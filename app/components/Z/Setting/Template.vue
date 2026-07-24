@@ -54,7 +54,18 @@
 					label-key="label"
 					:disabled="template.is_disabled"
 					class="w-full"
-					@update:model-value="(value) => updateSettingValue(template, value)"
+					@update:model-value="(value) => updateSingleSelectSettingValue(template, value)"
+				/>
+				<USelect
+					v-if="getInputType(template) === InputTypeEnum.SELECT_MULTI"
+					multiple
+					:model-value="getMultiSelectSettingValue(template)"
+					:items="getSelectItems(template)"
+					value-key="value"
+					label-key="label"
+					:disabled="template.is_disabled"
+					class="w-full"
+					@update:model-value="(value) => updateMultiSelectSettingValue(template, value)"
 				/>
 			</div>
 		</div>
@@ -66,6 +77,7 @@ import type { SettingTempl } from '~/utils/types/setting-templ';
 import { InputType as InputTypeEnum } from 'yeppi-common';
 import { Setting } from '~/utils/types/setting';
 import { getOrderCompletionValidationItems } from '~/utils/options/order-completion-validation';
+import { getAdminReceiveEmailUpdateItems } from '~/utils/options/admin-receive-email-update';
 
 const props = defineProps({
 	templates: {
@@ -78,6 +90,11 @@ const { templates } = toRefs(props);
 
 const settingsStore = useSettingStore();
 const { settings, updatedSettings } = storeToRefs(settingsStore);
+
+type SelectSettingItem = {
+	value: string | number;
+	label: string;
+};
 
 const getInputType = (template: SettingTempl) => Number(template.input_type);
 
@@ -97,17 +114,36 @@ const getBooleanSettingValue = (template: SettingTempl): boolean => {
 	return value === 'true' || value === '1';
 };
 
-const getSelectItems = (template: SettingTempl) => getOrderCompletionValidationItems(template.data_source);
+const getSelectItems = (template: SettingTempl) => {
+	const orderCompletionItems = getOrderCompletionValidationItems(template.data_source);
+	if (orderCompletionItems.length) {
+		return orderCompletionItems.map((item): SelectSettingItem => ({ ...item }));
+	}
 
-const serializeSettingValue = (template: SettingTempl, value: string | number | boolean): string => {
+	return getAdminReceiveEmailUpdateItems(template.data_source).map((item): SelectSettingItem => ({ ...item }));
+};
+
+const getMultiSelectSettingValue = (template: SettingTempl): string[] => {
+	const raw = getRawSettingValue(template) ?? template.default_val ?? '';
+	return raw
+		.split(',')
+		.map((value) => value.trim())
+		.filter(Boolean);
+};
+
+const serializeSettingValue = (template: SettingTempl, value: string | number | boolean | string[]): string => {
 	if (getInputType(template) === InputTypeEnum.BOOLEAN) {
 		return value === true || value === 'true' || value === '1' ? '1' : '0';
+	}
+
+	if (Array.isArray(value)) {
+		return value.join(',');
 	}
 
 	return String(value);
 };
 
-const updateSettingValue = (template: SettingTempl, value: string | number | boolean) => {
+const updateSettingValue = (template: SettingTempl, value: string | number | boolean | string[]) => {
 	const settingData = {
 		group_code: template.group_code,
 		set_code: template.set_code,
@@ -116,6 +152,27 @@ const updateSettingValue = (template: SettingTempl, value: string | number | boo
 	};
 	const updatedSetting = new Setting(settingData as unknown as Setting);
 	settingsStore.addToUpdatedSettings(updatedSetting);
+};
+
+const updateSingleSelectSettingValue = (template: SettingTempl, value: unknown) => {
+	if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+		updateSettingValue(template, value);
+		return;
+	}
+
+	updateSettingValue(template, value == null ? '' : String(value));
+};
+
+const updateMultiSelectSettingValue = (template: SettingTempl, value: unknown) => {
+	const list = (Array.isArray(value) ? value : value ? [value] : [])
+		.filter((item): item is string | number | boolean => (
+			typeof item === 'string'
+			|| typeof item === 'number'
+			|| typeof item === 'boolean'
+		))
+		.map(String);
+
+	updateSettingValue(template, list.join(','));
 };
 
 const handleFileChange = (template: SettingTempl, event: Event) => {
