@@ -52,7 +52,7 @@
 					<div v-if="selectedAppointment" class="lg:col-span-1">
 						<ZCalendarAppointmentDetail
 							:appointment="selectedAppointment"
-							@close="selectedAppointment = null"
+							@close="clearSelectedAppointment"
 							@edit="openEditModal"
 							@delete="deleteAppointment"
 						/>
@@ -110,7 +110,7 @@
 						<div class="lg:sticky lg:top-4">
 							<ZCalendarAppointmentDetail
 								:appointment="selectedAppointment"
-								@close="selectedAppointment = null"
+								@close="clearSelectedAppointment"
 								@edit="openEditModal"
 								@delete="deleteAppointment"
 							/>
@@ -157,7 +157,7 @@
 						<div class="lg:sticky lg:top-4">
 							<ZCalendarAppointmentDetail
 								:appointment="selectedAppointment"
-								@close="selectedAppointment = null"
+								@close="clearSelectedAppointment"
 								@edit="openEditModal"
 								@delete="deleteAppointment"
 							/>
@@ -200,7 +200,7 @@
 						<div class="lg:sticky lg:top-4">
 							<ZCalendarAppointmentDetail
 								:appointment="selectedAppointment"
-								@close="selectedAppointment = null"
+								@close="clearSelectedAppointment"
 								@edit="openEditModal"
 								@delete="deleteAppointment"
 							/>
@@ -221,11 +221,14 @@ import { AppointmentStatus } from 'yeppi-common';
 import type { Appointment } from '~/utils/types/appointment';
 import { getAppointmentColumns } from '~/utils/table-columns';
 import { getAppointmentStatusColor } from '~/utils/options';
+import { failedNotification } from '~/stores/AppUi/AppUi';
 
 const overlay = useOverlay();
 const appointmentStore = useAppointmentStore();
 const { appointments, filter } = storeToRefs(appointmentStore);
 const selectedAppointment = ref<Appointment | null>(null);
+const route = useRoute();
+const router = useRouter();
 
 // Calendar view state
 const today = new Date();
@@ -408,7 +411,7 @@ const deleteAppointment = async (code: string) => {
 				confirmModal.close();
 				// Clear selected appointment if it's the one being deleted
 				if (selectedAppointment.value?.code === code) {
-					selectedAppointment.value = null;
+					clearSelectedAppointment();
 				}
 			},
 			onCancel: () => {
@@ -445,8 +448,6 @@ const deleteAppointment = async (code: string) => {
 // 	{ immediate: false },
 // );
 
-const route = useRoute();
-
 const applyDashboardDateQueryToFilter = () => {
 	const start = route.query.start_date;
 	const end = route.query.end_date;
@@ -464,10 +465,60 @@ const applyDashboardDateQueryToFilter = () => {
 	}
 };
 
+const clearSelectedAppointment = () => {
+	selectedAppointment.value = null;
+	if (!route.query.code) return;
+
+	const nextQuery = { ...route.query };
+	delete nextQuery.code;
+	void router.replace({ query: nextQuery });
+};
+
+const openAppointmentFromQuery = async () => {
+	const code = typeof route.query.code === 'string' ? route.query.code.trim() : '';
+	if (!code) return;
+
+	filter.value.view = 'listing';
+	filter.value.current_page = 1;
+	filter.value.status = 'All';
+	selectedTab.value = 0;
+
+	let found = appointments.value.find((appointment) => appointment.code === code) ?? null;
+	if (!found) {
+		found = await appointmentStore.getAppointmentByCode(code);
+		if (found) {
+			const start = new Date(found.start_date_time);
+			if (!Number.isNaN(start.getTime())) {
+				filter.value.date_range = fourMonthForwardRange(start);
+				await appointmentStore.getAppointments();
+				found = appointments.value.find((appointment) => appointment.code === code) ?? found;
+			}
+			if (found && !appointments.value.some((appointment) => appointment.code === found?.code)) {
+				appointments.value = [found, ...appointments.value];
+			}
+		}
+	}
+
+	if (!found) {
+		failedNotification('Appointment not found');
+		return;
+	}
+
+	selectedAppointment.value = found;
+};
+
 onMounted(async () => {
 	applyDashboardDateQueryToFilter();
 	await appointmentStore.getAppointments();
+	await openAppointmentFromQuery();
 });
+
+watch(
+	() => route.query.code,
+	async () => {
+		await openAppointmentFromQuery();
+	},
+);
 
 const selectAppointment = (appointment: Appointment) => {
 	if (!appointment) return;

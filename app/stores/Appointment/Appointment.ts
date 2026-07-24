@@ -105,6 +105,16 @@ export const useAppointmentStore = defineStore('appointmentStore', {
 			}
 		},
 
+		async getAppointmentByCode(code: string): Promise<Appointment | null> {
+			const { $api } = useNuxtApp();
+			try {
+				const resp = await $api.appointment.getSingle(code);
+				return resp?.appointment ?? resp ?? null;
+			} catch {
+				return null;
+			}
+		},
+
 		async updateAppointment(appointment: Appointment) {
 			this.updating = true;
 			const { $api } = useNuxtApp();
