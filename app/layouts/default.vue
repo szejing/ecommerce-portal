@@ -54,9 +54,21 @@
 			</template>
 		</UDashboardSidebar>
 		<div class="flex flex-1 flex-col min-w-0">
-			<!-- <header class="flex shrink-0 items-center gap-2 border-b border-default px-4 py-2">
-				<UDashboardSidebarCollapse />
-			</header> -->
+			<div
+				v-if="isStoreHidden"
+				class="flex w-full shrink-0 flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-red-600 px-4 py-2.5 text-center text-sm font-medium text-white"
+				role="status"
+			>
+				<span>{{ $t('pages.storeProfilePage.storeDisabledBanner') }}</span>
+				<button
+					type="button"
+					class="underline underline-offset-2 font-semibold hover:text-white/90 disabled:opacity-70"
+					:disabled="merchantInfoStore.updating"
+					@click="onEnableStore"
+				>
+					{{ $t('pages.storeProfilePage.enableStoreNow') }}
+				</button>
+			</div>
 			<slot />
 		</div>
 	</UDashboardGroup>
@@ -65,7 +77,17 @@
 <script lang="ts" setup>
 const route = useRoute();
 const appUiStore = useAppUiStore();
+const merchantInfoStore = useMerchantInfoStore();
 const { navigations, showSidebar } = storeToRefs(appUiStore);
+const { isStoreHidden } = storeToRefs(merchantInfoStore);
+
+const onEnableStore = async () => {
+	try {
+		await merchantInfoStore.setHideStore(false);
+	} catch {
+		// notification handled in store
+	}
+};
 
 const pathMatchesLink = (path: string, link: { to?: string; children?: unknown[] }): boolean => {
 	if (!link.to || typeof link.to !== 'string') return false;

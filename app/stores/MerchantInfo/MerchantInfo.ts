@@ -20,6 +20,14 @@ export const useMerchantInfoStore = defineStore('merchantInfoStore', {
 		currencies: [] as Currency[],
 		errors: [] as string[],
 	}),
+	getters: {
+		isStoreHidden(state): boolean {
+			const info = state.merchant.find(
+				(item) => item.group_code === GROUP_CODE.INFO && item.set_code === MERCHANT.HIDE_STORE,
+			);
+			return info?.getBoolean() ?? false;
+		},
+	},
 	actions: {
 		getMerchantInfo(group_code: string, set_code: string): MerchantInfo | null {
 			const info = this.merchant.find((info) => info.group_code === group_code && info.set_code === set_code);
@@ -48,6 +56,39 @@ export const useMerchantInfoStore = defineStore('merchantInfoStore', {
 
 		clearUpdatedInfo() {
 			this.updatedInfo = [];
+		},
+
+		async setHideStore(hide: boolean) {
+			this.updating = true;
+			const { $api } = useNuxtApp();
+			const set_value = hide ? 'true' : 'false';
+
+			try {
+				const { data } = await $api.merchantInfo.saveMany({
+					merchant_info: [
+						new MerchantInfo({
+							group_code: GROUP_CODE.INFO,
+							set_code: MERCHANT.HIDE_STORE,
+							set_value,
+						}),
+					],
+				});
+
+				if (data) {
+					this.merchant = data.map((info) => new MerchantInfo(info));
+				} else {
+					this.updateMerchantInfoByGroupAndSet(GROUP_CODE.INFO, MERCHANT.HIDE_STORE, set_value);
+				}
+
+				this.updatedInfo = this.updatedInfo.filter((info) => info.set_code !== MERCHANT.HIDE_STORE);
+				successNotification(hide ? 'Store hidden from marketplace' : 'Store enabled on marketplace');
+			} catch (err: unknown | ErrorResponse) {
+				const message = (err as ErrorResponse).message ?? 'Failed to update store visibility';
+				failedNotification(message);
+				throw err;
+			} finally {
+				this.updating = false;
+			}
 		},
 
 		async updateMerchantInfo() {

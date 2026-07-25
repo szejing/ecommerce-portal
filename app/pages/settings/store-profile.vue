@@ -51,6 +51,32 @@
 			</UCard>
 		</div>
 		<div v-else class="p-6 space-y-6">
+			<div
+				class="flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between"
+				:class="
+					hideStore
+						? 'border-red-200/60 bg-red-50/80 dark:border-red-800/50 dark:bg-red-950/40'
+						: 'border-gray-200/60 bg-gray-50/80 dark:border-gray-700/50 dark:bg-gray-800/60'
+				"
+			>
+				<div class="min-w-0 space-y-1">
+					<p class="text-sm font-semibold text-gray-900 dark:text-white">
+						{{ $t('pages.storeProfilePage.hideStoreLabel') }}
+					</p>
+					<p class="text-sm text-gray-600 dark:text-gray-400">
+						{{ $t('pages.storeProfilePage.hideStoreDesc') }}
+					</p>
+				</div>
+				<USwitch
+					:model-value="hideStore"
+					:loading="merchantInfoStore.updating"
+					:disabled="merchantInfoStore.updating"
+					color="error"
+					size="lg"
+					@update:model-value="onHideStoreChange"
+				/>
+			</div>
+
 			<div class="space-y-2">
 				<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $t('nav.storeProfile') }}</h2>
 				<p class="text-gray-600 dark:text-gray-400">{{ $t('pages.storeProfileDesc') }}</p>
@@ -95,7 +121,7 @@
 					<!-- Thumbnail -->
 					<UFormField :label="$t('pages.storeProfilePage.thumbnail')">
 						<ZDropzone
-							class="max-w-full sm:max-w-[200px]"
+							class="max-w-full sm:max-w-50"
 							:key="thumbnailDropzoneKey"
 							:existing-images="thumbnailExistingImages"
 							:multiple="false"
@@ -242,6 +268,16 @@ onMounted(() => {
 });
 
 const isDirty = computed(() => updatedInfo.value.length > 0);
+
+const hideStore = computed(() => merchantInfoStore.isStoreHidden);
+
+const onHideStoreChange = async (value: boolean) => {
+	try {
+		await merchantInfoStore.setHideStore(value);
+	} catch {
+		// notification handled in store
+	}
+};
 
 const thumbnailDropzoneKey = ref(0);
 
