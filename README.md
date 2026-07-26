@@ -59,7 +59,7 @@ This pushes:
 - `registry.digitalocean.com/wemotoo/wemotoo-portal:<tag>`
 - both also tagged as `:prod`
 
-After a successful push, `APP_VERSION` in `.env.prod` and `../.env.tags` are updated. Note the printed tag (e.g. `1.0.1`).
+Before build, `APP_VERSION` in `.env.prod` and `../.env.tags` are updated so the image bakes in the new version. Note the printed tag (e.g. `1.0.1`).
 
 ### 2. Cloud: pull and deploy
 
