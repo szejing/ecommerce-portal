@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="payment-types" :title="$t('nav.paymentTypes')" back-to="/settings/payment">
+	<ZPagePanel id="payment-types" :title="t('nav.paymentTypes')" back-to="/settings/payment">
 		<template #toolbar>
 			<ZSectionFilterPaymentTypeGroups />
 		</template>
@@ -33,8 +33,8 @@
 				<template #empty>
 					<div class="flex flex-col items-center justify-center py-12 gap-3">
 						<UIcon :name="ICONS.PAYMENT_METHODS" class="w-12 h-12 text-gray-400" />
-						<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noPaymentTypesFound') }}</p>
-						<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+						<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noPaymentTypesFound') }}</p>
+						<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 					</div>
 				</template>
 			</UTable>
@@ -50,6 +50,7 @@
 import { options_page_size } from '~/utils/options';
 import { getPaymentTypeGroupColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
+import { ICONS } from '~/utils/icons';
 
 const PAYMENT_TYPE_GROUP_COLUMN_LABELS = {
 	index: 'table.no',

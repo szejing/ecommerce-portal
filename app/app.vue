@@ -10,6 +10,7 @@
 
 <script lang="ts" setup>
 import { ZModalMessage } from '#components';
+import { ICONS } from '~/utils/icons';
 
 const toast = useToast();
 

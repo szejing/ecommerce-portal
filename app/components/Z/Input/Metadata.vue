@@ -4,7 +4,7 @@
 
 		<div v-if="metadataFields.length" class="grid grid-cols-1 md:grid-cols-2 gap-4">
 			<UFormField v-for="field in metadataFields" :key="field.key" :label="field.key" :name="`${name}.${field.key}`" :error="fieldErrors[field.key]">
-				<USwitch v-if="field.type === 'boolean'" v-model="field.value" :label="field.value ? $t('common.active') : $t('common.inactive')" />
+				<USwitch v-if="field.type === 'boolean'" v-model="field.value" :label="field.value ? t('common.active') : t('common.inactive')" />
 				<UInput v-else-if="field.type === 'number'" v-model="field.value" type="number" />
 				<UTextarea v-else-if="field.type === 'json'" v-model="field.value" :rows="4" class="font-mono text-xs md:col-span-2" />
 				<UInput v-else v-model="field.value" />

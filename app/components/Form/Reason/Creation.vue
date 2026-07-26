@@ -4,16 +4,16 @@
 			<div class="lg:col-span-9 space-y-6">
 				<UCard>
 					<div class="space-y-4">
-						<UFormField :label="$t('common.code')" name="code" required>
+						<UFormField :label="t('common.code')" name="code" required>
 							<UInput v-model="new_reason.code" class="uppercase" />
 						</UFormField>
-						<UFormField :label="$t('common.description')" name="description" required>
+						<UFormField :label="t('common.description')" name="description" required>
 							<UInput v-model="new_reason.description" />
 						</UFormField>
-						<UFormField :label="$t('table.reasonType')" name="type" required>
+						<UFormField :label="t('table.reasonType')" name="type" required>
 							<USelect v-model="new_reason.type" :items="typeOptions" value-attribute="value" class="w-full" />
 						</UFormField>
-						<UFormField :label="$t('common.status')" name="is_active">
+						<UFormField :label="t('common.status')" name="is_active">
 							<USwitch v-model="new_reason.is_active" />
 						</UFormField>
 					</div>

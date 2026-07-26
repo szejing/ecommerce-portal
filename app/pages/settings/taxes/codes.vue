@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="taxes-codes" :title="$t('nav.taxCodes')" back-to="/settings/taxes">
+	<ZPagePanel id="taxes-codes" :title="t('nav.taxCodes')" back-to="/settings/taxes">
 		<template #toolbar>
 			<ZSectionFilterTaxCodes />
 		</template>
@@ -33,8 +33,8 @@
 				<template #empty>
 					<div class="flex flex-col items-center justify-center py-12 gap-3">
 						<UIcon :name="ICONS.TAX" class="w-12 h-12 text-gray-400" />
-						<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noTaxCodesFound') }}</p>
-						<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+						<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noTaxCodesFound') }}</p>
+						<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 					</div>
 				</template>
 			</UTable>
@@ -54,6 +54,7 @@ import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import type { Tax } from '~/utils/types/tax';
 import type { TableRow } from '@nuxt/ui';
 import { options_page_size } from '~/utils/options';
+import { ICONS } from '~/utils/icons';
 
 const TAX_CODE_COLUMN_LABELS = {
 	code: 'table.code',

@@ -5,10 +5,10 @@
 				<div class="flex-1">
 					<div class="flex items-center gap-2">
 						<UIcon :name="ICONS.TAG" class="text-primary-500 w-6 h-6" />
-						<h2 class="text-xl font-semibold">{{ $t('pages.discountDetails') }}</h2>
+						<h2 class="text-xl font-semibold">{{ t('pages.discountDetails') }}</h2>
 						<span class="text-red-500 text-sm">*</span>
 					</div>
-					<p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ $t('components.discountForm.sectionSubtitle') }}</p>
+					<p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ t('components.discountForm.sectionSubtitle') }}</p>
 				</div>
 			</div>
 		</template>
@@ -20,17 +20,17 @@
 				</UFormField>
 			</div>
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-				<UFormField :label="$t('form.code')" name="code">
-					<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ $t('components.discountForm.codeHint') }}</p>
-					<UInput v-model="state.code" :disabled="codeDisabled" :placeholder="$t('components.discountForm.codePlaceholder')" />
+				<UFormField :label="t('form.code')" name="code">
+					<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ t('components.discountForm.codeHint') }}</p>
+					<UInput v-model="state.code" :disabled="codeDisabled" :placeholder="t('components.discountForm.codePlaceholder')" />
 				</UFormField>
-				<UFormField :label="$t('form.description')" name="description" required>
-					<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ $t('components.discountForm.descriptionHint') }}</p>
+				<UFormField :label="t('form.description')" name="description" required>
+					<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ t('components.discountForm.descriptionHint') }}</p>
 					<UInput v-model="state.description" />
 				</UFormField>
 
 				<div class="grid grid-cols-1 sm:grid-cols-6 gap-4">
-					<UFormField class="col-span-1 sm:col-span-3" :label="$t('components.discountForm.validityStartsAt')" name="starts_at">
+					<UFormField class="col-span-1 sm:col-span-3" :label="t('components.discountForm.validityStartsAt')" name="starts_at">
 						<UPopover v-model:open="startsAtPopoverOpen" :content="{ align: 'start' }" :modal="true">
 							<UButton icon="i-lucide-calendar" color="neutral" variant="outline" class="w-full min-w-0 justify-between group">
 								<span class="truncate">{{ startsAtButtonLabel }}</span>
@@ -40,14 +40,14 @@
 								<div class="p-2 space-y-2">
 									<ZDatePicker v-model="startsAtAsDate" :max-date="startsAtMaxDate" @close="startsAtPopoverOpen = false" />
 									<div v-if="state.starts_at" class="flex justify-end border-t border-default pt-2">
-										<UButton :label="$t('components.filter.clear')" color="neutral" variant="soft" size="sm" @click="clearStartsAt" />
+										<UButton :label="t('components.filter.clear')" color="neutral" variant="soft" size="sm" @click="clearStartsAt" />
 									</div>
 								</div>
 							</template>
 						</UPopover>
 					</UFormField>
 
-					<UFormField class="col-span-1 sm:col-span-3" :label="$t('components.discountForm.validityEndsAt')" name="ends_at">
+					<UFormField class="col-span-1 sm:col-span-3" :label="t('components.discountForm.validityEndsAt')" name="ends_at">
 						<UPopover v-model:open="endsAtPopoverOpen" :content="{ align: 'start' }" :modal="true">
 							<UButton icon="i-lucide-calendar" color="neutral" variant="outline" class="w-full min-w-0 justify-between group">
 								<span class="truncate">{{ endsAtButtonLabel }}</span>
@@ -57,7 +57,7 @@
 								<div class="p-2 space-y-2">
 									<ZDatePicker v-model="endsAtAsDate" :min-date="endsAtMinDate" @close="endsAtPopoverOpen = false" />
 									<div v-if="state.ends_at" class="flex justify-end border-t border-default pt-2">
-										<UButton :label="$t('components.filter.clear')" color="neutral" variant="soft" size="sm" @click="clearEndsAt" />
+										<UButton :label="t('components.filter.clear')" color="neutral" variant="soft" size="sm" @click="clearEndsAt" />
 									</div>
 								</div>
 							</template>

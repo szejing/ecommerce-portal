@@ -2,19 +2,19 @@
 	<UCard :ui="cardUi">
 		<template #header>
 			<div class="w-full flex-between items-center">
-				<h2>{{ $t('components.zInput.inventory') }}</h2>
+				<h2>{{ t('components.zInput.inventory') }}</h2>
 				<div class="w-[50%] flex-jend items-center gap-4">
-					<UCheckbox v-model="variantDetail.manage_inventory" name="manageInventory" :label="$t('components.zInput.manageInventory')" color="success" />
+					<UCheckbox v-model="variantDetail.manage_inventory" name="manageInventory" :label="t('components.zInput.manageInventory')" color="success" />
 				</div>
 			</div>
 		</template>
 
 		<div v-if="variantDetail.manage_inventory" class="section-grid-basic-details">
-			<UFormField v-slot="{ error }" :label="$t('components.zInput.sku')" name="sku">
+			<UFormField v-slot="{ error }" :label="t('components.zInput.sku')" name="sku">
 				<UInput v-model="variantDetail.sku" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" />
 			</UFormField>
 
-			<UFormField v-slot="{ error }" :label="$t('components.zInput.quantity')" name="quantity">
+			<UFormField v-slot="{ error }" :label="t('components.zInput.quantity')" name="quantity">
 				<UInput v-model="variantDetail.inventory_quantity" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" type="number" />
 			</UFormField>
 		</div>
@@ -23,6 +23,9 @@
 
 <script lang="ts" setup>
 import type { ProductVariant } from '~/utils/types/product-variant';
+import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 const props = defineProps({
 	details: {

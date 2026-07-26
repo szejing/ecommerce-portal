@@ -6,20 +6,21 @@
 	>
 		<template #body>
 			<div class="space-y-2">
-				<h3>{{ title ?? $t('components.zModal.confirmationTitle') }}</h3>
-				<p>{{ message ?? $t('components.zModal.confirmationMessage') }}</p>
+				<h3>{{ title ?? t('components.zModal.confirmationTitle') }}</h3>
+				<p>{{ message ?? t('components.zModal.confirmationMessage') }}</p>
 			</div>
 		</template>
 
 		<template #footer>
 			<div class="flex-jend gap-4">
-				<UButton @click="onConfirm">{{ $t('common.ok') }}</UButton>
+				<UButton @click="onConfirm">{{ t('common.ok') }}</UButton>
 			</div>
 		</template>
 	</UModal>
 </template>
 
 <script lang="ts" setup>
+const { t } = useI18n();
 defineProps({
 	title: {
 		type: String,

@@ -1,14 +1,14 @@
 <template>
-	<ZPagePanel id="analytics-orders" :title="$t('nav.analytics')" back-to="/analytics">
+	<ZPagePanel id="analytics-orders" :title="t('nav.analytics')" back-to="/analytics">
 		<div class="flex flex-col gap-8 lg:gap-10">
 			<!-- Title + date (one visual block) -->
 			<div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
 				<div class="min-w-0 space-y-1.5">
-					<h2 class="text-2xl font-semibold tracking-tight text-highlighted sm:text-3xl">{{ $t('pages.orderAnalytics') }}</h2>
-					<p class="max-w-2xl text-sm leading-relaxed text-muted sm:text-base">{{ $t('pages.orderDashboardDesc') }}</p>
+					<h2 class="text-2xl font-semibold tracking-tight text-highlighted sm:text-3xl">{{ t('pages.orderAnalytics') }}</h2>
+					<p class="max-w-2xl text-sm leading-relaxed text-muted sm:text-base">{{ t('pages.orderDashboardDesc') }}</p>
 				</div>
 				<div class="shrink-0 w-full max-w-md lg:w-auto lg:max-w-none">
-					<p class="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{{ $t('pages.orderAnalyticsDateRange') }}</p>
+					<p class="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{{ t('pages.orderAnalyticsDateRange') }}</p>
 					<ZDateRange v-model="range" @update:model-value="onRangeChange" />
 				</div>
 			</div>
@@ -18,9 +18,9 @@
 				<div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
 					<div>
 						<h3 id="order-analytics-reports-heading" class="text-sm font-semibold text-highlighted">
-							{{ $t('pages.orderAnalyticsSectionReports') }}
+							{{ t('pages.orderAnalyticsSectionReports') }}
 						</h3>
-						<p class="text-xs text-muted">{{ $t('pages.orderAnalyticsSectionReportsHint') }}</p>
+						<p class="text-xs text-muted">{{ t('pages.orderAnalyticsSectionReportsHint') }}</p>
 					</div>
 				</div>
 				<div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -50,7 +50,7 @@
 			<!-- KPIs -->
 			<section aria-labelledby="order-analytics-overview-heading" class="space-y-4">
 				<h3 id="order-analytics-overview-heading" class="text-sm font-semibold text-highlighted">
-					{{ $t('pages.orderAnalyticsSectionOverview') }}
+					{{ t('pages.orderAnalyticsSectionOverview') }}
 				</h3>
 				<ZDashboardStats :stats="orderStats" />
 			</section>
@@ -58,15 +58,15 @@
 			<!-- Chart -->
 			<section aria-labelledby="order-analytics-trend-heading" class="space-y-4">
 				<h3 id="order-analytics-trend-heading" class="text-sm font-semibold text-highlighted">
-					{{ $t('pages.orderAnalyticsSectionTrend') }}
+					{{ t('pages.orderAnalyticsSectionTrend') }}
 				</h3>
 				<UCard ref="chartCardRef" :ui="{ root: 'overflow-visible', body: '!px-0 !pt-0 !pb-3' }">
 					<template #header>
 						<div class="space-y-1">
 							<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 								<div>
-									<p class="text-xs font-medium uppercase tracking-wide text-muted">{{ $t('components.dashboard.revenue') }}</p>
-									<p class="mt-0.5 text-sm text-muted">{{ $t('pages.orderDashboardChartSubtitle') }}</p>
+									<p class="text-xs font-medium uppercase tracking-wide text-muted">{{ t('components.dashboard.revenue') }}</p>
+									<p class="mt-0.5 text-sm text-muted">{{ t('pages.orderDashboardChartSubtitle') }}</p>
 								</div>
 								<p class="text-2xl font-semibold tabular-nums text-highlighted sm:text-right sm:text-3xl">
 									{{ formatCurrency(chartTotal, primaryCurrency) }}
@@ -94,18 +94,18 @@
 			<!-- Top lists -->
 			<section aria-labelledby="order-analytics-highlights-heading" class="space-y-4">
 				<h3 id="order-analytics-highlights-heading" class="text-sm font-semibold text-highlighted">
-					{{ $t('pages.orderAnalyticsSectionHighlights') }}
+					{{ t('pages.orderAnalyticsSectionHighlights') }}
 				</h3>
 				<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
 					<UCard>
 						<template #header>
 							<div class="flex items-center gap-2">
 								<UIcon name="i-heroicons-cube" class="size-5 text-primary" />
-								<h4 class="font-semibold text-highlighted">{{ $t('pages.orderDashboardTopProducts') }}</h4>
+								<h4 class="font-semibold text-highlighted">{{ t('pages.orderDashboardTopProducts') }}</h4>
 							</div>
 						</template>
 						<div v-if="top_purchased_products.length === 0" class="py-8 text-center text-sm text-muted">
-							{{ $t('pages.orderDashboardNoData') }}
+							{{ t('pages.orderDashboardNoData') }}
 						</div>
 						<ul v-else class="divide-y divide-border">
 							<li
@@ -118,7 +118,7 @@
 									<span class="truncate font-medium text-highlighted">{{ product.prod_name }}</span>
 								</div>
 								<div class="flex shrink-0 items-center gap-2 text-sm">
-									<span class="text-muted">{{ product.total_qty }} {{ $t('table.qty') }}</span>
+									<span class="text-muted">{{ product.total_qty }} {{ t('table.qty') }}</span>
 									<span class="font-medium">{{ formatCurrency(product.total_net_amt, 'MYR') }}</span>
 								</div>
 							</li>
@@ -129,11 +129,11 @@
 						<template #header>
 							<div class="flex items-center gap-2">
 								<UIcon name="i-heroicons-users" class="size-5 text-primary" />
-								<h4 class="font-semibold text-highlighted">{{ $t('pages.orderDashboardTopCustomers') }}</h4>
+								<h4 class="font-semibold text-highlighted">{{ t('pages.orderDashboardTopCustomers') }}</h4>
 							</div>
 						</template>
 						<div v-if="top_purchased_customers.length === 0" class="py-8 text-center text-sm text-muted">
-							{{ $t('pages.orderDashboardNoData') }}
+							{{ t('pages.orderDashboardNoData') }}
 						</div>
 						<ul v-else class="divide-y divide-border">
 							<li
@@ -146,7 +146,7 @@
 									<span class="truncate font-medium text-highlighted">{{ customer.customer_name }}</span>
 								</div>
 								<div class="flex shrink-0 items-center gap-2 text-sm">
-									<span class="text-muted">{{ customer.total_orders }} {{ $t('pages.ordersLabel') }}</span>
+									<span class="text-muted">{{ customer.total_orders }} {{ t('pages.ordersLabel') }}</span>
 									<span class="font-medium">{{ formatCurrency(customer.total_spent, 'MYR') }}</span>
 								</div>
 							</li>

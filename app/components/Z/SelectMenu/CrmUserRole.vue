@@ -1,5 +1,5 @@
 <template>
-	<USelect v-model="role" :items="roleItems" value-attribute="value" :placeholder="$t('components.crmUserForm.role')" />
+	<USelect v-model="role" :items="roleItems" value-attribute="value" :placeholder="t('components.crmUserForm.role')" />
 </template>
 
 <script lang="ts" setup>

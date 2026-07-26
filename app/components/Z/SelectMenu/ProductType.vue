@@ -1,7 +1,7 @@
 <template>
 	<div class="space-y-3">
 		<p class="text-sm text-neutral-600 dark:text-neutral-400">
-			{{ $t('components.productUpdate.productTypeDescription') }}
+			{{ t('components.productUpdate.productTypeDescription') }}
 		</p>
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 			<button
@@ -37,7 +37,7 @@
 			</button>
 		</div>
 		<p v-if="!items.length" class="text-sm text-neutral-500">
-			{{ $t('components.selectMenu.selectType') }}
+			{{ t('components.selectMenu.selectType') }}
 		</p>
 	</div>
 </template>

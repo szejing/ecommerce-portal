@@ -1,7 +1,7 @@
 <template>
 	<section class="space-y-4" aria-labelledby="shipment-workflow-title">
 		<div class="rounded-lg border border-default bg-default p-4 sm:p-5">
-			<h2 id="shipment-workflow-title" class="sr-only">{{ $t('shipmentArrangement.workflow.title') }}</h2>
+			<h2 id="shipment-workflow-title" class="sr-only">{{ t('shipmentArrangement.workflow.title') }}</h2>
 			<ol class="grid gap-5 lg:grid-cols-3 lg:gap-6">
 				<li v-for="step in steps" :key="step.number" data-testid="workflow-step" class="flex min-w-0 gap-3">
 					<span
@@ -24,7 +24,7 @@
 							data-testid="workflow-export"
 							class="mt-3 min-h-11 w-full justify-center sm:w-auto"
 							icon="i-lucide-download"
-							:label="$t('shipmentArrangement.workflow.downloadCount', { count: pendingCount })"
+							:label="t('shipmentArrangement.workflow.downloadCount', { count: pendingCount })"
 							:disabled="pendingCount === 0"
 							:loading="exporting"
 							@click="emit('export')"
@@ -36,7 +36,7 @@
 							color="primary"
 							variant="outline"
 							icon="i-lucide-upload"
-							:label="$t('shipmentArrangement.workflow.upload')"
+							:label="t('shipmentArrangement.workflow.upload')"
 							:loading="importing"
 							@click="emit('import')"
 						/>
@@ -45,12 +45,7 @@
 			</ol>
 		</div>
 
-		<UAlert
-			color="warning"
-			variant="soft"
-			icon="i-lucide-triangle-alert"
-			:description="$t('shipmentArrangement.workflow.consequence')"
-		/>
+		<UAlert color="warning" variant="soft" icon="i-lucide-triangle-alert" :description="t('shipmentArrangement.workflow.consequence')" />
 	</section>
 </template>
 

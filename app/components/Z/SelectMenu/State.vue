@@ -10,13 +10,7 @@
 		:placeholder="placeholderText"
 	>
 		<template v-if="slots.default" #default>
-			<slot
-				:values="displayValues"
-				:state-label="stateLabel"
-				:deselect="deselect"
-				:clear-all="clearAll"
-				:placeholder="placeholderText"
-			/>
+			<slot :values="displayValues" :state-label="stateLabel" :deselect="deselect" :clear-all="clearAll" :placeholder="placeholderText" />
 		</template>
 	</USelectMenu>
 </template>
@@ -49,9 +43,7 @@ const emit = defineEmits<{
 const { t } = useI18n();
 const slots = useSlots();
 
-const displayValues = computed(() =>
-	props.multiple ? [...props.stateNames] : props.stateName ? [props.stateName] : [],
-);
+const displayValues = computed(() => (props.multiple ? [...props.stateNames] : props.stateName ? [props.stateName] : []));
 
 const stateOptions = computed(() => mergeMalaysiaStateOptions(displayValues.value));
 

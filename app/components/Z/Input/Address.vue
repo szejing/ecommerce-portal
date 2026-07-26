@@ -1,84 +1,77 @@
 <template>
 	<div class="space-y-4">
-		<UFormField v-slot="{ error }" :label="$t('components.zInput.address1')" name="address1" required>
-			<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ $t('components.zInput.addressLine1Hint') }}</p>
-			<UInput v-model="address1" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="$t('components.zInput.address1')" />
+		<UFormField v-slot="{ error }" :label="t('components.zInput.address1')" name="address1" required>
+			<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ t('components.zInput.addressLine1Hint') }}</p>
+			<UInput v-model="address1" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="t('components.zInput.address1')" />
 		</UFormField>
 
-		<UFormField :label="$t('components.zInput.address2')" name="address2">
-			<UInput v-model="address2" :placeholder="$t('components.zInput.address2')" />
+		<UFormField :label="t('components.zInput.address2')" name="address2">
+			<UInput v-model="address2" :placeholder="t('components.zInput.address2')" />
 		</UFormField>
 
-		<UFormField :label="$t('components.zInput.address3')" name="address3">
-			<UInput v-model="address3" :placeholder="$t('components.zInput.address3')" />
+		<UFormField :label="t('components.zInput.address3')" name="address3">
+			<UInput v-model="address3" :placeholder="t('components.zInput.address3')" />
 		</UFormField>
 
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-			<UFormField v-slot="{ error }" :label="$t('components.zInput.city')" name="city" required>
-				<UInput v-model="city" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="$t('components.zInput.city')" />
+			<UFormField v-slot="{ error }" :label="t('components.zInput.city')" name="city" required>
+				<UInput v-model="city" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="t('components.zInput.city')" />
 			</UFormField>
 
-			<UFormField v-slot="{ error }" :label="$t('components.zInput.postalCode')" name="postal_code" required>
-				<UInput v-model="postal_code" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="$t('components.zInput.postalCode')" />
+			<UFormField v-slot="{ error }" :label="t('components.zInput.postalCode')" name="postal_code" required>
+				<UInput v-model="postal_code" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="t('components.zInput.postalCode')" />
 			</UFormField>
 		</div>
 
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-			<UFormField :label="$t('components.zInput.state')" :name="stateFieldName" required>
-				<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ $t('components.zInput.addressStateHint') }}</p>
+			<UFormField :label="t('components.zInput.state')" :name="stateFieldName" required>
+				<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ t('components.zInput.addressStateHint') }}</p>
 				<USelect
 					:model-value="stateSelectValue"
 					:items="stateItems"
 					value-attribute="value"
 					class="w-full"
-					:placeholder="$t('components.selectMenu.selectState')"
+					:placeholder="t('components.selectMenu.selectState')"
 					@update:model-value="onStateSelect"
 				/>
 			</UFormField>
 
-			<UFormField :label="$t('components.zInput.countryCode')" name="country_code" required>
-				<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ $t('components.zInput.addressCountryHint') }}</p>
+			<UFormField :label="t('components.zInput.countryCode')" name="country_code" required>
+				<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ t('components.zInput.addressCountryHint') }}</p>
 				<USelect
 					:model-value="countrySelectValue"
 					:items="countryItems"
 					value-attribute="value"
 					class="w-full"
-					:placeholder="$t('components.selectMenu.selectCountry')"
+					:placeholder="t('components.selectMenu.selectCountry')"
 					@update:model-value="onCountrySelect"
 				/>
 			</UFormField>
 		</div>
 
 		<div v-if="requiredLatLng" class="space-y-2">
-			<p class="text-xs text-neutral-500 dark:text-neutral-400">{{ $t('components.zInput.addressCoordinatesHint') }}</p>
+			<p class="text-xs text-neutral-500 dark:text-neutral-400">{{ t('components.zInput.addressCoordinatesHint') }}</p>
 			<div class="flex flex-wrap items-center gap-2">
-				<UButton
-					color="primary"
-					variant="soft"
-					size="sm"
-					:loading="geocodingLoading"
-					:disabled="geocodingLoading"
-					@click="onFillCoordsFromAddress"
-				>
-					{{ $t('components.zInput.fillCoordsFromAddress') }}
+				<UButton color="primary" variant="soft" size="sm" :loading="geocodingLoading" :disabled="geocodingLoading" @click="onFillCoordsFromAddress">
+					{{ t('components.zInput.fillCoordsFromAddress') }}
 				</UButton>
 				<UButton variant="outline" size="sm" :disabled="!addressQueryForMaps" @click="onOpenInGoogleMaps">
-					{{ $t('components.zInput.openInGoogleMaps') }}
+					{{ t('components.zInput.openInGoogleMaps') }}
 				</UButton>
 				<UButton variant="outline" size="sm" :disabled="geocodingLoading" @click="onUseMyLocation">
-					{{ $t('components.zInput.useMyLocation') }}
+					{{ t('components.zInput.useMyLocation') }}
 				</UButton>
 			</div>
 			<p class="text-xs text-neutral-500 dark:text-neutral-400">
-				{{ $t('components.zInput.osmAttribution') }}
+				{{ t('components.zInput.osmAttribution') }}
 			</p>
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-				<UFormField v-slot="{ error }" :label="$t('components.zInput.latitude')" name="latitude">
-					<UInput v-model="latitude" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="$t('components.zInput.latitude')" />
+				<UFormField v-slot="{ error }" :label="t('components.zInput.latitude')" name="latitude">
+					<UInput v-model="latitude" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="t('components.zInput.latitude')" />
 				</UFormField>
 
-				<UFormField v-slot="{ error }" :label="$t('components.zInput.longitude')" name="longitude">
-					<UInput v-model="longitude" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="$t('components.zInput.longitude')" />
+				<UFormField v-slot="{ error }" :label="t('components.zInput.longitude')" name="longitude">
+					<UInput v-model="longitude" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="t('components.zInput.longitude')" />
 				</UFormField>
 			</div>
 		</div>
@@ -91,6 +84,7 @@ import MerchantRoutes from '~/repository/routes.client';
 import { useDataStore } from '~/stores/Data/Data';
 import { buildOutletAddressSearchQuery, googleMapsWebSearchUrl } from '~/utils/address-geocode';
 import { mergeMalaysiaStateOptions } from '~/utils/data/malaysia-states';
+import { ICONS } from '~/utils/icons';
 
 const props = defineProps<{
 	address1?: string;
@@ -159,8 +153,7 @@ async function onFillCoordsFromAddress() {
 		emit('update:longitude', longitude);
 		toast.add({ title: t('components.zInput.geocodeSuccess'), color: 'success' });
 	} catch (err: unknown) {
-		const status =
-			err && typeof err === 'object' && 'statusCode' in err ? (err as { statusCode?: number }).statusCode : undefined;
+		const status = err && typeof err === 'object' && 'statusCode' in err ? (err as { statusCode?: number }).statusCode : undefined;
 		if (status === 404) {
 			toast.add({ title: t('components.zInput.geocodeNoResults'), color: 'warning' });
 		} else {

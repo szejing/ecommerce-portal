@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="orders" :title="$t('nav.orders')">
+	<ZPagePanel id="orders" :title="t('nav.orders')">
 		<template #toolbar>
 			<ZSectionFilterOrders />
 		</template>
@@ -11,7 +11,7 @@
 					v-model="selectedStatuses"
 					:items="statusItems"
 					:get-color="getOrderStatusColor"
-					:placeholder="$t('components.selectMenu.selectOrderStatus')"
+					:placeholder="t('components.selectMenu.selectOrderStatus')"
 					class="w-full sm:w-72"
 					@update:model-value="onStatusesChange"
 				/>
@@ -42,18 +42,12 @@
 
 			<!-- Orders Table -->
 			<UCard :ui="{ body: 'p-0 sm:p-0' }">
-				<UTable
-					v-if="!initialize && !loading"
-					v-model:sorting="sorting"
-					:data="orders"
-					:columns="visibleColumns"
-					@select="selectOrder"
-				>
+				<UTable v-if="!initialize && !loading" v-model:sorting="sorting" :data="orders" :columns="visibleColumns" @select="selectOrder">
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon name="i-heroicons-shopping-cart" class="w-12 h-12 text-gray-400" />
-							<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noOrdersFound') }}</p>
-							<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noOrdersFound') }}</p>
+							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
 				</UTable>
@@ -67,7 +61,7 @@
 				<div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
 					<div class="text-sm text-gray-700 dark:text-gray-300">
 						{{
-							$t('pages.showingToOf', {
+							t('pages.showingToOf', {
 								from: (current_page - 1) * filter.page_size + 1,
 								to: Math.min(current_page * filter.page_size, orderStore.total_orders),
 								total: orderStore.total_orders,
@@ -93,10 +87,7 @@
 import { useStorage } from '@vueuse/core';
 import { OrderStatus, PaymentStatus } from 'yeppi-common';
 import { getOrderStatusColor, getOrderStatusOptions, options_page_size } from '~/utils/options';
-import {
-	ORDERS_SELECTED_STATUSES_STORAGE_KEY,
-	resolveOrderStatusesFromStorage,
-} from '~/utils/orders-selected-statuses-storage';
+import { ORDERS_SELECTED_STATUSES_STORAGE_KEY, resolveOrderStatusesFromStorage } from '~/utils/orders-selected-statuses-storage';
 import { getOrderColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import type { TableRow } from '@nuxt/ui';
@@ -175,7 +166,10 @@ const VALID_PAYMENT_STATUSES = new Set(Object.values(PaymentStatus));
 const parseStatusQuery = (status: string | Array<string | null>): OrderStatus[] => {
 	const values = Array.isArray(status)
 		? status.filter((value): value is string => typeof value === 'string')
-		: status.split(',').map((part) => part.trim()).filter(Boolean);
+		: status
+				.split(',')
+				.map((part) => part.trim())
+				.filter(Boolean);
 	return values.filter((value): value is OrderStatus => VALID_ORDER_STATUSES.has(value as OrderStatus));
 };
 

@@ -18,8 +18,8 @@
 					<div class="p-2">
 						<ZDateRangePicker :model-value="draftForPicker" @update:model-value="onDraftUpdate" @close="applyCalendar" />
 						<div class="flex justify-end gap-2 pt-2 border-t border-default mt-2">
-							<UButton :label="$t('common.cancel')" color="neutral" variant="ghost" @click="popoverOpen = false" />
-							<UButton :label="$t('common.apply')" color="primary" @click="applyCalendar" />
+							<UButton :label="t('common.cancel')" color="neutral" variant="ghost" @click="popoverOpen = false" />
+							<UButton :label="t('common.apply')" color="primary" @click="applyCalendar" />
 						</div>
 					</div>
 				</template>
@@ -30,7 +30,7 @@
 			<template v-for="preset in presets" :key="preset.key">
 				<UButton
 					v-if="!hidePresets && !isMobile"
-					:label="$t(`components.dateRange.${preset.key}`)"
+					:label="t(`components.dateRange.${preset.key}`)"
 					color="primary"
 					:variant="isPresetActive(preset) ? 'solid' : 'soft'"
 					size="xs"
@@ -48,8 +48,8 @@
 					<div class="p-2">
 						<ZDateRangePicker :model-value="draftForPicker" @update:model-value="onDraftUpdate" @close="applyCalendar" />
 						<div class="flex justify-end gap-2 pt-2 border-t border-default mt-2">
-							<UButton :label="$t('common.cancel')" color="neutral" variant="ghost" @click="popoverOpen = false" />
-							<UButton :label="$t('common.apply')" color="primary" @click="applyCalendar" />
+							<UButton :label="t('common.cancel')" color="neutral" variant="ghost" @click="popoverOpen = false" />
+							<UButton :label="t('common.apply')" color="primary" @click="applyCalendar" />
 						</div>
 					</div>
 				</template>

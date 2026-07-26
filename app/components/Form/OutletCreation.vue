@@ -5,7 +5,7 @@
 				<div class="space-y-3">
 					<div class="flex items-center gap-2">
 						<UIcon :name="ICONS.OUTLET" class="w-5 h-5 text-primary-500" />
-						<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('components.productForm.generalInformation') }}</h3>
+						<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('components.productForm.generalInformation') }}</h3>
 					</div>
 					<div class="pl-7">
 						<ZInputOutletGeneralInfo
@@ -20,7 +20,7 @@
 				<div class="space-y-3">
 					<div class="flex items-center gap-2">
 						<UIcon name="i-heroicons-map-pin" class="w-5 h-5 text-primary-500" />
-						<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('components.outletForm.addressAndLocation') }}</h3>
+						<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('components.outletForm.addressAndLocation') }}</h3>
 					</div>
 					<div class="pl-7">
 						<ZInputAddress
@@ -42,7 +42,7 @@
 				<div class="space-y-3">
 					<div class="flex items-center gap-2">
 						<UIcon :name="ICONS.TAX" class="w-5 h-5 text-primary-500" />
-						<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('components.outletForm.taxConfiguration') }}</h3>
+						<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('components.outletForm.taxConfiguration') }}</h3>
 					</div>
 					<div class="pl-7">
 						<ZSelectMenuTaxRule v-model:tax-rule="new_outlet.tax_rule_code" class="sm:w-[50%] w-full" @update:tax-rule="updateTaxRule" />
@@ -87,14 +87,7 @@ onMounted(() => {
 	outletStore.resetNewOutlet();
 });
 
-const buildAddressBlock = (o: {
-	address1: string;
-	address2?: string | null;
-	address3?: string | null;
-	city: string;
-	state: string;
-	postal_code: string;
-}) => {
+const buildAddressBlock = (o: { address1: string; address2?: string | null; address3?: string | null; city: string; state: string; postal_code: string }) => {
 	const lines = [o.address1, o.address2, o.address3].map((s) => s?.trim()).filter(Boolean) as string[];
 	const tail = [o.city, o.state, o.postal_code]
 		.map((s) => s?.trim())

@@ -5,32 +5,32 @@
 			<template #header>
 				<div class="flex items-center gap-2">
 					<UIcon :name="ICONS.CUSTOMER_GROUP_ROUNDED" class="w-5 h-5 text-muted" />
-					<h2 class="text-base font-semibold text-default">{{ $t('components.orderDetail.customerInformation') }}</h2>
+					<h2 class="text-base font-semibold text-default">{{ t('components.orderDetail.customerInformation') }}</h2>
 				</div>
 			</template>
 
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-				<UFormField v-slot="{ error }" :label="$t('components.orderInput.customerName')" name="customer_name" required>
-					<UInput v-model="name" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="$t('components.orderInput.customerNamePlaceholder')" />
+				<UFormField v-slot="{ error }" :label="t('components.orderInput.customerName')" name="customer_name" required>
+					<UInput v-model="name" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="t('components.orderInput.customerNamePlaceholder')" />
 				</UFormField>
 
-				<UFormField v-slot="{ error }" :label="$t('components.orderDetail.emailAddress')" name="email_address" required>
+				<UFormField v-slot="{ error }" :label="t('components.orderDetail.emailAddress')" name="email_address" required>
 					<UInput
 						v-model="email_address"
 						type="email"
 						autocomplete="email"
 						:trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined"
-						:placeholder="$t('components.orderInput.emailAddressPlaceholder')"
+						:placeholder="t('components.orderInput.emailAddressPlaceholder')"
 					/>
 				</UFormField>
 
-				<UFormField v-slot="{ error }" :label="$t('components.orderDetail.phoneNo')" name="phone_no" required>
+				<UFormField v-slot="{ error }" :label="t('components.orderDetail.phoneNo')" name="phone_no" required>
 					<UInput
 						v-model="phone_no"
 						type="tel"
 						autocomplete="tel"
 						:trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined"
-						:placeholder="$t('components.orderInput.phoneNoPlaceholder')"
+						:placeholder="t('components.orderInput.phoneNoPlaceholder')"
 					/>
 				</UFormField>
 			</div>
@@ -40,7 +40,7 @@
 		<template v-if="shipping_address || billing_address">
 			<UCard v-if="shipping_address" class="card">
 				<template #header>
-					<h2 class="text-base font-semibold text-default">{{ $t('components.orderInput.shippingAddress') }}</h2>
+					<h2 class="text-base font-semibold text-default">{{ t('components.orderInput.shippingAddress') }}</h2>
 				</template>
 				<ZInputAddress
 					v-model:address1="shipping_address.address1"
@@ -57,11 +57,11 @@
 			<UCard v-if="billing_address" class="card">
 				<template #header>
 					<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-						<h2 class="text-base font-semibold text-default">{{ $t('components.orderInput.billingAddress') }}</h2>
+						<h2 class="text-base font-semibold text-default">{{ t('components.orderInput.billingAddress') }}</h2>
 						<UCheckbox
 							v-model="same_as_shipping_address"
 							:ui="{ label: 'text-sm font-normal text-muted' }"
-							:label="$t('components.orderInput.sameAsShippingAddress')"
+							:label="t('components.orderInput.sameAsShippingAddress')"
 							@change="onChangeSameAsShippingAddress"
 						/>
 					</div>
@@ -83,6 +83,9 @@
 
 <script lang="ts" setup>
 import type { AddressModel } from '~/utils/models/customer.model';
+import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 const same_as_shipping_address = ref(false);
 const props = defineProps({

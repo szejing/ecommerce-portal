@@ -10,7 +10,7 @@
 		size="md"
 		label-key="code"
 		description-key="description"
-		:placeholder="$t('components.selectMenu.selectCategory')"
+		:placeholder="t('components.selectMenu.selectCategory')"
 	>
 		<template #default>
 			<div v-if="category" class="flex items-center">
@@ -25,7 +25,7 @@
 					/>
 				</div>
 			</div>
-			<span v-else class="text-neutral-400 text-sm">{{ $t('components.selectMenu.selectCategory') }}</span>
+			<span v-else class="text-neutral-400 text-sm">{{ t('components.selectMenu.selectCategory') }}</span>
 		</template>
 	</USelectMenu>
 </template>
@@ -33,6 +33,9 @@
 <script lang="ts" setup>
 import type { SelectMenuItem } from '@nuxt/ui';
 import type { Category } from '~/utils/types/category';
+import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 const searchTerm = ref('');
 const categoryStore = useProductCategoryStore();

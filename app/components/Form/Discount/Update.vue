@@ -2,7 +2,7 @@
 	<div class="w-full">
 		<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
 			<div class="lg:col-span-9">
-				<UForm ref="formRef" :schema="discountSchema" :state="formState as Record<string, unknown>" class="space-y-6 mb-6" @submit="onSubmit" @error="onError">
+				<UForm ref="formRef" :schema="discountSchema" :state="formState" class="space-y-6 mb-6" @submit="onSubmit" @error="onError">
 					<ZInputDiscountDetailsSection :state="formState" code-disabled />
 					<ZInputDiscountRuleAndConditionsSection :state="formState" />
 				</UForm>

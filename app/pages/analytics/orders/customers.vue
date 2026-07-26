@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="analytics-orders-customers" :title="$t('pages.analyticsOrdersCustomers')" back-to="/analytics/orders">
+	<ZPagePanel id="analytics-orders-customers" :title="t('pages.analyticsOrdersCustomers')" back-to="/analytics/orders">
 		<template #toolbar>
 			<ZSectionFilterOrderSummCustomers />
 		</template>
@@ -21,8 +21,8 @@
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.REPORT_ORDER" class="w-12 h-12 text-gray-400" />
-							<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noDataFound') }}</p>
-							<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noDataFound') }}</p>
+							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
 				</UTable>
@@ -40,6 +40,7 @@ import { getSummCustomerColumns, getSummCustomerColumnLabels } from '~/utils/tab
 import type { SummOrderCustomer } from '~/utils/types/summ-orders';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import { options_page_size } from '~/utils/options';
+import { ICONS } from '~/utils/icons';
 
 const { t } = useI18n();
 const summ_customer_columns = computed(() => getSummCustomerColumns<SummOrderCustomer>(t, 'order'));

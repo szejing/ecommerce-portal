@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="taxes-rules-detail-create" :title="$t('nav.taxRules')" back-to="/settings/taxes/rules">
+	<ZPagePanel id="taxes-rules-detail-create" :title="t('nav.taxRules')" back-to="/settings/taxes/rules">
 		<div class="flex-jbetween-icenter">
 			<h2 class="my-6">Add Tax Rule</h2>
 		</div>
@@ -9,7 +9,8 @@
 	</ZPagePanel>
 </template>
 
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+const { t } = useI18n();</script>
 
 <style scoped>
 .wrapper-grid {

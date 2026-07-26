@@ -3,15 +3,15 @@
 		<div class="space-y-6">
 			<!-- Thumbnail Upload Section -->
 			<div class="space-y-2">
-				<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('components.productForm.categoryThumbnail') }}</h3>
+				<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('components.productForm.categoryThumbnail') }}</h3>
 				<ZDropzone @files-selected="updateThumbnail" />
 			</div>
 
 			<!-- *********************** General Info *********************** -->
 			<div class="space-y-2">
-				<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('components.productForm.generalInformation') }}</h3>
+				<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('components.productForm.generalInformation') }}</h3>
 				<p class="text-sm text-neutral-400">
-					{{ $t('components.productForm.categoryGeneralDesc') }}
+					{{ t('components.productForm.categoryGeneralDesc') }}
 				</p>
 				<ZInputProductCategoryGeneralInfo v-model:code="new_category.code" v-model:description="new_category.description" />
 			</div>
@@ -19,11 +19,11 @@
 
 			<!-- Parent Category Section -->
 			<div class="space-y-2">
-				<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('components.productForm.parentCategory') }}</h3>
+				<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('components.productForm.parentCategory') }}</h3>
 				<ZSelectMenuCategory
 					v-model:category="new_category.parent_category"
 					:ignore-codes="[new_category.code]"
-					:placeholder="$t('components.productForm.selectParentCategory')"
+					:placeholder="t('components.productForm.selectParentCategory')"
 					class="sm:w-[50%] w-full"
 				/>
 			</div>
@@ -33,7 +33,7 @@
 		<div class="flex justify-center pt-4">
 			<UButton color="success" size="md" :loading="adding" type="submit">
 				<UIcon :name="ICONS.CHECK_ROUNDED" class="w-4 h-4" />
-				<span class="text-sm">{{ $t('pages.createCategory') }}</span>
+				<span class="text-sm">{{ t('pages.createCategory') }}</span>
 			</UButton>
 		</div>
 	</UForm>
@@ -43,6 +43,7 @@
 import type { FormSubmitEvent } from '#ui/types';
 import type { z } from 'zod';
 import { CreateCategoryValidation } from '~/utils/schema';
+import { ICONS } from '~/utils/icons';
 
 const { t } = useI18n();
 const categorySchema = computed(() => CreateCategoryValidation(t));

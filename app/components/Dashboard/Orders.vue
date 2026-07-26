@@ -8,7 +8,7 @@
 		>
 			<template #header>
 				<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-					<h1 class="text-lg font-bold">{{ $t('nav.orders') }}</h1>
+					<h1 class="text-lg font-bold">{{ t('nav.orders') }}</h1>
 					<UCheckbox v-model="hideCompleted" label="Hide Completed" @update:model-value="onHideCompletedChange" />
 				</div>
 			</template>
@@ -16,7 +16,7 @@
 			<UTable :data="orders" :columns="order_columns" :loading="loading" @select="selectOrder">
 				<template #empty>
 					<div class="flex flex-col items-center justify-center py-6 gap-3">
-						<span class="italic text-sm">{{ $t('pages.noOrdersFound') }}</span>
+						<span class="italic text-sm">{{ t('pages.noOrdersFound') }}</span>
 					</div>
 				</template>
 			</UTable>

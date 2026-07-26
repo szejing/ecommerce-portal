@@ -11,7 +11,7 @@
 		multiple
 		label-key="code"
 		description-key="description"
-		:placeholder="$t('components.selectMenu.selectTaxes')"
+		:placeholder="t('components.selectMenu.selectTaxes')"
 	>
 		<template #default>
 			<div v-if="taxes && taxes.length > 0" class="flex flex-wrap gap-1.5">
@@ -28,13 +28,16 @@
 					/>
 				</div>
 			</div>
-			<span v-else class="text-neutral-400 text-sm">{{ $t('components.selectMenu.selectTaxes') }}</span>
+			<span v-else class="text-neutral-400 text-sm">{{ t('components.selectMenu.selectTaxes') }}</span>
 		</template>
 	</USelectMenu>
 </template>
 
 <script lang="ts" setup>
 import type { Tax } from '~/utils/types/tax';
+import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 const searchTerm = ref('');
 const taxStore = useTaxStore();

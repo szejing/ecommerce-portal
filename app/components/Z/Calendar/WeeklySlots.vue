@@ -96,7 +96,7 @@
 												<div class="flex items-center justify-between gap-2">
 													<span class="font-semibold text-gray-900 dark:text-white">{{ block.appointment.code }}</span>
 													<UBadge :color="block.statusColor" variant="subtle" size="sm">
-														{{ $t('options.' + block.appointment.status.toLowerCase()) }}
+														{{ t('options.' + block.appointment.status.toLowerCase()) }}
 													</UBadge>
 												</div>
 												<div class="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
@@ -113,16 +113,16 @@
 												</p>
 												<p v-if="block.appointment.duration" class="text-xs text-gray-500 flex items-center gap-1">
 													<UIcon name="i-heroicons-clock" class="w-3.5 h-3.5" />
-													{{ $t('pages.durationMinutes', { n: block.appointment.duration }) }}
+													{{ t('pages.durationMinutes', { n: block.appointment.duration }) }}
 												</p>
 											</div>
 											<div class="flex gap-2 pt-1 border-t border-gray-200 dark:border-gray-700">
-												<UButton size="xs" color="primary" variant="soft" :label="$t('components.calendar.view')" @click="$emit('select', block.appointment)" />
+												<UButton size="xs" color="primary" variant="soft" :label="t('components.calendar.view')" @click="$emit('select', block.appointment)" />
 												<UButton
 													size="xs"
 													color="neutral"
 													variant="outline"
-													:label="$t('components.calendar.edit')"
+													:label="t('components.calendar.edit')"
 													@click="$emit('edit', block.appointment)"
 												/>
 											</div>
@@ -187,7 +187,7 @@
 							<div class="flex items-center justify-between gap-2">
 								<p class="font-medium text-sm text-gray-900 dark:text-white truncate">{{ block.appointment.customer_name }}</p>
 								<UBadge :color="block.statusColor" variant="subtle" size="xs" class="shrink-0">
-									{{ $t('options.' + block.appointment.status.toLowerCase()) }}
+									{{ t('options.' + block.appointment.status.toLowerCase()) }}
 								</UBadge>
 							</div>
 							<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1">
@@ -205,7 +205,7 @@
 				</div>
 				<!-- Empty day -->
 				<div v-else class="px-3 py-4 text-center">
-					<p class="text-xs text-gray-400 dark:text-gray-500">{{ $t('pages.noAppointmentsFound') }}</p>
+					<p class="text-xs text-gray-400 dark:text-gray-500">{{ t('pages.noAppointmentsFound') }}</p>
 				</div>
 			</div>
 		</div>
@@ -259,7 +259,7 @@ defineEmits<{
 }>();
 
 const hoveredCode = ref<string | null>(null);
-const { t: $t } = useI18n();
+const { t } = useI18n();
 
 const { totalSlots, totalHeightPx, slotHeightPx } = useCalendarTimeSlots(() => ({
 	startHour: props.startHour,

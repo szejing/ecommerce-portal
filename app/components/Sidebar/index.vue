@@ -11,6 +11,8 @@
 </template>
 
 <script lang="ts" setup>
+import { ICONS } from '~/utils/icons';
+
 const appUiStore = useAppUiStore();
 
 const { forcedShow, showSidebar } = storeToRefs(appUiStore);

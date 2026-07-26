@@ -7,18 +7,18 @@
 						<div class="flex items-center gap-3">
 							<UIcon :name="ICONS.USER_GROUP_ROUNDED" class="text-primary-600 w-8 h-8" />
 							<div>
-								<h2 class="text-xl font-semibold">{{ $t('pages.staffDepartmentDetails') }}</h2>
-								<p class="text-sm text-muted">{{ $t('components.staffDepartmentForm.detailsSectionSubtitle') }}</p>
+								<h2 class="text-xl font-semibold">{{ t('pages.staffDepartmentDetails') }}</h2>
+								<p class="text-sm text-muted">{{ t('components.staffDepartmentForm.detailsSectionSubtitle') }}</p>
 							</div>
 						</div>
 					</template>
 
 					<div class="space-y-6 py-2 px-4">
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-							<UFormField :label="$t('common.name')" name="name" required class="sm:col-span-2">
-								<UInput v-model="formState.name" :placeholder="$t('components.crmUserForm.staffDepartment')" />
+							<UFormField :label="t('common.name')" name="name" required class="sm:col-span-2">
+								<UInput v-model="formState.name" :placeholder="t('components.crmUserForm.staffDepartment')" />
 							</UFormField>
-							<UFormField :label="$t('components.crmUserForm.defaultCommissionRate')" name="default_commission_rate" required>
+							<UFormField :label="t('components.crmUserForm.defaultCommissionRate')" name="default_commission_rate" required>
 								<UInput
 									:model-value="String(formState.default_commission_rate)"
 									type="number"
@@ -28,10 +28,10 @@
 									@update:model-value="(value: string | number) => (formState.default_commission_rate = Number(value || 0))"
 								/>
 							</UFormField>
-							<UFormField :label="$t('common.status')" name="is_active">
+							<UFormField :label="t('common.status')" name="is_active">
 								<div class="flex items-center gap-2 pt-2">
 									<USwitch v-model="formState.is_active" />
-									<span class="text-sm text-muted">{{ formState.is_active ? $t('common.active') : $t('common.inactive') }}</span>
+									<span class="text-sm text-muted">{{ formState.is_active ? t('common.active') : t('common.inactive') }}</span>
 								</div>
 							</UFormField>
 						</div>

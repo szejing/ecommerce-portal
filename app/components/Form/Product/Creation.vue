@@ -3,7 +3,7 @@
 		<!-- Auto-save indicator -->
 		<div v-if="lastSaved" class="text-sm text-neutral-600 text-right mb-4 px-2">
 			<UIcon :name="ICONS.CHECK_ROUNDED" class="inline-block w-4 h-4 text-green-500" />
-			{{ $t('components.productForm.draftSavedAt', { time: lastSaved }) }}
+			{{ t('components.productForm.draftSavedAt', { time: lastSaved }) }}
 		</div>
 
 		<!-- Three Column Layout: Sidebar + Form + Sticky Review (laptop) -->
@@ -105,6 +105,7 @@ import type { TagInput, Tag } from '~/utils/types/tag';
 import type { BrandInput, Brand } from '~/utils/types/brand';
 import type { Image } from '~/utils/types/image';
 import { CreateProductValidation } from '~/utils/schema';
+import { ICONS } from '~/utils/icons';
 import { ZModalConfirmation, ZModalLoading } from '#components';
 import type { FormErrorEvent } from '#ui/types';
 import type { ProductVariationInput } from '~/utils/types/product-variation';

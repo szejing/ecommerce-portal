@@ -2,8 +2,8 @@
 	<UForm :schema="tagSchema" :state="new_tag" class="space-y-4" @submit="onSubmit">
 		<!-- *********************** General Info *********************** -->
 		<div class="space-y-2">
-			<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t('components.productForm.generalInformation') }}</h3>
-			<p class="text-sm text-neutral-400">{{ $t('components.productForm.tagGeneralDesc') }}</p>
+			<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('components.productForm.generalInformation') }}</h3>
+			<p class="text-sm text-neutral-400">{{ t('components.productForm.tagGeneralDesc') }}</p>
 			<ZInputProductTagGeneralInfo v-model:value="new_tag.value" />
 		</div>
 
@@ -11,7 +11,7 @@
 		<div class="flex justify-center pt-4">
 			<UButton color="success" size="md" :loading="adding" type="submit">
 				<UIcon :name="ICONS.CHECK_ROUNDED" class="w-4 h-4" />
-				<span class="text-sm">{{ $t('pages.createTag') }}</span>
+				<span class="text-sm">{{ t('pages.createTag') }}</span>
 			</UButton>
 		</div>
 	</UForm>
@@ -21,6 +21,7 @@
 import type { FormSubmitEvent } from '#ui/types';
 import type { z } from 'zod';
 import { CreateTagValidation } from '~/utils/schema';
+import { ICONS } from '~/utils/icons';
 
 const { t } = useI18n();
 const tagSchema = computed(() => CreateTagValidation(t));

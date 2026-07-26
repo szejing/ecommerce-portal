@@ -4,7 +4,7 @@
 		:items="paymentTypeItems"
 		size="md"
 		value-key="code"
-		:placeholder="$t('components.selectMenu.selectPaymentType')"
+		:placeholder="t('components.selectMenu.selectPaymentType')"
 		:search-input="{
 			placeholder: 'Search payment type…',
 			icon: 'i-lucide-search',
@@ -12,12 +12,13 @@
 	>
 		<template #default>
 			<span v-if="paymentTypeCode" class="truncate">{{ paymentTypes.find((type: any) => type.code === paymentTypeCode)?.code?.toUpperCase() }}</span>
-			<span v-else class="text-neutral-400">{{ $t('components.selectMenu.selectPaymentType') }}</span>
+			<span v-else class="text-neutral-400">{{ t('components.selectMenu.selectPaymentType') }}</span>
 		</template>
 	</USelectMenu>
 </template>
 
 <script lang="ts" setup>
+const { t } = useI18n();
 const paymentTypeStore = usePaymentTypeStore();
 const { payment_type_groups } = storeToRefs(paymentTypeStore);
 

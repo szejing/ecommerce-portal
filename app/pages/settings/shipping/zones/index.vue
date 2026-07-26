@@ -1,7 +1,7 @@
 <template>
-	<ZPagePanel id="settings-shipping-zones-listing" :title="$t('pages.shippingZonesListingTitle')" back-to="/settings/shipping">
+	<ZPagePanel id="settings-shipping-zones-listing" :title="t('pages.shippingZonesListingTitle')" back-to="/settings/shipping">
 		<template #navbar-right>
-			<ZCreateButton to="/settings/shipping/zones/create" :label="$t('common.create')" />
+			<ZCreateButton to="/settings/shipping/zones/create" :label="t('common.create')" />
 		</template>
 		<template #toolbar>
 			<ZSectionFilterShippingZones />
@@ -33,8 +33,8 @@
 				<template #empty>
 					<div class="flex flex-col items-center justify-center py-12 gap-3">
 						<UIcon :name="ICONS.ADDITIONAL" class="w-12 h-12 text-gray-400" />
-						<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noShippingZonesFound') }}</p>
-						<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+						<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noShippingZonesFound') }}</p>
+						<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 					</div>
 				</template>
 			</UTable>

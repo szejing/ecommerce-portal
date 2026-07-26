@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="courier-create" :title="$t('pages.createCourierTitle')" back-to="/settings/shipping/couriers" grow>
+	<ZPagePanel id="courier-create" :title="t('pages.createCourierTitle')" back-to="/settings/shipping/couriers" grow>
 		<div class="container w-full mx-auto">
 			<FormCourierCreation ref="formRef" @saved="onSaved" />
 		</div>
@@ -8,19 +8,19 @@
 			<div class="w-full backdrop-blur-sm border-t border-neutral-200 dark:border-neutral-800 shadow-md z-50">
 				<div class="mx-auto px-4 sm:px-6 py-4">
 					<div class="hidden md:flex justify-end items-center gap-3">
-						<UButton color="neutral" variant="outline" size="lg" @click="goBack">{{ $t('common.cancel') }}</UButton>
+						<UButton color="neutral" variant="outline" size="lg" @click="goBack">{{ t('common.cancel') }}</UButton>
 						<UButton color="success" variant="solid" size="lg" :loading="adding" @click="onSubmit">
 							<UIcon :name="ICONS.CHECK_ROUNDED" />
-							{{ $t('pages.createCourierButton') }}
+							{{ t('pages.createCourierButton') }}
 						</UButton>
 					</div>
 					<div class="md:hidden flex flex-col gap-2">
 						<UButton color="success" size="md" class="w-full" :loading="adding" @click="onSubmit">
 							<UIcon :name="ICONS.CHECK_ROUNDED" class="w-4 h-4" />
-							<span class="text-sm">{{ $t('pages.createCourierButton') }}</span>
+							<span class="text-sm">{{ t('pages.createCourierButton') }}</span>
 						</UButton>
 						<UButton color="neutral" variant="outline" size="sm" class="w-full" @click="goBack">
-							<span class="text-xs">{{ $t('common.cancel') }}</span>
+							<span class="text-xs">{{ t('common.cancel') }}</span>
 						</UButton>
 					</div>
 				</div>

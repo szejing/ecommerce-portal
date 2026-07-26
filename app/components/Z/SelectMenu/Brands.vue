@@ -13,7 +13,7 @@
 		multiple
 		label-key="code"
 		description-key="description"
-		:placeholder="$t('components.selectMenu.selectBrands')"
+		:placeholder="t('components.selectMenu.selectBrands')"
 		variant="formTrigger"
 		:loading="brandStore.loading"
 		@update:open="onOpen"
@@ -33,11 +33,11 @@
 					/>
 				</div>
 			</div>
-			<span v-else class="text-neutral-400 text-sm">{{ $t('components.selectMenu.selectBrands') }}</span>
+			<span v-else class="text-neutral-400 text-sm">{{ t('components.selectMenu.selectBrands') }}</span>
 		</template>
 
 		<template #empty>
-			<UButton color="success" variant="ghost" @click="createBrand">{{ $t('components.selectMenu.createLabel', { term: searchTerm }) }}</UButton>
+			<UButton color="success" variant="ghost" @click="createBrand">{{ t('components.selectMenu.createLabel', { term: searchTerm }) }}</UButton>
 		</template>
 	</USelectMenu>
 </template>
@@ -45,6 +45,9 @@
 <script lang="ts" setup>
 import { useInfiniteScroll } from '@vueuse/core';
 import type { Brand } from '~/utils/types/brand';
+import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 const searchTerm = ref('');
 const brandStore = useBrandStore();

@@ -1,6 +1,6 @@
 <!-- eslint-disable indent -->
 <template>
-	<ZPagePanel id="appointments" :title="$t('nav.appointments')">
+	<ZPagePanel id="appointments" :title="t('nav.appointments')">
 		<template #toolbar>
 			<ZSectionFilterAppointments />
 		</template>
@@ -27,9 +27,9 @@
 						<UCard>
 							<div class="flex items-center justify-between mb-4">
 								<div>
-									<h3 class="font-semibold">{{ $t('pages.upcomingAppointments') }}</h3>
+									<h3 class="font-semibold">{{ t('pages.upcomingAppointments') }}</h3>
 									<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-										{{ $t('pages.appointmentsCount', displayedAppointments.length) }}
+										{{ t('pages.appointmentsCount', displayedAppointments.length) }}
 									</p>
 								</div>
 							</div>
@@ -39,9 +39,9 @@
 									<div class="flex flex-col items-center justify-center py-12 gap-3">
 										<UIcon name="i-heroicons-calendar-days" class="w-16 h-16 text-gray-400" />
 										<div class="text-center">
-											<p class="font-medium text-gray-900 dark:text-white">{{ $t('pages.noAppointmentsFound') }}</p>
+											<p class="font-medium text-gray-900 dark:text-white">{{ t('pages.noAppointmentsFound') }}</p>
 											<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-												{{ filter.query ? $t('pages.tryAdjustingFilters') : $t('pages.scheduleFirstAppointment') }}
+												{{ filter.query ? t('pages.tryAdjustingFilters') : t('pages.scheduleFirstAppointment') }}
 											</p>
 										</div>
 									</div>
@@ -66,12 +66,12 @@
 					<div :class="selectedAppointment ? 'lg:col-span-2' : 'lg:col-span-3'">
 						<UCard>
 							<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
-								<h3 class="font-semibold hidden sm:block">{{ $t('pages.dailyView') }}</h3>
+								<h3 class="font-semibold hidden sm:block">{{ t('pages.dailyView') }}</h3>
 								<div class="flex items-center gap-2 justify-between sm:justify-end w-full sm:w-auto">
 									<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-left" @click="goPrevDay" />
 									<span class="text-center font-medium text-sm sm:text-base min-w-0 truncate">{{ format(calendarFocusDate, 'EEE, d MMM yyyy') }}</span>
 									<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-right" @click="goNextDay" />
-									<UButton color="primary" variant="soft" size="sm" :label="$t('pages.today')" class="hidden sm:flex" @click="goToTodayMonth" />
+									<UButton color="primary" variant="soft" size="sm" :label="t('pages.today')" class="hidden sm:flex" @click="goToTodayMonth" />
 								</div>
 							</div>
 							<ZLoading v-if="appointmentStore.loading" />
@@ -125,7 +125,7 @@
 					<div :class="selectedAppointment ? 'lg:col-span-2' : 'lg:col-span-3'">
 						<UCard>
 							<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
-								<h3 class="font-semibold hidden sm:block">{{ $t('pages.weeklyView') }}</h3>
+								<h3 class="font-semibold hidden sm:block">{{ t('pages.weeklyView') }}</h3>
 								<div class="flex items-center gap-2 justify-between sm:justify-end w-full sm:w-auto">
 									<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-left" @click="goPrevWeek" />
 									<div class="text-center min-w-0">
@@ -133,11 +133,11 @@
 											{{ format(weekStartDate, 'd MMM') }} – {{ format(add(weekStartDate, { days: 6 }), 'd MMM yyyy') }}
 										</span>
 										<span class="text-gray-500 dark:text-gray-400 font-normal text-xs sm:text-sm ml-1 hidden sm:inline">{{
-											$t('pages.weekNumber', { n: getISOWeek(weekStartDate) })
+											t('pages.weekNumber', { n: getISOWeek(weekStartDate) })
 										}}</span>
 									</div>
 									<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-right" @click="goNextWeek" />
-									<UButton color="primary" variant="soft" size="sm" :label="$t('pages.today')" class="hidden sm:flex" @click="goToTodayMonth" />
+									<UButton color="primary" variant="soft" size="sm" :label="t('pages.today')" class="hidden sm:flex" @click="goToTodayMonth" />
 								</div>
 							</div>
 							<ZLoading v-if="appointmentStore.loading" />
@@ -172,12 +172,12 @@
 					<div :class="selectedAppointment ? 'lg:col-span-2' : 'lg:col-span-3'">
 						<UCard>
 							<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
-								<h3 class="font-semibold hidden sm:block">{{ $t('pages.monthlyView') }}</h3>
+								<h3 class="font-semibold hidden sm:block">{{ t('pages.monthlyView') }}</h3>
 								<div class="flex items-center gap-2 justify-between sm:justify-end w-full sm:w-auto">
 									<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-left" @click="goPrevMonth" />
 									<span class="text-center font-medium text-sm sm:text-base">{{ format(monthDate, 'MMMM yyyy') }}</span>
 									<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-right" @click="goNextMonth" />
-									<UButton color="primary" variant="soft" size="sm" :label="$t('pages.today')" class="hidden sm:flex" @click="goToTodayMonth" />
+									<UButton color="primary" variant="soft" size="sm" :label="t('pages.today')" class="hidden sm:flex" @click="goToTodayMonth" />
 								</div>
 							</div>
 							<ZLoading v-if="appointmentStore.loading" />

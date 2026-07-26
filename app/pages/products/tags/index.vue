@@ -1,7 +1,7 @@
 <template>
-	<ZPagePanel id="products-tags" :title="$t('nav.tags')" back-to="/products">
+	<ZPagePanel id="products-tags" :title="t('nav.tags')" back-to="/products">
 		<template #navbar-right>
-			<ZCreateButton to="/products/tags/create" :label="$t('common.addTag')" />
+			<ZCreateButton to="/products/tags/create" :label="t('common.addTag')" />
 		</template>
 		<template #toolbar>
 			<ZSectionFilterTags />
@@ -36,8 +36,8 @@
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.ADDITIONAL" class="w-12 h-12 text-gray-400" />
-							<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noTagsFound') }}</p>
-							<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noTagsFound') }}</p>
+							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
 				</UTable>
@@ -59,6 +59,7 @@ import type { Tag } from '~/utils/types/tag';
 import { options_page_size } from '~/utils/options';
 import type { TableRow } from '@nuxt/ui';
 import { failedNotification } from '~/stores/AppUi/AppUi';
+import { ICONS } from '~/utils/icons';
 
 const overlay = useOverlay();
 const tagsStore = useProductTagStore();

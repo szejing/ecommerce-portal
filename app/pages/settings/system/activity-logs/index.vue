@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="settings-system-activity-logs" :title="$t('nav.activityLogs')" back-to="/settings/system">
+	<ZPagePanel id="settings-system-activity-logs" :title="t('nav.activityLogs')" back-to="/settings/system">
 		<template #toolbar>
 			<ZSectionFilterActivityLogs />
 		</template>
@@ -7,7 +7,7 @@
 		<div class="space-y-6">
 			<div class="flex flex-col sm:flex-row sm:items-center justify-end sm:justify-between gap-4">
 				<p v-if="!initialize && !loading" class="text-sm text-muted">
-					{{ $t('pages.showingActivityLogs', { total: total_activity_logs }) }}
+					{{ t('pages.showingActivityLogs', { total: total_activity_logs }) }}
 				</p>
 				<ZTableToolbar
 					v-model="filter.page_size"
@@ -36,8 +36,8 @@
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.LIST" class="w-12 h-12 text-gray-400" />
-							<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noActivityLogsFound') }}</p>
-							<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noActivityLogsFound') }}</p>
+							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
 				</UTable>
@@ -50,7 +50,7 @@
 				<div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
 					<div class="text-sm text-gray-700 dark:text-gray-300">
 						{{
-							$t('pages.showingToOf', {
+							t('pages.showingToOf', {
 								from: (filter.current_page - 1) * filter.page_size + 1,
 								to: Math.min(filter.current_page * filter.page_size, total_activity_logs),
 								total: total_activity_logs,
@@ -76,6 +76,7 @@
 import { options_page_size } from '~/utils/options';
 import { ACTIVITY_LOG_COLUMN_LABELS, getActivityLogColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
+import { ICONS } from '~/utils/icons';
 
 const { t } = useI18n();
 const activityLogStore = useActivityLogStore();

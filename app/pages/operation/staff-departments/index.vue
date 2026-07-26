@@ -1,7 +1,7 @@
 <template>
-	<ZPagePanel id="staff-departments" :title="$t('nav.staffDepartments')" back-to="/operation">
+	<ZPagePanel id="staff-departments" :title="t('nav.staffDepartments')" back-to="/operation">
 		<template #navbar-right>
-			<ZCreateButton to="/operation/staff-departments/create" :label="$t('common.addStaffDepartment')" />
+			<ZCreateButton to="/operation/staff-departments/create" :label="t('common.addStaffDepartment')" />
 		</template>
 		<template #toolbar>
 			<ZSectionFilterStaffDepartments />
@@ -33,8 +33,8 @@
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.USER_GROUP_ROUNDED" class="w-12 h-12 text-gray-400" />
-							<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noStaffDepartmentsFound') }}</p>
-							<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noStaffDepartmentsFound') }}</p>
+							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
 				</UTable>

@@ -6,7 +6,7 @@
 				<ZNavigationCollapsible
 					:id="groupIndex * 1000 + linkIndex"
 					:navigate="{
-						title: $t(link.label),
+						title: t(link.label),
 						icon: link.icon,
 						to: link.to,
 						isCollapsed: false,
@@ -34,7 +34,7 @@
 			<NuxtLink v-else :to="link.to" class="active-link" exact-active-class="exact-active-link">
 				<div class="flex items-center gap-4">
 					<UIcon v-if="link.icon" :name="link.icon" class="w-5 h-5" />
-					{{ $t(link.label) }}
+					{{ t(link.label) }}
 				</div>
 			</NuxtLink>
 		</div>
@@ -42,6 +42,7 @@
 </template>
 
 <script lang="ts" setup>
+const { t } = useI18n();
 const appUiStore = useAppUiStore();
 
 const { navigations } = storeToRefs(appUiStore);

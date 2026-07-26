@@ -25,7 +25,7 @@
 				<div class="flex-1 min-w-0">
 					<p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ item.appointment.customer_name }}</p>
 					<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
-						{{ item.appointment.appt_desc || $t('pages.noDescription') }}
+						{{ item.appointment.appt_desc || t('pages.noDescription') }}
 					</p>
 				</div>
 				<!-- Status badge -->
@@ -36,7 +36,7 @@
 						size="sm"
 						class="border border-current/20"
 					>
-						{{ $t('options.' + item.appointment.status.toLowerCase()) }}
+						{{ t('options.' + item.appointment.status.toLowerCase()) }}
 					</UBadge>
 				</div>
 			</button>
@@ -48,7 +48,7 @@
 			class="flex flex-col items-center justify-center py-12 gap-3 text-center px-4"
 		>
 			<UIcon name="i-heroicons-calendar-days" class="w-10 h-10 text-gray-300 dark:text-gray-600" />
-			<p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ $t('pages.noAppointmentsFound') }}</p>
+			<p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('pages.noAppointmentsFound') }}</p>
 		</div>
 	</div>
 </template>
@@ -73,7 +73,7 @@ defineEmits<{
 	select: [appointment: Appointment];
 }>();
 
-const { t: $t } = useI18n();
+const { t } = useI18n();
 
 const dateHeader = computed(() => format(props.date, 'MMM d, yyyy'));
 const dayOfWeek = computed(() => format(props.date, 'EEEE'));
@@ -81,9 +81,9 @@ const dayOfWeek = computed(() => format(props.date, 'EEEE'));
 function formatDurationMinutes(minutes: number): string {
 	if (minutes >= 60 && minutes % 60 === 0) {
 		const hours = minutes / 60;
-		return hours === 1 ? $t('pages.durationOneHour') : $t('pages.durationHours', { n: hours });
+		return hours === 1 ? t('pages.durationOneHour') : t('pages.durationHours', { n: hours });
 	}
-	return $t('pages.durationMinutesShort', { n: minutes });
+	return t('pages.durationMinutesShort', { n: minutes });
 }
 
 const rows = computed(() => {

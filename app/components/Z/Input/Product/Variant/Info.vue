@@ -2,10 +2,10 @@
 	<UCard :ui="cardUi">
 		<template #header>
 			<div class="w-full flex-between items-center">
-				<h2>{{ $t('components.zInput.generalInfo') }}</h2>
+				<h2>{{ t('components.zInput.generalInfo') }}</h2>
 				<div class="w-[50%] flex-jend items-center gap-4">
-					<!-- <UCheckbox v-model="variantDetail.manage_inventory" name="manageInventory" :label="$t('components.zInput.manageInventory')" color="success" /> -->
-					<UCheckbox v-model="variantDetail.allow_backorder" name="allowBackorder" :label="$t('components.zInput.allowBackorder')" color="success" />
+					<!-- <UCheckbox v-model="variantDetail.manage_inventory" name="manageInventory" :label="t('components.zInput.manageInventory')" color="success" /> -->
+					<UCheckbox v-model="variantDetail.allow_backorder" name="allowBackorder" :label="t('components.zInput.allowBackorder')" color="success" />
 
 					<!-- <UCheckbox v-model="is_discountable" name="isDiscountable" label="Discountable" color="success" />
 					<UCheckbox v-model="is_giftcard" name="isGiftCard" label="Giftcard" color="success" /> -->
@@ -27,6 +27,9 @@
 
 <script lang="ts" setup>
 import type { ProductVariant } from '~/utils/types/product-variant';
+import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 const props = defineProps({
 	details: {

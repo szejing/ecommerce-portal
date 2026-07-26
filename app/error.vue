@@ -30,7 +30,7 @@
 					</div>
 
 					<div class="space-y-1">
-						<p class="text-xs font-medium text-muted uppercase tracking-wider">{{ $t('error.pageTitle') }} · {{ statusCode }}</p>
+						<p class="text-xs font-medium text-muted uppercase tracking-wider">{{ t('error.pageTitle') }} · {{ statusCode }}</p>
 						<h1 class="text-xl sm:text-2xl font-semibold text-default">
 							{{ title }}
 						</h1>
@@ -41,10 +41,10 @@
 
 					<div class="flex flex-col-reverse sm:flex-row gap-3 justify-center pt-2">
 						<UButton v-if="!isNotFound" color="neutral" variant="soft" size="lg" class="min-w-32" @click="tryAgain">
-							{{ $t('error.tryAgain') }}
+							{{ t('error.tryAgain') }}
 						</UButton>
 						<UButton color="primary" size="lg" class="min-w-32 button button-primary-solid" @click="goHome">
-							{{ $t('error.goBackHome') }}
+							{{ t('error.goBackHome') }}
 						</UButton>
 					</div>
 				</UCard>

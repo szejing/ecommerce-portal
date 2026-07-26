@@ -4,7 +4,7 @@
 			<div class="card-header-sidebar">
 				<h3 class="sidebar-title">
 					<UIcon name="i-heroicons-clipboard-document-check" class="w-5 h-5" />
-					{{ $t('components.orderDetail.orderStatus') }}
+					{{ t('components.orderDetail.orderStatus') }}
 				</h3>
 				<UBadge v-if="currentStatus" :color="statusBadgeColor" variant="subtle" size="sm" class="capitalize">
 					{{ statusBadgeLabel }}
@@ -15,7 +15,7 @@
 		<div class="status-section">
 			<ZSelectMenuOrderStatus v-model:status="status" />
 			<UButton block color="primary" :icon="ICONS.SAVE" :disabled="status === currentStatus || updating" :loading="updating" @click="emit('submit')">
-				{{ $t('components.orderDetail.updateOrderStatus') }}
+				{{ t('components.orderDetail.updateOrderStatus') }}
 			</UButton>
 		</div>
 	</UCard>
@@ -38,7 +38,7 @@ const emit = defineEmits<{
 const status = defineModel<OrderStatus>('status', { required: true });
 const { t } = useI18n();
 
-const statusBadgeColor = computed(() => (props.currentStatus ? getOrderStatusColor(props.currentStatus) ?? 'neutral' : 'neutral'));
+const statusBadgeColor = computed(() => (props.currentStatus ? (getOrderStatusColor(props.currentStatus) ?? 'neutral') : 'neutral'));
 const statusBadgeLabel = computed(() => {
 	if (!props.currentStatus) return '';
 	return getOrderStatusOption(t, props.currentStatus)?.label ?? props.currentStatus;

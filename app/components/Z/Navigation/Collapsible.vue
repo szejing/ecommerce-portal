@@ -17,6 +17,7 @@
 
 <script setup lang="ts">
 import type { Navigation } from '~/utils/types/navigation';
+import { ICONS } from '~/utils/icons';
 
 interface Item {
 	icon: string;

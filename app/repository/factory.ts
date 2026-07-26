@@ -35,20 +35,29 @@ class HttpFactory {
 		fetchOptions,
 		body,
 		query,
-		headers = {
-			'Content-Type': 'application/json',
-		},
+		headers,
 	}: IHttpFactory): Promise<T> {
 		try {
+			// FormData must not get an explicit Content-Type — the runtime sets
+			// multipart/form-data with the correct boundary. A forced
+			// application/json breaks Nitro readFormData on proxy routes.
+			const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+			const mergedHeaders: Record<string, string> = {
+				...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+				...(headers ?? {}),
+				...((fetchOptions?.headers as Record<string, string> | undefined) ?? {}),
+			};
+			if (isFormData) {
+				delete mergedHeaders['Content-Type'];
+				delete mergedHeaders['content-type'];
+			}
+
 			return await $fetch<T>(url, {
 				...fetchOptions,
 				method,
 				body,
 				query,
-				headers: {
-					...headers,
-					...(fetchOptions?.headers ?? {}),
-				},
+				headers: mergedHeaders,
 			});
 		} catch (error: any) {
 			// if (error instanceof 401) {

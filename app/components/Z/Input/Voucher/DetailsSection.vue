@@ -5,10 +5,10 @@
 				<div class="flex-1">
 					<div class="flex items-center gap-2">
 						<UIcon :name="ICONS.ADDITIONAL" class="text-primary-500 w-6 h-6" />
-						<h2 class="text-xl font-semibold">{{ $t('pages.voucherDetails') }}</h2>
+						<h2 class="text-xl font-semibold">{{ t('pages.voucherDetails') }}</h2>
 						<span class="text-red-500 text-sm">*</span>
 					</div>
-					<p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ $t('components.voucherForm.sectionSubtitle') }}</p>
+					<p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{{ t('components.voucherForm.sectionSubtitle') }}</p>
 				</div>
 			</div>
 		</template>
@@ -20,8 +20,8 @@
 				</UFormField>
 			</div>
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-				<UFormField :label="$t('form.code')" :name="fieldName('code')" :required="!codeDisabled">
-					<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ $t('components.voucherForm.codeHint') }}</p>
+				<UFormField :label="t('form.code')" :name="fieldName('code')" :required="!codeDisabled">
+					<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ t('components.voucherForm.codeHint') }}</p>
 					<UInput
 						class="uppercase"
 						:model-value="state.code"
@@ -32,8 +32,8 @@
 					/>
 				</UFormField>
 
-				<UFormField :label="$t('form.description')" :name="fieldName('description')">
-					<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ $t('components.voucherForm.descriptionHint') }}</p>
+				<UFormField :label="t('form.description')" :name="fieldName('description')">
+					<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ t('components.voucherForm.descriptionHint') }}</p>
 					<UInput v-model="state.description" />
 				</UFormField>
 			</div>
@@ -43,17 +43,17 @@
 					<div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
 						<div class="flex min-w-0 items-center gap-2">
 							<UIcon :name="ICONS.CALENDAR" class="text-primary-500 w-5 h-5 shrink-0" />
-							<h3 class="text-base font-semibold text-highlighted">{{ $t('components.voucherForm.validityPeriod') }}</h3>
+							<h3 class="text-base font-semibold text-highlighted">{{ t('components.voucherForm.validityPeriod') }}</h3>
 						</div>
 						<p class="text-xs text-neutral-500 dark:text-neutral-400 sm:max-w-[min(100%,20rem)] sm:text-right">
-							{{ $t('components.discountForm.validityPeriodUnsetHint') }}
+							{{ t('components.discountForm.validityPeriodUnsetHint') }}
 						</p>
 					</div>
 					<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
 						<UFormField
 							class="min-w-0 w-full sm:flex-1"
 							:name="fieldName('starts_at')"
-							:label="$t('components.discountForm.validityStartsAt')"
+							:label="t('components.discountForm.validityStartsAt')"
 							:ui="{ label: 'sr-only' }"
 						>
 							<UPopover v-model:open="startsAtPopoverOpen" :content="{ align: 'start' }" :modal="true">
@@ -65,7 +65,7 @@
 									<div class="p-2 space-y-2">
 										<ZDatePicker v-model="startsAtAsDate" :max-date="startsAtMaxDate" @close="startsAtPopoverOpen = false" />
 										<div v-if="state.starts_at" class="flex justify-end border-t border-default pt-2">
-											<UButton :label="$t('components.filter.clear')" color="neutral" variant="soft" size="sm" @click="clearStartsAt" />
+											<UButton :label="t('components.filter.clear')" color="neutral" variant="soft" size="sm" @click="clearStartsAt" />
 										</div>
 									</div>
 								</template>
@@ -78,7 +78,7 @@
 						<UFormField
 							class="min-w-0 w-full sm:flex-1"
 							:name="fieldName('ends_at')"
-							:label="$t('components.discountForm.validityEndsAt')"
+							:label="t('components.discountForm.validityEndsAt')"
 							:ui="{ label: 'sr-only' }"
 						>
 							<UPopover v-model:open="endsAtPopoverOpen" :content="{ align: 'start' }" :modal="true">
@@ -90,7 +90,7 @@
 									<div class="p-2 space-y-2">
 										<ZDatePicker v-model="endsAtAsDate" :min-date="endsAtMinDate" @close="endsAtPopoverOpen = false" />
 										<div v-if="state.ends_at" class="flex justify-end border-t border-default pt-2">
-											<UButton :label="$t('components.filter.clear')" color="neutral" variant="soft" size="sm" @click="clearEndsAt" />
+											<UButton :label="t('components.filter.clear')" color="neutral" variant="soft" size="sm" @click="clearEndsAt" />
 										</div>
 									</div>
 								</template>

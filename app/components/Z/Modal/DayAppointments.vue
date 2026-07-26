@@ -34,14 +34,14 @@
 										size="xs"
 										class="shrink-0"
 									>
-										{{ $t('options.' + appointment.status.toLowerCase()) }}
+										{{ t('options.' + appointment.status.toLowerCase()) }}
 									</UBadge>
 								</div>
 								<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1">
 									<UIcon name="i-heroicons-clock" class="w-3 h-3 shrink-0" />
 									{{ formatTime(appointment.start_date_time) }}
 									<span v-if="appointment.duration" class="text-gray-400 dark:text-gray-500">
-										· {{ $t('pages.durationMinutes', { n: appointment.duration }) }}
+										· {{ t('pages.durationMinutes', { n: appointment.duration }) }}
 									</span>
 								</p>
 								<p v-if="appointment.appt_desc" class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
@@ -53,7 +53,7 @@
 					<div v-else class="px-3 py-8 text-center">
 						<UIcon name="i-heroicons-calendar-days" class="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
 						<p class="text-xs text-gray-400 dark:text-gray-500">
-							{{ $t('pages.noAppointmentsFound') }}
+							{{ t('pages.noAppointmentsFound') }}
 						</p>
 					</div>
 				</div>
@@ -100,7 +100,7 @@ const onOpenChange = (value: boolean) => {
 	if (!value) emit('close', undefined);
 };
 
-const { t: $t } = useI18n();
+const { t } = useI18n();
 
 const selectedAppointment = ref<Appointment | null>(null);
 

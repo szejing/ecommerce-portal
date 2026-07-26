@@ -3,14 +3,17 @@
 		variant="ghost"
 		color="neutral"
 		:icon="ICONS.ARROW_LEFT"
-		:label="labeled ? $t('components.backButton.backToPreviousPage') : undefined"
-		:aria-label="$t('components.backButton.backToPreviousPage')"
+		:label="labeled ? t('components.backButton.backToPreviousPage') : undefined"
+		:aria-label="t('components.backButton.backToPreviousPage')"
 		@click="goBack"
 		class="px-0"
 	/>
 </template>
 
 <script lang="ts" setup>
+import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 const router = useRouter();
 
 const props = withDefaults(

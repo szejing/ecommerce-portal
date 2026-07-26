@@ -1,14 +1,14 @@
 <template>
 	<div class="flex items-center gap-3 justify-between sm:justify-end">
 		<div class="flex items-center gap-2">
-			<span class="text-sm text-gray-600 dark:text-gray-400">{{ $t('common.show') }}</span>
+			<span class="text-sm text-gray-600 dark:text-gray-400">{{ t('common.show') }}</span>
 			<USelect :model-value="modelValue" :items="pageSizeOptions" size="sm" class="w-20" @update:model-value="$emit('update:modelValue', $event)" />
-			<span class="text-sm text-gray-600 dark:text-gray-400">{{ $t('common.entries') }}</span>
+			<span class="text-sm text-gray-600 dark:text-gray-400">{{ t('common.entries') }}</span>
 		</div>
 
 		<UButton v-if="exportEnabled" variant="outline" :disabled="exporting" :loading="exporting" size="sm" @click="$emit('export')">
 			<UIcon :name="ICONS.EXCEL" class="w-4 h-4" />
-			{{ $t('common.export') }}
+			{{ t('common.export') }}
 		</UButton>
 
 		<USelectMenu
@@ -21,13 +21,15 @@
 			:ui="{ content: 'w-56 max-h-60 overflow-y-auto' }"
 		>
 			<UButton icon="i-heroicons-view-columns" color="neutral" variant="ghost" size="xs">
-				{{ $t('components.selectMenu.showColumns') }}
+				{{ t('components.selectMenu.showColumns') }}
 			</UButton>
 		</USelectMenu>
 	</div>
 </template>
 
 <script lang="ts" setup>
+import { ICONS } from '~/utils/icons';
+const { t } = useI18n();
 type ColumnOption = {
 	key: string;
 	label: string;

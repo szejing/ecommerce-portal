@@ -33,11 +33,11 @@
 
 		<template #footer>
 			<div class="flex justify-between gap-4 w-full">
-				<UButton color="error" variant="ghost" @click="onDelete">{{ $t('components.zInput.delete') }}</UButton>
+				<UButton color="error" variant="ghost" @click="onDelete">{{ t('components.zInput.delete') }}</UButton>
 
 				<div class="flex-jend gap-4">
-					<UButton color="neutral" variant="soft" @click="onCancel">{{ $t('common.cancel') }}</UButton>
-					<UButton color="primary" variant="solid" @click="onUpdate">{{ $t('modal.confirm') }}</UButton>
+					<UButton color="neutral" variant="soft" @click="onCancel">{{ t('common.cancel') }}</UButton>
+					<UButton color="primary" variant="solid" @click="onUpdate">{{ t('modal.confirm') }}</UButton>
 				</div>
 			</div>
 		</template>
@@ -48,6 +48,8 @@
 import type { ProductCreate } from '~/utils/types/form/product-creation';
 import type { PriceInput } from '~/utils/types/price';
 import type { Product, ProductVariantInput } from '~/utils/types/product';
+
+const { t } = useI18n();
 
 const props = defineProps({
 	product: {

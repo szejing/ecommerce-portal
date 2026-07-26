@@ -82,7 +82,7 @@ const selectRange = (range: { days?: number; months?: number; years?: number }) 
 						{{ df.format(selected.start) }}
 					</template>
 				</template>
-				<template v-else> {{ $t('pages.dashboard.pickADate') }} </template>
+				<template v-else> {{ t('pages.dashboard.pickADate') }} </template>
 			</span>
 
 			<template #trailing>

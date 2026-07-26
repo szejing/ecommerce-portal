@@ -6,18 +6,18 @@
 					<div class="flex sm:hidden w-full">
 						<NuxtImg class="my-2 mx-auto w-full cursor-pointer rounded-sm" src="/logo/logo.png" alt="logo" />
 					</div>
-					<h1 class="text-center">{{ $t('auth.resetPasswordTitle') }}</h1>
-					<p class="text-center text-sm text-muted mt-1">{{ $t('auth.resetPasswordDesc') }}</p>
+					<h1 class="text-center">{{ t('auth.resetPasswordTitle') }}</h1>
+					<p class="text-center text-sm text-muted mt-1">{{ t('auth.resetPasswordDesc') }}</p>
 				</div>
 			</template>
 
 			<div class="flex flex-col gap-2">
 				<div class="space-y-2">
-					<UFormField :label="$t('auth.newPassword')" name="password" required>
+					<UFormField :label="t('auth.newPassword')" name="password" required>
 						<UInput
 							id="password"
 							v-model="state.password"
-							:placeholder="$t('auth.password')"
+							:placeholder="t('auth.password')"
 							:color="passwordStrengthColor"
 							:type="state.showPassword ? 'text' : 'password'"
 							:aria-invalid="passwordStrengthScore < 4"
@@ -31,7 +31,7 @@
 									variant="link"
 									size="sm"
 									:icon="state.showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-									:aria-label="state.showPassword ? $t('common.hidePassword') : $t('common.showPassword')"
+									:aria-label="state.showPassword ? t('common.hidePassword') : t('common.showPassword')"
 									:aria-pressed="state.showPassword"
 									aria-controls="password"
 									@click="state.showPassword = !state.showPassword"
@@ -40,8 +40,8 @@
 						</UInput>
 					</UFormField>
 					<UProgress :color="passwordStrengthColor" :indicator="passwordStrengthText" :model-value="passwordStrengthScore" :max="4" size="sm" />
-					<p id="password-strength" class="text-sm font-medium">{{ passwordStrengthText }}. {{ $t('auth.mustContain') }}</p>
-					<ul class="space-y-1" :aria-label="$t('components.changePassword.passwordRequirementsAria')">
+					<p id="password-strength" class="text-sm font-medium">{{ passwordStrengthText }}. {{ t('auth.mustContain') }}</p>
+					<ul class="space-y-1" :aria-label="t('components.changePassword.passwordRequirementsAria')">
 						<li v-for="(req, index) in passwordStrength" :key="index" class="flex items-center gap-0.5" :class="req.met ? 'text-success' : 'text-muted'">
 							<UIcon :name="req.met ? 'i-lucide-circle-check' : 'i-lucide-circle-x'" class="size-4 shrink-0" />
 							<span class="text-xs font-light">
@@ -51,7 +51,7 @@
 						</li>
 					</ul>
 				</div>
-				<UFormField :label="$t('auth.confirmPassword')" name="confirmPassword" required>
+				<UFormField :label="t('auth.confirmPassword')" name="confirmPassword" required>
 					<UInput v-model="state.confirmPassword" :type="state.showConfirm ? 'text' : 'password'" autocomplete="new-password" :ui="{ trailing: 'pe-1' }">
 						<template v-if="state.confirmPassword?.length" #trailing>
 							<UButton
@@ -59,7 +59,7 @@
 								variant="link"
 								size="sm"
 								:icon="state.showConfirm ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-								:aria-label="state.showConfirm ? $t('common.hidePassword') : $t('common.showPassword')"
+								:aria-label="state.showConfirm ? t('common.hidePassword') : t('common.showPassword')"
 								@click="state.showConfirm = !state.showConfirm"
 							/>
 						</template>
@@ -69,8 +69,8 @@
 
 			<template #footer>
 				<div class="flex flex-col gap-2">
-					<UButton block size="md" color="primary" variant="outline" type="submit" :loading="loading">{{ $t('auth.resetPasswordButton') }}</UButton>
-					<NuxtLink to="/login" class="text-center text-sm text-muted hover:underline">{{ $t('auth.backToLogin') }}</NuxtLink>
+					<UButton block size="md" color="primary" variant="outline" type="submit" :loading="loading">{{ t('auth.resetPasswordButton') }}</UButton>
+					<NuxtLink to="/login" class="text-center text-sm text-muted hover:underline">{{ t('auth.backToLogin') }}</NuxtLink>
 				</div>
 			</template>
 		</UCard>

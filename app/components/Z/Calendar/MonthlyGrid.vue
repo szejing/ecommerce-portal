@@ -72,7 +72,7 @@
 							class="w-full justify-start text-[10px] sm:text-xs font-medium px-1.5 py-0.5 min-h-0"
 							@click.stop="openDayListing(cell.date as Date)"
 						>
-							+{{ cell.appointments.length - maxVisibleAppointments }} {{ $t('components.calendar.more') }}
+							+{{ cell.appointments.length - maxVisibleAppointments }} {{ t('components.calendar.more') }}
 						</UButton>
 					</div>
 				</div>
@@ -114,14 +114,14 @@
 									size="xs"
 									class="shrink-0"
 								>
-									{{ $t('options.' + appointment.status.toLowerCase()) }}
+									{{ t('options.' + appointment.status.toLowerCase()) }}
 								</UBadge>
 							</div>
 							<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1">
 								<UIcon name="i-heroicons-clock" class="w-3 h-3 shrink-0" />
 								{{ formatTime(appointment.start_date_time) }}
 								<span v-if="appointment.duration" class="text-gray-400 dark:text-gray-500">
-									· {{ $t('pages.durationMinutes', { n: appointment.duration }) }}
+									· {{ t('pages.durationMinutes', { n: appointment.duration }) }}
 								</span>
 							</p>
 							<p v-if="appointment.appt_desc" class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
@@ -166,7 +166,7 @@ const emit = defineEmits<{
 	delete: [code: string];
 }>();
 
-const { t: $t } = useI18n();
+const { t } = useI18n();
 
 // Max visible appointments per cell in grid (desktop)
 const maxVisibleAppointments = 3;

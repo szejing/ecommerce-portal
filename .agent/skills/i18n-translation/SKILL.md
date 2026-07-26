@@ -41,13 +41,13 @@ This skill guides translation of UI strings, validation messages, and option lab
 
 ### 1. Vue Templates
 
-Use `$t()` for direct interpolation:
+Use `t()` for direct interpolation:
 
 ```vue
 <template>
-	<h1>{{ $t('pages.ordersTitle') }}</h1>
-	<UButton>{{ $t('common.save') }}</UButton>
-	<p>{{ $t('pages.showingToOf', { from: 1, to: 10, total: 100 }) }}</p>
+	<h1>{{ t('pages.ordersTitle') }}</h1>
+	<UButton>{{ t('common.save') }}</UButton>
+	<p>{{ t('pages.showingToOf', { from: 1, to: 10, total: 100 }) }}</p>
 </template>
 ```
 
@@ -237,7 +237,7 @@ Add keys to both `i18n/locales/en.json` and `i18n/locales/ms.json`:
 <p>No orders found.</p>
 
 <!-- After -->
-<p>{{ $t('pages.noOrdersFound') }}</p>
+<p>{{ t('pages.noOrdersFound') }}</p>
 ```
 
 **Scripts**:
@@ -271,7 +271,7 @@ Use pipe syntax with `{n}`:
 }
 ```
 
-Usage: `$t('pages.appointmentsCount', count)` (count as second argument)
+Usage: `t('pages.appointmentsCount', count)` (count as second argument)
 
 ### Interpolation
 
@@ -283,7 +283,7 @@ Use `{varName}` placeholders:
 }
 ```
 
-Usage: `$t('pages.showingToOf', { from: 1, to: 10, total: 100 })`
+Usage: `t('pages.showingToOf', { from: 1, to: 10, total: 100 })`
 
 ### Special Characters
 
@@ -325,8 +325,8 @@ Escape `@` in email placeholders:
 
 ## Quick Reference
 
-- Translate template text: `$t('namespace.key')`
-- Translate in script: `const { t } = useI18n(); t('key')`
+- Translate template text: `t('namespace.key')`
+- Translate in script and template: `const { t } = useI18n(); t('key')`
 - Translate schema: export `createXxxValidation(t)`
 - Translate options: export `getXxxOptions(t)` returning `{ value, label }[]`
 - Translate table: export `getXxxColumns(t)`

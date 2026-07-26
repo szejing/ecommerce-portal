@@ -1,7 +1,7 @@
 <template>
 	<UModal
 		v-model:open="isOpen"
-		:title="$t('components.orderExport.title')"
+		:title="t('components.orderExport.title')"
 		:ui="{ content: 'w-full sm:max-w-lg' }"
 		:close="{
 			onClick: () => {
@@ -14,7 +14,7 @@
 			<div class="space-y-5">
 				<div class="space-y-2">
 					<label class="text-xs font-medium text-gray-700 dark:text-gray-300">
-						{{ $t('components.orderExport.dateRange') }}
+						{{ t('components.orderExport.dateRange') }}
 					</label>
 					<ZDateRange v-model="form.date_range" hide-presets />
 				</div>
@@ -23,29 +23,22 @@
 					v-model="selectedStatuses"
 					:items="statusItems"
 					:get-color="getOrderStatusColor"
-					:placeholder="$t('components.selectMenu.selectOrderStatus')"
+					:placeholder="t('components.selectMenu.selectOrderStatus')"
 					show-label
-					:label="$t('components.orderExport.statuses')"
+					:label="t('components.orderExport.statuses')"
 				/>
 
 				<div class="space-y-2">
 					<label class="text-xs font-medium text-gray-700 dark:text-gray-300">
-						{{ $t('components.orderExport.sortBy') }}
+						{{ t('components.orderExport.sortBy') }}
 					</label>
-					<USelect
-						v-model="form.sort"
-						:items="sortItems"
-						value-key="value"
-						color="neutral"
-						variant="outline"
-						class="w-full"
-					/>
+					<USelect v-model="form.sort" :items="sortItems" value-key="value" color="neutral" variant="outline" class="w-full" />
 				</div>
 
 				<UCheckbox
 					v-model="form.include_item_details"
-					:label="$t('components.orderExport.includeItemDetails')"
-					:description="$t('components.orderExport.includeItemDetailsHint')"
+					:label="t('components.orderExport.includeItemDetails')"
+					:description="t('components.orderExport.includeItemDetailsHint')"
 				/>
 			</div>
 		</template>
@@ -53,10 +46,10 @@
 		<template #footer>
 			<div class="flex justify-between gap-4 w-full">
 				<UButton color="neutral" variant="outline" @click="onCancel">
-					{{ $t('common.cancel') }}
+					{{ t('common.cancel') }}
 				</UButton>
 				<UButton color="success" :loading="loading" @click="onExport">
-					{{ $t('components.orderExport.export') }}
+					{{ t('components.orderExport.export') }}
 				</UButton>
 			</div>
 		</template>
@@ -66,11 +59,7 @@
 <script lang="ts" setup>
 import { OrderStatus } from 'yeppi-common';
 import { getDefaultOrderStatuses, getOrderStatusColor, getOrderStatusOptions } from '~/utils/options';
-import {
-	getDefaultOrderExportOptions,
-	type OrderExportOptions,
-	type OrderExportSortKey,
-} from '~/utils/order-export';
+import { getDefaultOrderExportOptions, type OrderExportOptions, type OrderExportSortKey } from '~/utils/order-export';
 
 const isOpen = ref(true);
 const loading = ref(false);

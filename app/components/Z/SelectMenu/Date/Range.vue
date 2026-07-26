@@ -14,7 +14,7 @@
 						{{ df.format(selected.start) }}
 					</template>
 				</template>
-				<template v-else> {{ $t('components.selectMenu.pickADate') }} </template>
+				<template v-else> {{ t('components.selectMenu.pickADate') }} </template>
 			</span>
 
 			<template #trailing>

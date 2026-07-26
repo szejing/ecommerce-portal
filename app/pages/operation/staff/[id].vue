@@ -11,12 +11,12 @@
 					<div class="flex items-center justify-between">
 						<h2 class="flex items-center text-lg font-semibold text-neutral-900 dark:text-neutral-100">
 							<UIcon name="i-heroicons-user" class="w-5 h-5 inline-block mr-2" />
-							{{ $t('pages.crmUserDetailUserInformation') }}
+							{{ t('pages.crmUserDetailUserInformation') }}
 						</h2>
 						<div class="flex items-center gap-2">
 							<UButton v-if="canEditCurrentUser" color="success" :loading="updating" :disabled="!hasChanges" @click="editFormRef?.submit()">
 								<UIcon :name="ICONS.SAVE" class="w-4 h-4" />
-								{{ $t('common.save') }}
+								{{ t('common.save') }}
 							</UButton>
 							<UButton
 								v-if="canDeleteCurrentUser"
@@ -28,7 +28,7 @@
 								:disabled="updating"
 								@click="deleteUser"
 							>
-								{{ $t('common.delete') }}
+								{{ t('common.delete') }}
 							</UButton>
 						</div>
 					</div>
@@ -50,40 +50,40 @@
 					/>
 					<div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
 						<div>
-							<span class="text-neutral-500 dark:text-neutral-400">{{ $t('components.crmUserForm.name') }}</span>
+							<span class="text-neutral-500 dark:text-neutral-400">{{ t('components.crmUserForm.name') }}</span>
 							<p class="font-medium text-neutral-900 dark:text-neutral-100">
 								{{ current_crm_user.name || '—' }}
 							</p>
 						</div>
 						<div>
-							<span class="text-neutral-500 dark:text-neutral-400">{{ $t('components.crmUserForm.role') }}</span>
+							<span class="text-neutral-500 dark:text-neutral-400">{{ t('components.crmUserForm.role') }}</span>
 							<p class="font-medium text-neutral-900 dark:text-neutral-100">
-								{{ current_crm_user.role ? roleLabel(current_crm_user.role, $t) : '—' }}
+								{{ current_crm_user.role ? roleLabel(current_crm_user.role, t) : '—' }}
 							</p>
 						</div>
 						<div class="sm:col-span-2">
-							<span class="text-neutral-500 dark:text-neutral-400">{{ $t('components.crmUserForm.email') }}</span>
+							<span class="text-neutral-500 dark:text-neutral-400">{{ t('components.crmUserForm.email') }}</span>
 							<p class="font-medium text-neutral-900 dark:text-neutral-100">
 								{{ current_crm_user.email_address || '—' }}
 							</p>
 						</div>
 						<div>
-							<span class="text-neutral-500 dark:text-neutral-400">{{ $t('components.crmUserForm.staffDepartment') }}</span>
+							<span class="text-neutral-500 dark:text-neutral-400">{{ t('components.crmUserForm.staffDepartment') }}</span>
 							<p class="font-medium text-neutral-900 dark:text-neutral-100">
 								{{ currentStaffDepartmentName }}
 							</p>
 						</div>
 						<div>
-							<span class="text-neutral-500 dark:text-neutral-400">{{ $t('components.crmUserForm.phone') }}</span>
+							<span class="text-neutral-500 dark:text-neutral-400">{{ t('components.crmUserForm.phone') }}</span>
 							<p class="font-medium text-neutral-900 dark:text-neutral-100">
 								{{ current_crm_user.dial_code && current_crm_user.phone_no ? `${current_crm_user.dial_code} ${current_crm_user.phone_no}` : '—' }}
 							</p>
 						</div>
 						<div>
-							<span class="text-neutral-500 dark:text-neutral-400">{{ $t('components.crmUserForm.status') }}</span>
+							<span class="text-neutral-500 dark:text-neutral-400">{{ t('components.crmUserForm.status') }}</span>
 							<div class="mt-1">
 								<UBadge :color="current_crm_user.is_active ? 'success' : 'error'" variant="subtle">
-									{{ current_crm_user.is_active ? $t('components.crmUserForm.statusActive') : $t('components.crmUserForm.statusDisabled') }}
+									{{ current_crm_user.is_active ? t('components.crmUserForm.statusActive') : t('components.crmUserForm.statusDisabled') }}
 								</UBadge>
 							</div>
 						</div>
@@ -96,12 +96,12 @@
 				<template #header>
 					<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
 						<UIcon name="i-heroicons-key" class="w-5 h-5 inline-block mr-2" />
-						{{ isViewingSelf ? $t('pages.crmUserDetailChangePasswordTitle') : $t('pages.crmUserDetailResetPasswordTitle') }}
+						{{ isViewingSelf ? t('pages.crmUserDetailChangePasswordTitle') : t('pages.crmUserDetailResetPasswordTitle') }}
 					</h2>
 				</template>
 
 				<p class="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
-					{{ isViewingSelf ? $t('pages.crmUserDetailChangePasswordDesc') : $t('pages.crmUserDetailResetPasswordDesc') }}
+					{{ isViewingSelf ? t('pages.crmUserDetailChangePasswordDesc') : t('pages.crmUserDetailResetPasswordDesc') }}
 				</p>
 				<FormCrmUserChangePassword ref="formRef" :loading="updating" :require-current-password="isViewingSelf" @submit="submitPassword" />
 			</UCard>
@@ -117,6 +117,7 @@ import { useStaffDepartmentStore } from '~/stores/StaffDepartment/StaffDepartmen
 import { roleLabel } from '~/utils/options/user-roles';
 import { ZModalConfirmation, ZModalLoading } from '#components';
 import { useAuthStore } from '~/stores';
+import { ICONS } from '~/utils/icons';
 
 const route = useRoute();
 const id = computed(() => String(route.params.id ?? ''));

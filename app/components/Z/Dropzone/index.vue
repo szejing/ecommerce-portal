@@ -28,7 +28,7 @@
 						<div class="preview-grid">
 							<div v-for="(preview, index) in previews" :key="`preview-${index}`" class="preview-item">
 								<div class="preview-item-container group">
-									<img :src="preview" alt="Preview image" class="preview-image" />
+									<ZImage :src="preview" alt="Preview image" fill />
 									<button class="delete-button" type="button" @click.stop="removePreview(index)">
 										<UIcon name="i-heroicons-trash" class="w-4 h-4 text-white" />
 									</button>
@@ -42,7 +42,7 @@
 						<div class="preview-grid">
 							<div v-for="(preview, index) in currentImages" :key="`existing-${index}`" class="preview-item">
 								<div class="preview-item-container group">
-									<img v-if="preview != null" :src="preview.url || preview" alt="Preview image" class="preview-image" />
+									<ZImage v-if="preview != null" :src="preview.url || preview" alt="Preview image" fill />
 									<button class="delete-button" type="button" @click.stop="removeExistingImage(index)">
 										<UIcon name="i-heroicons-trash" class="w-4 h-4 text-white" />
 									</button>
@@ -61,6 +61,7 @@
 </template>
 
 <script setup>
+import { ICONS } from '~/utils/icons';
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB - files over this are rejected
 const HEIC_EXTENSIONS_PATTERN = /\.(heic|heif)$/i;
 const HEIC_MIME_TYPES = ['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'];
@@ -493,6 +494,7 @@ onBeforeUnmount(() => {
 	width: 120px;
 	height: 120px;
 	display: block;
+	border: 1px solid var(--color-main-300);
 	border-radius: 0.5rem;
 	overflow: hidden;
 	cursor: pointer;
@@ -506,17 +508,6 @@ onBeforeUnmount(() => {
 	}
 }
 
-.preview-image {
-	display: block;
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	border-width: 1px;
-	border-color: var(--color-main-300);
-	border-radius: 0.5rem;
-	transition: all 200ms ease-in-out;
-}
-
 /* Add overlay effect on hover */
 .preview-item-container::before {
 	content: '';
@@ -527,7 +518,8 @@ onBeforeUnmount(() => {
 	height: 100%;
 	background-color: rgba(0, 0, 0, 0);
 	transition: background-color 200ms ease-in-out;
-	z-index: 1;
+	/* Above the preview image's own stacking layers, below the delete button. */
+	z-index: 15;
 	border-radius: 0.5rem;
 	pointer-events: none;
 }

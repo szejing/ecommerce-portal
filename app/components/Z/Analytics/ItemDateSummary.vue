@@ -5,7 +5,7 @@
 				<Icon name="i-heroicons-calendar-days" class="text-base text-muted" />
 			</div>
 			<div class="min-w-0">
-				<p class="text-xs font-medium uppercase tracking-wide text-muted">{{ $t('table.bizDate') }}</p>
+				<p class="text-xs font-medium uppercase tracking-wide text-muted">{{ t('table.bizDate') }}</p>
 				<p class="truncate text-sm font-semibold text-highlighted">{{ getFormattedDate(new Date(date)) }}</p>
 			</div>
 		</div>
@@ -16,11 +16,11 @@
 				<span class="text-sm font-semibold tabular-nums text-highlighted">{{ primaryCount }}</span>
 			</div>
 			<div class="flex flex-col px-3 first:pl-0 last:pr-0 sm:px-4">
-				<span class="text-xs text-muted">{{ $t('table.totalItems') }}</span>
+				<span class="text-xs text-muted">{{ t('table.totalItems') }}</span>
 				<span class="text-sm font-semibold tabular-nums text-highlighted">{{ totalItems }}</span>
 			</div>
 			<div class="flex flex-col px-3 first:pl-0 last:pr-0 sm:px-4">
-				<span class="text-xs text-muted">{{ $t('table.netAmt') }}</span>
+				<span class="text-xs text-muted">{{ t('table.netAmt') }}</span>
 				<span class="text-sm font-semibold tabular-nums text-primary">{{ formatCurrency(netAmt, currencyCode) }}</span>
 			</div>
 		</div>
@@ -30,6 +30,8 @@
 <script lang="ts" setup>
 import { formatCurrency, getFormattedDate } from 'yeppi-common';
 import { computed } from 'vue';
+
+const { t } = useI18n();
 
 const props = defineProps<{
 	date: string;

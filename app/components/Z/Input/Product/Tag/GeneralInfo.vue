@@ -1,12 +1,14 @@
 <template>
 	<div class="section-grid-basic-details">
-		<UFormField v-slot="{ error }" :label="$t('table.value')" name="value" required>
-			<UInput v-model="value" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="$t('components.zInput.tagNamePlaceholder')" />
+		<UFormField v-slot="{ error }" :label="t('table.value')" name="value" required>
+			<UInput v-model="value" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="t('components.zInput.tagNamePlaceholder')" />
 		</UFormField>
 	</div>
 </template>
 
 <script lang="ts" setup>
+import { ICONS } from '~/utils/icons';
+const { t } = useI18n();
 const props = defineProps({
 	value: String,
 });

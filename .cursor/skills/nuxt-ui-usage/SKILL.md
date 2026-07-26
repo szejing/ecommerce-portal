@@ -49,16 +49,16 @@ Prefer semantic utilities over raw palette colors where applicable: `text-defaul
 
 ## Components Used in This Project
 
-| Component | Usage |
-|-----------|-------|
-| UButton | Actions, submit, cancel |
-| UForm | Forms with Zod schema validation |
-| UTable | Data tables with `app/utils/table-columns/` |
-| UModal | Dialogs; prefer `components/Z/Modal/` wrappers |
-| USelectMenu | Filters, status selectors; items as `{ value, label }[]` |
-| UBadge | Status tags with `getXxxColor()` from `app/utils/options/` |
-| UInput, USelect, UTextarea | Form fields |
-| UCard | Sections, panels |
+| Component                  | Usage                                                      |
+| -------------------------- | ---------------------------------------------------------- |
+| UButton                    | Actions, submit, cancel                                    |
+| UForm                      | Forms with Zod schema validation                           |
+| UTable                     | Data tables with `app/utils/table-columns/`                |
+| UModal                     | Dialogs; prefer `components/Z/Modal/` wrappers             |
+| USelectMenu                | Filters, status selectors; items as `{ value, label }[]`   |
+| UBadge                     | Status tags with `getXxxColor()` from `app/utils/options/` |
+| UInput, USelect, UTextarea | Form fields                                                |
+| UCard                      | Sections, panels                                           |
 
 ## Form Patterns
 
@@ -68,14 +68,14 @@ Forms use **UForm** + **Zod** + **createXxxValidation(t)** for i18n:
 <script setup lang="ts">
 import { createCreateTaxValidation } from '~/utils/schema';
 
-const { t } = useI18n();
+const { t: $t } = useI18n();
 const taxSchema = computed(() => createCreateTaxValidation(t));
 </script>
 
 <template>
-  <UForm :schema="taxSchema" :state="formState" @submit="onSubmit">
-    <!-- fields -->
-  </UForm>
+	<UForm :schema="taxSchema" :state="formState" @submit="onSubmit">
+		<!-- fields -->
+	</UForm>
 </template>
 ```
 
@@ -85,10 +85,10 @@ Export `getXxxColumns(t: TranslateFn)` from `app/utils/table-columns/`:
 
 ```ts
 export function getOrderColumns(t: TranslateFn) {
-  return [
-    { key: 'order_no', label: t('table.orderNo') },
-    { key: 'status', label: t('table.status') },
-  ];
+	return [
+		{ key: 'order_no', label: t('table.orderNo') },
+		{ key: 'status', label: t('table.status') },
+	];
 }
 ```
 
@@ -98,16 +98,16 @@ Options from `app/utils/options/` — export `getXxxOptions(t)` returning `{ val
 
 ```vue
 <script setup lang="ts">
-const { t } = useI18n();
+const { t: $t } = useI18n();
 const items = computed(() => getOrderStatusOptions(t));
 </script>
 
 <template>
-  <USelectMenu v-model="status" :items="items" value-key="value">
-    <template #default>
-      <UBadge :color="getOrderStatusColor(status)">{{ selectedLabel }}</UBadge>
-    </template>
-  </USelectMenu>
+	<USelectMenu v-model="status" :items="items" value-key="value">
+		<template #default>
+			<UBadge :color="getOrderStatusColor(status)">{{ selectedLabel }}</UBadge>
+		</template>
+	</USelectMenu>
 </template>
 ```
 

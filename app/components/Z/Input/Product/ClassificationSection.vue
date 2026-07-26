@@ -5,12 +5,12 @@
 				<div class="flex-1">
 					<div class="flex items-center gap-2">
 						<UIcon :name="ICONS.TAG" class="text-primary-500 w-6 h-6" />
-						<h2 class="text-xl font-semibold">{{ $t('components.productUpdate.classification') }}</h2>
-						<span class="text-xs text-neutral-500 ml-2">({{ $t('components.productUpdate.optional') }})</span>
+						<h2 class="text-xl font-semibold">{{ t('components.productUpdate.classification') }}</h2>
+						<span class="text-xs text-neutral-500 ml-2">({{ t('components.productUpdate.optional') }})</span>
 					</div>
-					<p class="text-sm text-neutral-500 mt-1">{{ $t('components.productUpdate.organizeWithCategories') }}</p>
+					<p class="text-sm text-neutral-500 mt-1">{{ t('components.productUpdate.organizeWithCategories') }}</p>
 				</div>
-				<UTooltip :text="$t('pages.categoriesTagsTooltip')" :popper="{ placement: 'bottom' }">
+				<UTooltip :text="t('pages.categoriesTagsTooltip')" :popper="{ placement: 'bottom' }">
 					<UIcon :name="ICONS.HELP" class="text-neutral-400 hover:text-primary-500 w-5 h-5 cursor-help" />
 				</UTooltip>
 			</div>
@@ -18,8 +18,8 @@
 
 		<div class="py-2 px-4">
 			<div class="grid grid-cols-1 gap-6">
-				<UFormField :label="$t('components.productUpdate.categories')">
-					<p class="text-xs text-neutral-500 my-1">{{ $t('components.productUpdate.mainCategories') }}</p>
+				<UFormField :label="t('components.productUpdate.categories')">
+					<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.mainCategories') }}</p>
 					<!-- Category Picker Trigger -->
 					<div class="category-picker-trigger" @click="openCategoryPicker">
 						<div class="category-picker-content">
@@ -29,20 +29,20 @@
 									<UIcon :name="ICONS.CROSS" class="category-chip-remove" @click.stop="removeCategory(category)" />
 								</div>
 							</template>
-							<span v-else class="category-picker-placeholder">{{ $t('components.selectMenu.selectCategories') }}</span>
+							<span v-else class="category-picker-placeholder">{{ t('components.selectMenu.selectCategories') }}</span>
 						</div>
 						<UIcon :name="ICONS.EXPAND_ROUNDED" class="category-picker-chevron" />
 					</div>
 				</UFormField>
 
-				<UFormField :label="$t('components.productUpdate.tags')">
-					<p class="text-xs text-neutral-500 my-1">{{ $t('components.productUpdate.keywordsFiltering') }}</p>
-					<ZSelectMenuTags v-model:tags="tagsModel" class="w-full" :placeholder="$t('components.selectMenu.selectTags')" />
+				<UFormField :label="t('components.productUpdate.tags')">
+					<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.keywordsFiltering') }}</p>
+					<ZSelectMenuTags v-model:tags="tagsModel" class="w-full" :placeholder="t('components.selectMenu.selectTags')" />
 				</UFormField>
 
-				<UFormField :label="$t('components.productUpdate.brands')">
-					<p class="text-xs text-neutral-500 my-1">{{ $t('components.productUpdate.productBrand') }}</p>
-					<ZSelectMenuBrands v-model:brands="brandsModel" class="w-full" :placeholder="$t('components.selectMenu.selectBrands')" />
+				<UFormField :label="t('components.productUpdate.brands')">
+					<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.productBrand') }}</p>
+					<ZSelectMenuBrands v-model:brands="brandsModel" class="w-full" :placeholder="t('components.selectMenu.selectBrands')" />
 				</UFormField>
 			</div>
 		</div>
@@ -55,6 +55,8 @@ import { ICONS } from '~/utils/icons';
 import type { Category } from '~/utils/types/category';
 import type { Tag } from '~/utils/types/tag';
 import type { Brand } from '~/utils/types/brand';
+
+const { t } = useI18n();
 
 const props = defineProps<{
 	categories: Category[];

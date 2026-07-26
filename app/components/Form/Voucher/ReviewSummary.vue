@@ -6,8 +6,8 @@
 					<div class="flex items-center gap-3">
 						<UIcon :name="ICONS.CHECK_ROUNDED" class="text-primary-600 w-10 h-10" />
 						<div>
-							<h2 class="text-lg font-semibold text-default">{{ $t('components.voucherForm.reviewTitle') }}</h2>
-							<p class="text-sm text-muted mt-0.5">{{ $t(subtitleKey) }}</p>
+							<h2 class="text-lg font-semibold text-default">{{ t('components.voucherForm.reviewTitle') }}</h2>
+							<p class="text-sm text-muted mt-0.5">{{ t(subtitleKey) }}</p>
 						</div>
 					</div>
 				</div>
@@ -18,25 +18,25 @@
 			<section class="rounded-xl bg-elevated/60 p-4 border border-default/10">
 				<h4 class="text-xs font-medium uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
 					<UIcon :name="ICONS.ADDITIONAL" class="w-4 h-4 text-primary-500" />
-					{{ $t('pages.voucherDetails') }}
+					{{ t('pages.voucherDetails') }}
 				</h4>
 				<dl class="space-y-2.5 text-sm">
 					<div class="flex justify-between gap-2">
-						<dt class="text-muted shrink-0">{{ $t('common.code') }}</dt>
-						<dd class="font-medium text-default truncate text-right">{{ summary.code || $t('common.notSet') }}</dd>
+						<dt class="text-muted shrink-0">{{ t('common.code') }}</dt>
+						<dd class="font-medium text-default truncate text-right">{{ summary.code || t('common.notSet') }}</dd>
 					</div>
 					<div class="flex justify-between gap-2">
-						<dt class="text-muted shrink-0">{{ $t('form.description') }}</dt>
-						<dd class="font-medium text-default truncate text-right">{{ summary.description || $t('common.notSet') }}</dd>
+						<dt class="text-muted shrink-0">{{ t('form.description') }}</dt>
+						<dd class="font-medium text-default truncate text-right">{{ summary.description || t('common.notSet') }}</dd>
 					</div>
 					<template v-if="summary.validityStartsAt != null || summary.validityEndsAt != null">
 						<div class="border-t border-default/10 space-y-2.5">
 							<div v-if="summary.validityStartsAt != null" class="flex justify-between gap-2">
-								<dt class="text-muted shrink-0">{{ $t('components.discountForm.validityStartsAt') }}</dt>
+								<dt class="text-muted shrink-0">{{ t('components.discountForm.validityStartsAt') }}</dt>
 								<dd class="font-medium text-default truncate text-right">{{ summary.validityStartsAt }}</dd>
 							</div>
 							<div v-if="summary.validityEndsAt != null" class="flex justify-between gap-2">
-								<dt class="text-muted shrink-0">{{ $t('components.discountForm.validityEndsAt') }}</dt>
+								<dt class="text-muted shrink-0">{{ t('components.discountForm.validityEndsAt') }}</dt>
 								<dd class="font-medium text-default truncate text-right">{{ summary.validityEndsAt }}</dd>
 							</div>
 						</div>
@@ -47,25 +47,25 @@
 			<section v-if="summary.discountDetails" class="rounded-xl bg-elevated/60 p-4 border border-default/10">
 				<h4 class="text-xs font-medium uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
 					<UIcon :name="ICONS.LAYERS" class="w-4 h-4 text-primary-500" />
-					{{ $t('pages.discountDetails') }}
+					{{ t('pages.discountDetails') }}
 				</h4>
 				<dl class="space-y-2.5 text-sm">
 					<div class="flex justify-between gap-2">
-						<dt class="text-muted shrink-0">{{ $t('components.discountForm.ruleSection') }}</dt>
+						<dt class="text-muted shrink-0">{{ t('components.discountForm.ruleSection') }}</dt>
 						<dd class="font-medium text-default text-right">{{ summary.discountDetails.ruleSummary }}</dd>
 					</div>
 					<div class="flex justify-between gap-2">
-						<dt class="text-muted shrink-0">{{ $t('components.discountForm.allocation') }}</dt>
+						<dt class="text-muted shrink-0">{{ t('components.discountForm.allocation') }}</dt>
 						<dd class="font-medium text-default truncate text-right">{{ summary.discountDetails.allocationLabel }}</dd>
 					</div>
 					<div class="flex justify-between gap-2">
-						<dt class="text-muted shrink-0">{{ $t('components.discountForm.usageLimit') }}</dt>
+						<dt class="text-muted shrink-0">{{ t('components.discountForm.usageLimit') }}</dt>
 						<dd class="font-medium text-default truncate text-right">{{ summary.discountDetails.discountUsageLimitLabel }}</dd>
 					</div>
 					<div class="flex justify-between gap-2">
-						<dt class="text-muted shrink-0">{{ $t('components.discountForm.conditionsSection') }}</dt>
+						<dt class="text-muted shrink-0">{{ t('components.discountForm.conditionsSection') }}</dt>
 						<dd class="font-medium text-default truncate text-right">
-							{{ $t('components.discountForm.reviewConditions', { count: summary.discountDetails.conditionsCount }) }}
+							{{ t('components.discountForm.reviewConditions', { count: summary.discountDetails.conditionsCount }) }}
 						</dd>
 					</div>
 				</dl>
@@ -74,7 +74,7 @@
 			<section class="rounded-xl bg-elevated/60 p-4 border border-default/10">
 				<h4 class="text-xs font-medium uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
 					<UIcon :name="ICONS.INFO" class="w-4 h-4 text-primary-500" />
-					{{ $t('form.usageLimit') }}
+					{{ t('form.usageLimit') }}
 				</h4>
 				<p class="text-sm font-medium text-default">{{ summary.usageLimitLabel }}</p>
 			</section>
@@ -85,20 +85,20 @@
 			>
 				<h4 class="text-xs font-medium uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
 					<UIcon :name="ICONS.CHECK_ROUNDED" class="w-4 h-4 text-primary-600" />
-					{{ $t('components.voucherForm.reviewInShort') }}
+					{{ t('components.voucherForm.reviewInShort') }}
 				</h4>
 				<div class="space-y-2.5 text-sm text-default leading-relaxed">
 					<ul v-if="summary.discountDetails?.discountApplySummary" class="list-disc ps-4 space-y-1.5">
 						<li class="font-medium">{{ summary.discountDetails.discountApplySummary }}</li>
 					</ul>
 					<template v-if="conditionReviewItems.length">
-						<p class="text-xs font-semibold text-muted mt-1 mb-0.5">{{ $t('components.voucherForm.reviewMustMatch') }}</p>
+						<p class="text-xs font-semibold text-muted mt-1 mb-0.5">{{ t('components.voucherForm.reviewMustMatch') }}</p>
 						<ul class="list-disc ps-4 space-y-2">
 							<li v-for="(item, idx) in conditionReviewItems" :key="idx" class="text-default">
 								<template v-if="item.amountText">{{ item.amountText }}</template>
 								<template v-if="item.amountText && item.filter">&nbsp;</template>
 								<template v-if="item.filter?.kind === 'badged'">
-									<span>{{ $t(item.filter.leadKey) }}</span>
+									<span>{{ t(item.filter.leadKey) }}</span>
 									<span class="ms-1 inline-flex flex-wrap items-center gap-1.5 align-middle">
 										<UBadge
 											v-for="(val, bi) in item.filter.values"
@@ -128,6 +128,8 @@
 <script lang="ts" setup>
 import type { ConditionReviewLineItem } from '~/utils/discount/discount-condition-review-lines';
 import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 export interface VoucherReviewDiscountDetails {
 	ruleSummary: string;

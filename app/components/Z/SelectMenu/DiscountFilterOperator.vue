@@ -6,9 +6,9 @@
 		size="md"
 		variant="formTrigger"
 		class="w-full"
-		:placeholder="$t('components.selectMenu.selectDiscountFilterOperator')"
+		:placeholder="t('components.selectMenu.selectDiscountFilterOperator')"
 		:search-input="{
-			placeholder: $t('components.selectMenu.searchDiscountFilterOperator'),
+			placeholder: t('components.selectMenu.searchDiscountFilterOperator'),
 			icon: 'i-lucide-search',
 		}"
 	>

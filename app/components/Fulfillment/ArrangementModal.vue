@@ -5,6 +5,8 @@ import { buildFulfillmentArrangementPayload } from '~/utils/fulfillment';
 import type { Courier } from '~/utils/types/courier';
 import type { FulfillmentBatch } from '~/utils/types/order-fulfillment-shipping';
 
+const { t } = useI18n();
+
 type ArrangementPayload = Omit<UpdateFulfillmentReq, 'merchant_id'>;
 
 type CourierOption = {
@@ -89,13 +91,13 @@ const onSubmit = async (_event: FormSubmitEvent<typeof state>) => {
 <template>
 	<UModal
 		v-model:open="open"
-		:title="$t('components.fulfillment.editArrangement')"
+		:title="t('components.fulfillment.editArrangement')"
 		:ui="{ content: 'w-full sm:max-w-lg' }"
 		@after:leave="emit('after:leave')"
 	>
 		<template #body>
 			<UForm :state="state" class="space-y-4" @submit="onSubmit">
-				<UFormField :label="$t('components.fulfillment.courierName')">
+				<UFormField :label="t('components.fulfillment.courierName')">
 					<div class="flex items-center gap-2">
 						<USelectMenu
 							v-model="selectedCourier"
@@ -110,22 +112,22 @@ const onSubmit = async (_event: FormSubmitEvent<typeof state>) => {
 							color="neutral"
 							variant="ghost"
 							icon="i-heroicons-x-mark"
-							:aria-label="$t('components.fulfillment.clearCourier')"
+							:aria-label="t('components.fulfillment.clearCourier')"
 							@click="clearCourier"
 						/>
 					</div>
 				</UFormField>
 
-				<UFormField name="tracking_no" :label="$t('components.fulfillment.trackingNumber')">
+				<UFormField name="tracking_no" :label="t('components.fulfillment.trackingNumber')">
 					<UInput v-model="state.tracking_no" data-testid="fulfillment-tracking-input" class="w-full" />
 				</UFormField>
 
 				<div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
 					<UButton type="button" color="neutral" variant="ghost" @click="emit('close', false)">
-						{{ $t('common.cancel') }}
+						{{ t('common.cancel') }}
 					</UButton>
 					<UButton type="submit" color="primary" :loading="saving">
-						{{ $t('common.save') }}
+						{{ t('common.save') }}
 					</UButton>
 				</div>
 			</UForm>

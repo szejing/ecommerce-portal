@@ -3,11 +3,11 @@
 	<div class="relative">
 		<div class="absolute top-0 right-0 z-1">
 			<UPopover v-model:open="customizeOpen" :content="{ align: 'end' }">
-				<UButton icon="i-heroicons-cog-6-tooth" color="neutral" variant="ghost" size="xs" :aria-label="$t('pages.dashboardStatsCustomize')" />
+				<UButton icon="i-heroicons-cog-6-tooth" color="neutral" variant="ghost" size="xs" :aria-label="t('pages.dashboardStatsCustomize')" />
 				<template #content>
 					<div class="p-3 min-w-56">
 						<p class="text-xs font-medium text-muted uppercase mb-2">
-							{{ $t('pages.dashboardStatsCustomize') }}
+							{{ t('pages.dashboardStatsCustomize') }}
 						</p>
 						<div class="space-y-1.5">
 							<label v-for="key in ALL_DASHBOARD_STAT_KEYS" :key="key" class="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-elevated cursor-pointer">
@@ -20,7 +20,7 @@
 							color="neutral"
 							variant="soft"
 							size="xs"
-							:label="$t('pages.dashboardStatsReset')"
+							:label="t('pages.dashboardStatsReset')"
 							@click="
 								resetToDefault();
 								customizeOpen = false;

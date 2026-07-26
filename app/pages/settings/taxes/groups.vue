@@ -1,7 +1,7 @@
 <template>
-	<ZPagePanel id="taxes-groups" :title="$t('nav.taxGroups')" back-to="/settings/taxes">
+	<ZPagePanel id="taxes-groups" :title="t('nav.taxGroups')" back-to="/settings/taxes">
 		<template #navbar-right>
-			<ZCreateButton to="/products/create" :label="$t('common.addTaxGroup')" />
+			<ZCreateButton to="/products/create" :label="t('common.addTaxGroup')" />
 		</template>
 		<template #toolbar>
 			<ZSectionFilterTaxGroups />
@@ -25,8 +25,8 @@
 				<template #empty>
 					<div class="flex flex-col items-center justify-center py-12 gap-3">
 						<UIcon :name="ICONS.TAX" class="w-12 h-12 text-gray-400" />
-						<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noTaxGroupsFound') }}</p>
-						<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+						<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noTaxGroupsFound') }}</p>
+						<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 					</div>
 				</template>
 			</UTable>
@@ -46,6 +46,7 @@ import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import type { TaxGroup } from '~/utils/types/tax-group';
 import type { TableRow } from '@nuxt/ui';
 import { options_page_size } from '~/utils/options';
+import { ICONS } from '~/utils/icons';
 
 const overlay = useOverlay();
 const taxGroupStore = useTaxGroupStore();

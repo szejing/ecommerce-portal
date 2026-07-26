@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="taxes-rules-create" :title="$t('nav.taxRules')" back-to="/settings/taxes/rules">
+	<ZPagePanel id="taxes-rules-create" :title="t('nav.taxRules')" back-to="/settings/taxes/rules">
 		<div class="flex-jbetween-icenter">
 			<h2 class="my-6">Add Tax Rule</h2>
 		</div>

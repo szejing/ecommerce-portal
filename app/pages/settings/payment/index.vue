@@ -1,10 +1,10 @@
 <template>
-	<ZPagePanel id="settings-payment" :title="$t('pages.paymentManagement')" back-to="/settings">
+	<ZPagePanel id="settings-payment" :title="t('pages.paymentManagement')" back-to="/settings">
 		<div class="space-y-4">
 			<!-- Header Section -->
 			<div class="space-y-2">
-				<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $t('pages.paymentManagement') }}</h2>
-				<p class="text-gray-600 dark:text-gray-400">{{ $t('pages.paymentManagementDesc') }}</p>
+				<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('pages.paymentManagement') }}</h2>
+				<p class="text-gray-600 dark:text-gray-400">{{ t('pages.paymentManagementDesc') }}</p>
 			</div>
 
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">

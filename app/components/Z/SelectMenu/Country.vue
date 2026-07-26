@@ -10,7 +10,7 @@
 		:filter-fields="['display_name', 'iso2', 'dial_code']"
 		size="md"
 		class="w-full"
-		:placeholder="$t('components.selectMenu.selectCountry')"
+		:placeholder="t('components.selectMenu.selectCountry')"
 		value-key="iso2"
 	/>
 </template>
@@ -18,6 +18,8 @@
 <script lang="ts" setup>
 import { useDataStore } from '~/stores/Data/Data';
 import type { Country } from '~/utils/types/country';
+
+const { t } = useI18n();
 
 const searchTerm = ref('');
 const dataStore = useDataStore();

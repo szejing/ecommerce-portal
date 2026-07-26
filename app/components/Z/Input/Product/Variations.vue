@@ -4,11 +4,11 @@
 			<div class="flex items-center justify-between mb-3">
 				<div class="flex items-center gap-3 flex-1">
 					<span class="text-sm font-medium text-neutral-700 whitespace-nowrap">
-						{{ $t('components.variations.variationLabel', { index: vIdx + 1 }) }}
+						{{ t('components.variations.variationLabel', { index: vIdx + 1 }) }}
 					</span>
 					<UInput
 						v-model="variation.name"
-						:placeholder="$t('components.variations.variationNamePlaceholder')"
+						:placeholder="t('components.variations.variationNamePlaceholder')"
 						:maxlength="14"
 						size="md"
 						class="max-w-48"
@@ -22,11 +22,11 @@
 			<!-- Options as tags -->
 			<div class="flex items-start gap-3">
 				<span class="text-sm text-neutral-500 whitespace-nowrap pt-1.5">
-					{{ $t('components.variations.optionsLabel') }}
+					{{ t('components.variations.optionsLabel') }}
 				</span>
 				<UInputTags
 					:model-value="getOptionValues(vIdx)"
-					:placeholder="$t('components.variations.optionValuePlaceholder')"
+					:placeholder="t('components.variations.optionValuePlaceholder')"
 					:max-length="20"
 					add-on-blur
 					add-on-enter
@@ -41,13 +41,16 @@
 
 		<!-- Add Variation Button -->
 		<UButton v-if="localVariations.length < MAX_VARIATIONS" :icon="ICONS.ADD" color="primary" variant="soft" size="sm" @click="addVariation">
-			{{ $t('components.variations.addVariation') }}
+			{{ t('components.variations.addVariation') }}
 		</UButton>
 	</div>
 </template>
 
 <script lang="ts" setup>
 import type { ProductVariationInput } from '~/utils/types/product-variation';
+import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 const MAX_VARIATIONS = 2;
 

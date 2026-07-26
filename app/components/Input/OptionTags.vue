@@ -52,6 +52,7 @@
 
 <script setup lang="ts">
 import type { ProductOptionInput } from '~/utils/types/product-option';
+import { ICONS } from '~/utils/icons';
 
 interface InputTags {
 	canAdd?: boolean;

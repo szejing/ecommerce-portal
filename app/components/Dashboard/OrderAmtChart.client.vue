@@ -2,7 +2,7 @@
 	<UCard ref="cardRef" :ui="{ root: 'overflow-visible', body: '!px-0 !pt-0 !pb-3' }">
 		<template #header>
 			<div>
-				<p class="text-xs text-muted uppercase">{{ $t('components.dashboard.revenue') }}</p>
+				<p class="text-xs text-muted uppercase">{{ t('components.dashboard.revenue') }}</p>
 				<p class="mt-2 text-3xl text-highlighted font-semibold">
 					{{ formatCurrency(total, 'MYR') }}
 				</p>
@@ -26,6 +26,8 @@
 import { VisXYContainer, VisLine, VisAxis, VisArea, VisCrosshair, VisTooltip } from '@unovis/vue';
 import { getFormattedDate, parseDate, formatCurrency } from 'yeppi-common';
 import type { DataRecord } from '~/utils/types/chart-data';
+
+const { t } = useI18n();
 
 const cardRef = useTemplateRef<HTMLElement | null>('cardRef');
 const { width } = useElementSize(cardRef);

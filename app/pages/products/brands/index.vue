@@ -1,7 +1,7 @@
 <template>
-	<ZPagePanel id="products-brands" :title="$t('nav.brands')" back-to="/products">
+	<ZPagePanel id="products-brands" :title="t('nav.brands')" back-to="/products">
 		<template #navbar-right>
-			<ZCreateButton to="/products/brands/create" :label="$t('common.addBrand')" />
+			<ZCreateButton to="/products/brands/create" :label="t('common.addBrand')" />
 		</template>
 		<template #toolbar>
 			<ZSectionFilterBrands />
@@ -36,8 +36,8 @@
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.ADDITIONAL" class="w-12 h-12 text-gray-400" />
-							<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noBrandsFound') }}</p>
-							<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noBrandsFound') }}</p>
+							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
 				</UTable>
@@ -57,6 +57,7 @@ import { getBrandColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import type { Brand } from '~/utils/types/brand';
 import { options_page_size } from '~/utils/options';
+import { ICONS } from '~/utils/icons';
 
 const BRAND_COLUMN_LABELS = {
 	code: 'table.code',

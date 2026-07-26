@@ -14,7 +14,7 @@
 
 		<template #footer>
 			<div class="mx-auto w-[50%] sm:w-[25%]">
-				<UButton variant="soft" block color="neutral" @click="onConfirm">{{ action || $t('modal.ok') }}</UButton>
+				<UButton variant="soft" block color="neutral" @click="onConfirm">{{ action || t('modal.ok') }}</UButton>
 			</div>
 		</template>
 	</UModal>
@@ -22,6 +22,8 @@
 
 <script lang="ts" setup>
 import type { ToastNotification } from '~/utils/types/event-notification';
+
+const { t } = useI18n();
 
 defineProps({
 	notification: {

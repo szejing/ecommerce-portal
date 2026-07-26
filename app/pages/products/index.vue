@@ -1,9 +1,9 @@
 <template>
-	<ZPagePanel id="products" :title="$t('pages.servicesProductsManagement')">
+	<ZPagePanel id="products" :title="t('pages.servicesProductsManagement')">
 		<div class="space-y-4">
 			<div class="space-y-1">
-				<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $t('pages.servicesProductsManagement') }}</h2>
-				<p class="text-gray-500 dark:text-gray-400">{{ $t('pages.servicesProductsManagementDesc') }}</p>
+				<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('pages.servicesProductsManagement') }}</h2>
+				<p class="text-gray-500 dark:text-gray-400">{{ t('pages.servicesProductsManagementDesc') }}</p>
 			</div>
 
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">

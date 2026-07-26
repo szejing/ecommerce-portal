@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="vouchers-edit" :title="`${$t('pages.editVoucher')} #${current_voucher?.code ?? code}`" :back-to="listBackPath" grow>
+	<ZPagePanel id="vouchers-edit" :title="`${t('pages.editVoucher')} #${current_voucher?.code ?? code}`" :back-to="listBackPath" grow>
 		<div class="container w-full mx-auto">
 			<FormVoucherUpdateLoading v-if="isLoading" />
 			<FormVoucherUpdate v-else-if="current_voucher" ref="formRef" :voucher="current_voucher" />
@@ -11,15 +11,15 @@
 					<div class="hidden md:flex justify-between items-center gap-3">
 						<UButton color="error" variant="ghost" size="lg" :loading="saving" @click="deleteVoucher">
 							<UIcon :name="ICONS.TRASH" />
-							{{ $t('common.delete') }}
+							{{ t('common.delete') }}
 						</UButton>
 
 						<div class="flex gap-3">
-							<UButton color="neutral" variant="outline" size="lg" @click="cancel">{{ $t('common.cancel') }}</UButton>
+							<UButton color="neutral" variant="outline" size="lg" @click="cancel">{{ t('common.cancel') }}</UButton>
 
 							<UButton color="success" variant="solid" size="lg" :loading="saving" @click="saveVoucher">
 								<UIcon :name="ICONS.CHECK_ROUNDED" />
-								{{ $t('components.voucherForm.updateVoucher') }}
+								{{ t('components.voucherForm.updateVoucher') }}
 							</UButton>
 						</div>
 					</div>
@@ -27,15 +27,15 @@
 					<div class="md:hidden flex flex-col gap-2">
 						<UButton color="success" size="md" class="w-full" :loading="saving" @click="saveVoucher">
 							<UIcon :name="ICONS.CHECK_ROUNDED" class="w-4 h-4" />
-							<span class="text-sm">{{ $t('components.voucherForm.updateVoucher') }}</span>
+							<span class="text-sm">{{ t('components.voucherForm.updateVoucher') }}</span>
 						</UButton>
 						<div class="flex gap-2">
 							<UButton color="error" variant="ghost" size="sm" class="flex-1" :loading="saving" @click="deleteVoucher">
 								<UIcon :name="ICONS.TRASH" class="w-4 h-4" />
-								<span class="text-xs">{{ $t('common.delete') }}</span>
+								<span class="text-xs">{{ t('common.delete') }}</span>
 							</UButton>
 							<UButton color="neutral" variant="outline" size="sm" class="flex-1" @click="cancel">
-								<span class="text-xs">{{ $t('common.cancel') }}</span>
+								<span class="text-xs">{{ t('common.cancel') }}</span>
 							</UButton>
 						</div>
 					</div>

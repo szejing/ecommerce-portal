@@ -1,7 +1,7 @@
 <template>
-	<ZPagePanel id="vouchers-shop-listing" :title="$t('nav.shopVouchers')" back-to="/marketing">
+	<ZPagePanel id="vouchers-shop-listing" :title="t('nav.shopVouchers')" back-to="/marketing">
 		<template #navbar-right>
-			<ZCreateButton to="/marketing/vouchers/shop/create" :label="$t('common.create')" />
+			<ZCreateButton to="/marketing/vouchers/shop/create" :label="t('common.create')" />
 		</template>
 		<template #toolbar>
 			<ZSectionFilterVouchers />
@@ -35,8 +35,8 @@
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.ADDITIONAL" class="w-12 h-12 text-gray-400" />
-							<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noVouchersFound') }}</p>
-							<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noVouchersFound') }}</p>
+							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
 				</UTable>

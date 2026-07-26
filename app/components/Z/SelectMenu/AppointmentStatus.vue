@@ -16,7 +16,7 @@
 					{{ selectedLabel }}
 				</UBadge>
 			</span>
-			<span v-else class="text-neutral-400">{{ $t('components.selectMenu.selectAppointmentStatus') }}</span>
+			<span v-else class="text-neutral-400">{{ t('components.selectMenu.selectAppointmentStatus') }}</span>
 		</template>
 
 		<template #item="{ item }">

@@ -1,12 +1,12 @@
 <template>
-	<USelectMenu v-model="status" :items="items" value-key="value" size="md" :placeholder="$t('components.selectMenu.selectOrderItemStatus')">
+	<USelectMenu v-model="status" :items="items" value-key="value" size="md" :placeholder="t('components.selectMenu.selectOrderItemStatus')">
 		<template #default>
 			<span v-if="status">
 				<UBadge :color="getOrderItemStatusColor(status)" variant="subtle" class="truncate">
 					{{ selectedLabel }}
 				</UBadge>
 			</span>
-			<span v-else class="text-neutral-400">{{ $t('components.selectMenu.selectOrderItemStatus') }}</span>
+			<span v-else class="text-neutral-400">{{ t('components.selectMenu.selectOrderItemStatus') }}</span>
 		</template>
 
 		<template #item="{ item }">

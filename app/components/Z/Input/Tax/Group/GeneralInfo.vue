@@ -1,19 +1,19 @@
 <template>
 	<div class="section-grid-basic-details">
-		<UFormField v-slot="{ error }" :label="$t('common.code')" name="code" :required="!isUpdate">
+		<UFormField v-slot="{ error }" :label="t('common.code')" name="code" :required="!isUpdate">
 			<UInput
 				v-model="code"
 				:trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined"
-				:placeholder="$t('components.zInput.codePlaceholder')"
+				:placeholder="t('components.zInput.codePlaceholder')"
 				:disabled="isUpdate"
 			/>
 		</UFormField>
 
-		<UFormField v-slot="{ error }" :label="$t('common.description')" name="description" required>
-			<UInput v-model="description" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="$t('components.zInput.descriptionPlaceholder')" />
+		<UFormField v-slot="{ error }" :label="t('common.description')" name="description" required>
+			<UInput v-model="description" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="t('components.zInput.descriptionPlaceholder')" />
 		</UFormField>
 
-		<UFormField :label="$t('components.zInput.taxes')" name="taxes">
+		<UFormField :label="t('components.zInput.taxes')" name="taxes">
 			<ZSelectMenuTaxes v-model:taxes="taxes" />
 		</UFormField>
 	</div>
@@ -21,6 +21,9 @@
 
 <script lang="ts" setup>
 import type { Tax, TaxInput } from '~/utils/types/tax';
+import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 const props = defineProps({
 	code: String,

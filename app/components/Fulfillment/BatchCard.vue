@@ -4,16 +4,19 @@ import { getShipmentStatusColor } from '~/utils/options';
 import type { FulfillmentAction } from '~/stores/Fulfillment/Fulfillment';
 import type { FulfillmentBatch, ShipmentStatusValue } from '~/utils/types/order-fulfillment-shipping';
 
-const props = withDefaults(defineProps<{
-	batch: FulfillmentBatch;
-	currencyCode?: string;
-	showBatchMeta?: boolean;
-	loading?: boolean;
-}>(), {
-	currencyCode: 'MYR',
-	showBatchMeta: false,
-	loading: false,
-});
+const props = withDefaults(
+	defineProps<{
+		batch: FulfillmentBatch;
+		currencyCode?: string;
+		showBatchMeta?: boolean;
+		loading?: boolean;
+	}>(),
+	{
+		currencyCode: 'MYR',
+		showBatchMeta: false,
+		loading: false,
+	},
+);
 
 const emit = defineEmits<{
 	edit: [batch: FulfillmentBatch];
@@ -52,15 +55,15 @@ const nextActions = computed(() => {
 				<div class="sidebar-title">
 					<UIcon name="i-heroicons-truck" class="w-5 h-5 shrink-0" />
 					<h3 v-if="showBatchMeta" data-testid="fulfillment-batch-number">
-						{{ $t('components.fulfillment.batchNumber', { number: batch.batch_no }) }}
+						{{ t('components.fulfillment.batchNumber', { number: batch.batch_no }) }}
 					</h3>
 					<h3 v-else>
-						{{ $t('components.fulfillment.shippingTitle') }}
+						{{ t('components.fulfillment.shippingTitle') }}
 					</h3>
 				</div>
 				<div data-testid="fulfillment-status-badges" class="status-badges">
 					<UBadge :color="getShipmentStatusColor(batch.shipment_status)" variant="subtle" size="sm">
-						{{ $t(shipmentLabels[batch.shipment_status]) }}
+						{{ t(shipmentLabels[batch.shipment_status]) }}
 					</UBadge>
 				</div>
 			</div>
@@ -72,14 +75,14 @@ const nextActions = computed(() => {
 					<div class="shipping-left">
 						<span data-testid="fulfillment-courier" class="shipping-courier">{{ courierLabel }}</span>
 						<div data-testid="fulfillment-tracking" class="shipping-tracking">
-							<span class="shipping-tracking-label">{{ $t('components.fulfillment.trackingNumber') }}:</span>
+							<span class="shipping-tracking-label">{{ t('components.fulfillment.trackingNumber') }}:</span>
 							<span class="shipping-tracking-value">{{ trackingLabel }}</span>
 						</div>
 						<div v-if="methodLabel" data-testid="fulfillment-method" class="shipping-meta">
 							{{ methodLabel }}
 						</div>
 						<div v-else data-testid="fulfillment-method" class="shipping-meta">
-							{{ $t('components.fulfillment.notYetProvided') }}
+							{{ t('components.fulfillment.notYetProvided') }}
 						</div>
 						<div v-if="zoneLabel" data-testid="fulfillment-zone" class="shipping-meta">
 							{{ zoneLabel }}
@@ -101,24 +104,17 @@ const nextActions = computed(() => {
 					:disabled="loading"
 					@click="emit('edit', batch)"
 				>
-					{{ $t('common.edit') }}
+					{{ t('common.edit') }}
 				</UButton>
 
 				<UPopover v-if="nextActions.length" :content="{ align: 'start' }">
-					<UButton
-						data-testid="fulfillment-update-status"
-						size="sm"
-						color="neutral"
-						variant="soft"
-						icon="i-heroicons-arrow-path"
-						:disabled="loading"
-					>
-						{{ $t('components.fulfillment.updateStatus') }}
+					<UButton data-testid="fulfillment-update-status" size="sm" color="neutral" variant="soft" icon="i-heroicons-arrow-path" :disabled="loading">
+						{{ t('components.fulfillment.updateStatus') }}
 					</UButton>
 					<template #content>
 						<div class="w-64 space-y-2 p-3">
 							<p class="text-sm font-medium text-default">
-								{{ $t('components.fulfillment.chooseNextStatus') }}
+								{{ t('components.fulfillment.chooseNextStatus') }}
 							</p>
 							<UButton
 								v-for="item in nextActions"
@@ -130,7 +126,7 @@ const nextActions = computed(() => {
 								:loading="loading"
 								@click="emit('action', item.action, batch)"
 							>
-								{{ $t(item.label) }}
+								{{ t(item.label) }}
 							</UButton>
 						</div>
 					</template>

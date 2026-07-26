@@ -12,8 +12,8 @@
 						<p class="text-sm text-muted mt-0.5 truncate">{{ prodName }}</p>
 					</div>
 				</div>
-				<UFormField :label="$t('components.orderInput.status')" name="item_status" class="sm:w-40 shrink-0">
-					<UTooltip :text="$t('components.orderInput.changeItemStatus')" :popper="{ placement: 'bottom' }">
+				<UFormField :label="t('components.orderInput.status')" name="item_status" class="sm:w-40 shrink-0">
+					<UTooltip :text="t('components.orderInput.changeItemStatus')" :popper="{ placement: 'bottom' }">
 						<USelectMenu v-model="status" :items="itemStatusOptions" value-key="value" size="md" :ui="{ base: 'min-w-full' }">
 							<template #default>
 								<UBadge :color="getOrderItemStatusColor(status)" variant="subtle" class="truncate w-full justify-center">
@@ -36,21 +36,21 @@
 			<template #header>
 				<div class="flex items-center gap-2">
 					<UIcon :name="ICONS.CALENDAR" class="w-5 h-5 text-muted" />
-					<h2 class="text-base font-semibold text-default">{{ $t('components.orderInput.appointment') }}</h2>
+					<h2 class="text-base font-semibold text-default">{{ t('components.orderInput.appointment') }}</h2>
 				</div>
 			</template>
 			<p class="text-sm text-muted mb-4">#{{ appointment.code }}</p>
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-				<UFormField :label="$t('components.orderInput.date')" name="appointment_date">
+				<UFormField :label="t('components.orderInput.date')" name="appointment_date">
 					<ZSelectMenuDateTime
 						v-model:date-time="appointmentDate"
-						:placeholder="$t('components.orderInput.appointmentDate')"
+						:placeholder="t('components.orderInput.appointmentDate')"
 						:min-date="new Date()"
 						:max-date="new Date(new Date().setMonth(new Date().getMonth() + 2))"
 						class="w-full"
 					/>
 				</UFormField>
-				<UFormField :label="$t('common.status')" name="appointment_status">
+				<UFormField :label="t('common.status')" name="appointment_status">
 					<ZSelectMenuAppointmentStatus v-model:status="appointmentStatus" />
 				</UFormField>
 			</div>
@@ -61,25 +61,25 @@
 			<template #header>
 				<div class="flex items-center gap-2">
 					<UIcon :name="ICONS.CURRENCY" class="w-5 h-5 text-muted" />
-					<h2 class="text-base font-semibold text-default">{{ $t('components.orderInput.pricing') }}</h2>
+					<h2 class="text-base font-semibold text-default">{{ t('components.orderInput.pricing') }}</h2>
 				</div>
 			</template>
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-				<UFormField :label="$t('components.orderInput.currency')" name="currency" disabled>
+				<UFormField :label="t('components.orderInput.currency')" name="currency" disabled>
 					<ZSelectMenuCurrency :currency-code="currencyCode" class="w-full" />
 				</UFormField>
-				<UFormField v-slot="{ error }" :label="$t('components.orderDetail.unitSellPrice')" name="unit_sell_price" disabled>
+				<UFormField v-slot="{ error }" :label="t('components.orderDetail.unitSellPrice')" name="unit_sell_price" disabled>
 					<UInput
 						:model-value="unitSellPrice.toFixed(2)"
 						:trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined"
-						:placeholder="$t('components.orderInput.unitSellPricePlaceholder')"
+						:placeholder="t('components.orderInput.unitSellPricePlaceholder')"
 						class="w-full"
 						disabled
 					/>
 				</UFormField>
 			</div>
 			<div class="mt-4 pt-4 border-t border-default/10 flex items-center justify-end gap-2">
-				<span class="text-sm text-muted">{{ $t('components.orderInput.totalPrice') }}</span>
+				<span class="text-sm text-muted">{{ t('components.orderInput.totalPrice') }}</span>
 				<span class="text-lg font-semibold text-default">{{ currencyCode }} {{ netTotal.toFixed(2) }}</span>
 			</div>
 		</UCard>
@@ -92,6 +92,7 @@ import { OrderItemStatus } from 'yeppi-common';
 import type { AppointmentModel } from '~/utils/models';
 import type { ProductVariant } from '~/utils/types/product-variant';
 import { getOrderItemStatusOptions, getOrderItemStatusColor } from '~/utils/options';
+import { ICONS } from '~/utils/icons';
 
 const { $api } = useNuxtApp();
 const { t } = useI18n();

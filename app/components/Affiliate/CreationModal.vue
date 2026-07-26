@@ -9,6 +9,8 @@ import {
 import type { Customer } from "~/utils/types/customer";
 import { useAffiliateStore } from "~/stores/Affiliate/Affiliate";
 
+const { t } = useI18n();
+
 const props = defineProps<{
   open: boolean;
 }>();
@@ -124,13 +126,13 @@ const onSubmit = async () => {
 <template>
   <UModal
     v-model:open="openModel"
-    :title="$t('affiliate.createAffiliate')"
+    :title="t('affiliate.createAffiliate')"
     :ui="{ content: 'w-full sm:max-w-xl' }"
     @after:leave="resetForm"
   >
     <template #body>
       <UForm :state="form" class="space-y-4" @submit="onSubmit">
-        <UFormField :label="$t('affiliate.customer')" name="user_id" required>
+        <UFormField :label="t('affiliate.customer')" name="user_id" required>
           <USelectMenu
             v-model="form.user_id"
             v-model:search-term="customerSearchTerm"
@@ -138,7 +140,7 @@ const onSubmit = async () => {
             value-key="value"
             :loading="customersLoading"
             :search-input="{
-              placeholder: $t('affiliate.searchCustomers'),
+              placeholder: t('affiliate.searchCustomers'),
               icon: 'i-lucide-search',
             }"
             class="w-full"
@@ -153,7 +155,7 @@ const onSubmit = async () => {
                 </p>
               </div>
               <span v-else class="text-sm text-muted">{{
-                $t("affiliate.selectCustomer")
+                t("affiliate.selectCustomer")
               }}</span>
             </template>
 
@@ -170,13 +172,13 @@ const onSubmit = async () => {
 
             <template #empty>
               <span class="text-sm text-muted">{{
-                $t("pages.noCustomersFound")
+                t("pages.noCustomersFound")
               }}</span>
             </template>
           </USelectMenu>
         </UFormField>
 
-        <UFormField :label="$t('affiliate.tier')" name="tier_id">
+        <UFormField :label="t('affiliate.tier')" name="tier_id">
           <div class="flex items-center gap-2">
             <USelectMenu
               v-model="form.tier_id"
@@ -194,7 +196,7 @@ const onSubmit = async () => {
                   </p>
                 </div>
                 <span v-else class="text-sm text-muted">{{
-                  $t("affiliate.selectTier")
+                  t("affiliate.selectTier")
                 }}</span>
               </template>
 
@@ -215,16 +217,16 @@ const onSubmit = async () => {
               color="neutral"
               variant="ghost"
               icon="i-lucide-x"
-              :aria-label="$t('affiliate.clearTier')"
+              :aria-label="t('affiliate.clearTier')"
               @click="form.tier_id = undefined"
             />
           </div>
         </UFormField>
 
-        <UFormField :label="$t('affiliate.slug')" name="slug">
+        <UFormField :label="t('affiliate.slug')" name="slug">
           <UInput
             v-model="form.slug"
-            :placeholder="$t('affiliate.slugPlaceholder')"
+            :placeholder="t('affiliate.slugPlaceholder')"
           />
         </UFormField>
 
@@ -235,7 +237,7 @@ const onSubmit = async () => {
             variant="ghost"
             @click="openModel = false"
           >
-            {{ $t("common.cancel") }}
+            {{ t("common.cancel") }}
           </UButton>
           <UButton
             type="submit"
@@ -243,7 +245,7 @@ const onSubmit = async () => {
             :loading="adding"
             :disabled="!form.user_id"
           >
-            {{ $t("affiliate.createAffiliate") }}
+            {{ t("affiliate.createAffiliate") }}
           </UButton>
         </div>
       </UForm>

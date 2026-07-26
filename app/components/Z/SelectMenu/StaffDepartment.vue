@@ -4,7 +4,7 @@
 		:items="staffDepartmentOptions"
 		value-attribute="value"
 		:disabled="disabled"
-		:placeholder="$t('components.crmUserForm.staffDepartment')"
+		:placeholder="t('components.crmUserForm.staffDepartment')"
 	/>
 </template>
 

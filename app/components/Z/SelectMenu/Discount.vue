@@ -6,12 +6,12 @@
 		value-key="code"
 		label-key="searchText"
 		:search-input="{
-			placeholder: $t('components.selectMenu.searchDiscount'),
+			placeholder: t('components.selectMenu.searchDiscount'),
 			icon: 'i-lucide-search',
 		}"
 		size="md"
 		variant="formTrigger"
-		:placeholder="placeholder ?? $t('components.selectMenu.selectDiscount')"
+		:placeholder="placeholder ?? t('components.selectMenu.selectDiscount')"
 		:loading="loading"
 		class="w-full"
 	>

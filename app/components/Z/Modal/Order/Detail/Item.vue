@@ -1,6 +1,6 @@
 <template>
 	<UModal
-		:title="$t('components.zModal.updateItem')"
+		:title="t('components.zModal.updateItem')"
 		:ui="{
 			content: 'w-full sm:max-w-[60%] md:max-w-[55%] lg:max-w-[50%]',
 		}"
@@ -23,8 +23,8 @@
 				<!-- *********************** General Info *********************** -->
 
 				<div class="flex-jend gap-4">
-					<UButton color="neutral" variant="ghost" @click="onCancel">{{ $t('common.cancel') }}</UButton>
-					<UButton color="primary" variant="solid" :loading="is_loading" :disabled="is_loading" type="submit">{{ $t('components.zModal.update') }}</UButton>
+					<UButton color="neutral" variant="ghost" @click="onCancel">{{ t('common.cancel') }}</UButton>
+					<UButton color="primary" variant="solid" :loading="is_loading" :disabled="is_loading" type="submit">{{ t('components.zModal.update') }}</UButton>
 				</div>
 			</UForm>
 		</template>

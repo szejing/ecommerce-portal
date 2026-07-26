@@ -2,27 +2,27 @@
 	<div class="w-full">
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 			<p v-if="customer?.customer_no" class="customer-detail-item">
-				<span>{{ $t('components.orderDetail.customerNo') }}</span>
+				<span>{{ t('components.orderDetail.customerNo') }}</span>
 				<span>{{ customer?.customer_no }}</span>
 			</p>
 			<p v-if="customer?.name" class="customer-detail-item">
-				<span>{{ $t('common.name') }}</span>
+				<span>{{ t('common.name') }}</span>
 				<span>{{ customer?.name }}</span>
 			</p>
 			<p v-if="customer?.email_address" class="customer-detail-item">
-				<span>{{ $t('components.orderDetail.emailAddress') }}</span>
+				<span>{{ t('components.orderDetail.emailAddress') }}</span>
 				<span>{{ customer?.email_address }}</span>
 			</p>
 			<p v-if="customer?.phone_no" class="customer-detail-item">
-				<span>{{ $t('components.orderDetail.phoneNo') }}</span>
+				<span>{{ t('components.orderDetail.phoneNo') }}</span>
 				<span>{{ customer?.phone_no }}</span>
 			</p>
 			<p v-if="customer?.ref_no1" class="customer-detail-item">
-				<span>{{ $t('components.orderDetail.refNo1') }}</span>
+				<span>{{ t('components.orderDetail.refNo1') }}</span>
 				<span>{{ customer?.ref_no1 }}</span>
 			</p>
 			<p v-if="customer?.ref_no2" class="customer-detail-item">
-				<span>{{ $t('components.orderDetail.refNo2') }}</span>
+				<span>{{ t('components.orderDetail.refNo2') }}</span>
 				<span>{{ customer?.ref_no2 }}</span>
 			</p>
 		</div>
@@ -30,7 +30,7 @@
 			<div v-if="hasAddressValue(customer?.shipping_address)" class="flex flex-col gap-4">
 				<div class="flex flex-row flex-nowrap items-center justify-between gap-2 min-w-0">
 					<p class="customer-detail-item min-w-0 flex-1 m-0">
-						<span>{{ $t('components.orderDetail.shippingAddress') }}</span>
+						<span>{{ t('components.orderDetail.shippingAddress') }}</span>
 						<span class="hidden" aria-hidden="true"></span>
 					</p>
 					<div class="flex shrink-0 items-center gap-1">
@@ -40,19 +40,15 @@
 							size="sm"
 							square
 							icon="i-heroicons-clipboard-document"
-							:aria-label="$t('components.orderDetail.copyShippingAddress')"
+							:aria-label="t('components.orderDetail.copyShippingAddress')"
 							@click="copyShippingAddress"
 						/>
 					</div>
 				</div>
 				<component
 					:is="shippingMapsHref ? 'a' : 'div'"
-					v-bind="
-						shippingMapsHref
-							? { href: shippingMapsHref, target: '_blank', rel: 'noopener noreferrer' }
-							: {}
-					"
-					:aria-label="shippingMapsHref ? $t('components.orderDetail.openShippingDirections') : undefined"
+					v-bind="shippingMapsHref ? { href: shippingMapsHref, target: '_blank', rel: 'noopener noreferrer' } : {}"
+					:aria-label="shippingMapsHref ? t('components.orderDetail.openShippingDirections') : undefined"
 					:class="
 						[
 							'block rounded-lg border border-primary/20 bg-primary/5 px-3 py-3 text-sm text-neutral-600 transition-colors dark:border-primary/30 dark:bg-primary/10 dark:text-neutral-300 space-y-0.5 [&_p]:m-0',
@@ -66,7 +62,7 @@
 			</div>
 
 			<div v-if="hasAddressValue(customer?.billing_address)" class="flex flex-col gap-4">
-				<h3>{{ $t('components.orderDetail.billingAddress') }}</h3>
+				<h3>{{ t('components.orderDetail.billingAddress') }}</h3>
 				<div class="text-neutral-400">
 					<p v-if="customer?.billing_address?.address1">{{ customer?.billing_address?.address1 }}</p>
 					<p v-if="customer?.billing_address?.address2">{{ customer?.billing_address?.address2 }}</p>

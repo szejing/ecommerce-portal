@@ -4,7 +4,7 @@
 		:items="items"
 		value-key="value"
 		label-key="label"
-		:placeholder="$t('pages.customerInsights.selectTrait')"
+		:placeholder="t('pages.customerInsights.selectTrait')"
 		variant="formTrigger"
 	/>
 </template>

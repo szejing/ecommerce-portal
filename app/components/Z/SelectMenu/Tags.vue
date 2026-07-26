@@ -12,7 +12,7 @@
 		size="md"
 		multiple
 		label-key="value"
-		:placeholder="$t('components.selectMenu.selectTags')"
+		:placeholder="t('components.selectMenu.selectTags')"
 		variant="formTrigger"
 		:loading="tagStore.loading"
 		@update:open="onOpen"
@@ -32,11 +32,11 @@
 					/>
 				</div>
 			</div>
-			<span v-else class="text-neutral-400 text-sm">{{ $t('components.selectMenu.selectTags') }}</span>
+			<span v-else class="text-neutral-400 text-sm">{{ t('components.selectMenu.selectTags') }}</span>
 		</template>
 
 		<template #empty>
-			<UButton color="success" variant="ghost" @click="createTag">{{ $t('components.selectMenu.createLabel', { term: searchTerm }) }}</UButton>
+			<UButton color="success" variant="ghost" @click="createTag">{{ t('components.selectMenu.createLabel', { term: searchTerm }) }}</UButton>
 		</template>
 	</USelectMenu>
 </template>
@@ -44,6 +44,9 @@
 <script lang="ts" setup>
 import { useInfiniteScroll } from '@vueuse/core';
 import type { Tag } from '~/utils/types/tag';
+import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 const searchTerm = ref('');
 const tagStore = useProductTagStore();

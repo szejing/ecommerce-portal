@@ -6,6 +6,8 @@ import type { Courier } from '~/utils/types/courier';
 import type { FulfillmentBatch } from '~/utils/types/order-fulfillment-shipping';
 import type { OrderHistory } from '~/utils/types/order-history';
 
+const { t } = useI18n();
+
 const props = withDefaults(defineProps<{
 	order: OrderHistory;
 	ownerType?: 'order' | 'sale';
@@ -54,10 +56,10 @@ const runAction = async (action: FulfillmentAction, batch: FulfillmentBatch) => 
 	<section v-if="batches.length" class="space-y-3" aria-labelledby="fulfillment-shipping-heading">
 		<div v-if="batches.length > 1" class="flex items-center justify-between gap-3">
 			<h2 id="fulfillment-shipping-heading" class="text-base font-semibold text-default">
-				{{ $t('components.fulfillment.batchesTitle') }}
+				{{ t('components.fulfillment.batchesTitle') }}
 			</h2>
 			<UBadge data-testid="fulfillment-batch-count" color="neutral" variant="subtle">
-				{{ $t('components.fulfillment.batchCount', { count: batches.length }) }}
+				{{ t('components.fulfillment.batchCount', { count: batches.length }) }}
 			</UBadge>
 		</div>
 

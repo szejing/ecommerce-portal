@@ -115,8 +115,7 @@ const props = defineProps({
 });
 
 const productTypeStore = useProductTypeStore();
-const transformProductToUpdate = (product: Product): ProductUpdate =>
-	buildProductUpdate(product, productTypeStore.prod_types);
+const transformProductToUpdate = (product: Product): ProductUpdate => buildProductUpdate(product, productTypeStore.prod_types);
 
 // Categories, tags, brands state (for UI binding) - declared before watch
 const categories = ref<Category[]>(props.product.categories ?? []);

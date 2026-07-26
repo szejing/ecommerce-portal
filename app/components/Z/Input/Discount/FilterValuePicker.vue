@@ -22,10 +22,10 @@
 					{{ val }}
 				</UBadge>
 				<span v-if="hasCondition && currentSelectedValues.length === 0" class="px-1 py-0.5 text-muted">
-					{{ $t('common.notSet') }}
+					{{ t('common.notSet') }}
 				</span>
 				<span v-if="!hasCondition" class="px-1 py-0.5 text-muted">
-					{{ $t('components.discountForm.selectFilterConditionFirst') }}
+					{{ t('components.discountForm.selectFilterConditionFirst') }}
 				</span>
 			</div>
 			<UButton
@@ -34,7 +34,7 @@
 				size="xs"
 				class="shrink-0"
 				icon="i-lucide-search"
-				:label="$t('components.discountForm.openFilterValuePicker')"
+				:label="t('components.discountForm.openFilterValuePicker')"
 				:disabled="!hasCondition"
 				@click.stop="openPicker"
 			/>
@@ -49,7 +49,7 @@
 				color="neutral"
 				variant="ghost"
 				size="xs"
-				:label="$t('components.filter.clear')"
+				:label="t('components.filter.clear')"
 				@click="clearSelection"
 			/>
 		</div>
@@ -57,7 +57,7 @@
 
 	<UModal
 		v-model:open="pickerOpen"
-		:title="$t('components.discountForm.filterValuePickerTitle', { entity: entityLabel })"
+		:title="t('components.discountForm.filterValuePickerTitle', { entity: entityLabel })"
 		:description="pickerModalDescription"
 		:ui="pickerModalUi"
 	>
@@ -65,7 +65,7 @@
 			<!-- Nested category tree (same pattern as Z/Modal/Category/Picker.vue) -->
 			<div v-if="isCategoryTreeMode" class="space-y-4">
 				<div class="flex items-center justify-between gap-3">
-					<UInput v-model="categorySearchTerm" :placeholder="$t('components.zModal.categoryPicker.searchPlaceholder')" class="max-w-xs" size="md">
+					<UInput v-model="categorySearchTerm" :placeholder="t('components.zModal.categoryPicker.searchPlaceholder')" class="max-w-xs" size="md">
 						<template #leading>
 							<UIcon :name="ICONS.SEARCH_ROUNDED" class="size-4 text-muted" />
 						</template>
@@ -82,7 +82,7 @@
 							variant="ghost"
 							size="xs"
 							icon="i-lucide-x"
-							:aria-label="$t('common.delete')"
+							:aria-label="t('common.delete')"
 							class="shrink-0"
 							@click="removeDraftCategoryCode(code)"
 						/>
@@ -124,7 +124,7 @@
 								</li>
 							</ul>
 							<div v-else class="flex h-full min-h-[200px] items-center justify-center px-3 text-center text-sm text-muted">
-								{{ selectedLevel1 ? $t('components.zModal.categoryPicker.noSubcategories') : $t('components.zModal.categoryPicker.selectParent') }}
+								{{ selectedLevel1 ? t('components.zModal.categoryPicker.noSubcategories') : t('components.zModal.categoryPicker.selectParent') }}
 							</div>
 						</div>
 
@@ -141,19 +141,19 @@
 								</li>
 							</ul>
 							<div v-else class="flex h-full min-h-[200px] items-center justify-center px-3 text-center text-sm text-muted">
-								{{ selectedLevel2 ? $t('components.zModal.categoryPicker.noSubcategories') : $t('components.zModal.categoryPicker.selectSubcategory') }}
+								{{ selectedLevel2 ? t('components.zModal.categoryPicker.noSubcategories') : t('components.zModal.categoryPicker.selectSubcategory') }}
 							</div>
 						</div>
 					</div>
 
 					<div v-if="selectedCategoryPath" class="flex flex-wrap items-center gap-2 text-sm">
-						<span class="text-muted">{{ $t('components.zModal.categoryPicker.currentlySelected') }}:</span>
+						<span class="text-muted">{{ t('components.zModal.categoryPicker.currentlySelected') }}:</span>
 						<span class="font-medium text-highlighted">{{ selectedCategoryPath }}</span>
 					</div>
 
 					<div class="flex justify-end">
 						<UButton color="primary" :disabled="!canAddCurrentCategory" @click="addCurrentCategoryToDraft">
-							{{ $t('components.discountForm.filterValueAddCategorySelection') }}
+							{{ t('components.discountForm.filterValueAddCategorySelection') }}
 						</UButton>
 					</div>
 				</template>
@@ -168,19 +168,19 @@
 						</template>
 					</UInput>
 
-					<USelectMenu v-model="sortField" value-key="value" :items="sortFieldItems" :search-input="{ placeholder: $t('components.discountForm.sortBy') }" />
+					<USelectMenu v-model="sortField" value-key="value" :items="sortFieldItems" :search-input="{ placeholder: t('components.discountForm.sortBy') }" />
 
 					<USelectMenu
 						v-model="sortDirection"
 						value-key="value"
 						:items="sortDirectionItems"
-						:search-input="{ placeholder: $t('components.discountForm.sortDirection') }"
+						:search-input="{ placeholder: t('components.discountForm.sortDirection') }"
 					/>
 				</div>
 
 				<div class="overflow-hidden rounded-lg border border-default">
 					<div class="grid grid-cols-[auto_minmax(0,1fr)] gap-3 border-b border-default bg-muted/30 px-4 py-2 text-xs font-medium uppercase text-muted">
-						<span>{{ $t('common.select') }}</span>
+						<span>{{ t('common.select') }}</span>
 						<span>{{ entityLabel }}</span>
 					</div>
 
@@ -189,7 +189,7 @@
 					</div>
 
 					<div v-else-if="rows.length === 0" class="px-4 py-8 text-center text-sm text-muted">
-						{{ $t('components.discountForm.filterValuePickerEmpty') }}
+						{{ t('components.discountForm.filterValuePickerEmpty') }}
 					</div>
 
 					<div v-else class="max-h-80 divide-y divide-default overflow-y-auto">
@@ -205,7 +205,7 @@
 
 				<div class="flex flex-wrap items-center justify-between gap-3">
 					<p class="text-xs text-muted">
-						{{ $t('components.discountForm.filterValuePickerTotal', { total }) }}
+						{{ t('components.discountForm.filterValuePickerTotal', { total }) }}
 					</p>
 					<div class="flex items-center gap-3">
 						<USelectMenu v-model="pageSize" value-key="value" :items="pageSizeItems" @update:model-value="page = 1" />
@@ -218,11 +218,11 @@
 		<template #footer>
 			<div class="w-full flex items-center justify-between gap-3">
 				<p class="text-xs text-muted">
-					{{ $t('components.discountForm.filterValuePickerSelected', { count: draftSelectedValues.length }) }}
+					{{ t('components.discountForm.filterValuePickerSelected', { count: draftSelectedValues.length }) }}
 				</p>
 				<div class="flex items-center gap-2">
-					<UButton color="neutral" variant="soft" :label="$t('common.cancel')" @click="pickerOpen = false" />
-					<UButton color="primary" :label="$t('common.apply')" @click="applySelection" />
+					<UButton color="neutral" variant="soft" :label="t('common.cancel')" @click="pickerOpen = false" />
+					<UButton color="primary" :label="t('common.apply')" @click="applySelection" />
 				</div>
 			</div>
 		</template>

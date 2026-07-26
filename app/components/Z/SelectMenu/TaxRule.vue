@@ -10,7 +10,7 @@
 		size="md"
 		label-key="code"
 		description-key="description"
-		:placeholder="$t('components.selectMenu.selectTaxRule')"
+		:placeholder="t('components.selectMenu.selectTaxRule')"
 	>
 		<template #default>
 			<div v-if="tax_rule" class="flex items-center">
@@ -25,13 +25,16 @@
 					/>
 				</div>
 			</div>
-			<span v-else class="text-neutral-400 text-sm">{{ $t('components.selectMenu.selectTaxRule') }}</span>
+			<span v-else class="text-neutral-400 text-sm">{{ t('components.selectMenu.selectTaxRule') }}</span>
 		</template>
 	</USelectMenu>
 </template>
 
 <script lang="ts" setup>
 import type { TaxRule } from '~/utils/types/tax-rule';
+import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 const searchTerm = ref('');
 const taxRuleStore = useTaxRuleStore();

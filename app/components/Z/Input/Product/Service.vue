@@ -5,7 +5,7 @@
 			<UCheckbox
 				v-model="prodMetadata.requires_booking"
 				name="requires_booking"
-				:label="$t('components.zInput.requiresBooking')"
+				:label="t('components.zInput.requiresBooking')"
 				color="success"
 				@update:model-value="updateRequiresBooking"
 			/>
@@ -14,8 +14,8 @@
 		<!-- Duration -->
 		<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
 			<div class="min-w-0">
-				<label class="text-sm font-medium text-default">{{ $t('components.zInput.duration') }}</label>
-				<p class="text-sm text-muted">{{ $t('components.zInput.durationDesc') }}</p>
+				<label class="text-sm font-medium text-default">{{ t('components.zInput.duration') }}</label>
+				<p class="text-sm text-muted">{{ t('components.zInput.durationDesc') }}</p>
 			</div>
 			<div class="w-full sm:w-40 shrink-0">
 				<ZSelectMenuDuration :duration="prodMetadata.duration" @update:duration="updateDuration" />
@@ -25,9 +25,9 @@
 		<!-- Off days -->
 		<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
 			<div class="min-w-0">
-				<label class="text-sm font-medium text-default">{{ $t('components.zInput.offDay') }}</label>
-				<p class="text-sm text-muted">{{ $t('components.zInput.offDayDesc') }}</p>
-				<p class="text-xs text-muted mt-0.5">{{ $t('components.zInput.offDayNote') }}</p>
+				<label class="text-sm font-medium text-default">{{ t('components.zInput.offDay') }}</label>
+				<p class="text-sm text-muted">{{ t('components.zInput.offDayDesc') }}</p>
+				<p class="text-xs text-muted mt-0.5">{{ t('components.zInput.offDayNote') }}</p>
 			</div>
 			<div class="w-full sm:w-48 shrink-0">
 				<ZSelectMenuDays :days="offDayArray" @update:days="updateOffDay" />
@@ -36,13 +36,13 @@
 
 		<!-- Operating hours -->
 		<div class="flex flex-col gap-2">
-			<label class="text-sm font-medium text-default">{{ $t('components.zInput.operatingHours') }}</label>
-			<p class="text-sm text-muted">{{ $t('components.zInput.operatingHoursDesc') }}</p>
+			<label class="text-sm font-medium text-default">{{ t('components.zInput.operatingHours') }}</label>
+			<p class="text-sm text-muted">{{ t('components.zInput.operatingHoursDesc') }}</p>
 			<div class="flex items-start gap-3">
 				<UCheckbox
 					v-model="followOperationHour"
 					name="follow_operation_hour"
-					:label="$t('components.zInput.followOperationHour')"
+					:label="t('components.zInput.followOperationHour')"
 					color="primary"
 					@update:model-value="updateFollowOperationHour"
 				/>
@@ -52,16 +52,16 @@
 					<span class="text-sm">{{ merchantStartTime || '–' }}</span>
 					<span class="hidden sm:inline shrink-0" aria-hidden="true">–</span>
 					<span class="text-sm">{{ merchantEndTime || '–' }}</span>
-					<span v-if="!merchantStartTime && !merchantEndTime" class="text-sm">{{ $t('components.zInput.merchantHoursNotSet') }}</span>
+					<span v-if="!merchantStartTime && !merchantEndTime" class="text-sm">{{ t('components.zInput.merchantHoursNotSet') }}</span>
 				</div>
 			</template>
 			<div v-else class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2">
 				<div class="w-full sm:w-40 shrink-0">
-					<ZSelectMenuTime :title="$t('components.zInput.selectTime')" :time="prodMetadata.start_time" type="start" @update:time="updateStartTime" />
+					<ZSelectMenuTime :title="t('components.zInput.selectTime')" :time="prodMetadata.start_time" type="start" @update:time="updateStartTime" />
 				</div>
 				<span class="hidden sm:inline text-muted shrink-0" aria-hidden="true">–</span>
 				<div class="w-full sm:w-40 shrink-0">
-					<ZSelectMenuTime :title="$t('components.zInput.selectTime')" :time="prodMetadata.end_time" type="end" @update:time="updateEndTime" />
+					<ZSelectMenuTime :title="t('components.zInput.selectTime')" :time="prodMetadata.end_time" type="end" @update:time="updateEndTime" />
 				</div>
 			</div>
 		</div>
@@ -71,6 +71,8 @@
 <script lang="ts" setup>
 import type { ServiceMetadata } from 'yeppi-common';
 import { GROUP_CODE, MERCHANT } from 'yeppi-common';
+
+const { t } = useI18n();
 
 type ServiceMetadataExtended = ServiceMetadata & { follow_operation_hour?: boolean };
 

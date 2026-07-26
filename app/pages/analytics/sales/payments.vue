@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="analytics-sales-payments" :title="$t('pages.analyticsSalesPayments')" back-to="/analytics/sales">
+	<ZPagePanel id="analytics-sales-payments" :title="t('pages.analyticsSalesPayments')" back-to="/analytics/sales">
 		<template #toolbar>
 			<ZSectionFilterSaleSummPayments />
 		</template>
@@ -21,8 +21,8 @@
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.REPORT_SALES" class="w-12 h-12 text-gray-400" />
-							<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noSalesPaymentSummaryFound') }}</p>
-							<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noSalesPaymentSummaryFound') }}</p>
+							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
 				</UTable>
@@ -41,7 +41,7 @@
 					<ZAnalyticsItemDateSummary
 						:date="group.date"
 						:primary-count="group.total_txns"
-						:primary-stat-label="$t('table.totalTransactions')"
+						:primary-stat-label="t('table.totalTransactions')"
 						:active-qty="group.active_qty"
 						:voided-qty="group.voided_qty"
 						:net-amt="group.net_amt"
@@ -64,6 +64,7 @@ import { OrderStatus } from 'yeppi-common';
 import { getSummPaymentColumns, SUMM_PAYMENT_COLUMN_LABELS } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import { options_page_size } from '~/utils/options';
+import { ICONS } from '~/utils/icons';
 
 const { t } = useI18n();
 const summ_payment_columns = computed(() => getSummPaymentColumns(t));

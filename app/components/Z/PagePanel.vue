@@ -10,7 +10,7 @@
 						<slot v-if="$slots['navbar-right']" name="navbar-right" />
 
 						<UPopover v-model:open="notificationPopoverOpen" :content="{ align: 'end' }">
-							<UButton class="notification-btn" color="secondary" variant="soft" square :aria-label="$t('notifications.open')" @click="refreshNotifications">
+							<UButton class="notification-btn" color="secondary" variant="soft" square :aria-label="t('notifications.open')" @click="refreshNotifications">
 								<UIcon :name="ICONS.BELL" class="size-5" />
 								<!-- ClientOnly: unreadCount is filled by client-only 02.init-app before hydrate; SSR always has 0 -->
 								<ClientOnly>
@@ -24,8 +24,8 @@
 								<div class="notification-panel">
 									<div class="notification-header">
 										<div>
-											<p class="notification-kicker">{{ $t('notifications.actionCenter') }}</p>
-											<h3>{{ $t('notifications.title') }}</h3>
+											<p class="notification-kicker">{{ t('notifications.actionCenter') }}</p>
+											<h3>{{ t('notifications.title') }}</h3>
 										</div>
 										<UButton
 											color="neutral"
@@ -53,7 +53,7 @@
 									</div>
 
 									<UButton class="notification-view-all" color="neutral" variant="ghost" size="sm" block @click="viewAllNotifications">
-										{{ $t('notifications.viewAll') }}
+										{{ t('notifications.viewAll') }}
 									</UButton>
 								</div>
 							</template>
@@ -82,6 +82,9 @@
 <script lang="ts" setup>
 import type { NotificationType } from 'yeppi-common';
 import type { NotificationItem } from '~/utils/types/notification';
+import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 withDefaults(
 	defineProps<{

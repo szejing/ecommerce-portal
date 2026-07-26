@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="analytics-orders-items" :title="$t('pages.analyticsOrdersItems')" back-to="/analytics/orders">
+	<ZPagePanel id="analytics-orders-items" :title="t('pages.analyticsOrdersItems')" back-to="/analytics/orders">
 		<template #toolbar>
 			<ZSectionFilterOrderSummItems />
 		</template>
@@ -21,8 +21,8 @@
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.REPORT_ORDER" class="w-12 h-12 text-gray-400" />
-							<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noOrderItemSummaryFound') }}</p>
-							<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noOrderItemSummaryFound') }}</p>
+							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
 				</UTable>
@@ -41,7 +41,7 @@
 					<ZAnalyticsItemDateSummary
 						:date="group.date"
 						:primary-count="group.total_orders"
-						:primary-stat-label="$t('table.totalOrders')"
+						:primary-stat-label="t('table.totalOrders')"
 						:active-qty="group.active_qty"
 						:voided-qty="group.voided_qty"
 						:net-amt="group.net_amt"
@@ -65,6 +65,7 @@ import { getSummItemColumns, getSummItemColumnLabels } from '~/utils/table-colum
 import type { SummOrderItem } from '~/utils/types/summ-orders';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import { options_page_size } from '~/utils/options';
+import { ICONS } from '~/utils/icons';
 
 const route = useRoute();
 const { t } = useI18n();

@@ -1,11 +1,11 @@
 <template>
-	<ZPagePanel id="affiliates" :title="$t('nav.affiliates')">
+	<ZPagePanel id="affiliates" :title="t('nav.affiliates')">
 		<template #navbar-right>
 			<div class="flex items-center gap-2">
 				<UButton variant="outline" color="neutral" @click="navigateTo('/marketing/affiliates/tiers')">
-					{{ $t('affiliate.tiers') }}
+					{{ t('affiliate.tiers') }}
 				</UButton>
-				<ZCreateButton :label="$t('affiliate.addAffiliate')" @click="createAffiliateOpen = true" />
+				<ZCreateButton :label="t('affiliate.addAffiliate')" @click="createAffiliateOpen = true" />
 			</div>
 		</template>
 		<template #toolbar>
@@ -35,8 +35,8 @@
 				<template #empty>
 					<div class="flex flex-col items-center justify-center py-12 gap-3">
 						<UIcon name="i-heroicons-user-group" class="w-12 h-12 text-gray-400" />
-						<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noAffiliatesFound') }}</p>
-						<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingSearch') }}</p>
+						<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noAffiliatesFound') }}</p>
+						<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingSearch') }}</p>
 					</div>
 				</template>
 			</UTable>

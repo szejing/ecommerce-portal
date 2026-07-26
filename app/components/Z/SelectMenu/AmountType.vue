@@ -2,7 +2,7 @@
 	<USelectMenu v-model="amountType" :items="items" value-key="value" size="md" :ui="{ base: 'min-w-[200px]' }">
 		<template #default>
 			<span v-if="amountType">{{ selectedLabel }}</span>
-			<span v-else class="text-neutral-400">{{ $t('components.selectMenu.selectAmountType') }}</span>
+			<span v-else class="text-neutral-400">{{ t('components.selectMenu.selectAmountType') }}</span>
 		</template>
 
 		<template #item="{ item }">

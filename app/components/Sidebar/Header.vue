@@ -1,19 +1,14 @@
 <template>
-	<div class="cursor-pointer" @click="navigateTo('/settings/store-profile')">
+	<div class="cursor-pointer" @click="goToStoreProfile">
 		<ClientOnly>
 			<UUser :name="collapsed ? undefined : merchantId" :description="collapsed ? undefined : merchantName">
 				<template #avatar>
-					<div
+					<ZImage
 						v-if="thumbnail"
-						class="relative size-8 shrink-0 overflow-hidden rounded-sm bg-neutral-100">
-						<div
-							class="absolute inset-0 scale-110 bg-cover bg-center opacity-60 blur-lg"
-							:style="{ backgroundImage: `url(${thumbnail})` }" />
-						<img
-							:src="thumbnail"
-							:alt="merchantName"
-							class="relative z-10 block h-full w-full object-contain" />
-					</div>
+						:src="thumbnail"
+						:alt="merchantName"
+						:width="32"
+						:height="32" />
 					<div v-else class="flex size-8 shrink-0 items-center justify-center rounded-sm bg-neutral-100">
 						<UIcon name="i-heroicons-building-storefront" class="size-4 shrink-0 text-neutral-400" />
 					</div>
@@ -40,6 +35,8 @@ const merchantInfoStore = useMerchantInfoStore();
 defineProps<{
 	collapsed?: boolean;
 }>();
+
+const goToStoreProfile = () => navigateTo('/settings/store-profile');
 
 const merchantName = computed(() => {
 	return merchantInfoStore.getMerchantInfo(GROUP_CODE.INFO, MERCHANT.NAME)?.getString() ?? '';

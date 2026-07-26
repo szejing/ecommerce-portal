@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="analytics-orders-summary" :title="$t('pages.analyticsOrdersSummary')" back-to="/analytics/orders">
+	<ZPagePanel id="analytics-orders-summary" :title="t('pages.analyticsOrdersSummary')" back-to="/analytics/orders">
 		<template #toolbar>
 			<ZSectionFilterOrderSumm />
 		</template>
@@ -32,8 +32,8 @@
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.REPORT_ORDER" class="w-12 h-12 text-gray-400" />
-							<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noOrderSummaryFound') }}</p>
-							<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noOrderSummaryFound') }}</p>
+							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
 				</UTable>
@@ -52,6 +52,7 @@ import { options_page_size } from '~/utils/options';
 import { mapSummBillsToTableRows } from '~/utils/summ-bill-table-rows';
 import { getSummColumns, getSummColumnLabels } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
+import { ICONS } from '~/utils/icons';
 
 const route = useRoute();
 const { t } = useI18n();

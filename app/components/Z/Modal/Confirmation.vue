@@ -21,13 +21,13 @@
 
 		<template #footer>
 			<div v-if="action == 'delete'" class="flex justify-between gap-4 w-full">
-				<UButton color="neutral" variant="outline" @click="onCancel">{{ $t('common.cancel') }}</UButton>
-				<UButton color="error" variant="ghost" class="opacity-50 hover:opacity-100" :loading="loading" @click="onConfirm">{{ $t('modal.confirm') }}</UButton>
+				<UButton color="neutral" variant="outline" @click="onCancel">{{ t('common.cancel') }}</UButton>
+				<UButton color="error" variant="ghost" class="opacity-50 hover:opacity-100" :loading="loading" @click="onConfirm">{{ t('modal.confirm') }}</UButton>
 			</div>
 
 			<div v-else class="flex justify-between gap-4 w-full">
-				<UButton color="neutral" variant="outline" @click="onCancel">{{ $t('common.cancel') }}</UButton>
-				<UButton color="success" :loading="loading" @click="onConfirm">{{ $t('modal.confirm') }}</UButton>
+				<UButton color="neutral" variant="outline" @click="onCancel">{{ t('common.cancel') }}</UButton>
+				<UButton color="success" :loading="loading" @click="onConfirm">{{ t('modal.confirm') }}</UButton>
 			</div>
 		</template>
 	</UModal>

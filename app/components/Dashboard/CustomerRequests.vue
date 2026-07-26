@@ -11,7 +11,7 @@
 				<div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
 					<div class="flex items-center gap-2">
 						<UIcon name="i-heroicons-exclamation-triangle" class="size-5 text-warning" />
-						<h1 class="text-lg font-bold">{{ $t('pages.customerRequests') }}</h1>
+						<h1 class="text-lg font-bold">{{ t('pages.customerRequests') }}</h1>
 					</div>
 					<UBadge v-if="requests.length > 0" color="warning" variant="subtle">
 						{{ requests.length }}
@@ -21,7 +21,7 @@
 
 			<div v-if="loading" class="flex items-center gap-3 px-4 py-5 text-sm text-muted sm:px-6">
 				<UIcon name="i-heroicons-arrow-path" class="size-4 animate-spin" />
-				<span>{{ $t('common.loading') }}</span>
+				<span>{{ t('common.loading') }}</span>
 			</div>
 
 			<div v-else class="divide-y divide-default">
@@ -58,7 +58,7 @@
 
 					<div class="flex items-center justify-between gap-3 sm:justify-end">
 						<div class="text-left sm:text-right">
-							<p class="text-xs text-muted">{{ $t('pages.requestedAt') }}</p>
+							<p class="text-xs text-muted">{{ t('pages.requestedAt') }}</p>
 							<p class="text-sm font-medium text-default">{{ formatRequestedAt(request.requested_at) }}</p>
 						</div>
 						<UButton
@@ -66,7 +66,7 @@
 							variant="soft"
 							size="sm"
 							icon="i-heroicons-arrow-right"
-							:aria-label="$t('pages.viewCustomerRequest')"
+							:aria-label="t('pages.viewCustomerRequest')"
 							@click.stop="openRequest(order, request)"
 						/>
 					</div>

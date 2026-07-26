@@ -6,7 +6,7 @@
 					<div class="flex sm:hidden w-full">
 						<NuxtImg class="my-2 mx-auto w-full cursor-pointer rounded-sm" src="/logo/logo.png" alt="logo" />
 					</div>
-					<h1 class="text-center">{{ $t('auth.loginTitle') }}</h1>
+					<h1 class="text-center">{{ t('auth.loginTitle') }}</h1>
 				</div>
 			</template>
 
@@ -16,19 +16,19 @@
 					color="error"
 					variant="soft"
 					icon="i-lucide-wifi-off"
-					:title="$t('auth.serverUnreachableTitle')"
-					:description="$t('auth.serverUnreachableDescription')"
+					:title="t('auth.serverUnreachableTitle')"
+					:description="t('auth.serverUnreachableDescription')"
 				/>
 
-				<UFormField :label="$t('auth.merchantId')" name="section_merchant_id" required>
+				<UFormField :label="t('auth.merchantId')" name="section_merchant_id" required>
 					<UInput :model-value="state.merchant_id" autocomplete="section-login organization" @update:model-value="setMerchantId" />
 				</UFormField>
 
-				<UFormField :label="$t('auth.email')" name="email_address" required>
+				<UFormField :label="t('auth.email')" name="email_address" required>
 					<UInput v-model="state.email_address" autocomplete="section-login email" />
 				</UFormField>
 
-				<UFormField :label="$t('auth.password')" name="password" required>
+				<UFormField :label="t('auth.password')" name="password" required>
 					<UInput v-model="state.password" :type="state.show ? 'text' : 'password'">
 						<template v-if="state.password?.length" #trailing>
 							<UButton
@@ -37,7 +37,7 @@
 								variant="link"
 								size="sm"
 								:icon="state.show ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-								:aria-label="state.show ? $t('common.hidePassword') : $t('common.showPassword')"
+								:aria-label="state.show ? t('common.hidePassword') : t('common.showPassword')"
 								:aria-pressed="state.show"
 								aria-controls="password"
 								@click="togglePasswordVisibility"
@@ -49,8 +49,8 @@
 
 			<template #footer>
 				<div class="flex flex-col gap-2">
-					<UButton block size="md" color="primary" variant="outline" type="submit" :loading="loading">{{ $t('common.submit') }}</UButton>
-					<NuxtLink to="/forgot-password" class="text-center text-sm text-muted hover:underline">{{ $t('auth.forgotPassword') }}</NuxtLink>
+					<UButton block size="md" color="primary" variant="outline" type="submit" :loading="loading">{{ t('common.submit') }}</UButton>
+					<NuxtLink to="/forgot-password" class="text-center text-sm text-muted hover:underline">{{ t('auth.forgotPassword') }}</NuxtLink>
 				</div>
 			</template>
 		</UCard>

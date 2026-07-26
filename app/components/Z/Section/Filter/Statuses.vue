@@ -1,7 +1,7 @@
 <template>
 	<div class="flex flex-col gap-1.5 min-w-0" :class="wrapperClass">
 		<label v-if="showLabel" class="text-xs font-medium text-gray-700 dark:text-gray-300">
-			{{ label || $t('components.filter.status') }}
+			{{ label || t('components.filter.status') }}
 		</label>
 		<USelectMenu
 			v-model="selected"
@@ -9,7 +9,7 @@
 			:items="items"
 			value-key="value"
 			selected-icon="i-lucide-check"
-			:placeholder="placeholder || $t('components.selectMenu.selectStatus')"
+			:placeholder="placeholder || t('components.selectMenu.selectStatus')"
 			:disabled="disabled"
 			color="neutral"
 			variant="outline"
@@ -22,10 +22,10 @@
 		>
 			<template #default>
 				<span v-if="selectedLabels.length === 0" class="text-neutral-400">
-					{{ placeholder || $t('components.selectMenu.selectStatus') }}
+					{{ placeholder || t('components.selectMenu.selectStatus') }}
 				</span>
 				<UBadge v-else-if="isAllSelected" color="neutral" variant="subtle" class="truncate">
-					{{ $t('options.all') }}
+					{{ t('options.all') }}
 				</UBadge>
 				<template v-else-if="selectedLabels.length === 1">
 					<UBadge
@@ -39,7 +39,7 @@
 					<span v-else class="text-sm text-default truncate">{{ selectedLabels[0]!.label }}</span>
 				</template>
 				<span v-else class="text-sm text-default truncate">
-					{{ $t('components.discountForm.filterValuePickerSelected', { count: selectedLabels.length }) }}
+					{{ t('components.discountForm.filterValuePickerSelected', { count: selectedLabels.length }) }}
 				</span>
 			</template>
 
@@ -61,6 +61,8 @@
 
 <script lang="ts" setup>
 import type { UiBadgeColor } from 'yeppi-common';
+
+const { t } = useI18n();
 
 export type StatusFilterItem = {
 	label: string;

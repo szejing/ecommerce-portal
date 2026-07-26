@@ -1,7 +1,7 @@
 <template>
 	<UModal
 		:default-open="true"
-		:title="$t('components.zModal.updateAppointment')"
+		:title="t('components.zModal.updateAppointment')"
 		:ui="{
 			content: 'max-w-[85%] md:max-w-[55%] ',
 		}"
@@ -10,17 +10,17 @@
 			<div class="flex flex-col gap-3 w-full">
 				<div class="flex items-center gap-2">
 					<UIcon name="i-lucide-calendar-days" class="size-5 text-main-500" aria-hidden="true" />
-					<h2 class="text-main text-lg font-semibold">{{ $t('components.zModal.appointment') }}</h2>
+					<h2 class="text-main text-lg font-semibold">{{ t('components.zModal.appointment') }}</h2>
 				</div>
 				<div class="flex flex-row flex-jbetween-icenter w-full gap-4">
 					<div class="flex flex-col gap-1">
 						<UBadge color="neutral" variant="subtle" size="lg" class="font-mono w-fit">#{{ appointment!.code }}</UBadge>
 						<template v-if="appointment!.order_no">
-							<span class="text-neutral-600 text-sm">{{ $t('components.zModal.orderNo') }} #{{ appointment!.order_no }}</span>
+							<span class="text-neutral-600 text-sm">{{ t('components.zModal.orderNo') }} #{{ appointment!.order_no }}</span>
 						</template>
 					</div>
 					<div class="flex flex-col gap-2">
-						<label class="text-neutral-500 text-sm">{{ $t('table.status') }}</label>
+						<label class="text-neutral-500 text-sm">{{ t('table.status') }}</label>
 						<ZSelectMenuAppointmentStatus v-model:status="state.appointment.status" />
 					</div>
 				</div>
@@ -31,16 +31,16 @@
 			<UForm ref="formRef" :schema="appointmentSchema" :state="state.appointment" class="space-y-5" @submit="onSubmit">
 				<!-- Service details -->
 				<div>
-					<h4 class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 sm:mb-3">{{ $t('pages.serviceDetails') }}</h4>
+					<h4 class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 sm:mb-3">{{ t('pages.serviceDetails') }}</h4>
 					<div :class="['flex gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg', appointment!.ref_no ? 'items-start' : 'items-center']">
 						<div class="p-2 sm:p-3 bg-gray-100 dark:bg-gray-700 rounded-lg shrink-0">
 							<UIcon name="i-heroicons-wrench" class="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 dark:text-gray-400" />
 						</div>
 						<div class="flex-1 min-w-0">
-							<p class="font-semibold text-gray-900 dark:text-white mb-1 wrap-break-word">{{ appointment!.appt_desc || $t('pages.noDescription') }}</p>
+							<p class="font-semibold text-gray-900 dark:text-white mb-1 wrap-break-word">{{ appointment!.appt_desc || t('pages.noDescription') }}</p>
 							<p v-if="appointment!.ref_no" class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
 								<UIcon name="i-heroicons-hashtag" class="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-								{{ $t('pages.reference') }}: {{ appointment!.ref_no }}
+								{{ t('pages.reference') }}: {{ appointment!.ref_no }}
 							</p>
 						</div>
 					</div>
@@ -48,7 +48,7 @@
 
 				<!-- Customer information -->
 				<div>
-					<h4 class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 sm:mb-3">{{ $t('components.orderDetail.customerInformation') }}</h4>
+					<h4 class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 sm:mb-3">{{ t('components.orderDetail.customerInformation') }}</h4>
 					<div class="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
 						<div class="p-2 sm:p-3 bg-primary-100 dark:bg-primary-900/20 rounded-lg shrink-0">
 							<UIcon name="i-heroicons-user" class="w-5 h-5 sm:w-6 sm:h-6 text-primary-600 dark:text-primary-400" />
@@ -67,23 +67,23 @@
 				<div class="space-y-4">
 					<h3 class="flex items-center gap-2 text-sm font-medium text-neutral-700">
 						<UIcon name="i-lucide-clock" class="size-4 text-neutral-500" aria-hidden="true" />
-						{{ $t('components.zModal.appointmentStartDate') }} / {{ $t('components.zModal.appointmentEndDate') }}
+						{{ t('components.zModal.appointmentStartDate') }} / {{ t('components.zModal.appointmentEndDate') }}
 					</h3>
 					<div class="grid gap-4 sm:grid-cols-2">
 						<div class="flex flex-col gap-2">
-							<label class="text-neutral-500 text-sm">{{ $t('components.zModal.appointmentStartDate') }}</label>
+							<label class="text-neutral-500 text-sm">{{ t('components.zModal.appointmentStartDate') }}</label>
 							<ZSelectMenuDateTime
 								v-model:date-time="state.appointment.start_date_time"
-								:placeholder="$t('components.zModal.appointmentStartDate')"
+								:placeholder="t('components.zModal.appointmentStartDate')"
 								:min-date="new Date()"
 								:max-date="new Date(new Date().setMonth(new Date().getMonth() + 2))"
 							/>
 						</div>
 						<div class="flex flex-col gap-2">
-							<label class="text-neutral-500 text-sm">{{ $t('components.zModal.appointmentEndDate') }}</label>
+							<label class="text-neutral-500 text-sm">{{ t('components.zModal.appointmentEndDate') }}</label>
 							<ZSelectMenuDateTime
 								v-model:date-time="state.appointment.end_date_time"
-								:placeholder="$t('components.zModal.appointmentEndDate')"
+								:placeholder="t('components.zModal.appointmentEndDate')"
 								:min-date="state.appointment.start_date_time ?? new Date()"
 								:max-date="new Date(new Date().setMonth(new Date().getMonth() + 2))"
 							/>
@@ -97,12 +97,12 @@
 			<div class="flex-jbetween-icenter w-full">
 				<UButton color="error" variant="ghost" size="sm" class="opacity-70 hover:opacity-100" @click="onDelete">
 					<UIcon name="i-lucide-trash-2" class="size-4" />
-					{{ $t('components.zModal.delete') }}
+					{{ t('components.zModal.delete') }}
 				</UButton>
 				<div class="flex flex-wrap items-center justify-end gap-3">
-					<UButton color="neutral" variant="soft" @click="onCancel">{{ $t('common.cancel') }}</UButton>
+					<UButton color="neutral" variant="soft" @click="onCancel">{{ t('common.cancel') }}</UButton>
 					<UButton color="primary" variant="solid" :loading="updating" @click="formRef?.submit()">
-						{{ $t('components.zModal.update') }}
+						{{ t('components.zModal.update') }}
 					</UButton>
 				</div>
 			</div>

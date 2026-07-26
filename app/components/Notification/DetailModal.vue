@@ -1,10 +1,10 @@
 <template>
-	<UModal v-model:open="open" :title="item?.title ?? $t('notifications.detailTitle')" :ui="{ content: 'w-full sm:max-w-2xl' }">
+	<UModal v-model:open="open" :title="item?.title ?? t('notifications.detailTitle')" :ui="{ content: 'w-full sm:max-w-2xl' }">
 		<template #body>
 			<div v-if="item" class="notification-detail">
 				<div class="detail-hero">
 					<div>
-						<p class="detail-kicker">{{ item.notification_title ?? $t('notifications.title') }}</p>
+						<p class="detail-kicker">{{ item.notification_title ?? t('notifications.title') }}</p>
 						<h3>{{ item.title }}</h3>
 						<p v-if="item.notification_description" class="detail-description">
 							{{ item.notification_description }}
@@ -17,28 +17,28 @@
 
 				<div class="detail-grid">
 					<div class="detail-field">
-						<span>{{ $t('common.status') }}</span>
+						<span>{{ t('common.status') }}</span>
 						<UBadge v-if="item.status" :color="statusColor" variant="subtle" size="sm" class="capitalize w-fit">
 							{{ item.status }}
 						</UBadge>
 						<UBadge v-else color="neutral" variant="subtle" size="sm">
-							{{ $t('common.notSet') }}
+							{{ t('common.notSet') }}
 						</UBadge>
 					</div>
 					<div class="detail-field">
-						<span>{{ $t('notifications.reference') }}</span>
+						<span>{{ t('notifications.reference') }}</span>
 						<UBadge v-if="item.ref_no" color="neutral" variant="subtle" size="sm" class="font-mono w-fit max-w-full truncate">
 							{{ item.ref_no }}
 						</UBadge>
 						<UBadge v-else color="neutral" variant="subtle" size="sm">
-							{{ $t('common.notSet') }}
+							{{ t('common.notSet') }}
 						</UBadge>
 					</div>
 					<div class="detail-dates">
-						<span>{{ $t('notifications.timestamps') }}</span>
+						<span>{{ t('notifications.timestamps') }}</span>
 						<div class="detail-dates-grid">
 							<div v-for="field in dateFields" :key="field.key" class="detail-date-item">
-								<span>{{ $t(field.labelKey) }}</span>
+								<span>{{ t(field.labelKey) }}</span>
 								<strong>{{ formatDate(field.value) }}</strong>
 							</div>
 						</div>
@@ -46,7 +46,7 @@
 				</div>
 
 				<div v-if="item.subtitle" class="detail-note">
-					<span>{{ $t('common.description') }}</span>
+					<span>{{ t('common.description') }}</span>
 					<p>{{ item.subtitle }}</p>
 				</div>
 			</div>
@@ -55,7 +55,7 @@
 		<template #footer>
 			<div class="detail-footer">
 				<UButton color="neutral" variant="ghost" @click="open = false">
-					{{ $t('common.cancel') }}
+					{{ t('common.cancel') }}
 				</UButton>
 				<UButton v-if="item?.action.url" color="primary" :trailing-icon="ICONS.ARROW_RIGHT" @click="goToAction">
 					{{ item.action.label }}
@@ -70,6 +70,9 @@ import { format } from 'date-fns';
 import type { AppointmentStatus } from 'yeppi-common';
 import type { NotificationItem } from '~/utils/types/notification';
 import { getAppointmentStatusColor, getOrderStatusColor, getPaymentStatusColor } from '~/utils/options';
+import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 const open = defineModel<boolean>('open', { default: false });
 

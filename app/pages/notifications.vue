@@ -1,13 +1,13 @@
 <template>
-	<ZPagePanel id="notifications" :title="$t('notifications.title')">
+	<ZPagePanel id="notifications" :title="t('notifications.title')">
 		<div class="space-y-6">
 			<div class="notifications-toolbar">
 				<div>
-					<p class="notifications-kicker">{{ $t('notifications.actionCenter') }}</p>
-					<h1>{{ $t('notifications.allTitle') }}</h1>
+					<p class="notifications-kicker">{{ t('notifications.actionCenter') }}</p>
+					<h1>{{ t('notifications.allTitle') }}</h1>
 				</div>
 				<UButton color="neutral" variant="soft" :icon="ICONS.REFRESH" :loading="loading" @click="loadNotifications">
-					{{ $t('common.refresh') }}
+					{{ t('common.refresh') }}
 				</UButton>
 			</div>
 

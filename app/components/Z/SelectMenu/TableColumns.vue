@@ -7,11 +7,12 @@
 			content: 'w-50 max-h-40 overflow-y-auto scrollbar-hide',
 		}"
 	>
-		<UButton icon="i-heroicons-view-columns" color="neutral" size="xs">{{ $t('components.selectMenu.showColumns') }}</UButton>
+		<UButton icon="i-heroicons-view-columns" color="neutral" size="xs">{{ t('components.selectMenu.showColumns') }}</UButton>
 	</USelectMenu>
 </template>
 
 <script lang="ts" setup>
+const { t } = useI18n();
 const props = defineProps({
 	columns: {
 		type: Array as PropType<

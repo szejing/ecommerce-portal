@@ -1,15 +1,15 @@
 <template>
 	<UForm ref="formRef" :schema="crmUserSchema" :state="state" class="space-y-6" @submit="onSubmit">
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-			<UFormField name="name" :label="$t('components.crmUserForm.name')">
-				<UInput :model-value="state.name" :placeholder="$t('components.crmUserForm.name')" @update:model-value="(v: string) => set('name', v)" />
+			<UFormField name="name" :label="t('components.crmUserForm.name')">
+				<UInput :model-value="state.name" :placeholder="t('components.crmUserForm.name')" @update:model-value="(v: string) => set('name', v)" />
 			</UFormField>
 
-			<UFormField name="role" :label="$t('components.crmUserForm.role')">
+			<UFormField name="role" :label="t('components.crmUserForm.role')">
 				<ZSelectMenuCrmUserRole :role="state.role" @update:role="(v) => set('role', v)" />
 			</UFormField>
 
-			<UFormField name="staff_department_id" :label="$t('components.crmUserForm.staffDepartment')">
+			<UFormField name="staff_department_id" :label="t('components.crmUserForm.staffDepartment')">
 				<ZSelectMenuStaffDepartment
 					:staff-department-id="state.staff_department_id"
 					:disabled="!canEditStaffDepartment"
@@ -18,32 +18,32 @@
 				/>
 			</UFormField>
 
-			<UFormField name="email_address" :label="$t('components.crmUserForm.email')" class="sm:col-span-2">
+			<UFormField name="email_address" :label="t('components.crmUserForm.email')" class="sm:col-span-2">
 				<UInput
 					:model-value="state.email_address"
 					type="email"
-					:placeholder="$t('components.crmUserForm.email')"
+					:placeholder="t('components.crmUserForm.email')"
 					@update:model-value="(v: string) => set('email_address', v)"
 				/>
 			</UFormField>
 
-			<UFormField name="dial_code" :label="$t('components.crmUserForm.phone')">
+			<UFormField name="dial_code" :label="t('components.crmUserForm.phone')">
 				<ZPhoneInput
 					:dial-code="state.dial_code"
 					:phone-no="state.phone_no"
-					:placeholder="$t('components.crmUserForm.phone')"
+					:placeholder="t('components.crmUserForm.phone')"
 					@update:dial-code="(v: string) => set('dial_code', v)"
 					@update:phone-no="(v: string) => set('phone_no', v)"
 				/>
 			</UFormField>
 
-			<UFormField :label="$t('components.crmUserForm.status')" name="is_active">
+			<UFormField :label="t('components.crmUserForm.status')" name="is_active">
 				<USwitch
 					v-model="state.is_active"
 					class="mt-2"
 					:label="
-						$t('components.crmUserForm.currentStatusLabel', {
-							status: state.is_active ? $t('components.crmUserForm.statusActive') : $t('components.crmUserForm.statusDisabled'),
+						t('components.crmUserForm.currentStatusLabel', {
+							status: state.is_active ? t('components.crmUserForm.statusActive') : t('components.crmUserForm.statusDisabled'),
 						})
 					"
 				/>

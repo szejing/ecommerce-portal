@@ -1,7 +1,7 @@
 <template>
 	<UCard>
 		<template #header>
-			<h3 class="text-base font-semibold">{{ $t('components.activities.title') }}</h3>
+			<h3 class="text-base font-semibold">{{ t('components.activities.title') }}</h3>
 		</template>
 
 		<UTimeline v-if="activities?.length" :items="timelineItems" :default-value="latestActivityValue" size="xs" color="primary">
@@ -41,15 +41,15 @@
 							size="xs"
 							square
 							icon="i-heroicons-clipboard-document"
-							:aria-label="$t('components.activities.copyTrackingNo')"
+							:aria-label="t('components.activities.copyTrackingNo')"
 							@click="copyTrackingNumber(item.trackingNo)"
 						/>
 					</p>
 				</div>
-				<p v-if="item.actor" class="text-xs text-neutral-300">{{ $t('components.activities.createdBy') }}: {{ item.actor }}</p>
+				<p v-if="item.actor" class="text-xs text-neutral-300">{{ t('components.activities.createdBy') }}: {{ item.actor }}</p>
 			</template>
 		</UTimeline>
-		<p v-else class="text-sm text-neutral-700">{{ $t('components.activities.empty') }}</p>
+		<p v-else class="text-sm text-neutral-700">{{ t('components.activities.empty') }}</p>
 	</UCard>
 </template>
 

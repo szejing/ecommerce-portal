@@ -4,13 +4,13 @@
 			<div class="card-header-sidebar">
 				<h3 class="sidebar-title">
 					<UIcon name="i-heroicons-banknotes" class="w-5 h-5" />
-					{{ $t('components.orderDetail.paymentInformation') }}
+					{{ t('components.orderDetail.paymentInformation') }}
 				</h3>
 				<UButton v-if="order?.payments?.length == 0" variant="ghost" size="xs" :icon="ICONS.ADD_OUTLINE" @click="addPaymentInfo" />
 				<div v-if="order?.payment_status === PaymentStatus.PAID" class="status-group">
 					<UBadge color="success" size="lg">
 						<UIcon name="i-heroicons-check-circle" class="w-4 h-4" />
-						{{ $t('components.orderDetail.paid') }}
+						{{ t('components.orderDetail.paid') }}
 					</UBadge>
 				</div>
 			</div>
@@ -23,7 +23,7 @@
 					<span class="payment-amount">{{ payment.currency_code }} {{ payment.payment_amt?.toFixed(2) }}</span>
 				</div>
 				<div v-if="payment.ref_no1" class="payment-ref">
-					<span class="payment-ref-label">{{ $t('components.orderDetail.refLabel') }}:</span>
+					<span class="payment-ref-label">{{ t('components.orderDetail.refLabel') }}:</span>
 					<span class="payment-ref-value">{{ payment.ref_no1 }}</span>
 				</div>
 				<div class="payment-date">
@@ -34,9 +34,9 @@
 		</div>
 		<div v-else class="payment-empty">
 			<UIcon name="i-heroicons-currency-dollar" class="w-12 h-12 text-neutral-300" />
-			<p class="payment-empty-text">{{ $t('components.orderDetail.noPaymentRecorded') }}</p>
+			<p class="payment-empty-text">{{ t('components.orderDetail.noPaymentRecorded') }}</p>
 			<UButton size="sm" color="primary" :icon="ICONS.ADD_OUTLINE" @click="addPaymentInfo">
-				{{ $t('components.orderDetail.addPayment') }}
+				{{ t('components.orderDetail.addPayment') }}
 			</UButton>
 		</div>
 	</UCard>
@@ -48,6 +48,8 @@ import { PaymentStatus, getFormattedDate } from 'yeppi-common';
 import type { PaymentModel } from '~/utils/models';
 import type { OrderHistory } from '~/utils/types/order-history';
 import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 const props = defineProps<{
 	order?: OrderHistory;

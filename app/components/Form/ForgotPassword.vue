@@ -6,25 +6,25 @@
 					<div class="flex sm:hidden w-full">
 						<NuxtImg class="my-2 mx-auto w-full cursor-pointer rounded-sm" src="/logo/logo.png" alt="logo" />
 					</div>
-					<h1 class="text-center">{{ $t('auth.forgotPasswordTitle') }}</h1>
-					<p class="text-center text-sm text-muted mt-1">{{ $t('auth.forgotPasswordDesc') }}</p>
+					<h1 class="text-center">{{ t('auth.forgotPasswordTitle') }}</h1>
+					<p class="text-center text-sm text-muted mt-1">{{ t('auth.forgotPasswordDesc') }}</p>
 				</div>
 			</template>
 
 			<div v-if="success" class="rounded-md bg-success/10 text-success px-3 py-3 text-sm">
-				{{ $t('auth.resetLinkSent', { email: state.email_address }) }}
+				{{ t('auth.resetLinkSent', { email: state.email_address }) }}
 			</div>
 
 			<div v-else-if="success === false" class="rounded-md bg-error/10 text-error px-3 py-3 text-sm">{{ errorMessage }}</div>
 
 			<template v-else>
 				<div class="flex flex-col gap-2">
-					<UFormField :label="$t('auth.merchantId')" name="merchant_id" required>
+					<UFormField :label="t('auth.merchantId')" name="merchant_id" required>
 						<UInput v-model="state.merchant_id" autocomplete="merchant_id" />
 					</UFormField>
 
-					<UFormField :label="$t('auth.email')" name="email_address" required>
-						<UInput v-model="state.email_address" :placeholder="$t('auth.emailPlaceholder')" autocomplete="email" />
+					<UFormField :label="t('auth.email')" name="email_address" required>
+						<UInput v-model="state.email_address" :placeholder="t('auth.emailPlaceholder')" autocomplete="email" />
 					</UFormField>
 				</div>
 			</template>
@@ -32,9 +32,9 @@
 			<template #footer>
 				<div class="flex flex-col gap-2">
 					<UButton v-if="!success" block size="md" color="primary" variant="outline" type="submit" :loading="loading" :disabled="countdown > 0">
-						{{ countdown > 0 ? $t('auth.resendIn', { n: countdown }) : $t('auth.sendResetLink') }}
+						{{ countdown > 0 ? t('auth.resendIn', { n: countdown }) : t('auth.sendResetLink') }}
 					</UButton>
-					<NuxtLink to="/login" class="text-center text-sm text-muted hover:underline">{{ $t('auth.backToLogin') }}</NuxtLink>
+					<NuxtLink to="/login" class="text-center text-sm text-muted hover:underline">{{ t('auth.backToLogin') }}</NuxtLink>
 				</div>
 			</template>
 		</UCard>

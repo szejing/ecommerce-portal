@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="products-listing" :title="$t('nav.products')" back-to="/products">
+	<ZPagePanel id="products-listing" :title="t('nav.products')" back-to="/products">
 		<template #navbar-right>
 			<div class="flex flex-wrap items-center gap-2">
 				<ZImportActions
@@ -13,7 +13,7 @@
 					@download-template="downloadProductImportTemplate"
 					@import="importProductFile"
 				/>
-				<ZCreateButton to="/products/create" :label="$t('common.addProduct')" />
+				<ZCreateButton to="/products/create" :label="t('common.addProduct')" />
 			</div>
 		</template>
 		<template #toolbar>
@@ -48,8 +48,8 @@
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.PRODUCT" class="w-12 h-12 text-gray-400" />
-							<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noProductsFound') }}</p>
-							<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noProductsFound') }}</p>
+							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
 				</UTable>
@@ -69,7 +69,12 @@ import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import type { Product } from '~/utils/types/product';
 import type { TableRow } from '@nuxt/ui';
 import { ZModalImporting, ZModalLoading } from '#components';
-import { PRODUCT_IMPORT_ACCEPT, PRODUCT_IMPORT_FORMAT_ERROR_MESSAGE, isAllowedProductImportFile, type ProductImportTemplateType } from '~/repository/modules/product/product';
+import {
+	PRODUCT_IMPORT_ACCEPT,
+	PRODUCT_IMPORT_FORMAT_ERROR_MESSAGE,
+	isAllowedProductImportFile,
+	type ProductImportTemplateType,
+} from '~/repository/modules/product/product';
 import { ICONS } from '~/utils/icons';
 import { productDetailPath } from '~/utils/product-route';
 

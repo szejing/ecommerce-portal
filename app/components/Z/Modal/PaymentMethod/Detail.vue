@@ -1,38 +1,38 @@
 <template>
-	<UModal :title="$t('pages.paymentMethodDetail')" :ui="{ content: 'w-full sm:max-w-2xl' }">
+	<UModal :title="t('pages.paymentMethodDetail')" :ui="{ content: 'w-full sm:max-w-2xl' }">
 		<template #body>
 			<UForm ref="formRef" :state="state" class="space-y-5" @submit="onSubmit">
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<UFormField :label="$t('common.code')" name="code">
+					<UFormField :label="t('common.code')" name="code">
 						<UInput v-model="state.code" disabled />
 					</UFormField>
 
-					<UFormField :label="$t('common.type')" name="type">
+					<UFormField :label="t('common.type')" name="type">
 						<USelect v-model="state.type" :items="paymentMethodTypeItems" value-key="value" label-key="label" class="w-full" />
 					</UFormField>
 				</div>
 
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<UFormField :label="$t('common.description')" name="desc" required>
+					<UFormField :label="t('common.description')" name="desc" required>
 						<UInput v-model="state.desc" />
 					</UFormField>
 
-					<UFormField :label="$t('common.shortDescription')" name="short_desc">
+					<UFormField :label="t('common.shortDescription')" name="short_desc">
 						<UInput v-model="state.short_desc" />
 					</UFormField>
 				</div>
 
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<UFormField :label="$t('pages.currencyCode')" name="currency_code" required>
+					<UFormField :label="t('pages.currencyCode')" name="currency_code" required>
 						<UInput v-model="state.currency_code" />
 					</UFormField>
 
-					<UFormField :label="$t('pages.providerCode')" name="provider_code" required>
+					<UFormField :label="t('pages.providerCode')" name="provider_code" required>
 						<UInput v-model="state.provider_code" />
 					</UFormField>
 				</div>
 
-				<UFormField :label="$t('pages.logo')" name="logo">
+				<UFormField :label="t('pages.logo')" name="logo">
 					<ZDropzone
 						class="max-w-full sm:max-w-[200px]"
 						:key="logoDropzoneKey"
@@ -45,12 +45,12 @@
 				</UFormField>
 
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<UFormField :label="$t('common.status')" name="is_active">
-						<USwitch v-model="state.is_active" :label="state.is_active ? $t('common.active') : $t('common.inactive')" />
+					<UFormField :label="t('common.status')" name="is_active">
+						<USwitch v-model="state.is_active" :label="state.is_active ? t('common.active') : t('common.inactive')" />
 					</UFormField>
 
-					<UFormField :label="$t('pages.sandbox')" name="is_sandbox">
-						<USwitch v-model="state.is_sandbox" :label="state.is_sandbox ? $t('common.active') : $t('common.inactive')" />
+					<UFormField :label="t('pages.sandbox')" name="is_sandbox">
+						<USwitch v-model="state.is_sandbox" :label="state.is_sandbox ? t('common.active') : t('common.inactive')" />
 					</UFormField>
 				</div>
 
@@ -60,8 +60,8 @@
 
 		<template #footer>
 			<div class="flex justify-end gap-3 w-full">
-				<UButton color="neutral" variant="soft" @click="emit('cancel')">{{ $t('common.cancel') }}</UButton>
-				<UButton color="primary" variant="solid" :loading="updating || logoUploading" @click="submitForm">{{ $t('common.save') }}</UButton>
+				<UButton color="neutral" variant="soft" @click="emit('cancel')">{{ t('common.cancel') }}</UButton>
+				<UButton color="primary" variant="solid" :loading="updating || logoUploading" @click="submitForm">{{ t('common.save') }}</UButton>
 			</div>
 		</template>
 	</UModal>
@@ -75,6 +75,8 @@ import type { UpdatePaymentMethodBody } from '~/repository/modules/payment-metho
 import type { BuildMetadataResult } from '~/utils/metadata-fields';
 import { failedNotification } from '~/stores/AppUi/AppUi';
 import { getPaymentMethodLogoUploadDir } from '~/utils/payment-method-logo';
+
+const { t } = useI18n();
 
 const props = defineProps<{
 	paymentMethod: PaymentMethod;

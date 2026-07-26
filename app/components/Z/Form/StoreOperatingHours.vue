@@ -1,13 +1,13 @@
 <template>
 	<div class="space-y-4">
 		<h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">
-			{{ $t('pages.storeProfilePage.operatingHoursAndOffDays') }}
+			{{ t('pages.storeProfilePage.operatingHoursAndOffDays') }}
 		</h4>
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-			<UFormField :label="$t('components.zInput.offDay')">
+			<UFormField :label="t('components.zInput.offDay')">
 				<ZSelectMenuDays :days="offDays" @update:days="(d: string[]) => $emit('update:offDays', d)" />
 			</UFormField>
-			<UFormField :label="$t('components.zInput.startTime')">
+			<UFormField :label="t('components.zInput.startTime')">
 				<ZSelectMenuTime
 					:title="timeSelectTitle"
 					:time="startTime"
@@ -16,7 +16,7 @@
 					@update:time="(v: string) => $emit('update:startTime', v)"
 				/>
 			</UFormField>
-			<UFormField :label="$t('components.zInput.endTime')">
+			<UFormField :label="t('components.zInput.endTime')">
 				<ZSelectMenuTime
 					:title="timeSelectTitle"
 					:time="endTime"
@@ -30,6 +30,7 @@
 </template>
 
 <script lang="ts" setup>
+const { t } = useI18n();
 defineProps<{
 	offDays: string[];
 	startTime: string | null;

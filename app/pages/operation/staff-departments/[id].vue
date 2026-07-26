@@ -15,8 +15,8 @@
 					<template #header>
 						<div class="flex items-center justify-between gap-3">
 							<div>
-								<h3 class="text-lg font-semibold text-default">{{ $t('pages.staffDepartmentAssignedUsers') }}</h3>
-								<p class="text-sm text-muted">{{ $t('pages.staffDepartmentAssignedUsersDesc') }}</p>
+								<h3 class="text-lg font-semibold text-default">{{ t('pages.staffDepartmentAssignedUsers') }}</h3>
+								<p class="text-sm text-muted">{{ t('pages.staffDepartmentAssignedUsersDesc') }}</p>
 							</div>
 							<UBadge color="neutral" variant="subtle">{{ department_users_total }}</UBadge>
 						</div>
@@ -32,7 +32,7 @@
 						<template #empty>
 							<div class="flex flex-col items-center justify-center py-10 gap-2">
 								<UIcon name="i-heroicons-user-group" class="w-10 h-10 text-gray-400" />
-								<p class="text-sm text-muted">{{ $t('pages.noStaffInDepartment') }}</p>
+								<p class="text-sm text-muted">{{ t('pages.noStaffInDepartment') }}</p>
 							</div>
 						</template>
 					</UTable>
@@ -55,28 +55,28 @@
 					<div class="hidden md:flex justify-between items-center gap-3">
 						<UButton color="error" variant="ghost" size="lg" :loading="removing" @click="confirmDelete">
 							<UIcon :name="ICONS.TRASH" />
-							{{ $t('common.delete') }}
+							{{ t('common.delete') }}
 						</UButton>
 						<div class="flex gap-3">
-							<UButton color="neutral" variant="outline" size="lg" @click="goBack">{{ $t('common.cancel') }}</UButton>
+							<UButton color="neutral" variant="outline" size="lg" @click="goBack">{{ t('common.cancel') }}</UButton>
 							<UButton color="success" variant="solid" size="lg" :loading="updating" @click="onSubmit">
 								<UIcon :name="ICONS.CHECK_ROUNDED" />
-								{{ $t('common.save') }}
+								{{ t('common.save') }}
 							</UButton>
 						</div>
 					</div>
 					<div class="md:hidden flex flex-col gap-2">
 						<UButton color="success" size="md" class="w-full" :loading="updating" @click="onSubmit">
 							<UIcon :name="ICONS.CHECK_ROUNDED" class="w-4 h-4" />
-							<span class="text-sm">{{ $t('common.save') }}</span>
+							<span class="text-sm">{{ t('common.save') }}</span>
 						</UButton>
 						<div class="flex gap-2">
 							<UButton color="error" variant="ghost" size="sm" class="flex-1" :loading="removing" @click="confirmDelete">
 								<UIcon :name="ICONS.TRASH" class="w-4 h-4" />
-								<span class="text-xs">{{ $t('common.delete') }}</span>
+								<span class="text-xs">{{ t('common.delete') }}</span>
 							</UButton>
 							<UButton color="neutral" variant="outline" size="sm" class="flex-1" @click="goBack">
-								<span class="text-xs">{{ $t('common.cancel') }}</span>
+								<span class="text-xs">{{ t('common.cancel') }}</span>
 							</UButton>
 						</div>
 					</div>
@@ -121,9 +121,7 @@ const panelTitle = computed(() => {
 
 useHead({
 	title: () =>
-		current_department.value
-			? `${t('pages.editStaffDepartmentPageTitle')} — ${current_department.value.name}`
-			: t('pages.editStaffDepartmentPageTitle'),
+		current_department.value ? `${t('pages.editStaffDepartmentPageTitle')} — ${current_department.value.name}` : t('pages.editStaffDepartmentPageTitle'),
 });
 
 const loadPageData = async () => {

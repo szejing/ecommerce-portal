@@ -1,30 +1,30 @@
 <template>
 	<div class="section-grid-basic-details">
-		<UFormField :label="$t('components.orderInput.paymentDate')" name="paymentDate">
-			<ZSelectMenuDateTime :date-time="paymentDateTime" :placeholder="$t('components.orderInput.paymentDate')" @update:date-time="paymentDateTime = $event" />
+		<UFormField :label="t('components.orderInput.paymentDate')" name="paymentDate">
+			<ZSelectMenuDateTime :date-time="paymentDateTime" :placeholder="t('components.orderInput.paymentDate')" @update:date-time="paymentDateTime = $event" />
 		</UFormField>
 
 		<!-- // Date selection -->
 		<div class="grid grid-cols-1 gap-4">
-			<UFormField :label="$t('components.orderInput.paymentType')" name="paymentType">
+			<UFormField :label="t('components.orderInput.paymentType')" name="paymentType">
 				<ZSelectMenuPaymentType v-model:payment-type-code="paymentTypeCode" v-model:currency-code="currencyCode" class="w-full" />
 			</UFormField>
 
-			<UFormField v-slot="{ error }" :label="$t('components.orderInput.paymentAmountWithCurrency', { currency: currencyCode })" name="paymentAmount" required>
+			<UFormField v-slot="{ error }" :label="t('components.orderInput.paymentAmountWithCurrency', { currency: currencyCode })" name="paymentAmount" required>
 				<UInput
 					v-model="paymentAmount"
 					:trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined"
-					:placeholder="$t('components.orderInput.paymentAmountPlaceholder')"
+					:placeholder="t('components.orderInput.paymentAmountPlaceholder')"
 					disabled
 				/>
 			</UFormField>
 
-			<UFormField v-slot="{ error }" :label="$t('components.orderDetail.refNo1')" name="refNo1">
-				<UInput v-model="refNo1" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="$t('components.orderInput.refNo1Placeholder')" />
+			<UFormField v-slot="{ error }" :label="t('components.orderDetail.refNo1')" name="refNo1">
+				<UInput v-model="refNo1" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="t('components.orderInput.refNo1Placeholder')" />
 			</UFormField>
 
-			<UFormField v-slot="{ error }" :label="$t('components.orderDetail.refNo2')" name="refNo2">
-				<UInput v-model="refNo2" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="$t('components.orderInput.refNo2Placeholder')" />
+			<UFormField v-slot="{ error }" :label="t('components.orderDetail.refNo2')" name="refNo2">
+				<UInput v-model="refNo2" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="t('components.orderInput.refNo2Placeholder')" />
 			</UFormField>
 		</div>
 
@@ -34,6 +34,9 @@
 
 <script lang="ts" setup>
 import { ZSelectMenuDateTime } from '#components';
+import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 const props = defineProps({
 	paymentDateTime: Date,

@@ -18,6 +18,7 @@
 <script lang="ts" setup>
 import type { ProductVariantInput } from '~/utils/types/product';
 import { formatCurrency } from 'yeppi-common';
+import { ICONS } from '~/utils/icons';
 
 const props = defineProps<{ variant: ProductVariantInput | undefined }>();
 const emit = defineEmits(['update:productvariant', 'view:productvariant']);

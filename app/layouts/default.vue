@@ -28,10 +28,10 @@
 						>
 							<template #item-label="{ item }">
 								<ULink v-if="item.to" :to="item.to" class="block size-full" @click="(e: MouseEvent) => onNavItemLabelClick(e, item)">
-									{{ $t(String(item?.label ?? '')) }}
+									{{ t(String(item?.label ?? '')) }}
 								</ULink>
 								<template v-else>
-									{{ $t(String(item?.label ?? '')) }}
+									{{ t(String(item?.label ?? '')) }}
 								</template>
 							</template>
 						</UNavigationMenu>
@@ -59,14 +59,14 @@
 				class="flex w-full shrink-0 flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-red-600 px-4 py-2.5 text-center text-sm font-medium text-white"
 				role="status"
 			>
-				<span>{{ $t('pages.storeProfilePage.storeDisabledBanner') }}</span>
+				<span>{{ t('pages.storeProfilePage.storeDisabledBanner') }}</span>
 				<button
 					type="button"
 					class="underline underline-offset-2 font-semibold hover:text-white/90 disabled:opacity-70"
 					:disabled="merchantInfoStore.updating"
 					@click="onEnableStore"
 				>
-					{{ $t('pages.storeProfilePage.enableStoreNow') }}
+					{{ t('pages.storeProfilePage.enableStoreNow') }}
 				</button>
 			</div>
 			<slot />
@@ -75,6 +75,7 @@
 </template>
 
 <script lang="ts" setup>
+const { t } = useI18n();
 const route = useRoute();
 const appUiStore = useAppUiStore();
 const merchantInfoStore = useMerchantInfoStore();

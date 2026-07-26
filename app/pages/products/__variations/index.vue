@@ -1,7 +1,7 @@
 <template>
-	<ZPagePanel id="products-options" :title="$t('nav.options')">
+	<ZPagePanel id="products-options" :title="t('nav.options')">
 		<template #navbar-right>
-			<ZCreateButton to="/products/options/create" :label="$t('common.addOption')" />
+			<ZCreateButton to="/products/options/create" :label="t('common.addOption')" />
 		</template>
 		<template #toolbar>
 			<ZSectionFilterBrands />
@@ -40,8 +40,8 @@
 				<template #empty>
 					<div class="flex flex-col items-center justify-center py-12 gap-3">
 						<UIcon :name="ICONS.ADDITIONAL" class="w-12 h-12 text-gray-400" />
-						<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noOptionsFound') }}</p>
-						<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+						<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noOptionsFound') }}</p>
+						<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 					</div>
 				</template>
 			</UTable>
@@ -62,6 +62,7 @@ import type { ProductVariation } from '~/utils/types/product-variation';
 import type { ProductOption } from '~/utils/types/product-option';
 import { options_page_size } from '~/utils/options';
 import type { TableRow } from '@nuxt/ui';
+import { ICONS } from '~/utils/icons';
 
 const PRODUCT_VARIATION_COLUMN_LABELS = {
 	name: 'table.name',

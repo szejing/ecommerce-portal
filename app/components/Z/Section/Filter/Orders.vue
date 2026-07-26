@@ -4,19 +4,19 @@
 		<div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
 			<!-- Date Range Filter -->
 			<div class="flex flex-col col-span-full gap-1.5">
-				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $t('components.filter.dateRange') }}</label>
+				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.dateRange') }}</label>
 				<ZDateRange v-model="filter.date_range" @update:model-value="handleDateRangeChange" />
 			</div>
 
 			<!-- Order Number Search -->
 			<div class="flex flex-col col-span-2 gap-1.5">
-				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $t('components.filter.orderNo') }}</label>
-				<UInput v-model="filter.query" :placeholder="$t('components.filter.searchOrderNo')" :icon="ICONS.SEARCH_ROUNDED" @input="debouncedSearch" />
+				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.orderNo') }}</label>
+				<UInput v-model="filter.query" :placeholder="t('components.filter.searchOrderNo')" :icon="ICONS.SEARCH_ROUNDED" @input="debouncedSearch" />
 			</div>
 
 			<!-- Currency Filter -->
 			<!-- <div class="flex flex-col col-span-2 sm:col-span-1 gap-1.5">
-				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $t('components.filter.currency') }}</label>
+				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.currency') }}</label>
 				<ZSelectMenuCurrency v-model:currency-code="filter.currency_code" @update:model-value="handleCurrencyChange" />
 			</div> -->
 
@@ -25,11 +25,11 @@
 				<div class="flex gap-2">
 					<UButton variant="outline" color="neutral" :disabled="is_loading" @click="clearFilters">
 						<UIcon name="i-heroicons-arrow-path" class="w-4 h-4" />
-						{{ $t('components.filter.clear') }}
+						{{ t('components.filter.clear') }}
 					</UButton>
 					<UButton color="primary" :disabled="is_loading" :loading="is_loading" @click="search">
 						<UIcon :name="ICONS.SEARCH_ROUNDED" class="w-4 h-4" />
-						{{ $t('components.filter.search') }}
+						{{ t('components.filter.search') }}
 					</UButton>
 				</div>
 			</div>
@@ -37,7 +37,7 @@
 
 		<!-- Active Filters Display -->
 		<div v-if="hasActiveFilters" class="flex flex-wrap gap-2 items-center">
-			<span class="text-xs text-gray-600 dark:text-gray-400">{{ $t('components.filter.activeFilters') }}</span>
+			<span class="text-xs text-gray-600 dark:text-gray-400">{{ t('components.filter.activeFilters') }}</span>
 			<UBadge
 				v-if="filter.date_range && (filter.date_range.start || filter.date_range.end)"
 				color="primary"
@@ -45,19 +45,19 @@
 				size="sm"
 				@click="clearFilter('date')"
 			>
-				{{ $t('components.filter.date') }}: {{ formatDateRange(filter.date_range) }}
+				{{ t('components.filter.date') }}: {{ formatDateRange(filter.date_range) }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
 			<UBadge v-if="filter.query" color="info" variant="subtle" size="sm" @click="clearFilter('query')">
-				{{ $t('components.filter.order') }}: {{ filter.query }}
+				{{ t('components.filter.order') }}: {{ filter.query }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
 			<UBadge v-if="hasPartialStatusFilter" color="success" variant="subtle" size="sm" @click="clearFilter('status')">
-				{{ $t('components.filter.status') }}: {{ statusBadgeLabel }}
+				{{ t('components.filter.status') }}: {{ statusBadgeLabel }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
 			<UBadge v-if="filter.currency_code && filter.currency_code !== 'MYR'" color="warning" variant="subtle" size="sm">
-				{{ $t('components.filter.currency') }}: {{ filter.currency_code }}
+				{{ t('components.filter.currency') }}: {{ filter.currency_code }}
 			</UBadge>
 		</div>
 	</div>
@@ -67,6 +67,7 @@
 import type { Range } from '~/utils/interface';
 import { sub, format } from 'date-fns';
 import { getDefaultOrderStatuses, getOrderStatusOptions, isAllOrderStatusesSelected } from '~/utils/options';
+import { ICONS } from '~/utils/icons';
 
 const { t } = useI18n();
 const orderStore = useOrderStore();
@@ -85,9 +86,7 @@ const statusLabelMap = computed(() => {
 
 const hasPartialStatusFilter = computed(() => filter.value.statuses.length > 0 && !isAllOrderStatusesSelected(filter.value.statuses));
 
-const statusBadgeLabel = computed(() =>
-	filter.value.statuses.map((status) => statusLabelMap.value.get(status) ?? capitalizeFirstLetter(status)).join(', '),
-);
+const statusBadgeLabel = computed(() => filter.value.statuses.map((status) => statusLabelMap.value.get(status) ?? capitalizeFirstLetter(status)).join(', '));
 
 const hasActiveFilters = computed(() => {
 	const hasDateFilter = filter.value.date_range && (filter.value.date_range.start || filter.value.date_range.end);

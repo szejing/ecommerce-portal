@@ -1,16 +1,18 @@
 <template>
 	<div class="section-grid-basic-details">
-		<UFormField v-slot="{ error }" :label="$t('common.name')" name="name" required>
-			<UInput v-model="name" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="$t('common.name')" />
+		<UFormField v-slot="{ error }" :label="t('common.name')" name="name" required>
+			<UInput v-model="name" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="t('common.name')" />
 		</UFormField>
 
-		<UFormField :label="$t('common.values')" name="values" required>
-			<UInputTags v-model="values" :placeholder="$t('components.zInput.enterValues')" class="w-full" color="primary" :duplicate="false" :add-on-blur="true" />
+		<UFormField :label="t('common.values')" name="values" required>
+			<UInputTags v-model="values" :placeholder="t('components.zInput.enterValues')" class="w-full" color="primary" :duplicate="false" :add-on-blur="true" />
 		</UFormField>
 	</div>
 </template>
 
 <script lang="ts" setup>
+import { ICONS } from '~/utils/icons';
+const { t } = useI18n();
 const props = defineProps({
 	name: String,
 	values: {

@@ -6,14 +6,12 @@
 		size="md"
 		class="min-w-0 w-full"
 		:search-input="{
-			placeholder: $t('components.selectMenu.searchTime'),
+			placeholder: t('components.selectMenu.searchTime'),
 			icon: 'i-lucide-search',
 		}"
 	>
 		<template #default>
-			<span v-if="selectedLabel" class="truncate">
-				{{ prefix }}: {{ selectedLabel }}
-			</span>
+			<span v-if="selectedLabel" class="truncate"> {{ prefix }}: {{ selectedLabel }} </span>
 			<span v-else class="text-muted">{{ title }}</span>
 		</template>
 	</USelectMenu>

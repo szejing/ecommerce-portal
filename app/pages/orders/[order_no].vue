@@ -1,10 +1,10 @@
 <template>
-	<ZPagePanel id="orders-detail" :title="$t('pages.orderDetail')" back-to="/orders">
+	<ZPagePanel id="orders-detail" :title="t('pages.orderDetail')" back-to="/orders">
 		<ZLoading v-if="loading" />
 		<div v-else-if="order_not_found" class="order-not-found">
 			<UIcon name="i-heroicons-magnifying-glass-circle" class="order-not-found-icon" />
-			<p class="order-not-found-text">{{ $t('pages.orderNotFound', { orderNo: order_no_param }) }}</p>
-			<UButton color="primary" variant="soft" :to="'/orders'">{{ $t('nav.orders') }}</UButton>
+			<p class="order-not-found-text">{{ t('pages.orderNotFound', { orderNo: order_no_param }) }}</p>
+			<UButton color="primary" variant="soft" :to="'/orders'">{{ t('nav.orders') }}</UButton>
 		</div>
 		<div v-else class="order-detail-container pb-[calc(5.5rem+env(safe-area-inset-bottom,0))] lg:pb-0">
 			<!-- Header Section -->
@@ -22,7 +22,7 @@
 							<p class="text-base text-neutral-400 italic">{{ record?.inv_no }}</p>
 						</div>
 						<div v-if="record?.ref_no" class="metadata-item">
-							<p>{{ $t('components.orderDetail.refLabel') }}: {{ record?.ref_no }}</p>
+							<p>{{ t('components.orderDetail.refLabel') }}: {{ record?.ref_no }}</p>
 						</div>
 						<div v-if="record" class="metadata-item fulfillment-meta mt-2">
 							<UIcon
@@ -53,17 +53,17 @@
 
 						<div class="status-badge-stack">
 							<div class="status-group">
-								<UBadge v-if="order?.status === OrderStatus.PENDING_PAYMENT" variant="subtle" color="info" size="lg">{{ $t('options.pendingPayment') }}</UBadge>
-								<UBadge v-else-if="String(order?.status) === 'paid'" color="info" size="lg">{{ $t('options.paid') }}</UBadge>
-								<UBadge v-else-if="order?.status === OrderStatus.PROCESSING" color="info" size="lg">{{ $t('options.processing') }}</UBadge>
-								<UBadge v-else-if="String(order?.status) === 'shipped'" color="primary" size="lg">{{ $t('options.shipped') }}</UBadge>
-								<UBadge v-else-if="String(order?.status) === 'delivered'" color="success" size="lg">{{ $t('options.delivered') }}</UBadge>
-								<UBadge v-else-if="order?.status === OrderStatus.COMPLETED" color="success" size="lg">{{ $t('options.completed') }}</UBadge>
-								<UBadge v-else-if="order?.status === OrderStatus.REQUIRES_ACTION" color="warning" size="lg">{{ $t('options.requiresAction') }}</UBadge>
-								<UBadge v-else-if="order?.status === OrderStatus.REFUNDED" color="error" size="lg">{{ $t('options.refunded') }}</UBadge>
-								<UBadge v-else-if="order?.status === OrderStatus.CANCELLED" color="error" size="lg">{{ $t('options.cancelled') }}</UBadge>
+								<UBadge v-if="order?.status === OrderStatus.PENDING_PAYMENT" variant="subtle" color="info" size="lg">{{ t('options.pendingPayment') }}</UBadge>
+								<UBadge v-else-if="String(order?.status) === 'paid'" color="info" size="lg">{{ t('options.paid') }}</UBadge>
+								<UBadge v-else-if="order?.status === OrderStatus.PROCESSING" color="info" size="lg">{{ t('options.processing') }}</UBadge>
+								<UBadge v-else-if="String(order?.status) === 'shipped'" color="primary" size="lg">{{ t('options.shipped') }}</UBadge>
+								<UBadge v-else-if="String(order?.status) === 'delivered'" color="success" size="lg">{{ t('options.delivered') }}</UBadge>
+								<UBadge v-else-if="order?.status === OrderStatus.COMPLETED" color="success" size="lg">{{ t('options.completed') }}</UBadge>
+								<UBadge v-else-if="order?.status === OrderStatus.REQUIRES_ACTION" color="warning" size="lg">{{ t('options.requiresAction') }}</UBadge>
+								<UBadge v-else-if="order?.status === OrderStatus.REFUNDED" color="error" size="lg">{{ t('options.refunded') }}</UBadge>
+								<UBadge v-else-if="order?.status === OrderStatus.CANCELLED" color="error" size="lg">{{ t('options.cancelled') }}</UBadge>
 							</div>
-							<p v-if="order?.last_updated" class="status-last-updated" :title="$t('table.lastUpdated')">
+							<p v-if="order?.last_updated" class="status-last-updated" :title="t('table.lastUpdated')">
 								{{ order.last_updated }}
 							</p>
 						</div>
@@ -80,11 +80,11 @@
 							<div class="card-header">
 								<h2 class="card-title">
 									<UIcon :name="ICONS.CUSTOMER_GROUP_ROUNDED" class="w-5 h-5" />
-									{{ $t('components.orderDetail.customerInformation') }}
+									{{ t('components.orderDetail.customerInformation') }}
 								</h2>
 								<UButton variant="ghost" size="sm" @click="editCustomerDetail">
 									<UIcon name="i-heroicons-pencil" class="w-3 h-3" />
-									{{ $t('components.orderDetail.edit') }}
+									{{ t('components.orderDetail.edit') }}
 								</UButton>
 							</div>
 						</template>
@@ -97,24 +97,24 @@
 							<div class="card-header">
 								<h2 class="card-title">
 									<UIcon :name="ICONS.PRODUCT" class="w-5 h-5" />
-									{{ $t('components.orderDetail.orderItems') }}
+									{{ t('components.orderDetail.orderItems') }}
 								</h2>
 								<div class="flex items-center gap-2">
 									<span v-if="order?.status === OrderStatus.PENDING_PAYMENT" class="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
 										<UIcon name="i-heroicons-pencil" class="w-3 h-3" />
-										{{ $t('components.orderDetail.editable') }}
+										{{ t('components.orderDetail.editable') }}
 									</span>
 									<span v-else-if="order?.status === OrderStatus.COMPLETED" class="text-xs text-green-600 font-medium">
 										<UIcon name="i-heroicons-pencil" class="w-3 h-3" />
-										{{ $t('components.orderDetail.editable') }}
+										{{ t('components.orderDetail.editable') }}
 									</span>
 									<UPopover v-else overlay>
 										<UButton color="neutral" :trailing-icon="ICONS.QUESTION_MARK" variant="soft" size="xs" />
 										<template #content>
 											<div class="p-4 max-w-xs">
 												<p class="text-sm">
-													{{ $t('components.orderDetail.orderNotEditableMessage') }}<br />
-													<b class="text-primary">{{ $t('components.orderDetail.changeStatusToEdit') }}</b>
+													{{ t('components.orderDetail.orderNotEditableMessage') }}<br />
+													<b class="text-primary">{{ t('components.orderDetail.changeStatusToEdit') }}</b>
 												</p>
 											</div>
 										</template>
@@ -141,13 +141,13 @@
 						<div class="order-items-bill-summary border-default divide-y divide-default border-t">
 							<div class="grid grid-cols-[2fr_1fr_1fr_1fr] items-center">
 								<div class="col-span-2" />
-								<div class="p-4 text-left text-muted italic font-normal">{{ $t('components.orderDetail.subTotal') }}</div>
+								<div class="p-4 text-left text-muted italic font-normal">{{ t('components.orderDetail.subTotal') }}</div>
 								<div class="p-4 text-center font-bold text-lg italic">{{ formatCurrency(record?.gross_amt ?? 0, currency_code) }}</div>
 							</div>
 							<div v-if="(record?.order_type ?? OrderType.PICKUP) === OrderType.DELIVERY" class="grid grid-cols-[2fr_1fr_1fr_1fr] items-center">
 								<div class="col-span-2" />
 								<div class="p-4 text-left text-muted italic font-normal">
-									{{ $t('components.fulfillment.shippingFee') }}
+									{{ t('components.fulfillment.shippingFee') }}
 									<span v-if="shipping_fee_method_hint" class="text-xs font-normal not-italic text-muted leading-tight max-w-full">
 										{{ shipping_fee_method_hint }}
 									</span>
@@ -165,7 +165,7 @@
 							</div>
 							<div class="grid grid-cols-[2fr_1fr_1fr_1fr] items-center border-b-4 border-double border-default">
 								<div class="col-span-2" />
-								<div class="p-4 text-left italic font-bold">{{ $t('components.orderDetail.netTotal') }}</div>
+								<div class="p-4 text-left italic font-bold">{{ t('components.orderDetail.netTotal') }}</div>
 								<div class="p-4 text-center font-bold text-lg italic">{{ formatCurrency(order?.payable_total ?? 0, currency_code) }}</div>
 							</div>
 						</div>
@@ -177,7 +177,7 @@
 							<div class="card-header">
 								<h2 class="card-title">
 									<UIcon name="i-heroicons-chat-bubble-left-ellipsis" class="w-5 h-5" />
-									{{ $t('components.orderDetail.remarks') }}
+									{{ t('components.orderDetail.remarks') }}
 								</h2>
 							</div>
 						</template>
@@ -216,7 +216,6 @@
 							:owner-type="ownerType"
 							@refresh="getOrderDetails"
 						/>
-
 					</div>
 				</div>
 			</div>
@@ -226,9 +225,9 @@
 				v-if="record !== undefined && !isLgUp"
 				class="mobile-actions-bar fixed inset-x-0 bottom-0 z-40 border-t border-default bg-default/95 px-4 pt-3 backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]"
 			>
-				<UDrawer v-model:open="isOrderActionsOpen" :title="$t('components.orderDetail.orderActionsTitle')" direction="bottom">
+				<UDrawer v-model:open="isOrderActionsOpen" :title="t('components.orderDetail.orderActionsTitle')" direction="bottom">
 					<UButton block color="primary" :icon="ICONS.SETTINGS_ROUNDED" class="mobile-actions-open-trigger w-full">
-						{{ $t('components.orderDetail.manageOrder') }}
+						{{ t('components.orderDetail.manageOrder') }}
 					</UButton>
 					<template #body>
 						<div class="mobile-actions-drawer-body space-y-4 max-h-[min(70vh,32rem)] overflow-y-auto overscroll-contain px-0.5 pb-4">
@@ -258,7 +257,6 @@
 								:owner-type="ownerType"
 								@refresh="getOrderDetails"
 							/>
-
 						</div>
 					</template>
 				</UDrawer>
@@ -301,7 +299,7 @@ watch(isLgUp, (lg) => {
 });
 const order_no_param = computed(() => String(route.params.order_no ?? ''));
 const type = computed(() => String(route.query.type ?? ''));
-const ownerType = computed<'order' | 'sale'>(() => type.value === 'sale' ? 'sale' : 'order');
+const ownerType = computed<'order' | 'sale'>(() => (type.value === 'sale' ? 'sale' : 'order'));
 
 const order = ref<OrderHistory | undefined>();
 

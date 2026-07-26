@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="home" :title="$t('pages.home')">
+	<ZPagePanel id="home" :title="t('pages.home')">
 		<ZDateRange v-model="dashboardRange" @update:model-value="onDashboardRangeChange" />
 		<DashboardStats />
 		<DashboardCustomerRequests />
@@ -11,6 +11,8 @@
 <script setup lang="ts">
 import { startOfWeek, endOfWeek } from 'date-fns';
 import type { Range } from '~/utils/interface';
+
+const { t } = useI18n();
 
 useHead({ title: 'Wemotoo CRM' });
 

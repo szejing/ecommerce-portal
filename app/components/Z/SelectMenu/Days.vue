@@ -7,18 +7,19 @@
 		value-key="short"
 		class="min-w-0 w-full"
 		:search-input="{
-			placeholder: $t('components.selectMenu.searchDays'),
+			placeholder: t('components.selectMenu.searchDays'),
 			icon: 'i-lucide-search',
 		}"
 	>
 		<template #default>
 			<span v-if="days.length > 0" class="truncate">{{ displayDays }}</span>
-			<span v-else class="text-muted">{{ $t('components.zInput.selectDays') }}</span>
+			<span v-else class="text-muted">{{ t('components.zInput.selectDays') }}</span>
 		</template>
 	</USelectMenu>
 </template>
 
 <script lang="ts" setup>
+const { t } = useI18n();
 const days_options = [
 	{ seq: 1, short: 'Mon', long: 'Monday' },
 	{ seq: 2, short: 'Tue', long: 'Tuesday' },

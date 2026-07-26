@@ -4,7 +4,7 @@
 		:items="items"
 		value-key="value"
 		size="md"
-		:placeholder="$t('components.selectMenu.selectPaymentStatus')"
+		:placeholder="t('components.selectMenu.selectPaymentStatus')"
 		:search-input="{
 			placeholder: 'Search payment status…',
 			icon: 'i-lucide-search',
@@ -16,7 +16,7 @@
 					{{ selectedLabel }}
 				</UBadge>
 			</span>
-			<span v-else class="text-neutral-400">{{ $t('components.selectMenu.selectPaymentStatus') }}</span>
+			<span v-else class="text-neutral-400">{{ t('components.selectMenu.selectPaymentStatus') }}</span>
 		</template>
 
 		<template #item="{ item }">

@@ -11,11 +11,12 @@
 		label-key="code"
 		description-key="name"
 		:disabled="items.length == 1"
-		:placeholder="$t('components.selectMenu.selectCurrency')"
+		:placeholder="t('components.selectMenu.selectCurrency')"
 	/>
 </template>
 
 <script lang="ts" setup>
+const { t } = useI18n();
 const searchTerm = ref('');
 const merchantInfoStore = useMerchantInfoStore();
 const { currencies: items } = storeToRefs(merchantInfoStore);

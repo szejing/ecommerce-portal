@@ -3,7 +3,7 @@
 		v-model:open="open"
 		data-testid="import-preview-modal"
 		:data-open="String(open)"
-		:title="$t('shipmentArrangement.preview.title')"
+		:title="t('shipmentArrangement.preview.title')"
 		:ui="{ content: 'w-[calc(100vw-1.5rem)] max-w-6xl sm:w-full' }"
 	>
 		<template #body>
@@ -15,15 +15,22 @@
 					</div>
 				</div>
 
-				<UAlert v-if="error" color="error" variant="soft" icon="i-lucide-circle-alert" :title="$t('shipmentArrangement.preview.failedTitle')" :description="error" />
+				<UAlert
+					v-if="error"
+					color="error"
+					variant="soft"
+					icon="i-lucide-circle-alert"
+					:title="t('shipmentArrangement.preview.failedTitle')"
+					:description="error"
+				/>
 
 				<UAlert
 					v-if="applyResult"
 					:color="applyResult.failed > 0 ? 'warning' : 'success'"
 					variant="soft"
 					:icon="applyResult.failed > 0 ? 'i-lucide-triangle-alert' : 'i-lucide-circle-check'"
-					:title="$t('shipmentArrangement.preview.applyResultTitle')"
-					:description="$t('shipmentArrangement.preview.applyResult', { updated: applyResult.updated, failed: applyResult.failed })"
+					:title="t('shipmentArrangement.preview.applyResultTitle')"
+					:description="t('shipmentArrangement.preview.applyResult', { updated: applyResult.updated, failed: applyResult.failed })"
 				/>
 
 				<ul v-if="applyResult?.errors.length" class="space-y-2 rounded-md border border-warning/30 bg-warning/5 p-3 text-sm">
@@ -42,21 +49,31 @@
 					color="warning"
 					variant="soft"
 					icon="i-lucide-triangle-alert"
-					:description="$t('shipmentArrangement.preview.applyWarning')"
+					:description="t('shipmentArrangement.preview.applyWarning')"
 				/>
 			</div>
 		</template>
 
 		<template #footer>
 			<div class="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-				<UButton class="min-h-11 justify-center" color="neutral" variant="ghost" :label="applyResult ? $t('common.close') : $t('common.cancel')" @click="() => { open = false; }" />
+				<UButton
+					class="min-h-11 justify-center"
+					color="neutral"
+					variant="ghost"
+					:label="applyResult ? t('common.close') : t('common.cancel')"
+					@click="
+						() => {
+							open = false;
+						}
+					"
+				/>
 				<UButton
 					v-if="!applyResult"
 					data-testid="apply-shipments"
 					class="min-h-11 justify-center"
 					:disabled="eligibleCount === 0"
 					:loading="applying"
-					:label="$t('shipmentArrangement.preview.applyCount', { count: eligibleCount })"
+					:label="t('shipmentArrangement.preview.applyCount', { count: eligibleCount })"
 					@click="emit('apply')"
 				/>
 			</div>

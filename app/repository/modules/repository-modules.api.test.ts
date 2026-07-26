@@ -72,6 +72,7 @@ describe('AuthModule', () => {
 		expect(lastFetch().url).toBe(MerchantRoutes.Auth.Login());
 		expect(lastFetch().opts.method).toBe('POST');
 		expect(lastFetch().opts.body).toEqual(loginPayload);
+		expect((lastFetch().opts.headers as Record<string, string>)['Content-Type']).toBe('application/json');
 	});
 
 	it('heartbeat', async () => {
@@ -437,6 +438,9 @@ describe('ProductModule', () => {
 		const uploaded = fd.get('file') as File;
 		expect(uploaded.name).toBe('products.csv');
 		expect(fd.get('template_type')).toBe('wemotoo');
+		const headers = lastFetch().opts.headers as Record<string, string>;
+		expect(headers['Content-Type']).toBeUndefined();
+		expect(headers['content-type']).toBeUndefined();
 	});
 
 	it('importProducts sends selected Sitegiant template type', async () => {
@@ -916,6 +920,9 @@ describe('ImageModule', () => {
 		expect(uploaded.name).toBe(jpeg.name);
 		expect(uploaded.type).toBe(jpeg.type);
 		expect(uploaded.size).toBe(jpeg.size);
+		const headers = lastFetch().opts.headers as Record<string, string>;
+		expect(headers['Content-Type']).toBeUndefined();
+		expect(headers['content-type']).toBeUndefined();
 	});
 
 	it('uploadMultiple sends FormData with files[] and dir', async () => {
@@ -929,6 +936,9 @@ describe('ImageModule', () => {
 		expect(files).toHaveLength(2);
 		expect(files[0]!.name).toBe(jpeg.name);
 		expect(files[1]!.name).toBe(jpeg2.name);
+		const headers = lastFetch().opts.headers as Record<string, string>;
+		expect(headers['Content-Type']).toBeUndefined();
+		expect(headers['content-type']).toBeUndefined();
 	});
 
 	it('allows HEIF sequence and WebP uploads before backend conversion', async () => {

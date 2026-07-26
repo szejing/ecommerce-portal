@@ -1,12 +1,12 @@
 <template>
 	<div v-if="validVariations.length > 0 && variantRows.length > 0" class="space-y-4">
-		<h4 class="text-sm font-semibold text-neutral-900">{{ $t('components.variantList.title') }}</h4>
+		<h4 class="text-sm font-semibold text-neutral-900">{{ t('components.variantList.title') }}</h4>
 
 		<!-- Apply to All row -->
 		<div class="flex items-center gap-3 mb-2">
 			<UInput
 				v-model="applyAll.price"
-				:placeholder="$t('components.variantList.pricePlaceholder')"
+				:placeholder="t('components.variantList.pricePlaceholder')"
 				type="number"
 				size="sm"
 				class="max-w-44"
@@ -16,9 +16,9 @@
 					<span class="text-xs text-neutral-400">{{ currencyCode }}</span>
 				</template>
 			</UInput>
-			<!-- <UInput v-model="applyAll.stock" :placeholder="$t('components.variantList.stockPlaceholder')" type="number" size="sm" class="max-w-36" /> -->
+			<!-- <UInput v-model="applyAll.stock" :placeholder="t('components.variantList.stockPlaceholder')" type="number" size="sm" class="max-w-36" /> -->
 			<UButton color="primary" variant="soft" size="sm" @click="applyToAll">
-				{{ $t('components.variantList.applyToAll') }}
+				{{ t('components.variantList.applyToAll') }}
 			</UButton>
 		</div>
 
@@ -34,11 +34,11 @@
 							</div>
 						</th>
 						<th class="text-left px-3 py-2 text-xs font-semibold text-neutral-700">
-							<span class="text-red-500">*</span> {{ $t('components.variantList.price') }}
+							<span class="text-red-500">*</span> {{ t('components.variantList.price') }}
 						</th>
 						<!-- <th class="text-left px-3 py-2 text-xs font-semibold text-neutral-700">
-							<span class="text-red-500">*</span> {{ $t('components.variantList.stock') }}
-							<UTooltip :text="$t('components.variantList.stockTooltip')">
+							<span class="text-red-500">*</span> {{ t('components.variantList.stock') }}
+							<UTooltip :text="t('components.variantList.stockTooltip')">
 								<UIcon :name="ICONS.HELP" class="w-3.5 h-3.5 text-neutral-400 inline-block" />
 							</UTooltip>
 						</th> -->
@@ -107,6 +107,7 @@ import type { Product, ProductVariantInput } from '~/utils/types/product';
 import type { ProductOptionInput } from '~/utils/types/product-option';
 import type { ProductVariationInput } from '~/utils/types/product-variation';
 import { getValidProductOptions, getValidProductVariations, resolveProductVariationId } from '~/utils/product-variant-list';
+import { ICONS } from '~/utils/icons';
 
 const { t } = useI18n();
 

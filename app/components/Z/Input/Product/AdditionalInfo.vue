@@ -53,7 +53,7 @@
 
 				<div class="text-center py-12 text-neutral-500">
 					<UIcon :name="ICONS.SETTINGS_ROUNDED" class="w-12 h-12 mx-auto mb-3 text-neutral-300" />
-					<p class="text-sm">{{ $t('components.productUpdate.taxConfigurationComingSoon') }}</p>
+					<p class="text-sm">{{ t('components.productUpdate.taxConfigurationComingSoon') }}</p>
 				</div>
 			</div>
 		</template>
@@ -65,6 +65,7 @@ import type { ProductCreate } from '~/utils/types/form/product-creation';
 import type { Product, ProductVariantInput } from '~/utils/types/product';
 import type { ProductVariationInput } from '~/utils/types/product-variation';
 import { ProductType } from 'yeppi-common';
+import { ICONS } from '~/utils/icons';
 
 const props = defineProps({
 	product: {

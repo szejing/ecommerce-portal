@@ -2,17 +2,17 @@
 	<div class="w-full">
 		<div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
 			<div class="flex flex-col col-span-full gap-1.5">
-				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $t('components.filter.dateRange') }}</label>
+				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.dateRange') }}</label>
 				<ZDateRange v-model="filter.date_range" @update:model-value="handleDateRangeChange" />
 			</div>
 
 			<div class="flex flex-col col-span-2 gap-1.5">
-				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $t('components.filter.search') }}</label>
-				<UInput v-model="filter.query" :placeholder="$t('components.filter.searchActivityLogs')" :icon="ICONS.SEARCH_ROUNDED" @input="debouncedSearch" />
+				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.search') }}</label>
+				<UInput v-model="filter.query" :placeholder="t('components.filter.searchActivityLogs')" :icon="ICONS.SEARCH_ROUNDED" @input="debouncedSearch" />
 			</div>
 
 			<div class="flex flex-col gap-1.5">
-				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $t('table.action') }}</label>
+				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('table.action') }}</label>
 				<USelect
 					:model-value="actionSelectValue"
 					:items="actionItems"
@@ -26,7 +26,7 @@
 			</div>
 
 			<div class="flex flex-col gap-1.5">
-				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $t('table.actor') }}</label>
+				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('table.actor') }}</label>
 				<USelect
 					:model-value="actorTypeSelectValue"
 					:items="actorTypeItems"
@@ -40,7 +40,7 @@
 			</div>
 
 			<div class="flex flex-col gap-1.5">
-				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $t('table.source') }}</label>
+				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('table.source') }}</label>
 				<USelect
 					:model-value="sourceSelectValue"
 					:items="sourceItems"
@@ -54,7 +54,7 @@
 			</div>
 
 			<div class="flex flex-col gap-1.5">
-				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $t('table.visibility') }}</label>
+				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('table.visibility') }}</label>
 				<USelect
 					:model-value="visibilitySelectValue"
 					:items="visibilityItems"
@@ -71,40 +71,40 @@
 				<div class="flex gap-2">
 					<UButton variant="outline" color="neutral" :disabled="is_loading" @click="clearFilters">
 						<UIcon name="i-heroicons-arrow-path" class="w-4 h-4" />
-						{{ $t('components.filter.clear') }}
+						{{ t('components.filter.clear') }}
 					</UButton>
 					<UButton color="primary" :disabled="is_loading" :loading="is_loading" @click="search">
 						<UIcon :name="ICONS.SEARCH_ROUNDED" class="w-4 h-4" />
-						{{ $t('components.filter.search') }}
+						{{ t('components.filter.search') }}
 					</UButton>
 				</div>
 			</div>
 		</div>
 
 		<div v-if="hasActiveFilters" class="flex flex-wrap gap-2 items-center">
-			<span class="text-xs text-gray-600 dark:text-gray-400">{{ $t('components.filter.activeFilters') }}</span>
+			<span class="text-xs text-gray-600 dark:text-gray-400">{{ t('components.filter.activeFilters') }}</span>
 			<UBadge v-if="hasDateFilter" color="primary" variant="subtle" size="sm" @click="clearFilter('date')">
-				{{ $t('components.filter.date') }}: {{ formatDateRange(filter.date_range) }}
+				{{ t('components.filter.date') }}: {{ formatDateRange(filter.date_range) }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
 			<UBadge v-if="filter.query" color="info" variant="subtle" size="sm" @click="clearFilter('query')">
-				{{ $t('components.filter.search') }}: {{ filter.query }}
+				{{ t('components.filter.search') }}: {{ filter.query }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
 			<UBadge v-if="filter.action" color="warning" variant="subtle" size="sm" @click="clearFilter('action')">
-				{{ $t('table.action') }}: {{ getActivityLogActionLabel(t, filter.action) }}
+				{{ t('table.action') }}: {{ getActivityLogActionLabel(t, filter.action) }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
 			<UBadge v-if="filter.actor_type" color="neutral" variant="subtle" size="sm" @click="clearFilter('actor_type')">
-				{{ $t('table.actor') }}: {{ getActivityLogActorTypeLabel(t, filter.actor_type) }}
+				{{ t('table.actor') }}: {{ getActivityLogActorTypeLabel(t, filter.actor_type) }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
 			<UBadge v-if="filter.source" color="neutral" variant="subtle" size="sm" @click="clearFilter('source')">
-				{{ $t('table.source') }}: {{ getActivityLogSourceLabel(t, filter.source) }}
+				{{ t('table.source') }}: {{ getActivityLogSourceLabel(t, filter.source) }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
 			<UBadge v-if="filter.visibility" color="neutral" variant="subtle" size="sm" @click="clearFilter('visibility')">
-				{{ $t('table.visibility') }}: {{ getActivityLogVisibilityLabel(t, filter.visibility) }}
+				{{ t('table.visibility') }}: {{ getActivityLogVisibilityLabel(t, filter.visibility) }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
 		</div>
@@ -113,6 +113,7 @@
 
 <script lang="ts" setup>
 import { format } from 'date-fns';
+import { ICONS } from '~/utils/icons';
 import {
 	ACTIVITY_LOG_FILTER_ALL,
 	getActivityLogActionLabel,

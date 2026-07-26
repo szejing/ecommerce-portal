@@ -1,12 +1,12 @@
 <template>
-	<ZPagePanel id="taxes-rules" :title="$t('nav.taxRules')" back-to="/settings/taxes/rules">
+	<ZPagePanel id="taxes-rules" :title="t('nav.taxRules')" back-to="/settings/taxes/rules">
 		<div class="wrapper-grid">
 			<UCard>
 				<template #header>
 					<div class="flex items-center justify-between">
 						<h2>Tax Rule</h2>
 						<UButton size="sm" color="error" variant="ghost" class="opacity-50 hover:opacity-100" :icon="ICONS.TRASH" @click="deleteTaxRule">
-							{{ $t('common.delete') }}
+							{{ t('common.delete') }}
 						</UButton>
 					</div>
 				</template>
@@ -27,6 +27,7 @@
 import { ZModalConfirmation, ZModalTaxRuleDetail } from '#components';
 import type { TaxRule } from '~/utils/types/tax-rule';
 import type { TaxRuleDetail } from '~/utils/types/tax-rule-detail';
+import { ICONS } from '~/utils/icons';
 
 const taxRuleStore = useTaxRuleStore();
 

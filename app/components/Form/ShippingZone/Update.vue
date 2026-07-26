@@ -135,7 +135,9 @@ const reviewSummary = computed(() => {
 
 	const pricingSummaryLabel = !pricingLines?.length ? t('common.notSet') : pricingLines.join(' · ');
 
-	const methodLabelsResolved = formState.shipping_method_ids.map((id) => methodOptions.value.find((o) => o.value === id)?.label).filter((x): x is string => Boolean(x));
+	const methodLabelsResolved = formState.shipping_method_ids
+		.map((id) => methodOptions.value.find((o) => o.value === id)?.label)
+		.filter((x): x is string => Boolean(x));
 	const methodLabels = methodLabelsResolved.length ? methodLabelsResolved : undefined;
 
 	return {
@@ -176,7 +178,10 @@ const submitForm = async (event: FormSubmitEvent<Schema>) => {
 	const methods = data.shipping_method_ids.map((id) => ({
 		shipping_method_id: Number(id),
 		fee: data.method_pricing[id]?.fee ?? 0,
-		estimated_days: data.method_pricing[id]?.estimated_days != null && !Number.isNaN(data.method_pricing[id]!.estimated_days!) ? data.method_pricing[id]!.estimated_days! : null,
+		estimated_days:
+			data.method_pricing[id]?.estimated_days != null && !Number.isNaN(data.method_pricing[id]!.estimated_days!)
+				? data.method_pricing[id]!.estimated_days!
+				: null,
 		order_cutoff_time: data.method_pricing[id]?.order_cutoff_time || null,
 	}));
 	const serializedState = serializeStatesForApi(data.state);

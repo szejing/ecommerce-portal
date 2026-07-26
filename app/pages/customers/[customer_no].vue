@@ -13,8 +13,8 @@
 
 		<div v-else-if="customer_not_found" class="flex flex-col items-center justify-center py-16 gap-4">
 			<UIcon name="i-heroicons-user-group" class="w-16 h-16 text-neutral-300" />
-			<p class="text-default">{{ $t('pages.customerNotFound', { customerNo: custNo }) }}</p>
-			<UButton color="primary" variant="soft" :to="'/customers'">{{ $t('nav.customers') }}</UButton>
+			<p class="text-default">{{ t('pages.customerNotFound', { customerNo: custNo }) }}</p>
+			<UButton color="primary" variant="soft" :to="'/customers'">{{ t('nav.customers') }}</UButton>
 		</div>
 
 		<div v-else-if="current_customer" class="space-y-6 max-w-6xl">
@@ -37,7 +37,7 @@
 						</div>
 						<div class="flex flex-wrap items-center gap-2 pt-1">
 							<UBadge v-if="isVip" color="warning" variant="subtle" size="sm"> VIP </UBadge>
-							<span class="text-sm text-muted"> {{ $t('pages.totalSpend') }}: {{ formatCurrency(current_customer.total_spent ?? 0, 'MYR') }} </span>
+							<span class="text-sm text-muted"> {{ t('pages.totalSpend') }}: {{ formatCurrency(current_customer.total_spent ?? 0, 'MYR') }} </span>
 						</div>
 					</div>
 				</div>
@@ -49,28 +49,28 @@
 				<UCard class="lg:col-span-1">
 					<template #header>
 						<h2 class="text-base font-semibold text-default">
-							{{ $t('pages.profileInfo') }}
+							{{ t('pages.profileInfo') }}
 						</h2>
 					</template>
 					<dl class="space-y-3 text-sm">
 						<div>
-							<dt class="text-muted">{{ $t('common.name') }}</dt>
+							<dt class="text-muted">{{ t('common.name') }}</dt>
 							<dd class="font-medium text-default mt-0.5">{{ current_customer.name || '—' }}</dd>
 						</div>
 						<div>
-							<dt class="text-muted">{{ $t('common.phoneNo') }}</dt>
+							<dt class="text-muted">{{ t('common.phoneNo') }}</dt>
 							<dd class="font-medium text-default mt-0.5">{{ phoneDisplay || '—' }}</dd>
 						</div>
 						<div>
-							<dt class="text-muted">{{ $t('table.email') }}</dt>
+							<dt class="text-muted">{{ t('table.email') }}</dt>
 							<dd class="font-medium text-default mt-0.5">{{ current_customer.email_address || '—' }}</dd>
 						</div>
 						<div>
-							<dt class="text-muted">{{ $t('pages.joined') }}</dt>
+							<dt class="text-muted">{{ t('pages.joined') }}</dt>
 							<dd class="font-medium text-default mt-0.5">{{ joinedDisplay }}</dd>
 						</div>
 						<div>
-							<dt class="text-muted">{{ $t('pages.lastTransaction') }}</dt>
+							<dt class="text-muted">{{ t('pages.lastTransaction') }}</dt>
 							<dd class="font-medium text-default mt-0.5">{{ lastActivityDisplay }}</dd>
 						</div>
 					</dl>
@@ -84,15 +84,15 @@
 							<div class="space-y-6 py-2">
 								<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
 									<UCard class="bg-elevated/50">
-										<p class="text-sm text-muted">{{ $t('pages.dashboardStatsOrders') }}</p>
+										<p class="text-sm text-muted">{{ t('pages.dashboardStatsOrders') }}</p>
 										<p class="text-2xl font-bold text-default mt-1">{{ totalOrdersCount }}</p>
 									</UCard>
 									<UCard class="bg-elevated/50">
-										<p class="text-sm text-muted">{{ $t('nav.appointments') }}</p>
+										<p class="text-sm text-muted">{{ t('nav.appointments') }}</p>
 										<p class="text-2xl font-bold text-default mt-1">{{ totalAppointmentsCount }}</p>
 									</UCard>
 									<UCard class="bg-elevated/50">
-										<p class="text-sm text-muted">{{ $t('pages.totalSpend') }}</p>
+										<p class="text-sm text-muted">{{ t('pages.totalSpend') }}</p>
 										<p class="text-2xl font-bold text-success mt-1">
 											{{ formatCurrency(current_customer.total_spent ?? 0, 'MYR') }}
 										</p>
@@ -122,9 +122,9 @@
 										<div class="flex flex-col items-center justify-center py-12 gap-3">
 											<UIcon name="i-heroicons-calendar-days" class="w-16 h-16 text-neutral-300" />
 											<div class="text-center">
-												<p class="font-medium text-default">{{ $t('pages.noAppointmentsFoundForCustomer') }}</p>
+												<p class="font-medium text-default">{{ t('pages.noAppointmentsFoundForCustomer') }}</p>
 												<p class="text-sm text-muted mt-1 max-w-sm">
-													{{ $t('pages.noAppointmentsFoundForCustomerDescription') }}
+													{{ t('pages.noAppointmentsFoundForCustomerDescription') }}
 												</p>
 											</div>
 										</div>
@@ -144,20 +144,14 @@
 						<!-- Orders -->
 						<template #orders>
 							<div class="py-2">
-								<UTable
-									:data="pagedCustomerOrders"
-									:columns="orderColumns"
-									:loading="loading"
-									:ui="{ tr: 'cursor-pointer' }"
-									@select="selectOrder"
-								>
+								<UTable :data="pagedCustomerOrders" :columns="orderColumns" :loading="loading" :ui="{ tr: 'cursor-pointer' }" @select="selectOrder">
 									<template #empty>
 										<div class="flex flex-col items-center justify-center py-12 gap-3">
 											<UIcon name="i-heroicons-shopping-cart" class="w-16 h-16 text-neutral-300" />
 											<div class="text-center">
-												<p class="font-medium text-default">{{ $t('pages.noOrdersFoundForCustomer') }}</p>
+												<p class="font-medium text-default">{{ t('pages.noOrdersFoundForCustomer') }}</p>
 												<p class="text-sm text-muted mt-1 max-w-sm">
-													{{ $t('pages.noOrdersFoundForCustomerDescription') }}
+													{{ t('pages.noOrdersFoundForCustomerDescription') }}
 												</p>
 											</div>
 										</div>
@@ -177,7 +171,7 @@
 						<!-- Invoices -->
 						<!-- <template #invoices>
 							<div class="py-2">
-								<p class="text-sm text-muted">{{ $t('pages.noInvoicesFound') }}</p>
+								<p class="text-sm text-muted">{{ t('pages.noInvoicesFound') }}</p>
 							</div>
 						</template> -->
 					</UTabs>

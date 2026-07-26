@@ -1,13 +1,13 @@
 <template>
 	<UModal
-		:title="$t('components.zModal.editCategory')"
+		:title="t('components.zModal.editCategory')"
 		:ui="{
 			content: 'w-full sm:max-w-[90%] md:max-w-[750px] lg:max-w-[850px]',
 		}"
 	>
 		<template #header>
 			<div class="flex items-center justify-between w-full">
-				<h3 class="text-lg font-bold">{{ $t('components.zModal.editCategory') }}</h3>
+				<h3 class="text-lg font-bold">{{ t('components.zModal.editCategory') }}</h3>
 			</div>
 		</template>
 
@@ -15,7 +15,7 @@
 			<div class="space-y-4">
 				<!-- Search -->
 				<div class="flex items-center justify-between">
-					<UInput v-model="searchTerm" :placeholder="$t('components.zModal.categoryPicker.searchPlaceholder')" :ui="{ base: 'w-64' }" size="md">
+					<UInput v-model="searchTerm" :placeholder="t('components.zModal.categoryPicker.searchPlaceholder')" :ui="{ base: 'w-64' }" size="md">
 						<template #leading>
 							<UIcon :name="ICONS.SEARCH_ROUNDED" class="w-4 h-4 text-neutral-400" />
 						</template>
@@ -59,7 +59,7 @@
 							</li>
 						</ul>
 						<div v-else class="flex items-center justify-center h-full text-sm text-neutral-400">
-							{{ selectedLevel1 ? $t('components.zModal.categoryPicker.noSubcategories') : $t('components.zModal.categoryPicker.selectParent') }}
+							{{ selectedLevel1 ? t('components.zModal.categoryPicker.noSubcategories') : t('components.zModal.categoryPicker.selectParent') }}
 						</div>
 					</div>
 
@@ -79,14 +79,14 @@
 							</li>
 						</ul>
 						<div v-else class="flex items-center justify-center h-full text-sm text-neutral-400">
-							{{ selectedLevel2 ? $t('components.zModal.categoryPicker.noSubcategories') : $t('components.zModal.categoryPicker.selectSubcategory') }}
+							{{ selectedLevel2 ? t('components.zModal.categoryPicker.noSubcategories') : t('components.zModal.categoryPicker.selectSubcategory') }}
 						</div>
 					</div>
 				</div>
 
 				<!-- Selected Path Preview -->
 				<div v-if="selectedPath" class="flex items-center gap-2 text-sm">
-					<span class="text-neutral-500">{{ $t('components.zModal.categoryPicker.currentlySelected') }} :</span>
+					<span class="text-neutral-500">{{ t('components.zModal.categoryPicker.currentlySelected') }} :</span>
 					<span class="font-semibold text-neutral-900 dark:text-neutral-100">{{ selectedPath }}</span>
 				</div>
 			</div>
@@ -96,8 +96,8 @@
 			<div class="flex justify-between w-full">
 				<div />
 				<div class="flex gap-3">
-					<UButton color="neutral" variant="outline" @click="onCancel">{{ $t('common.cancel') }}</UButton>
-					<UButton color="primary" :disabled="!currentSelection" @click="onConfirm">{{ $t('modal.confirm') }}</UButton>
+					<UButton color="neutral" variant="outline" @click="onCancel">{{ t('common.cancel') }}</UButton>
+					<UButton color="primary" :disabled="!currentSelection" @click="onConfirm">{{ t('modal.confirm') }}</UButton>
 				</div>
 			</div>
 		</template>

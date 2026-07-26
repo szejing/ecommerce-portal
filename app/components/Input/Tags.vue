@@ -51,6 +51,7 @@
 </template>
 
 <script setup lang="ts">
+import { ICONS } from '~/utils/icons';
 interface InputTags {
 	canAdd?: boolean;
 	modelValue?: string[];

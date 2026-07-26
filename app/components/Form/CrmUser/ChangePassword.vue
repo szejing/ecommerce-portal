@@ -1,11 +1,11 @@
 <template>
 	<UForm ref="formRef" :schema="schema" :state="state" class="space-y-4 max-w-md" @submit="onSubmit" @error="onError">
-		<UFormField v-if="requireCurrentPassword" :label="$t('components.changePassword.currentPassword')" name="old_password" required>
+		<UFormField v-if="requireCurrentPassword" :label="t('components.changePassword.currentPassword')" name="old_password" required>
 			<UInput
 				id="old_password"
 				v-model="state.old_password"
 				:type="state.show_old ? 'text' : 'password'"
-				:placeholder="$t('components.changePassword.currentPassword')"
+				:placeholder="t('components.changePassword.currentPassword')"
 				:ui="{ trailing: 'pe-1' }"
 			>
 				<template v-if="state.old_password?.length" #trailing>
@@ -14,7 +14,7 @@
 						variant="link"
 						size="sm"
 						:icon="state.show_old ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-						:aria-label="state.show_old ? $t('common.hidePassword') : $t('common.showPassword')"
+						:aria-label="state.show_old ? t('common.hidePassword') : t('common.showPassword')"
 						:aria-pressed="state.show_old"
 						aria-controls="old_password"
 						@click="state.show_old = !state.show_old"
@@ -23,11 +23,11 @@
 			</UInput>
 		</UFormField>
 		<div class="space-y-2">
-			<UFormField :label="$t('components.changePassword.newPassword')" name="new_password" required>
+			<UFormField :label="t('components.changePassword.newPassword')" name="new_password" required>
 				<UInput
 					id="new_password"
 					v-model="state.new_password"
-					:placeholder="$t('components.changePassword.newPassword')"
+					:placeholder="t('components.changePassword.newPassword')"
 					:color="passwordStrengthColor"
 					:type="state.show_new ? 'text' : 'password'"
 					:aria-invalid="passwordStrengthScore < 4"
@@ -40,7 +40,7 @@
 							variant="link"
 							size="sm"
 							:icon="state.show_new ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-							:aria-label="state.show_new ? $t('common.hidePassword') : $t('common.showPassword')"
+							:aria-label="state.show_new ? t('common.hidePassword') : t('common.showPassword')"
 							:aria-pressed="state.show_new"
 							aria-controls="new_password"
 							@click="state.show_new = !state.show_new"
@@ -49,23 +49,23 @@
 				</UInput>
 			</UFormField>
 			<UProgress :color="passwordStrengthColor" :indicator="passwordStrengthText" :model-value="passwordStrengthScore" :max="4" size="sm" />
-			<p id="new-password-strength" class="text-sm font-medium">{{ passwordStrengthText }}. {{ $t('auth.mustContain') }}</p>
-			<ul class="space-y-1" :aria-label="$t('components.changePassword.passwordRequirementsAria')">
+			<p id="new-password-strength" class="text-sm font-medium">{{ passwordStrengthText }}. {{ t('auth.mustContain') }}</p>
+			<ul class="space-y-1" :aria-label="t('components.changePassword.passwordRequirementsAria')">
 				<li v-for="(req, index) in passwordStrength" :key="index" class="flex items-center gap-0.5" :class="req.met ? 'text-success' : 'text-muted'">
 					<UIcon :name="req.met ? 'i-lucide-circle-check' : 'i-lucide-circle-x'" class="size-4 shrink-0" />
 					<span class="text-xs font-light">
 						{{ req.text }}
-						<span class="sr-only">{{ req.met ? $t('components.changePassword.requirementMet') : $t('components.changePassword.requirementNotMet') }}</span>
+						<span class="sr-only">{{ req.met ? t('components.changePassword.requirementMet') : t('components.changePassword.requirementNotMet') }}</span>
 					</span>
 				</li>
 			</ul>
 		</div>
-		<UFormField :label="$t('components.changePassword.confirmNewPassword')" name="confirm_password" required>
+		<UFormField :label="t('components.changePassword.confirmNewPassword')" name="confirm_password" required>
 			<UInput
 				id="confirm_password"
 				v-model="state.confirm_password"
 				:type="state.show_confirm ? 'text' : 'password'"
-				:placeholder="$t('components.changePassword.confirmNewPassword')"
+				:placeholder="t('components.changePassword.confirmNewPassword')"
 				:ui="{ trailing: 'pe-1' }"
 			>
 				<template v-if="state.confirm_password?.length" #trailing>
@@ -74,7 +74,7 @@
 						variant="link"
 						size="sm"
 						:icon="state.show_confirm ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-						:aria-label="state.show_confirm ? $t('common.hidePassword') : $t('common.showPassword')"
+						:aria-label="state.show_confirm ? t('common.hidePassword') : t('common.showPassword')"
 						:aria-pressed="state.show_confirm"
 						aria-controls="confirm_password"
 						@click="state.show_confirm = !state.show_confirm"
@@ -82,7 +82,7 @@
 				</template>
 			</UInput>
 		</UFormField>
-		<UButton color="primary" type="submit" :loading="loading" :disabled="!canSubmit">{{ $t('components.changePassword.updatePassword') }}</UButton>
+		<UButton color="primary" type="submit" :loading="loading" :disabled="!canSubmit">{{ t('components.changePassword.updatePassword') }}</UButton>
 	</UForm>
 </template>
 
@@ -122,9 +122,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 
-const schema = computed(() =>
-	props.requireCurrentPassword ? ChangePasswordValidation(t) : AdminResetPasswordValidation(t),
-);
+const schema = computed(() => (props.requireCurrentPassword ? ChangePasswordValidation(t) : AdminResetPasswordValidation(t)));
 type Schema = z.infer<ReturnType<typeof ChangePasswordValidation>>;
 
 const formRef = useTemplateRef('formRef');

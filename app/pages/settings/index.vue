@@ -1,9 +1,9 @@
 <template>
-	<ZPagePanel id="settings" :title="$t('nav.settings')">
+	<ZPagePanel id="settings" :title="t('nav.settings')">
 		<div class="space-y-4">
 			<div class="space-y-1">
-				<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $t('nav.settings') }}</h2>
-				<p class="text-gray-500 dark:text-gray-400">{{ $t('pages.settingsDesc') }}</p>
+				<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('nav.settings') }}</h2>
+				<p class="text-gray-500 dark:text-gray-400">{{ t('pages.settingsDesc') }}</p>
 			</div>
 
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">

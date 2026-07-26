@@ -1,7 +1,7 @@
 <template>
-	<ZPagePanel id="shipment-arrangement" :title="$t('shipmentArrangement.title')">
+	<ZPagePanel id="shipment-arrangement" :title="t('shipmentArrangement.title')">
 		<div class="min-w-0 space-y-5">
-			<p class="max-w-3xl text-sm leading-5 text-muted">{{ $t('shipmentArrangement.subtitle') }}</p>
+			<p class="max-w-3xl text-sm leading-5 text-muted">{{ t('shipmentArrangement.subtitle') }}</p>
 
 			<ShipmentArrangementWorkflowGuide
 				:pending-count="store.total"
@@ -16,11 +16,11 @@
 				color="error"
 				variant="soft"
 				icon="i-lucide-circle-alert"
-				:title="$t('shipmentArrangement.states.loadErrorTitle')"
+				:title="t('shipmentArrangement.states.loadErrorTitle')"
 				:description="pageError"
 			>
 				<template #actions>
-					<UButton data-testid="refresh-pending" color="error" variant="outline" size="sm" :label="$t('common.refresh')" @click="refreshPending" />
+					<UButton data-testid="refresh-pending" color="error" variant="outline" size="sm" :label="t('common.refresh')" @click="refreshPending" />
 				</template>
 			</UAlert>
 			<UAlert
@@ -28,29 +28,29 @@
 				color="error"
 				variant="soft"
 				icon="i-lucide-file-warning"
-				:title="$t('shipmentArrangement.states.uploadErrorTitle')"
+				:title="t('shipmentArrangement.states.uploadErrorTitle')"
 				:description="uploadError"
 			/>
 
-			<section class="rounded-lg border border-default bg-default p-4" :aria-label="$t('shipmentArrangement.filters.title')">
+			<section class="rounded-lg border border-default bg-default p-4" :aria-label="t('shipmentArrangement.filters.title')">
 				<div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1.4fr)_minmax(12rem,0.8fr)_auto_auto] xl:items-end">
 					<label class="min-w-0 space-y-1.5 text-sm font-medium text-default">
-						<span>{{ $t('shipmentArrangement.filters.searchLabel') }}</span>
-						<UInput v-model="store.filters.search" icon="i-lucide-search" :placeholder="$t('shipmentArrangement.filters.search')" />
+						<span>{{ t('shipmentArrangement.filters.searchLabel') }}</span>
+						<UInput v-model="store.filters.search" icon="i-lucide-search" :placeholder="t('shipmentArrangement.filters.search')" />
 					</label>
 					<label class="min-w-0 space-y-1.5 text-sm font-medium text-default">
-						<span>{{ $t('shipmentArrangement.filters.shippingMethodLabel') }}</span>
+						<span>{{ t('shipmentArrangement.filters.shippingMethodLabel') }}</span>
 						<USelectMenu
 							v-model="store.filters.shippingMethodId"
 							data-testid="shipping-method-filter"
 							class="w-full"
 							:items="shippingMethodOptions"
 							value-key="value"
-							:placeholder="$t('shipmentArrangement.filters.shippingMethod')"
+							:placeholder="t('shipmentArrangement.filters.shippingMethod')"
 						/>
 					</label>
 					<div class="min-w-0 space-y-1.5 text-sm font-medium text-default">
-						<span>{{ $t('shipmentArrangement.filters.orderDate') }}</span>
+						<span>{{ t('shipmentArrangement.filters.orderDate') }}</span>
 						<ZDateRange v-model="store.filters.dateRange" hide-presets />
 					</div>
 					<div class="flex flex-col gap-2 sm:flex-row xl:justify-end">
@@ -60,8 +60,8 @@
 							color="neutral"
 							variant="ghost"
 							icon="i-lucide-eraser"
-							:label="$t('shipmentArrangement.actions.clearFilters')"
-							:aria-label="$t('shipmentArrangement.actions.clearFilters')"
+							:label="t('shipmentArrangement.actions.clearFilters')"
+							:aria-label="t('shipmentArrangement.actions.clearFilters')"
 							@click="clearFilters"
 						/>
 					</div>
@@ -69,11 +69,11 @@
 				<input ref="fileInput" class="hidden" type="file" accept=".xlsx,.numbers" @change="onFileSelected" />
 			</section>
 
-			<section class="min-w-0 rounded-lg border border-default bg-default" :aria-label="$t('shipmentArrangement.table.title')">
+			<section class="min-w-0 rounded-lg border border-default bg-default" :aria-label="t('shipmentArrangement.table.title')">
 				<div class="flex flex-col gap-3 border-b border-default p-4 sm:flex-row sm:items-center sm:justify-between">
 					<div>
-						<h2 class="text-base font-semibold text-default">{{ $t('shipmentArrangement.table.pendingTitle') }}</h2>
-						<p class="text-sm text-muted">{{ $t('shipmentArrangement.table.pendingCount', { count: store.total }) }}</p>
+						<h2 class="text-base font-semibold text-default">{{ t('shipmentArrangement.table.pendingTitle') }}</h2>
+						<p class="text-sm text-muted">{{ t('shipmentArrangement.table.pendingCount', { count: store.total }) }}</p>
 					</div>
 					<ZTableToolbar
 						v-model="store.pageSize"
@@ -95,15 +95,15 @@
 				<div v-else-if="store.rows.length === 0" data-testid="pending-empty" class="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center">
 					<UIcon name="i-lucide-package-check" class="size-12 text-dimmed" />
 					<div>
-						<p class="font-semibold text-default">{{ $t('shipmentArrangement.states.emptyTitle') }}</p>
-						<p class="mt-1 text-sm text-muted">{{ $t('shipmentArrangement.states.emptyDescription') }}</p>
+						<p class="font-semibold text-default">{{ t('shipmentArrangement.states.emptyTitle') }}</p>
+						<p class="mt-1 text-sm text-muted">{{ t('shipmentArrangement.states.emptyDescription') }}</p>
 					</div>
 					<UButton
 						data-testid="refresh-pending"
 						color="neutral"
 						variant="outline"
 						icon="i-lucide-refresh-cw"
-						:label="$t('common.refresh')"
+						:label="t('common.refresh')"
 						@click="refreshPending"
 					/>
 				</div>
@@ -116,7 +116,7 @@
 					v-if="!store.loading && store.rows.length > 0"
 					class="flex flex-col gap-3 border-t border-default px-4 py-3 text-sm text-muted sm:flex-row sm:items-center sm:justify-between"
 				>
-					<span>{{ $t('shipmentArrangement.table.showing', { from: firstVisibleRow, to: lastVisibleRow, total: store.total }) }}</span>
+					<span>{{ t('shipmentArrangement.table.showing', { from: firstVisibleRow, to: lastVisibleRow, total: store.total }) }}</span>
 					<UPagination v-model:page="store.page" :items-per-page="store.pageSize" :total="store.total" show-first show-last size="sm" />
 				</div>
 			</section>

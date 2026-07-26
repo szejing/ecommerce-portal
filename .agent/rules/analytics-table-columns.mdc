@@ -49,7 +49,7 @@ Re-export from `app/utils/table-columns/index.ts`.
 import { getSummItemColumns, getSummItemColumnLabels } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 
-const { t } = useI18n();
+const { t: $t } = useI18n();
 const countKey = 'total_orders'; // or 'total_txns' on sales pages
 const columns = computed(() => getSummItemColumns(t, countKey));
 const columnOptions = computed(() => columnOptionsFromLabelMap(t, getSummItemColumnLabels(countKey)));

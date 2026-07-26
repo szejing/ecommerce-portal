@@ -14,8 +14,8 @@
 
 		<template #footer>
 			<div class="flex justify-between gap-4 w-full">
-				<UButton color="primary" variant="outline" @click="onStay">{{ $t('modal.stay') }}</UButton>
-				<UButton color="neutral" variant="outline" @click="onLeave">{{ $t('modal.leave') }}</UButton>
+				<UButton color="primary" variant="outline" @click="onStay">{{ t('modal.stay') }}</UButton>
+				<UButton color="neutral" variant="outline" @click="onLeave">{{ t('modal.leave') }}</UButton>
 			</div>
 		</template>
 	</UModal>

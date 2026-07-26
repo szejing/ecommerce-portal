@@ -1,7 +1,7 @@
 <template>
-	<ZPagePanel id="products-categories" :title="$t('nav.categories')" back-to="/products">
+	<ZPagePanel id="products-categories" :title="t('nav.categories')" back-to="/products">
 		<template #navbar-right>
-			<ZCreateButton to="/products/categories/create" :label="$t('common.addCategory')" />
+			<ZCreateButton to="/products/categories/create" :label="t('common.addCategory')" />
 		</template>
 		<template #toolbar>
 			<ZSectionFilterCategories />
@@ -52,8 +52,8 @@
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.ADDITIONAL" class="w-12 h-12 text-gray-400" />
-							<p class="text-sm text-gray-600 dark:text-gray-400">{{ $t('pages.noCategoriesFound') }}</p>
-							<p class="text-xs text-gray-500 dark:text-gray-500">{{ $t('pages.tryAdjustingFilters') }}</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noCategoriesFound') }}</p>
+							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
 				</UTable>
@@ -61,7 +61,7 @@
 
 			<!-- Count (tree view shows all categories) -->
 			<div v-if="!initialize && getDisplayCategories.length > 0" class="section-pagination text-sm text-muted">
-				{{ $t('pages.categoriesCount', { total: total_categories }) }}
+				{{ t('pages.categoriesCount', { total: total_categories }) }}
 			</div>
 		</div>
 	</ZPagePanel>
@@ -75,6 +75,7 @@ import type { Category } from '~/utils/types/category';
 import { options_page_size } from '~/utils/options';
 import type { TableRow } from '@nuxt/ui';
 import { failedNotification } from '~/stores/AppUi/AppUi';
+import { ICONS } from '~/utils/icons';
 
 const CATEGORY_COLUMN_LABELS = {
 	category: 'table.code',

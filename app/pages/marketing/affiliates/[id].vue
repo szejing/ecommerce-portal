@@ -11,13 +11,11 @@
 		<div v-else-if="current_affiliate" class="space-y-6 max-w-3xl">
 			<UCard>
 				<template #header>
-					<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-						{{ $t('nav.affiliates') }} - {{ current_affiliate.slug }}
-					</h2>
+					<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{{ t('nav.affiliates') }} - {{ current_affiliate.slug }}</h2>
 				</template>
 				<dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<div>
-						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ $t('affiliate.slug') }}</dt>
+						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ t('affiliate.slug') }}</dt>
 						<dd class="mt-1 text-sm text-neutral-900 dark:text-neutral-100">{{ current_affiliate.slug }}</dd>
 					</div>
 					<div>
@@ -25,19 +23,19 @@
 						<dd class="mt-1 text-sm text-neutral-900 dark:text-neutral-100">{{ current_affiliate.user_id }}</dd>
 					</div>
 					<div>
-						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ $t('affiliate.tier') }}</dt>
+						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ t('affiliate.tier') }}</dt>
 						<dd class="mt-1 text-sm text-neutral-900 dark:text-neutral-100">{{ current_affiliate.tier?.name ?? '—' }}</dd>
 					</div>
 					<div>
-						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ $t('affiliate.referrals') }}</dt>
+						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ t('affiliate.referrals') }}</dt>
 						<dd class="mt-1 text-sm text-neutral-900 dark:text-neutral-100">{{ current_affiliate.total_referrals_count ?? 0 }}</dd>
 					</div>
 					<div>
-						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ $t('affiliate.balance') }}</dt>
+						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ t('affiliate.balance') }}</dt>
 						<dd class="mt-1 text-sm text-neutral-900 dark:text-neutral-100">{{ current_affiliate.current_balance ?? 0 }}</dd>
 					</div>
 					<div>
-						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ $t('affiliate.createdAt') }}</dt>
+						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ t('affiliate.createdAt') }}</dt>
 						<dd class="mt-1 text-sm text-neutral-900 dark:text-neutral-100">
 							{{ current_affiliate.created_at ? new Date(current_affiliate.created_at).toLocaleString() : '—' }}
 						</dd>
@@ -46,7 +44,7 @@
 			</UCard>
 		</div>
 		<div v-else class="text-sm text-neutral-600 dark:text-neutral-400">
-			{{ $t('pages.noAffiliatesFound') }}
+			{{ t('pages.noAffiliatesFound') }}
 		</div>
 	</ZPagePanel>
 </template>

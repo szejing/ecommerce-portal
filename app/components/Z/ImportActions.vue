@@ -12,7 +12,14 @@
 		<UModal v-model:open="sourceModalOpen" :title="sourceModalTitle" :ui="{ content: 'w-full sm:max-w-lg' }">
 			<template #body>
 				<div class="flex flex-row gap-2">
-					<UButton v-for="source in importSources" :key="source.value" color="neutral" variant="outline" class="min-w-0 flex-1 justify-start text-left" @click="selectImportSource(source.value)">
+					<UButton
+						v-for="source in importSources"
+						:key="source.value"
+						color="neutral"
+						variant="outline"
+						class="min-w-0 flex-1 justify-start text-left"
+						@click="selectImportSource(source.value)"
+					>
 						<div class="flex min-w-0 flex-col items-start gap-1">
 							<span class="font-medium">{{ source.label }}</span>
 							<span v-if="source.description" class="text-xs text-gray-500 dark:text-gray-400">{{ source.description }}</span>
@@ -26,6 +33,7 @@
 
 <script lang="ts" setup>
 import { failedNotification } from '~/stores/AppUi/AppUi';
+import { ICONS } from '~/utils/icons';
 
 const props = withDefaults(
 	defineProps<{

@@ -10,13 +10,15 @@
 		size="md"
 		label-key="code"
 		description-key="description"
-		:placeholder="$t('components.selectMenu.selectTax')"
+		:placeholder="t('components.selectMenu.selectTax')"
 	>
 	</USelectMenu>
 </template>
 
 <script lang="ts" setup>
 import type { Tax } from '~/utils/types/tax';
+
+const { t } = useI18n();
 
 const searchTerm = ref('');
 const taxStore = useTaxStore();

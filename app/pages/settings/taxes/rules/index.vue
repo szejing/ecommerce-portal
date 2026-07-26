@@ -1,7 +1,7 @@
 <template>
-	<ZPagePanel id="taxes-rules" :title="$t('nav.taxRules')" back-to="/settings/taxes">
+	<ZPagePanel id="taxes-rules" :title="t('nav.taxRules')" back-to="/settings/taxes">
 		<template #navbar-right>
-			<ZCreateButton to="/settings/taxes/rules/create" :label="$t('common.addTaxRule')" />
+			<ZCreateButton to="/settings/taxes/rules/create" :label="t('common.addTaxRule')" />
 		</template>
 		<template #toolbar>
 			<ZSectionFilterTaxRules />
@@ -35,8 +35,8 @@
 			<UTable v-else :data="tax_rules" :columns="visibleColumns" :loading="loading" @select="selectTaxRule">
 				<template #empty-state>
 					<div class="flex-col-center section-empty">
-						<h2>{{ $t('pages.noTaxRulesFound') }}</h2>
-						<p>{{ $t('pages.tryAdjustingFilters') }}</p>
+						<h2>{{ t('pages.noTaxRulesFound') }}</h2>
+						<p>{{ t('pages.tryAdjustingFilters') }}</p>
 					</div>
 				</template>
 			</UTable>

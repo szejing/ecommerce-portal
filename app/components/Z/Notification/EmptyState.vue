@@ -1,12 +1,14 @@
 <template>
 	<div :class="['z-notification-empty', compact ? 'z-notification-empty--compact' : 'z-notification-empty--page']">
 		<UIcon :name="ICONS.CHECK_OUTLINE_ROUNDED" :class="compact ? 'size-8' : 'size-10'" />
-		<p>{{ $t('notifications.empty') }}</p>
+		<p>{{ t('notifications.empty') }}</p>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { ICONS } from '~/utils/icons';
+
+const { t } = useI18n();
 
 withDefaults(
 	defineProps<{

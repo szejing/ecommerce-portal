@@ -18,28 +18,28 @@
 					<div class="hidden md:flex justify-between items-center gap-3">
 						<UButton color="error" variant="ghost" size="lg" :loading="removing" @click="confirmDelete">
 							<UIcon :name="ICONS.TRASH" />
-							{{ $t('common.delete') }}
+							{{ t('common.delete') }}
 						</UButton>
 						<div class="flex gap-3">
-							<UButton color="neutral" variant="outline" size="lg" @click="goBack">{{ $t('common.cancel') }}</UButton>
+							<UButton color="neutral" variant="outline" size="lg" @click="goBack">{{ t('common.cancel') }}</UButton>
 							<UButton color="success" variant="solid" size="lg" :loading="updating" @click="onSubmit">
 								<UIcon :name="ICONS.CHECK_ROUNDED" />
-								{{ $t('common.save') }}
+								{{ t('common.save') }}
 							</UButton>
 						</div>
 					</div>
 					<div class="md:hidden flex flex-col gap-2">
 						<UButton color="success" size="md" class="w-full" :loading="updating" @click="onSubmit">
 							<UIcon :name="ICONS.CHECK_ROUNDED" class="w-4 h-4" />
-							<span class="text-sm">{{ $t('common.save') }}</span>
+							<span class="text-sm">{{ t('common.save') }}</span>
 						</UButton>
 						<div class="flex gap-2">
 							<UButton color="error" variant="ghost" size="sm" class="flex-1" :loading="removing" @click="confirmDelete">
 								<UIcon :name="ICONS.TRASH" class="w-4 h-4" />
-								<span class="text-xs">{{ $t('common.delete') }}</span>
+								<span class="text-xs">{{ t('common.delete') }}</span>
 							</UButton>
 							<UButton color="neutral" variant="outline" size="sm" class="flex-1" @click="goBack">
-								<span class="text-xs">{{ $t('common.cancel') }}</span>
+								<span class="text-xs">{{ t('common.cancel') }}</span>
 							</UButton>
 						</div>
 					</div>

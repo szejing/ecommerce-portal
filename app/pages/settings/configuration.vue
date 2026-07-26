@@ -1,16 +1,16 @@
 <template>
-	<ZPagePanel id="settings-configuration" :title="$t('nav.configuration')" back-to="/settings/system">
+	<ZPagePanel id="settings-configuration" :title="t('nav.configuration')" back-to="/settings/system">
 		<template #navbar-right>
 			<UButton color="success" @click="onSave">
 				<UIcon :name="ICONS.SAVE" class="w-4 h-4" />
-				{{ $t('common.save') }}
+				{{ t('common.save') }}
 			</UButton>
 		</template>
 
 		<div class="p-6 space-y-6">
 			<div class="space-y-2">
-				<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $t('nav.configuration') }}</h2>
-				<p class="text-gray-600 dark:text-gray-400">{{ $t('pages.configurationPageDesc') }}</p>
+				<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('nav.configuration') }}</h2>
+				<p class="text-gray-600 dark:text-gray-400">{{ t('pages.configurationPageDesc') }}</p>
 			</div>
 
 			<UTabs v-if="tabItems.length && !updating" v-model="activeTab" :items="tabItems" class="w-full">

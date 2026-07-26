@@ -5,12 +5,12 @@
 				<div class="flex-1">
 					<div class="flex items-center gap-2">
 						<UIcon :name="ICONS.CURRENCY" class="text-primary-500 w-6 h-6" />
-						<h2 class="text-xl font-semibold">{{ $t('components.productUpdate.pricing') }}</h2>
+						<h2 class="text-xl font-semibold">{{ t('components.productUpdate.pricing') }}</h2>
 						<span class="text-red-500 text-sm">*</span>
 					</div>
-					<p class="text-sm text-neutral-500 mt-1">{{ $t('components.productUpdate.setPricesCurrency') }}</p>
+					<p class="text-sm text-neutral-500 mt-1">{{ t('components.productUpdate.setPricesCurrency') }}</p>
 				</div>
-				<UTooltip :text="$t('pages.pricingTooltip')" :popper="{ placement: 'bottom' }">
+				<UTooltip :text="t('pages.pricingTooltip')" :popper="{ placement: 'bottom' }">
 					<UIcon :name="ICONS.HELP" class="text-neutral-400 hover:text-primary-500 w-5 h-5 cursor-help" />
 				</UTooltip>
 			</div>
@@ -18,41 +18,41 @@
 
 		<div class="py-2 px-4 space-y-6">
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-				<!-- <UFormField :label="$t('components.productUpdate.currency')">
-					<p class="text-xs text-neutral-500 my-1">{{ $t('components.productUpdate.currency') }}</p>
+				<!-- <UFormField :label="t('components.productUpdate.currency')">
+					<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.currency') }}</p>
 					<ZSelectMenuCurrency :currency-code="currencyCode" class="w-full" @update:currency="emit('update:currency', $event)" />
 				</UFormField> -->
 
-				<UFormField :label="$t('components.productUpdate.sellingprice')" required>
-					<p class="text-xs text-neutral-500 my-1">{{ $t('components.productUpdate.sellingPrice') }}</p>
+				<UFormField :label="t('components.productUpdate.sellingprice')" required>
+					<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.sellingPrice') }}</p>
 					<UInput
 						:model-value="origSellPrice ?? undefined"
 						type="number"
-						:placeholder="$t('components.productUpdate.pricePlaceholder')"
+						:placeholder="t('components.productUpdate.pricePlaceholder')"
 						:min="0"
 						:step="0.1"
 						@update:model-value="emit('update:origSellPrice', $event != null ? Number($event) : undefined)"
 					/>
 				</UFormField>
 
-				<UFormField :label="$t('components.productUpdate.costPriceOptional')">
-					<p class="text-xs text-neutral-500 my-1">{{ $t('components.productUpdate.costForProfit') }}</p>
+				<UFormField :label="t('components.productUpdate.costPriceOptional')">
+					<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.costForProfit') }}</p>
 					<UInput
 						:model-value="costPrice ?? undefined"
 						type="number"
-						:placeholder="$t('components.productUpdate.costPricePlaceholder')"
+						:placeholder="t('components.productUpdate.costPricePlaceholder')"
 						:min="0"
 						:step="0.1"
 						@update:model-value="emit('update:costPrice', $event != null ? Number($event) : undefined)"
 					/>
 				</UFormField>
 
-				<!-- <UFormField :label="$t('components.productUpdate.salePriceOptional')">
-					<p class="text-xs text-neutral-500 my-1">{{ $t('components.productUpdate.discountedPrice') }}</p>
+				<!-- <UFormField :label="t('components.productUpdate.salePriceOptional')">
+					<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.discountedPrice') }}</p>
 					<UInput
 						:model-value="salePrice ?? undefined"
 						type="number"
-						:placeholder="$t('components.productUpdate.salePricePlaceholder')"
+						:placeholder="t('components.productUpdate.salePricePlaceholder')"
 						:min="0"
 						:step="0.1"
 						@update:model-value="onSalePriceInput($event)"
@@ -62,7 +62,7 @@
 
 			<!-- Price Preview: treat sale price 0 as undefined (no sale) -->
 			<div v-if="origSellPrice" class="p-4 bg-neutral-50 rounded-lg">
-				<h4 class="text-sm font-medium mb-3">{{ $t('components.productUpdate.pricePreview') }}</h4>
+				<h4 class="text-sm font-medium mb-3">{{ t('components.productUpdate.pricePreview') }}</h4>
 				<div class="flex flex-wrap items-center gap-3">
 					<div v-if="effectiveSalePrice != null && effectiveSalePrice < origSellPrice" class="text-2xl font-bold text-green-600">
 						{{ currencyCode }} {{ effectiveSalePrice.toFixed(2) }}
@@ -74,11 +74,11 @@
 						{{ currencyCode }} {{ Number(origSellPrice).toFixed(2) }}
 					</div>
 					<div v-if="effectiveSalePrice != null && effectiveSalePrice < origSellPrice" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
-						{{ Math.round(((origSellPrice - effectiveSalePrice) / origSellPrice) * 100) }}% {{ $t('components.productUpdate.percentOff') }}
+						{{ Math.round(((origSellPrice - effectiveSalePrice) / origSellPrice) * 100) }}% {{ t('components.productUpdate.percentOff') }}
 					</div>
 				</div>
 				<div v-if="costPrice != null && origSellPrice" class="text-xs text-neutral-600 mt-2">
-					{{ $t('components.productUpdate.profitMargin') }}: {{ currencyCode }} {{ (origSellPrice - costPrice).toFixed(2) }} ({{
+					{{ t('components.productUpdate.profitMargin') }}: {{ currencyCode }} {{ (origSellPrice - costPrice).toFixed(2) }} ({{
 						Math.round(((origSellPrice - costPrice) / origSellPrice) * 100)
 					}}%)
 				</div>

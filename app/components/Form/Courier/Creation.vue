@@ -19,8 +19,8 @@ import type { FormSubmitEvent } from '#ui/types';
 import type { z } from 'zod';
 import { CreateCourierValidation } from '~/utils/schema';
 
-const courierStore = useCourierStore();
 const { t } = useI18n();
+const courierStore = useCourierStore();
 const { new_courier } = storeToRefs(courierStore);
 
 const courierSchema = computed(() => CreateCourierValidation(t));
