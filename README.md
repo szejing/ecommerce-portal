@@ -32,7 +32,7 @@ Scripts live in the parent ecommerce folder:
 - `../release-wemotoo` — build, bump version, push to DigitalOcean registry
 - `../deploy-wemotoo` — on cloud: set tags, pull images, restart containers
 - `../docker-compose.cloud.yml` — pull-only compose for the droplet
-- `../VERSION` — current semver (`X.Y.Z`), auto-bumped on each release
+- `.env.prod` `APP_VERSION` — current semver (`X.Y.Z`), auto-bumped on each release
 
 ### 1. Local: build and push
 
@@ -59,7 +59,7 @@ This pushes:
 - `registry.digitalocean.com/wemotoo/wemotoo-portal:<tag>`
 - both also tagged as `:prod`
 
-After a successful push, `VERSION` and `.env.tags` are updated. Note the printed tag (e.g. `1.0.1`).
+After a successful push, `APP_VERSION` in `.env.prod` and `../.env.tags` are updated. Note the printed tag (e.g. `1.0.1`).
 
 ### 2. Cloud: pull and deploy
 

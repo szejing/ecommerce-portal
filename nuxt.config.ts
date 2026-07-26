@@ -77,12 +77,12 @@ export default defineNuxtConfig({
 	// },
 
 	runtimeConfig: {
-		version: process.env.APP_VERSION,
 		apiKey: process.env.API_KEY,
 		requestSignatureSecret: process.env.REQUEST_SIGNATURE_SECRET,
 		jwtSecret: process.env.JWT_SECRET,
 		public: {
 			baseUrl: process.env.BASE_URL,
+			version: process.env.APP_VERSION,
 		},
 	},
 

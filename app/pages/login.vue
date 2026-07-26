@@ -12,6 +12,9 @@
 					<FormLogin />
 				</div>
 			</div>
+			<p v-if="appVersion" class="pb-6 text-center text-xs text-muted" :title="`v${appVersion}`">
+				v{{ appVersion }}
+			</p>
 		</div>
 	</div>
 </template>
@@ -24,6 +27,12 @@ definePageMeta({ layout: 'auth' });
 useHead({ title: 'Wemotoo CRM - Login' });
 
 const { t, locale, setLocale } = useI18n();
+const runtimeConfig = useRuntimeConfig();
+
+const appVersion = computed(() => {
+	const version = runtimeConfig.public.version;
+	return typeof version === 'string' && version.trim() ? version.trim() : '';
+});
 
 const localeItems = computed(() => [
 	{ label: t('common.english'), value: 'en' },

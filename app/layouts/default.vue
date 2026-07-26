@@ -37,11 +37,11 @@
 						</UNavigationMenu>
 					</template>
 					<template #fallback>
-						<div class="min-h-[200px] space-y-2 px-2 py-2" aria-hidden="true">
+						<div class="min-h-50 space-y-2 px-2 py-2" aria-hidden="true">
 							<template v-for="i in 8" :key="i">
 								<div class="flex items-center gap-3 rounded-md px-2 py-2.5">
 									<USkeleton class="h-5 w-5 shrink-0 rounded" />
-									<USkeleton class="h-4 flex-1 max-w-[140px]" />
+									<USkeleton class="h-4 flex-1 max-w-35" />
 								</div>
 							</template>
 						</div>
@@ -60,14 +60,17 @@
 				role="status"
 			>
 				<span>{{ t('pages.storeProfilePage.storeDisabledBanner') }}</span>
-				<button
+				<UButton
 					type="button"
-					class="underline underline-offset-2 font-semibold hover:text-white/90 disabled:opacity-70"
+					variant="link"
+					size="sm"
+					class="p-0 text-white underline underline-offset-2 font-semibold hover:text-white/90 disabled:opacity-70"
+					:loading="merchantInfoStore.updating"
 					:disabled="merchantInfoStore.updating"
 					@click="onEnableStore"
 				>
 					{{ t('pages.storeProfilePage.enableStoreNow') }}
-				</button>
+				</UButton>
 			</div>
 			<slot />
 		</div>
@@ -81,7 +84,6 @@ const appUiStore = useAppUiStore();
 const merchantInfoStore = useMerchantInfoStore();
 const { navigations, showSidebar } = storeToRefs(appUiStore);
 const { isStoreHidden } = storeToRefs(merchantInfoStore);
-
 const onEnableStore = async () => {
 	try {
 		await merchantInfoStore.setHideStore(false);

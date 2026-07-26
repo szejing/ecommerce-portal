@@ -69,8 +69,14 @@ defineProps<{
 
 const { t, locale, setLocale } = useI18n();
 const colorMode = useColorMode();
+const runtimeConfig = useRuntimeConfig();
 const authStore = useAuthStore();
 const user = computed(() => authStore.user);
+
+const appVersion = computed(() => {
+	const version = runtimeConfig.public.version;
+	return typeof version === 'string' && version.trim() ? version.trim() : '';
+});
 
 const switchLocale = (newLocale: 'en' | 'ms') => {
 	if (import.meta.client) {
@@ -93,81 +99,94 @@ const isItemSelected = (item: DropdownMenuItem): boolean => {
 	return false;
 };
 
-const items = computed<DropdownMenuItem[][]>(() => [
-	[
-		{
-			type: 'label',
-			label: user.value?.name,
-		},
-		{
-			label: t('nav.settings'),
-			icon: 'i-lucide-settings',
-			to: '/settings',
-		},
-	],
-	[
-		{
-			label: t('nav.appearance'),
-			icon: 'i-lucide-sun-moon',
-			children: [
-				{
-					label: t('nav.light'),
-					icon: 'i-lucide-sun',
-					value: 'light' as const,
-					onSelect(e: Event) {
-						e.preventDefault();
-						colorMode.preference = 'light';
-					},
-				},
-				{
-					label: t('nav.dark'),
-					icon: 'i-lucide-moon',
-					value: 'dark' as const,
-					onSelect(e: Event) {
-						e.preventDefault();
-						colorMode.preference = 'dark';
-					},
-				},
-			],
-		},
-	],
-	[
-		{
-			label: t('common.language'),
-			icon: 'i-lucide-languages',
-			children: [
-				{
-					label: t('common.english'),
-					icon: 'i-lucide-languages',
-					value: 'en' as const,
-					onSelect(e: Event) {
-						e.preventDefault();
-						switchLocale('en');
-					},
-				},
-				{
-					label: t('common.bahasaMelayu'),
-					icon: 'i-lucide-languages',
-					value: 'ms' as const,
-					onSelect(e: Event) {
-						e.preventDefault();
-						switchLocale('ms');
-					},
-				},
-			],
-		},
-	],
-	[
-		{
-			label: t('nav.logOut'),
-			icon: 'i-lucide-log-out',
-			onSelect: async () => {
-				await authStore.logout();
-				navigateTo('/login');
+const items = computed<DropdownMenuItem[][]>(() => {
+	const groups: DropdownMenuItem[][] = [
+		[
+			{
+				type: 'label',
+				label: user.value?.name,
 			},
-		},
-	],
-]);
+			{
+				label: t('nav.settings'),
+				icon: 'i-lucide-settings',
+				to: '/settings',
+			},
+		],
+		[
+			{
+				label: t('nav.appearance'),
+				icon: 'i-lucide-sun-moon',
+				children: [
+					{
+						label: t('nav.light'),
+						icon: 'i-lucide-sun',
+						value: 'light' as const,
+						onSelect(e: Event) {
+							e.preventDefault();
+							colorMode.preference = 'light';
+						},
+					},
+					{
+						label: t('nav.dark'),
+						icon: 'i-lucide-moon',
+						value: 'dark' as const,
+						onSelect(e: Event) {
+							e.preventDefault();
+							colorMode.preference = 'dark';
+						},
+					},
+				],
+			},
+		],
+		[
+			{
+				label: t('common.language'),
+				icon: 'i-lucide-languages',
+				children: [
+					{
+						label: t('common.english'),
+						icon: 'i-lucide-languages',
+						value: 'en' as const,
+						onSelect(e: Event) {
+							e.preventDefault();
+							switchLocale('en');
+						},
+					},
+					{
+						label: t('common.bahasaMelayu'),
+						icon: 'i-lucide-languages',
+						value: 'ms' as const,
+						onSelect(e: Event) {
+							e.preventDefault();
+							switchLocale('ms');
+						},
+					},
+				],
+			},
+		],
+		[
+			{
+				label: t('nav.logOut'),
+				icon: 'i-lucide-log-out',
+				onSelect: async () => {
+					await authStore.logout();
+					navigateTo('/login');
+				},
+			},
+		],
+	];
+
+	if (appVersion.value) {
+		groups.push([
+			{
+				type: 'label',
+				label: `v${appVersion.value}`,
+			},
+		]);
+	}
+
+	return groups;
+});
 </script>
 
 <style></style>
