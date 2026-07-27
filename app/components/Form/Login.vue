@@ -96,7 +96,7 @@ const loadStoredMerchantId = () => {
 const authStore = useAuthStore();
 const { loading, serverReachabilityError } = storeToRefs(authStore);
 
-const HEARTBEAT_INTERVAL_MS = 5_000;
+const HEARTBEAT_INTERVAL_MS = 5000;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
 const togglePasswordVisibility = () => {
