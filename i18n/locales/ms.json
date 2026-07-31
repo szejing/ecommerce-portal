@@ -1115,6 +1115,7 @@
 			"logoUploadDescription": "Muat naik imej terurus untuk templat ini sahaja.",
 			"logoPreviewAlt": "Pratonton logo templat",
 			"logoUploadError": "Logo templat tidak dapat dimuat naik.",
+			"logoUnsupportedFormatError": "Pilih imej JPG, JPEG, PNG, HEIC, HEIF atau WebP.",
 			"hideInTemplate": "Sembunyikan dalam templat ini",
 			"useStoreProfile": "Gunakan Profil Kedai",
 			"useSystemDefault": "Gunakan lalai sistem",

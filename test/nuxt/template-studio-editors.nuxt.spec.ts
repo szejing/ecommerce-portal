@@ -6,6 +6,7 @@ import BrandEditor from '~/components/Z/TemplateStudio/BrandEditor.vue';
 import SectionEditor from '~/components/Z/TemplateStudio/SectionEditor.vue';
 import TokenPicker from '~/components/Z/TemplateStudio/TokenPicker.vue';
 import RichTextEditor from '~/components/Z/TemplateStudio/RichTextEditor.client.vue';
+import { IMAGE_FORMAT_ERROR_MESSAGE } from '~/repository/modules/image/image';
 import type {
 	DocumentTemplateBlock,
 	DocumentTemplateConfiguration,
@@ -179,6 +180,48 @@ describe('Template Studio controlled content editor', () => {
 		});
 		expect(wrapper.get('[data-field="content.greeting"] [data-field-error="content.greeting"]').text())
 			.toBe('Unsupported template expression');
+	});
+
+	it('preflights plain-text token replacements against the catalog limit without moving the cursor', async () => {
+		const wrapper = await mountSuspended(TokenPicker, {
+			props: {
+				allowedTokens: ['invoiceNumber'],
+				modelValue: 'Order 1234567890',
+				selectionStart: 6,
+				selectionEnd: 16,
+				maxLength: 22,
+			},
+		});
+		await wrapper.get('[data-token="invoiceNumber"]').trigger('click');
+
+		expect(wrapper.emitted('select')).toBeUndefined();
+		expect(wrapper.emitted('update:modelValue')).toBeUndefined();
+		expect(wrapper.emitted('inserted')).toBeUndefined();
+
+		await wrapper.setProps({ maxLength: 23 });
+		await wrapper.get('[data-token="invoiceNumber"]').trigger('click');
+		expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['Order {{invoiceNumber}}']);
+		expect(wrapper.emitted('inserted')?.[0]).toEqual(['Order {{invoiceNumber}}', 23]);
+	});
+
+	it('passes the catalog subject limit to token insertion', async () => {
+		const wrapper = await mountSuspended(ContentEditor, {
+			props: {
+				entry: {
+					channel: 'email',
+					fields: [{
+						...contentFields[0]!,
+						max_length: 12,
+						allowed_tokens: ['customerName'],
+					}],
+					allowed_tokens: ['customerName'],
+				},
+				modelValue: { content: { subject: '123456789012' } },
+			},
+		});
+		await wrapper.get('[data-token="customerName"]').trigger('click');
+
+		expect(wrapper.emitted('update:path')).toBeUndefined();
 	});
 });
 
@@ -391,6 +434,77 @@ describe('Template Studio brand and merchant information editor', () => {
 			.toHaveProperty('value', '#ABCDEF');
 	});
 
+	it('keeps merchant information controlled after clear, edit, hide, and external updates', async () => {
+		const wrapper = await mountSuspended(BrandEditor, {
+			props: {
+				fields: brandFields,
+				modelValue: configuration,
+				inherited: { merchantInfo: { companyName: 'Store Profile merchant' } },
+			},
+		});
+		await wrapper.get('[data-clear="merchantInfo.companyName"]').trigger('click');
+		await wrapper.setProps({
+			modelValue: {
+				...configuration,
+				merchantInfo: {},
+			},
+		});
+		const input = wrapper.get('[data-field="merchantInfo.companyName"] input');
+		expect(input.element).toHaveProperty('value', 'Store Profile merchant');
+
+		await input.setValue('Edited merchant');
+		await wrapper.get('[data-hide="merchantInfo.companyName"]').trigger('click');
+		expect(wrapper.emitted('update:path')?.at(-2)).toEqual(['merchantInfo.companyName', 'Edited merchant']);
+		expect(wrapper.emitted('update:path')?.at(-1)).toEqual(['merchantInfo.companyName', '']);
+
+		await wrapper.setProps({
+			modelValue: {
+				...configuration,
+				merchantInfo: { companyName: 'Externally updated merchant' },
+			},
+		});
+		expect(input.element).toHaveProperty('value', 'Externally updated merchant');
+	});
+
+	it('clears transient logo previews on clear and controlled model changes', async () => {
+		const upload = vi.spyOn(useNuxtApp().$api.image, 'upload').mockResolvedValue({
+			image: { id: 42, url: 'https://cdn.example.com/transient-logo.png' },
+		});
+		const wrapper = await mountSuspended(BrandEditor, {
+			props: {
+				fields: brandFields,
+				modelValue: {
+					...configuration,
+					brand: { ...configuration.brand, logoAssetId: 7 },
+				},
+				inherited: { brand: { logoAssetId: 4 } },
+				logoUrl: 'https://cdn.example.com/override-logo.png',
+			},
+		});
+		expect(wrapper.get('[data-logo-preview]').attributes('src')).toBe('https://cdn.example.com/override-logo.png');
+
+		await wrapper.get('[data-clear="brand.logoAssetId"]').trigger('click');
+		expect(wrapper.find('[data-logo-preview]').exists()).toBe(false);
+		await wrapper.setProps({
+			modelValue: { ...configuration, brand: { ...configuration.brand } },
+			logoUrl: 'https://cdn.example.com/inherited-logo.png',
+		});
+		expect(wrapper.get('[data-logo-preview]').attributes('src')).toBe('https://cdn.example.com/inherited-logo.png');
+
+		wrapper.getComponent({ name: 'UFileUpload' }).vm.$emit(
+			'update:modelValue',
+			new File(['logo'], 'logo.png', { type: 'image/png' }),
+		);
+		await flushPromises();
+		expect(upload).toHaveBeenCalledOnce();
+		expect(wrapper.get('[data-logo-preview]').attributes('src')).toBe('https://cdn.example.com/transient-logo.png');
+
+		await wrapper.setProps({
+			modelValue: { ...configuration, brand: { ...configuration.brand, logoAssetId: 99 } },
+		});
+		expect(wrapper.get('[data-logo-preview]').attributes('src')).toBe('https://cdn.example.com/inherited-logo.png');
+	});
+
 	it('uses the managed logo upload and persists only the returned asset ID', async () => {
 		const upload = vi.spyOn(useNuxtApp().$api.image, 'upload').mockResolvedValue({
 			image: { id: 42, url: 'https://cdn.example.com/merchant-logo.png' },
@@ -411,6 +525,41 @@ describe('Template Studio brand and merchant information editor', () => {
 		expect(wrapper.emitted('update:path')?.[0]).toEqual(['brand.logoAssetId', 42]);
 		expect(wrapper.get('[data-logo-preview]').attributes('src')).toBe('https://cdn.example.com/merchant-logo.png');
 		expect(JSON.stringify(wrapper.emitted('update:path'))).not.toContain('cdn.example.com');
+	});
+
+	it('localizes unsupported logo formats in Malay', async () => {
+		await useNuxtApp().$i18n.setLocale('ms');
+		vi.spyOn(useNuxtApp().$api.image, 'upload').mockRejectedValue(new Error(IMAGE_FORMAT_ERROR_MESSAGE));
+		const wrapper = await mountSuspended(BrandEditor, {
+			props: { fields: brandFields, modelValue: configuration, inherited: {} },
+		});
+		wrapper.getComponent({ name: 'UFileUpload' }).vm.$emit(
+			'update:modelValue',
+			new File(['not-an-image'], 'notes.txt', { type: 'text/plain' }),
+		);
+		await flushPromises();
+
+		const error = wrapper.get('[data-field="brand.logoAssetId"] [role="alert"]').text();
+		expect(error).toBe('Pilih imej JPG, JPEG, PNG, HEIC, HEIF atau WebP.');
+		expect(error).not.toContain('Unsupported image format');
+	});
+
+	it('hides raw logo upload failures behind the localized Malay fallback', async () => {
+		await useNuxtApp().$i18n.setLocale('ms');
+		vi.spyOn(useNuxtApp().$api.image, 'upload')
+			.mockRejectedValue(new Error('Request failed with status 500: internal storage detail'));
+		const wrapper = await mountSuspended(BrandEditor, {
+			props: { fields: brandFields, modelValue: configuration, inherited: {} },
+		});
+		wrapper.getComponent({ name: 'UFileUpload' }).vm.$emit(
+			'update:modelValue',
+			new File(['logo'], 'logo.png', { type: 'image/png' }),
+		);
+		await flushPromises();
+
+		const error = wrapper.get('[data-field="brand.logoAssetId"] [role="alert"]').text();
+		expect(error).toBe('Logo templat tidak dapat dimuat naik.');
+		expect(error).not.toContain('internal storage detail');
 	});
 });
 

@@ -27,10 +27,12 @@ const props = withDefaults(defineProps<{
 	modelValue?: string;
 	selectionStart?: number;
 	selectionEnd?: number;
+	maxLength?: number;
 }>(), {
 	modelValue: undefined,
 	selectionStart: undefined,
 	selectionEnd: undefined,
+	maxLength: undefined,
 });
 
 const emit = defineEmits<{
@@ -61,13 +63,17 @@ const tokens = computed(() => {
 });
 
 function insert(token: string): void {
-	emit('select', token);
-	if (props.modelValue === undefined) return;
+	if (props.modelValue === undefined) {
+		emit('select', token);
+		return;
+	}
 
 	const start = props.selectionStart ?? props.modelValue.length;
 	const end = props.selectionEnd ?? start;
 	const allowedTokens = tokens.value.map(item => item.value);
 	const result = insertTemplateToken(props.modelValue, start, end, token, allowedTokens);
+	if (props.maxLength !== undefined && result.value.length > props.maxLength) return;
+	emit('select', token);
 	emit('update:modelValue', result.value);
 	emit('inserted', result.value, result.cursor);
 }

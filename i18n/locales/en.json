@@ -1116,6 +1116,7 @@
 			"logoUploadDescription": "Upload a managed image for this template only.",
 			"logoPreviewAlt": "Template logo preview",
 			"logoUploadError": "The template logo could not be uploaded.",
+			"logoUnsupportedFormatError": "Choose a JPG, JPEG, PNG, HEIC, HEIF, or WebP image.",
 			"hideInTemplate": "Hide in this template",
 			"useStoreProfile": "Use Store Profile",
 			"useSystemDefault": "Use system default",

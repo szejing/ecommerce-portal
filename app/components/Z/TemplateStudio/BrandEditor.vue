@@ -106,6 +106,7 @@
 
 <script setup lang="ts">
 import { dir } from '~/utils/constants/dir';
+import { IMAGE_FORMAT_ERROR_MESSAGE } from '~/repository/modules/image/image';
 import type { DocumentTemplateConfiguration, DocumentTemplateField } from '~/utils/types/document-template';
 
 type FieldValue = string | number | undefined;
@@ -143,6 +144,7 @@ const allowedMerchantFields = new Set([
 const colorValues = reactive<Record<string, string>>({});
 const colorErrors = reactive<Record<string, string>>({});
 const logoPreviewUrl = ref(props.logoUrl);
+const transientLogoAssetId = ref<number>();
 const uploading = ref(false);
 const uploadError = ref('');
 
@@ -164,7 +166,16 @@ watch(
 	{ deep: true, immediate: true },
 );
 
-watch(() => props.logoUrl, value => { logoPreviewUrl.value = value; });
+watch(() => props.modelValue.brand?.logoAssetId, (value) => {
+	if (value === transientLogoAssetId.value) return;
+	transientLogoAssetId.value = undefined;
+	logoPreviewUrl.value = props.logoUrl;
+});
+
+watch(() => props.logoUrl, (value) => {
+	transientLogoAssetId.value = undefined;
+	logoPreviewUrl.value = value;
+});
 
 function pathParts(path: string): ['brand' | 'merchantInfo', string] | null {
 	const [section, key, ...rest] = path.split('.');
@@ -202,7 +213,9 @@ function resolvedValue(path: string): FieldValue {
 }
 
 function fieldDisplayValue(path: string): string {
-	if (Object.prototype.hasOwnProperty.call(colorValues, path)) return colorValues[path] ?? '';
+	if (allowedColorFields.has(path) && Object.prototype.hasOwnProperty.call(colorValues, path)) {
+		return colorValues[path] ?? '';
+	}
 	return String(resolvedValue(path) ?? '');
 }
 
@@ -247,8 +260,18 @@ function updateColorPicker(path: string, event: Event): void {
 }
 
 function clearOverride(path: string): void {
-	delete colorErrors[path];
-	colorValues[path] = String(readPath(props.inherited, path) ?? readPath(props.systemDefaults, path) ?? '');
+	if (allowedColorFields.has(path)) {
+		delete colorErrors[path];
+		colorValues[path] = String(readPath(props.inherited, path) ?? readPath(props.systemDefaults, path) ?? '');
+	} else {
+		delete colorValues[path];
+		delete colorErrors[path];
+	}
+	if (path === 'brand.logoAssetId') {
+		transientLogoAssetId.value = undefined;
+		logoPreviewUrl.value = undefined;
+		uploadError.value = '';
+	}
 	emit('clear:path', path);
 }
 
@@ -264,11 +287,12 @@ async function uploadLogo(value: File | File[] | null | undefined): Promise<void
 	try {
 		const { image } = await $api.image.upload(file, dir.merchant, 'merchant-logo');
 		if (!(typeof image?.id === 'number' && image.id > 0)) throw new Error(t('components.templateStudio.logoUploadError'));
+		transientLogoAssetId.value = image.id;
 		logoPreviewUrl.value = typeof image.url === 'string' ? image.url : undefined;
 		emit('update:path', 'brand.logoAssetId', image.id);
 	} catch (error) {
-		uploadError.value = error instanceof Error && error.message.trim()
-			? error.message
+		uploadError.value = error instanceof Error && error.message === IMAGE_FORMAT_ERROR_MESSAGE
+			? t('components.templateStudio.logoUnsupportedFormatError')
 			: t('components.templateStudio.logoUploadError');
 	} finally {
 		uploading.value = false;

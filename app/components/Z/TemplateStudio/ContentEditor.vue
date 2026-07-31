@@ -33,6 +33,7 @@
 				:model-value="fieldValue(field.path)"
 				:selection-start="selectionFor(field.path).start"
 				:selection-end="selectionFor(field.path).end"
+				:max-length="field.max_length"
 				@update:model-value="updateField(field.path, $event)"
 				@inserted="(_value, cursor) => setCursor(field.path, cursor)"
 			/>
