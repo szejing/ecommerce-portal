@@ -188,4 +188,16 @@ describe('useDocumentTemplateStore', () => {
 		expect(store.conflict).toBeNull();
 		expect(store.error).toBeNull();
 	});
+
+	it('uses the published revision configuration as its next baseline', async () => {
+		const store = await selectDraft();
+		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
+		store.detail!.fields.push({ path: 'brand.primaryColor', label: 'Primary colour', kind: 'color', max_length: 20, allow_blank: false, allowed_tokens: [] });
+		api.publish.mockResolvedValue({ version: 3, latest_published_revision: { ...detail.draft_revision!, status: 'published', configuration: { content: { greeting: '<p>Published</p>' }, brand: { primaryColor: '#123456' } } } });
+		await store.publish();
+		expect(store.draft).toEqual({ content: { greeting: '<p>Published</p>' }, brand: { primaryColor: '#123456' } });
+		expect(store.isDirty).toBe(false);
+		store.setConfigurationPath('content.greeting', '<p>Changed</p>');
+		expect(store.configurationForRequest()).toEqual({ content: { greeting: '<p>Changed</p>' }, brand: { primaryColor: '#123456' } });
+	});
 });

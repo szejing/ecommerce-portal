@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { toRaw } from 'vue';
 import { UserRoles } from 'yeppi-common';
 import { useAuthStore } from '~/stores/Auth/Auth';
 import { resolveFieldValue, toUtcIsoOrNull } from '~/utils/document-template';
@@ -22,7 +23,7 @@ type ApiError = { statusCode?: number; status?: number; metadata?: { current_ver
 const emptyConfiguration = (): DocumentTemplateConfiguration => ({});
 
 function clone<T>(value: T): T {
-	return structuredClone(value);
+	return structuredClone(toRaw(value));
 }
 
 function deepFreeze<T>(value: T): T {
@@ -34,6 +35,9 @@ function deepFreeze<T>(value: T): T {
 }
 
 function stableSerialize(value: unknown): string {
+	value = toRaw(value as object);
+	if (value instanceof Date) return `Date(${value.toISOString()})`;
+	if (value === undefined) return 'undefined';
 	if (value === null || typeof value !== 'object') return JSON.stringify(value);
 	if (Array.isArray(value)) return `[${value.map(stableSerialize).join(',')}]`;
 	return `{${Object.keys(value as Record<string, unknown>).sort().map(key => `${JSON.stringify(key)}:${stableSerialize((value as Record<string, unknown>)[key])}`).join(',')}}`;
@@ -115,13 +119,21 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			this.refreshDirty();
 		},
 
-	resetSelection() {
+		resetSelection() {
 			this.generation += 1;
 			this.selectionEpoch += 1;
 			this.saveGeneration += 1;
 			this.previewGeneration += 1;
 			this.publishGeneration += 1;
 			this.mutationGeneration += 1;
+			this.summariesGeneration += 1;
+			this.loading = false;
+			this.saving = false;
+			this.previewing = false;
+			this.publishing = false;
+			this.testing = false;
+			this.resetting = false;
+			this.restoring = false;
 			this.selected = null;
 			this.detail = null;
 			this.revisions = [];
@@ -394,7 +406,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 
 		async testSend() {
 			const selection = this.selected;
-			if (!selection || selection.channel !== 'email' || !this.canEdit) return;
+			if (!selection || !this.detail || selection.channel !== 'email' || !this.canEdit) return;
 			this.testing = true;
 			try {
 				const { $api } = useNuxtApp();
@@ -418,6 +430,8 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			const request = ++this.publishGeneration;
 			const mutation = ++this.mutationGeneration;
 			const epoch = this.selectionEpoch;
+			const editGeneration = this.editGeneration;
+			const submitted = clone(this.draft);
 			const version = this.detail.version;
 			this.publishing = true;
 			try {
@@ -429,8 +443,11 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 					end_date: toUtcIsoOrNull(this.schedule.endDate),
 				});
 				if (request === this.publishGeneration && mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
+					const publishedConfiguration = response.latest_published_revision.configuration ?? submitted;
 					this.detail = { ...this.detail!, version: response.version, latest_published_revision: clone(response.latest_published_revision), draft_revision: null };
-					this.setBaseline(emptyConfiguration());
+					this.baseline = deepFreeze(clone(publishedConfiguration));
+					if (this.editGeneration === editGeneration) this.draft = clone(publishedConfiguration);
+					this.refreshDirty();
 					this.revisions = [clone(response.latest_published_revision), ...this.revisions.filter(revision => revision.id !== response.latest_published_revision.id)];
 				}
 			} catch (error) {
