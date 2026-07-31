@@ -16,6 +16,28 @@ const overlayMocks = vi.hoisted(() => ({
 	create: vi.fn(),
 	props: undefined as undefined | { onLeave?: () => void; onStay?: () => void },
 }));
+const watchMocks = vi.hoisted(() => ({
+	templateRegistered: vi.fn(),
+	templateTriggered: vi.fn(),
+}));
+
+mockNuxtImport('watch', original => (
+	source: unknown,
+	callback: (...args: unknown[]) => unknown,
+	options?: unknown,
+) => {
+	const initialValue = typeof source === 'function' ? source() : undefined;
+	const isTemplateSelectionWatcher = Array.isArray(initialValue)
+		&& initialValue.length === 3
+		&& Array.isArray(initialValue[2])
+		&& (initialValue[0] === 'email' || initialValue[0] === 'pdf')
+		&& typeof initialValue[1] === 'string';
+	if (isTemplateSelectionWatcher) watchMocks.templateRegistered();
+	return original(source, (...args: unknown[]) => {
+		if (isTemplateSelectionWatcher) watchMocks.templateTriggered();
+		return callback(...args);
+	}, options);
+});
 
 mockNuxtImport('useOverlay', () => () => ({
 	create: overlayMocks.create.mockImplementation((_component, options?: { props?: typeof overlayMocks.props }) => {
@@ -166,6 +188,8 @@ describe('TemplateStudioPage', () => {
 		overlayMocks.close.mockReset();
 		overlayMocks.create.mockReset();
 		overlayMocks.props = undefined;
+		watchMocks.templateRegistered.mockReset();
+		watchMocks.templateTriggered.mockReset();
 	});
 
 	afterEach(() => {
@@ -191,7 +215,9 @@ describe('TemplateStudioPage', () => {
 		const { loadSummaries, loadDetail, router } = await mountPage('/settings/templates?channel=email&template=forgot-password');
 
 		expect(loadSummaries).toHaveBeenCalledOnce();
+		expect(loadDetail).toHaveBeenCalledOnce();
 		expect(loadDetail).toHaveBeenCalledWith('email', 'order-confirmation');
+		expect(watchMocks.templateRegistered).toHaveBeenCalledOnce();
 		expect(router.currentRoute.value.query).toMatchObject({
 			channel: 'email',
 			template: 'order-confirmation',
@@ -341,6 +367,10 @@ describe('TemplateStudioPage', () => {
 		});
 		const router = useRouter();
 		await vi.waitFor(() => expect(loadSummaries).toHaveBeenCalledOnce());
+		const watchersBeforeLeave = {
+			registered: watchMocks.templateRegistered.mock.calls.length,
+			triggered: watchMocks.templateTriggered.mock.calls.length,
+		};
 
 		const leavePromise = router.push('/settings');
 		await vi.waitFor(() => expect(dispose).toHaveBeenCalledOnce());
@@ -348,12 +378,17 @@ describe('TemplateStudioPage', () => {
 		await leavePromise;
 		const wrapper = await mountPromise;
 		pageCleanups.push(() => wrapper.unmount());
+		await router.replace({ path: '/settings', query: { channel: 'email' } });
 		await nextTick();
 
-		expect(router.currentRoute.value.fullPath).toBe('/settings');
+		expect(router.currentRoute.value.fullPath).toBe('/settings?channel=email');
 		expect(store.summaries).toEqual(catalogSummaries);
 		expect(store.selected).toBeNull();
 		expect(loadDetail).not.toHaveBeenCalled();
+		expect({
+			registered: watchMocks.templateRegistered.mock.calls.length,
+			triggered: watchMocks.templateTriggered.mock.calls.length,
+		}).toEqual(watchersBeforeLeave);
 	});
 
 	it('localizes fixed catalog names in Malay and falls back for unknown future entries', async () => {

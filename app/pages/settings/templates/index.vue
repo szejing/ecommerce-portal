@@ -86,6 +86,7 @@ const templateStore = useDocumentTemplateStore();
 const { summaries, selected, isDirty, loadingDetail, summaryError, detailError } = storeToRefs(templateStore);
 const templateUpdateConfirmed = ref(false);
 let isActive = true;
+let initialLoadSettled = false;
 let selectionOperation = 0;
 
 useHead({ title: () => t('pages.templateStudioTitle') });
@@ -192,16 +193,20 @@ onBeforeRouteUpdate((to, from, next) => {
 	leaveModal.open();
 });
 
+watch(
+	() => [route.query.channel, route.query.template, summaries.value],
+	() => {
+		if (initialLoadSettled) void syncSelectionFromRoute();
+	},
+);
+
 const initialSelectionOperation = selectionOperation;
 try {
 	await templateStore.loadSummaries();
 	if (isActive && initialSelectionOperation === selectionOperation) await syncSelectionFromRoute();
 } catch {
 	// The store exposes a translated shell-safe error region while preserving retry state for later tasks.
+} finally {
+	initialLoadSettled = true;
 }
-
-watch(
-	() => [route.query.channel, route.query.template, summaries.value],
-	() => void syncSelectionFromRoute(),
-);
 </script>
