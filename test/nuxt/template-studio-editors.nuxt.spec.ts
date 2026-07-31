@@ -1,0 +1,444 @@
+import { flushPromises } from '@vue/test-utils';
+import { mountSuspended } from '@nuxt/test-utils/runtime';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import ContentEditor from '~/components/Z/TemplateStudio/ContentEditor.vue';
+import BrandEditor from '~/components/Z/TemplateStudio/BrandEditor.vue';
+import SectionEditor from '~/components/Z/TemplateStudio/SectionEditor.vue';
+import TokenPicker from '~/components/Z/TemplateStudio/TokenPicker.vue';
+import RichTextEditor from '~/components/Z/TemplateStudio/RichTextEditor.client.vue';
+import type {
+	DocumentTemplateBlock,
+	DocumentTemplateConfiguration,
+	DocumentTemplateField,
+} from '~/utils/types/document-template';
+
+const contentFields: DocumentTemplateField[] = [
+	{
+		path: 'content.subject',
+		label: 'Subject',
+		kind: 'plain-text',
+		max_length: 200,
+		allow_blank: false,
+		allowed_tokens: ['customerName', 'invoiceNumber'],
+	},
+	{
+		path: 'content.greeting',
+		label: 'Greeting',
+		kind: 'rich-text',
+		max_length: 500,
+		allow_blank: false,
+		allowed_tokens: ['customerName'],
+	},
+	{
+		path: 'content.rawHtml',
+		label: 'Raw HTML',
+		kind: 'plain-text',
+		max_length: 500,
+		allow_blank: false,
+		allowed_tokens: [],
+	},
+];
+
+const brandFields: DocumentTemplateField[] = [
+	{
+		path: 'brand.logoAssetId',
+		label: 'Logo',
+		kind: 'asset',
+		max_length: 0,
+		allow_blank: false,
+		allowed_tokens: [],
+	},
+	{
+		path: 'brand.primaryColor',
+		label: 'Primary colour',
+		kind: 'color',
+		max_length: 7,
+		allow_blank: false,
+		allowed_tokens: [],
+	},
+	{
+		path: 'brand.secondaryColor',
+		label: 'Secondary colour',
+		kind: 'color',
+		max_length: 7,
+		allow_blank: false,
+		allowed_tokens: [],
+	},
+	{
+		path: 'merchantInfo.companyName',
+		label: 'Company name',
+		kind: 'merchant-info',
+		max_length: 500,
+		allow_blank: true,
+		allowed_tokens: [],
+	},
+	{
+		path: 'merchantInfo.companyEmail',
+		label: 'Company email',
+		kind: 'merchant-info',
+		max_length: 500,
+		allow_blank: false,
+		allowed_tokens: [],
+	},
+	{
+		path: 'brand.customCss',
+		label: 'Custom CSS',
+		kind: 'plain-text',
+		max_length: 500,
+		allow_blank: true,
+		allowed_tokens: [],
+	},
+];
+
+const invoiceBlocks: DocumentTemplateBlock[] = [
+	{ id: 'merchantContact', label: 'Merchant contact', required: false, default_enabled: true },
+	{ id: 'orderItems', label: 'Order items', required: true, default_enabled: true },
+	{ id: 'taxSummary', label: 'Tax summary', required: false, default_enabled: false },
+];
+
+const configuration: DocumentTemplateConfiguration = {
+	content: {
+		subject: 'Invoice for ',
+		greeting: '<p>Hello {{customerName}}</p>',
+	},
+	brand: {
+		primaryColor: '#112233',
+	},
+	merchantInfo: {
+		companyName: 'Template merchant',
+	},
+	blocks: [
+		{ id: 'taxSummary', enabled: false, props: {} },
+		{ id: 'orderItems', enabled: false, props: {} },
+	],
+};
+
+afterEach(async () => {
+	vi.restoreAllMocks();
+	if (useNuxtApp().$i18n.locale.value !== 'en') await useNuxtApp().$i18n.setLocale('en');
+});
+
+describe('Template Studio controlled content editor', () => {
+	it('shows the catalog subject only for email entries and inserts an allowlisted token at the current selection', async () => {
+		const wrapper = await mountSuspended(ContentEditor, {
+			props: {
+				entry: { channel: 'email', fields: contentFields, allowed_tokens: ['customerName', 'invoiceNumber'] },
+				modelValue: configuration,
+			},
+		});
+		const subject = wrapper.get('[data-field="content.subject"] input').element as HTMLInputElement;
+		subject.setSelectionRange(8, 8);
+		await wrapper.get('[data-field="content.subject"] input').trigger('select');
+		await wrapper.get('[data-field="content.subject"] [data-token="invoiceNumber"]').trigger('click');
+
+		expect(wrapper.find('[data-field="content.subject"]').exists()).toBe(true);
+		expect(wrapper.find('[data-field="content.greeting"]').exists()).toBe(true);
+		expect(wrapper.find('[data-field="content.rawHtml"]').exists()).toBe(false);
+		expect(wrapper.find('[data-token="unknownToken"]').exists()).toBe(false);
+		expect(wrapper.emitted('update:path')?.[0]).toEqual([
+			'content.subject',
+			'Invoice {{invoiceNumber}}for ',
+		]);
+		const greetingEditor = wrapper.get('[data-field="content.greeting"]')
+			.getComponent({ name: 'QuillEditor' });
+		greetingEditor.vm.$emit('update:content', 'x'.repeat(501));
+		await nextTick();
+		expect(wrapper.emitted('update:path')).toHaveLength(1);
+		greetingEditor.vm.$emit('update:content', 'x'.repeat(500));
+		await nextTick();
+		expect(wrapper.emitted('update:path')?.[1]).toEqual(['content.greeting', 'x'.repeat(500)]);
+
+		const pdfWrapper = await mountSuspended(ContentEditor, {
+			props: {
+				entry: { channel: 'pdf', fields: contentFields, allowed_tokens: ['invoiceNumber'] },
+				modelValue: configuration,
+			},
+		});
+		expect(pdfWrapper.find('[data-field="content.subject"]').exists()).toBe(false);
+	});
+
+	it('keeps token input catalog-owned and displays backend field errors beside the matching field', async () => {
+		const tokenWrapper = await mountSuspended(TokenPicker, {
+			props: {
+				allowedTokens: ['customerName'],
+				modelValue: 'Hello customer',
+				selectionStart: 6,
+				selectionEnd: 14,
+			},
+		});
+		await tokenWrapper.get('[data-token="customerName"]').trigger('click');
+		expect(tokenWrapper.emitted('update:modelValue')?.[0]).toEqual(['Hello {{customerName}}']);
+		expect(tokenWrapper.find('input').exists()).toBe(false);
+
+		const wrapper = await mountSuspended(ContentEditor, {
+			props: {
+				entry: { channel: 'email', fields: contentFields, allowed_tokens: ['customerName'] },
+				modelValue: configuration,
+				fieldErrors: { 'content.greeting': 'Unsupported template expression' },
+			},
+		});
+		expect(wrapper.get('[data-field="content.greeting"] [data-field-error="content.greeting"]').text())
+			.toBe('Unsupported template expression');
+	});
+});
+
+describe('Template Studio restricted rich text editor', () => {
+	it('restricts the toolbar and formats to bold, italic, and safe links', async () => {
+		const wrapper = await mountSuspended(RichTextEditor, {
+			props: { modelValue: '<p>Hello</p>' },
+		});
+
+		expect(wrapper.find('.ql-bold').exists()).toBe(true);
+		expect(wrapper.find('.ql-italic').exists()).toBe(true);
+		expect(wrapper.find('.ql-link').exists()).toBe(true);
+		expect(wrapper.find('.ql-image').exists()).toBe(false);
+		expect(wrapper.find('.ql-code-block').exists()).toBe(false);
+		expect(wrapper.find('[data-raw-html]').exists()).toBe(false);
+		expect(wrapper.getComponent({ name: 'QuillEditor' }).props('options')).toMatchObject({
+			formats: ['bold', 'italic', 'link'],
+		});
+	});
+
+	it('inserts an allowlisted rich-text token at the last editor selection after the picker takes focus', async () => {
+		const wrapper = await mountSuspended(RichTextEditor, {
+			props: { modelValue: '<p>Hello</p>', allowedTokens: ['customerName'] },
+		});
+		const editor = {
+			getSelection: vi.fn(() => ({ index: 0, length: 0 })),
+			deleteText: vi.fn(),
+			insertText: vi.fn(),
+			updateContents: vi.fn(),
+			setSelection: vi.fn(),
+		};
+		const quill = wrapper.getComponent({ name: 'QuillEditor' });
+		quill.vm.$emit('ready', editor);
+		quill.vm.$emit('selectionChange', { range: { index: 4, length: 3 } });
+		await wrapper.get('[data-token="customerName"]').trigger('click');
+
+		expect(editor.updateContents).toHaveBeenCalledWith(expect.anything(), 'user');
+		expect((editor.updateContents.mock.calls[0]?.[0] as { ops: unknown[] }).ops).toEqual([
+			{ retain: 4 },
+			{ insert: '{{customerName}}' },
+			{ delete: 3 },
+		]);
+		expect(editor.deleteText).not.toHaveBeenCalled();
+		expect(editor.insertText).not.toHaveBeenCalled();
+		expect(editor.setSelection).toHaveBeenCalledWith(20, 0, 'silent');
+	});
+
+	it('keeps the parent and editor synchronized when a selected token replacement exceeds the limit', async () => {
+		const wrapper = await mountSuspended(RichTextEditor, {
+			props: {
+				modelValue: '<p>Hello world</p>',
+				allowedTokens: ['customerName'],
+				maxLength: 18,
+			},
+		});
+		const quill = wrapper.getComponent({ name: 'QuillEditor' });
+		const setContents = vi.spyOn(
+			quill.vm as unknown as { setContents: (content: string, source?: string) => void },
+			'setContents',
+		);
+		const editor = {
+			root: document.createElement('div'),
+			getSelection: vi.fn(),
+			deleteText: vi.fn(() => quill.vm.$emit('update:content', '<p>Hello ld</p>')),
+			insertText: vi.fn(() => quill.vm.$emit('update:content', '<p>Hello {{customerName}}ld</p>')),
+			updateContents: vi.fn(() => quill.vm.$emit('update:content', '<p>Hello {{customerName}}ld</p>')),
+			setSelection: vi.fn(),
+		};
+		quill.vm.$emit('ready', editor);
+		quill.vm.$emit('selectionChange', { range: { index: 6, length: 3 } });
+		await wrapper.get('[data-token="customerName"]').trigger('click');
+
+		expect(wrapper.emitted('update:modelValue')).toBeUndefined();
+		expect(editor.updateContents).toHaveBeenCalledOnce();
+		expect(setContents).toHaveBeenCalledWith('<p>Hello world</p>', 'silent');
+		expect(editor.setSelection).toHaveBeenCalledWith(6, 3, 'silent');
+	});
+
+	it('does not append an over-limit token while the editor is unavailable', async () => {
+		const wrapper = await mountSuspended(RichTextEditor, {
+			props: {
+				modelValue: '123456789012',
+				allowedTokens: ['customerName'],
+				maxLength: 12,
+			},
+		});
+		const quill = wrapper.getComponent({ name: 'QuillEditor' });
+		vi.spyOn(quill.vm as unknown as { getQuill: () => unknown }, 'getQuill').mockReturnValue(undefined);
+		await wrapper.get('[data-token="customerName"]').trigger('click');
+
+		expect(wrapper.emitted('update:modelValue')).toBeUndefined();
+	});
+
+	it('rejects oversized HTML, restores the controlled value, and labels the editable surface', async () => {
+		const wrapper = await mountSuspended(RichTextEditor, {
+			props: {
+				modelValue: '<p>Hello</p>',
+				maxLength: 12,
+				ariaLabel: 'Greeting',
+			},
+		});
+		const quill = wrapper.getComponent({ name: 'QuillEditor' });
+		const setContents = vi.spyOn(
+			quill.vm as unknown as { setContents: (content: string, source?: string) => void },
+			'setContents',
+		);
+		const root = document.createElement('div');
+		quill.vm.$emit('ready', {
+			root,
+			getSelection: vi.fn(),
+			deleteText: vi.fn(),
+			insertText: vi.fn(),
+			setSelection: vi.fn(),
+		});
+		quill.vm.$emit('update:content', '<p>123456</p>');
+		await nextTick();
+
+		expect(wrapper.emitted('update:modelValue')).toBeUndefined();
+		expect(setContents).toHaveBeenCalledWith('<p>Hello</p>', 'silent');
+		expect(root.getAttribute('aria-label')).toBe('Greeting');
+
+		quill.vm.$emit('update:content', '<p>12345</p>');
+		expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['<p>12345</p>']);
+	});
+});
+
+describe('Template Studio brand and merchant information editor', () => {
+	it('renders recognized brand paths only with their approved catalog control kind', async () => {
+		const wrapper = await mountSuspended(BrandEditor, {
+			props: {
+				fields: [{
+					path: 'brand.logoAssetId',
+					label: 'Logo as colour',
+					kind: 'color',
+					max_length: 7,
+					allow_blank: false,
+					allowed_tokens: [],
+				}],
+				modelValue: configuration,
+				inherited: {},
+			},
+		});
+
+		expect(wrapper.find('[data-field="brand.logoAssetId"]').exists()).toBe(false);
+	});
+
+	it('shows resolution badges, clears overrides, and limits explicit hiding to approved merchant information', async () => {
+		const wrapper = await mountSuspended(BrandEditor, {
+			props: {
+				fields: brandFields,
+				modelValue: configuration,
+				inherited: {
+					brand: { primaryColor: '#EE7F01', secondaryColor: '#003B72' },
+					merchantInfo: { companyName: 'Store Profile merchant', companyEmail: 'store@example.com' },
+				},
+			},
+		});
+
+		expect(wrapper.get('[data-field="brand.primaryColor"] [data-source="override"]').text()).toBe('Overridden');
+		expect(wrapper.get('[data-field="brand.secondaryColor"] [data-source="store-profile"]').text()).toBe('Inherited from Store Profile');
+		expect(wrapper.find('[data-field="brand.customCss"]').exists()).toBe(false);
+		await wrapper.get('[data-clear="brand.primaryColor"]').trigger('click');
+		await wrapper.get('[data-hide="merchantInfo.companyName"]').trigger('click');
+
+		expect(wrapper.emitted('clear:path')?.[0]).toEqual(['brand.primaryColor']);
+		expect(wrapper.emitted('update:path')?.[0]).toEqual(['merchantInfo.companyName', '']);
+		expect(wrapper.find('[data-hide="brand.primaryColor"]').exists()).toBe(false);
+		expect(wrapper.find('[data-hide="merchantInfo.companyEmail"]').exists()).toBe(false);
+	});
+
+	it('validates six-digit hex colours before emitting an override', async () => {
+		const wrapper = await mountSuspended(BrandEditor, {
+			props: {
+				fields: brandFields,
+				modelValue: configuration,
+				inherited: {},
+			},
+		});
+		const input = wrapper.get('[data-color-text="brand.primaryColor"]');
+		expect(input.attributes('aria-label')).toBe('Primary colour');
+
+		await input.setValue('#12345');
+		expect(wrapper.find('[data-color-error="brand.primaryColor"]').exists()).toBe(true);
+		expect(wrapper.emitted('update:path')).toBeUndefined();
+
+		await input.setValue('#12aBcF');
+		expect(wrapper.emitted('update:path')?.[0]).toEqual(['brand.primaryColor', '#12aBcF']);
+	});
+
+	it('clears stale local colour errors when the controlled configuration changes', async () => {
+		const wrapper = await mountSuspended(BrandEditor, {
+			props: {
+				fields: brandFields,
+				modelValue: configuration,
+				inherited: {},
+			},
+		});
+		await wrapper.get('[data-color-text="brand.primaryColor"]').setValue('#12345');
+		expect(wrapper.find('[data-color-error="brand.primaryColor"]').exists()).toBe(true);
+
+		await wrapper.setProps({
+			modelValue: {
+				...configuration,
+				brand: { primaryColor: '#ABCDEF' },
+			},
+		});
+
+		expect(wrapper.find('[data-color-error="brand.primaryColor"]').exists()).toBe(false);
+		expect(wrapper.get('[data-color-text="brand.primaryColor"]').element)
+			.toHaveProperty('value', '#ABCDEF');
+	});
+
+	it('uses the managed logo upload and persists only the returned asset ID', async () => {
+		const upload = vi.spyOn(useNuxtApp().$api.image, 'upload').mockResolvedValue({
+			image: { id: 42, url: 'https://cdn.example.com/merchant-logo.png' },
+		});
+		const wrapper = await mountSuspended(BrandEditor, {
+			props: {
+				fields: brandFields,
+				modelValue: configuration,
+				inherited: {},
+			},
+		});
+		const file = new File(['logo'], 'logo.png', { type: 'image/png' });
+
+		wrapper.getComponent({ name: 'UFileUpload' }).vm.$emit('update:modelValue', file);
+		await flushPromises();
+
+		expect(upload).toHaveBeenCalledWith(file, 'merchant', 'merchant-logo');
+		expect(wrapper.emitted('update:path')?.[0]).toEqual(['brand.logoAssetId', 42]);
+		expect(wrapper.get('[data-logo-preview]').attributes('src')).toBe('https://cdn.example.com/merchant-logo.png');
+		expect(JSON.stringify(wrapper.emitted('update:path'))).not.toContain('cdn.example.com');
+	});
+});
+
+describe('Template Studio section editor', () => {
+	it('locks required sections and emits every block in catalog order with empty props', async () => {
+		const wrapper = await mountSuspended(SectionEditor, {
+			props: { blocks: invoiceBlocks, modelValue: configuration.blocks },
+		});
+
+		expect(wrapper.get('[data-block="orderItems"] input').attributes('disabled')).toBeDefined();
+		expect(wrapper.find('[data-drag-handle]').exists()).toBe(false);
+		await wrapper.get('[data-block="taxSummary"] input').setValue(true);
+
+		expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([[
+			{ id: 'merchantContact', enabled: true, props: {} },
+			{ id: 'orderItems', enabled: true, props: {} },
+			{ id: 'taxSummary', enabled: true, props: {} },
+		]]);
+	});
+
+	it('renders Task 16 controls in Bahasa Melayu', async () => {
+		await useNuxtApp().$i18n.setLocale('ms');
+		const wrapper = await mountSuspended(SectionEditor, {
+			props: { blocks: invoiceBlocks, modelValue: configuration.blocks },
+		});
+
+		expect(wrapper.text()).toContain('Diperlukan');
+		expect(wrapper.text()).toContain('Item pesanan');
+		expect(wrapper.text()).not.toContain('Required');
+	});
+});
