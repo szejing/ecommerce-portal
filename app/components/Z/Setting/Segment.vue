@@ -5,7 +5,7 @@
 		</div>
 
 		<div v-for="child in visibleChildren" :key="child.seq_no" class="pb-2">
-			<h2 class="segment-desc font-bold bg-gray-100 dark:bg-gray-800">{{ child.segment_desc }}</h2>
+			<h2 class="segment-desc font-bold bg-gray-100 dark:bg-gray-800 mb-2">{{ child.segment_desc }}</h2>
 			<ZSettingTemplate :templates="child.filteredTempls" />
 		</div>
 	</div>
@@ -23,8 +23,7 @@ const props = defineProps({
 
 const { segment } = toRefs(props);
 
-const filterExternalTemplates = (templates: SettingSegment['setting_templs'] | undefined) =>
-	(templates ?? []).filter((template) => !template.is_internal);
+const filterExternalTemplates = (templates: SettingSegment['setting_templs'] | undefined) => (templates ?? []).filter((template) => !template.is_internal);
 
 // Filter out internal templates for the main segment
 const filteredSettingTempls = computed(() => filterExternalTemplates(segment.value.setting_templs));

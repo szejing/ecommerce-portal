@@ -165,11 +165,7 @@ const updateSingleSelectSettingValue = (template: SettingTempl, value: unknown) 
 
 const updateMultiSelectSettingValue = (template: SettingTempl, value: unknown) => {
 	const list = (Array.isArray(value) ? value : value ? [value] : [])
-		.filter((item): item is string | number | boolean => (
-			typeof item === 'string'
-			|| typeof item === 'number'
-			|| typeof item === 'boolean'
-		))
+		.filter((item): item is string | number | boolean => typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean')
 		.map(String);
 
 	updateSettingValue(template, list.join(','));

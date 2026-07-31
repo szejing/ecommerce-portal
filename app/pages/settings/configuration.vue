@@ -13,7 +13,7 @@
 				<p class="text-gray-600 dark:text-gray-400">{{ t('pages.configurationPageDesc') }}</p>
 			</div>
 
-			<UTabs v-if="tabItems.length && !updating" v-model="activeTab" :items="tabItems" class="w-full">
+			<UTabs v-if="tabItems.length && !updating" v-model="activeTab" :items="tabItems" class="w-full pb-12">
 				<template v-for="segment in segments" :key="segment.segment_code" #[segment.segment_code]>
 					<UCard>
 						<ZSettingSegment :segment="segment" />
