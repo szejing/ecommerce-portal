@@ -119,6 +119,7 @@ export async function signedFetch(
 		includeMerchantId?: boolean;
 		includeApiKey?: boolean;
 		merchant_id?: string;
+		raw?: boolean;
 		[key: string]: any;
 	} = {},
 ): Promise<any> {
@@ -157,18 +158,19 @@ export async function signedFetch(
 	if (!includeApiKey) {
 		delete headers['x-api-key'];
 	}
-	const { includeAccessToken: _omitAccess, includeMerchantId: _omitMerchant, includeApiKey: _omitApiKey, merchant_id: _omit, method: _method, body: _body, ...fetchOptions } = options;
+	const { includeAccessToken: _omitAccess, includeMerchantId: _omitMerchant, includeApiKey: _omitApiKey, merchant_id: _omit, raw = false, method: _method, body: _body, ...fetchOptions } = options;
 	// Request path must match what we signed (/api/...). Avoid double "api" when baseURL already includes /api.
 	const basePath = (baseURL || '').replace(/\/+$/, '');
 	const baseHasApi = basePath.endsWith('/api');
 	const requestPath = baseHasApi ? normalizedSegment : `api/${normalizedSegment}`;
-	return $fetch(requestPath, {
+	const requestOptions = {
 		...fetchOptions,
 		baseURL,
 		method: method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS',
 		headers,
 		body: fetchBody,
-	});
+	};
+	return raw ? $fetch.raw(requestPath, requestOptions) : $fetch(requestPath, requestOptions);
 }
 
 export const generateBasicHeaders = (event: any) => {
