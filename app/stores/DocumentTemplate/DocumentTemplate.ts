@@ -23,7 +23,27 @@ type ApiError = { statusCode?: number; status?: number; metadata?: { current_ver
 const emptyConfiguration = (): DocumentTemplateConfiguration => ({});
 
 function clone<T>(value: T): T {
-	return structuredClone(toRaw(value));
+	const seen = new WeakMap<object, unknown>();
+	const copy = (input: unknown): unknown => {
+		if (input === null || typeof input !== 'object') return input;
+		const raw = toRaw(input);
+		if (raw instanceof Date) return new Date(raw.getTime());
+		if (seen.has(raw)) throw new TypeError('Cyclic template configuration');
+		if (Array.isArray(raw)) {
+			const result = new Array(raw.length);
+			seen.set(raw, result);
+			for (let index = 0; index < raw.length; index += 1) if (index in raw) result[index] = copy(raw[index]);
+			return result;
+		}
+		const result: Record<string, unknown> = Object.create(null);
+		seen.set(raw, result);
+		for (const key of Object.keys(raw)) {
+			if (key === '__proto__' || key === 'constructor' || key === 'prototype') throw new TypeError('Unsafe template configuration key');
+			result[key] = copy((raw as Record<string, unknown>)[key]);
+		}
+		return result;
+	};
+	return copy(value) as T;
 }
 
 function deepFreeze<T>(value: T): T {
@@ -86,6 +106,8 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 		saveGeneration: 0,
 		previewGeneration: 0,
 		publishGeneration: 0,
+		revisionsGeneration: 0,
+		testGeneration: 0,
 	}),
 	getters: {
 		canEdit(): boolean {
@@ -127,6 +149,8 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			this.publishGeneration += 1;
 			this.mutationGeneration += 1;
 			this.summariesGeneration += 1;
+			this.revisionsGeneration += 1;
+			this.testGeneration += 1;
 			this.loading = false;
 			this.saving = false;
 			this.previewing = false;
@@ -154,7 +178,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 		},
 
 		clearPreview() {
-			if (this.preview?.channel === 'pdf') URL.revokeObjectURL(this.preview.objectUrl);
+			if (this.preview?.channel === 'pdf' && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(this.preview.objectUrl);
 			this.preview = null;
 		},
 
@@ -215,14 +239,14 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 		async loadRevisions() {
 			const selection = this.selected;
 			if (!selection) return;
-			const request = this.generation;
+			const request = ++this.revisionsGeneration;
+			const epoch = this.selectionEpoch;
 			try {
 				const { $api } = useNuxtApp();
 				const response = await $api.documentTemplate.listRevisions(selection.channel, selection.templateCode);
-				if (request === this.generation && isSameSelection(this.selected, selection)) this.revisions = clone(response.revisions);
+				if (request === this.revisionsGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) this.revisions = clone(response.revisions);
 			} catch (error) {
-				if (request === this.generation) this.error = error instanceof Error ? error.message : 'Failed to load revisions';
-				throw error;
+				if (request === this.revisionsGeneration && epoch === this.selectionEpoch) this.error = error instanceof Error ? error.message : String(error);
 			}
 		},
 
@@ -329,6 +353,8 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			if (!selection || !this.detail || !this.canEdit || !this.isDirty) return;
 			const request = ++this.saveGeneration;
 			const mutation = ++this.mutationGeneration;
+			this.revisionsGeneration += 1;
+			this.publishing = false; this.resetting = false; this.restoring = false;
 			const epoch = this.selectionEpoch;
 			const editGeneration = this.editGeneration;
 			const version = this.detail.version;
@@ -392,6 +418,8 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 				} else {
 					const blob = await $api.documentTemplate.previewPdf(selection.channel, selection.templateCode, body);
 					if (request === this.previewGeneration && isSameSelection(this.selected, selection)) {
+						if (!blob || (typeof Blob !== 'undefined' && !(blob instanceof Blob) && Object.prototype.toString.call(blob) !== '[object Blob]')) throw new TypeError('Invalid PDF preview response');
+						if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') throw new TypeError('PDF previews are unavailable in this environment');
 						const objectUrl = URL.createObjectURL(blob);
 						this.clearPreview();
 						this.preview = { channel: 'pdf', blob, objectUrl };
@@ -407,20 +435,26 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 		async testSend() {
 			const selection = this.selected;
 			if (!selection || !this.detail || selection.channel !== 'email' || !this.canEdit) return;
+			const request = ++this.testGeneration;
+			const epoch = this.selectionEpoch;
 			this.testing = true;
 			try {
 				const { $api } = useNuxtApp();
 				await $api.documentTemplate.testSend(selection.channel, selection.templateCode, { configuration: this.configurationForRequest() });
 			} catch (error) {
-				if (isSameSelection(this.selected, selection)) this.error = error instanceof Error ? error.message : 'Failed to send test email';
+				if (request === this.testGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) this.error = error instanceof Error ? error.message : String(error);
 			} finally {
-				this.testing = false;
+				if (request === this.testGeneration && epoch === this.selectionEpoch) this.testing = false;
 			}
 		},
 
 		async publish(revisionNo?: number) {
 			const selection = this.selected;
 			if (!selection || !this.detail || !this.canPublish) return;
+			if (this.isDirty) {
+				this.error = 'Save draft before publishing';
+				return;
+			}
 			const targetRevisionNo = revisionNo ?? this.detail.draft_revision?.revision_no;
 			if (targetRevisionNo === undefined) return;
 			if (!this.scheduleIsValid) {
@@ -429,6 +463,8 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			}
 			const request = ++this.publishGeneration;
 			const mutation = ++this.mutationGeneration;
+			this.revisionsGeneration += 1;
+			this.saving = false; this.resetting = false; this.restoring = false;
 			const epoch = this.selectionEpoch;
 			const editGeneration = this.editGeneration;
 			const submitted = clone(this.draft);
@@ -465,6 +501,8 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			const selection = this.selected;
 			if (!selection || !this.detail || !this.canReset) return;
 			const mutation = ++this.mutationGeneration;
+			this.revisionsGeneration += 1;
+			this.saving = false; this.publishing = false; this.restoring = false;
 			const epoch = this.selectionEpoch;
 			this.resetting = true;
 			try {
@@ -490,6 +528,8 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			const selection = this.selected;
 			if (!selection || !this.detail || !this.canRestore) return;
 			const mutation = ++this.mutationGeneration;
+			this.revisionsGeneration += 1;
+			this.saving = false; this.publishing = false; this.resetting = false;
 			const epoch = this.selectionEpoch;
 			this.restoring = true;
 			try {

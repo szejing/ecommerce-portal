@@ -200,4 +200,13 @@ describe('useDocumentTemplateStore', () => {
 		store.setConfigurationPath('content.greeting', '<p>Changed</p>');
 		expect(store.configurationForRequest()).toEqual({ content: { greeting: '<p>Changed</p>' }, brand: { primaryColor: '#123456' } });
 	});
+
+	it('fails closed without a publish request while a draft is dirty', async () => {
+		const store = await selectDraft();
+		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
+		store.setConfigurationPath('content.greeting', '<p>Unsaved</p>');
+		await store.publish();
+		expect(api.publish).not.toHaveBeenCalled();
+		expect(store.error).toBe('Save draft before publishing');
+	});
 });
