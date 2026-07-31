@@ -18,9 +18,11 @@ export type EmailPreview = { channel: 'email'; html: string; subject: string; re
 export type PdfPreview = { channel: 'pdf'; blob: Blob; objectUrl: string };
 type TemplateSelection = { channel: DocumentTemplateChannel; templateCode: string };
 type TemplateSchedule = { startDate: Date | null; endDate: Date | null; timezone: string };
-type ApiError = { statusCode?: number; status?: number; metadata?: { current_version?: number; field_errors?: Record<string, string> } };
+type UnknownRecord = Record<string, unknown>;
+type TemplateBlock = NonNullable<DocumentTemplateConfiguration['blocks']>[number];
 
 const emptyConfiguration = (): DocumentTemplateConfiguration => ({});
+const nativeBlobSlice = typeof Blob !== 'undefined' ? Blob.prototype.slice : null;
 
 function clone<T>(value: T): T {
 	const seen = new WeakMap<object, unknown>();
@@ -54,13 +56,152 @@ function deepFreeze<T>(value: T): T {
 	return value;
 }
 
-function stableSerialize(value: unknown): string {
-	value = toRaw(value as object);
-	if (value instanceof Date) return `Date(${value.toISOString()})`;
-	if (value === undefined) return 'undefined';
-	if (value === null || typeof value !== 'object') return JSON.stringify(value);
-	if (Array.isArray(value)) return `[${value.map(stableSerialize).join(',')}]`;
-	return `{${Object.keys(value as Record<string, unknown>).sort().map(key => `${JSON.stringify(key)}:${stableSerialize((value as Record<string, unknown>)[key])}`).join(',')}}`;
+function stableSerialize(input: unknown, seen = new WeakSet<object>()): string {
+	if (input === undefined) return 'Undefined';
+	if (input === null) return 'Null';
+	if (typeof input === 'string') return `String(${JSON.stringify(input)})`;
+	if (typeof input === 'number') {
+		if (Number.isNaN(input)) return 'Number(NaN)';
+		if (Object.is(input, -0)) return 'Number(-0)';
+		return `Number(${String(input)})`;
+	}
+	if (typeof input === 'boolean') return `Boolean(${input})`;
+	if (typeof input === 'bigint') return `BigInt(${input.toString()})`;
+	if (typeof input !== 'object') return `${typeof input}(${String(input)})`;
+
+	const value = toRaw(input);
+	if (value instanceof Date) {
+		const time = value.getTime();
+		return Number.isNaN(time) ? 'Date(Invalid)' : `Date(${value.toISOString()})`;
+	}
+	if (seen.has(value)) throw new TypeError('Cyclic template configuration');
+	seen.add(value);
+	if (Array.isArray(value)) {
+		const entries = Array.from({ length: value.length }, (_, index) => index in value ? `Value(${stableSerialize(value[index], seen)})` : 'Hole');
+		seen.delete(value);
+		return `Array(${value.length})[${entries.join(',')}]`;
+	}
+	const serialized = Object.keys(value as UnknownRecord)
+		.sort()
+		.map(key => `${JSON.stringify(key)}:${stableSerialize((value as UnknownRecord)[key], seen)}`)
+		.join(',');
+	seen.delete(value);
+	return `Object{${serialized}}`;
+}
+
+function isRecord(value: unknown): value is UnknownRecord {
+	return value !== null && typeof value === 'object';
+}
+
+function getApiErrorRecords(error: unknown): UnknownRecord[] {
+	if (!isRecord(error)) return [];
+	const records: UnknownRecord[] = [];
+	const pending: UnknownRecord[] = [error];
+	const seen = new Set<object>();
+	while (pending.length) {
+		const current = pending.shift()!;
+		if (seen.has(current)) continue;
+		seen.add(current);
+		records.push(current);
+		for (const key of ['error', 'data', 'response', 'cause']) {
+			if (isRecord(current[key])) pending.push(current[key]);
+		}
+	}
+	return records;
+}
+
+function getApiErrorMessage(error: unknown, fallback: string): string {
+	if (error instanceof Error && error.message.trim()) return error.message;
+	if (typeof error === 'string' && error.trim()) return error;
+	for (const record of getApiErrorRecords(error)) {
+		if (typeof record.message === 'string' && record.message.trim()) return record.message;
+	}
+	return fallback;
+}
+
+function getApiErrorMetadataValue(error: unknown, key: string): unknown {
+	for (const record of getApiErrorRecords(error)) {
+		if (isRecord(record.metadata) && Object.prototype.hasOwnProperty.call(record.metadata, key)) return record.metadata[key];
+	}
+	return undefined;
+}
+
+function getApiErrorStatus(error: unknown): number | null {
+	for (const record of getApiErrorRecords(error)) {
+		const status = record.statusCode ?? record.status;
+		if (typeof status === 'number') return status;
+	}
+	return null;
+}
+
+function isBlobResponse(value: unknown): value is Blob {
+	if (!isRecord(value) || !nativeBlobSlice) return false;
+	try {
+		nativeBlobSlice.call(value, 0, 0);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+function isPlainRecord(value: unknown): value is UnknownRecord {
+	if (!isRecord(value) || Array.isArray(value) || value instanceof Date) return false;
+	const prototype = Object.getPrototypeOf(value);
+	return prototype === null || prototype === Object.prototype;
+}
+
+function mergeBlockEdits(
+	serverBlocks: TemplateBlock[],
+	submittedBlocks: TemplateBlock[],
+	localBlocks: TemplateBlock[],
+): TemplateBlock[] {
+	const submittedById = new Map(submittedBlocks.map(block => [block.id, block]));
+	const localById = new Map(localBlocks.map(block => [block.id, block]));
+	const merged = clone(serverBlocks).filter(block => !submittedById.has(block.id) || localById.has(block.id));
+	for (const localBlock of localBlocks) {
+		const submittedBlock = submittedById.get(localBlock.id);
+		if (submittedBlock && stableSerialize(localBlock) === stableSerialize(submittedBlock)) continue;
+		const index = merged.findIndex(block => block.id === localBlock.id);
+		if (index === -1) merged.push(clone(localBlock));
+		else merged[index] = clone(localBlock);
+	}
+	return merged;
+}
+
+function mergePostDispatchEdits(
+	server: DocumentTemplateConfiguration,
+	submitted: DocumentTemplateConfiguration,
+	local: DocumentTemplateConfiguration,
+): DocumentTemplateConfiguration {
+	const mergeRecords = (serverRecord: UnknownRecord, submittedRecord: UnknownRecord, localRecord: UnknownRecord, root: boolean): UnknownRecord => {
+		const merged = clone(serverRecord);
+		const keys = new Set([...Object.keys(submittedRecord), ...Object.keys(localRecord)]);
+		for (const key of keys) {
+			const submittedHasKey = Object.prototype.hasOwnProperty.call(submittedRecord, key);
+			const localHasKey = Object.prototype.hasOwnProperty.call(localRecord, key);
+			if (!localHasKey) {
+				if (submittedHasKey) delete merged[key];
+				continue;
+			}
+			const submittedValue = submittedRecord[key];
+			const localValue = localRecord[key];
+			if (submittedHasKey && stableSerialize(localValue) === stableSerialize(submittedValue)) continue;
+			const serverValue = serverRecord[key];
+			if (root && key === 'blocks' && Array.isArray(localValue)) {
+				merged[key] = mergeBlockEdits(
+					Array.isArray(serverValue) ? serverValue as TemplateBlock[] : [],
+					Array.isArray(submittedValue) ? submittedValue as TemplateBlock[] : [],
+					localValue as TemplateBlock[],
+				);
+			} else if (isPlainRecord(localValue)) {
+				merged[key] = mergeRecords(isPlainRecord(serverValue) ? serverValue : {}, isPlainRecord(submittedValue) ? submittedValue : {}, localValue, false);
+			} else {
+				merged[key] = clone(localValue);
+			}
+		}
+		return merged;
+	};
+	return mergeRecords(server as UnknownRecord, submitted as UnknownRecord, local as UnknownRecord, true) as DocumentTemplateConfiguration;
 }
 
 function isSameSelection(current: TemplateSelection | null, expected: TemplateSelection | null): boolean {
@@ -83,7 +224,8 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 		preview: null as EmailPreview | PdfPreview | null,
 		revisions: [] as DocumentTemplateRevision[],
 		isDirty: false,
-		loading: false,
+		loadingSummaries: false,
+		loadingDetail: false,
 		saving: false,
 		previewing: false,
 		publishing: false,
@@ -93,6 +235,8 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 		conflict: null as { currentVersion: number } | null,
 		fieldErrors: {} as Record<string, string>,
 		error: null as string | null,
+		summaryError: null as string | null,
+		detailError: null as string | null,
 		schedule: {
 			startDate: null,
 			endDate: null,
@@ -110,6 +254,9 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 		testGeneration: 0,
 	}),
 	getters: {
+		loading(): boolean {
+			return this.loadingSummaries || this.loadingDetail;
+		},
 		canEdit(): boolean {
 			const role = useAuthStore().user?.role;
 			return role === UserRoles.MERCHANT_STAFF || role === UserRoles.MERCHANT_ADMIN || role === UserRoles.SUPER_STAFF || role === UserRoles.SUPER_ADMIN;
@@ -141,17 +288,16 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			this.refreshDirty();
 		},
 
-		resetSelection() {
+		resetDetailSelection() {
 			this.generation += 1;
 			this.selectionEpoch += 1;
 			this.saveGeneration += 1;
 			this.previewGeneration += 1;
 			this.publishGeneration += 1;
 			this.mutationGeneration += 1;
-			this.summariesGeneration += 1;
 			this.revisionsGeneration += 1;
 			this.testGeneration += 1;
-			this.loading = false;
+			this.loadingDetail = false;
 			this.saving = false;
 			this.previewing = false;
 			this.publishing = false;
@@ -165,8 +311,16 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			this.conflict = null;
 			this.fieldErrors = {};
 			this.error = null;
+			this.detailError = null;
 			this.schedule = { startDate: null, endDate: null, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone };
 			this.clearPreview();
+		},
+
+		resetSelection() {
+			this.resetDetailSelection();
+			this.summariesGeneration += 1;
+			this.loadingSummaries = false;
+			this.summaryError = null;
 		},
 
 		discardDraft() {
@@ -178,8 +332,15 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 		},
 
 		clearPreview() {
-			if (this.preview?.channel === 'pdf' && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(this.preview.objectUrl);
+			const objectUrl = this.preview?.channel === 'pdf' ? this.preview.objectUrl : null;
 			this.preview = null;
+			if (objectUrl && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+				try {
+					URL.revokeObjectURL(objectUrl);
+				} catch {
+					// The preview is already cleared; URL cleanup is best-effort in non-browser runtimes.
+				}
+			}
 		},
 
 		dispose() {
@@ -188,28 +349,28 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 
 		async loadSummaries() {
 			const request = ++this.summariesGeneration;
-			this.loading = true;
-			this.error = null;
+			this.loadingSummaries = true;
+			this.summaryError = null;
 			try {
 				const { $api } = useNuxtApp();
 				const response = await $api.documentTemplate.list();
 				if (request === this.summariesGeneration) this.summaries = clone(response.document_templates ?? []);
 			} catch (error) {
-				if (request === this.summariesGeneration) this.error = error instanceof Error ? error.message : 'Failed to load document templates';
+				if (request === this.summariesGeneration) this.summaryError = getApiErrorMessage(error, 'Failed to load document templates');
 				throw error;
 			} finally {
-				if (request === this.summariesGeneration) this.loading = false;
+				if (request === this.summariesGeneration) this.loadingSummaries = false;
 			}
 		},
 
 		async loadDetail(channel: DocumentTemplateChannel, templateCode: string) {
 			const selection = { channel, templateCode };
-			this.resetSelection();
+			this.resetDetailSelection();
 			const request = ++this.generation;
 			const epoch = this.selectionEpoch;
 			this.selected = selection;
-			this.loading = true;
-			this.error = null;
+			this.loadingDetail = true;
+			this.detailError = null;
 			this.conflict = null;
 			this.fieldErrors = {};
 			this.clearPreview();
@@ -230,9 +391,9 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 					timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 				};
 			} catch (error) {
-				if (request === this.generation && epoch === this.selectionEpoch) this.error = error instanceof Error ? error.message : String(error);
+				if (request === this.generation && epoch === this.selectionEpoch) this.detailError = getApiErrorMessage(error, 'Failed to load document template');
 			} finally {
-				if (request === this.generation && epoch === this.selectionEpoch) this.loading = false;
+				if (request === this.generation && epoch === this.selectionEpoch) this.loadingDetail = false;
 			}
 		},
 
@@ -246,7 +407,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 				const response = await $api.documentTemplate.listRevisions(selection.channel, selection.templateCode);
 				if (request === this.revisionsGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) this.revisions = clone(response.revisions);
 			} catch (error) {
-				if (request === this.revisionsGeneration && epoch === this.selectionEpoch) this.error = error instanceof Error ? error.message : String(error);
+				if (request === this.revisionsGeneration && epoch === this.selectionEpoch) this.error = getApiErrorMessage(error, 'Failed to load document template revisions');
 			}
 		},
 
@@ -336,16 +497,57 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			return configuration;
 		},
 
-		applyMutation(response: DocumentTemplateMutationResponse) {
+		applyDraftRevision(revision: DocumentTemplateRevision) {
+			const nextRevision = clone(revision);
+			const retained: DocumentTemplateRevision[] = [];
+			const ids = new Set([nextRevision.id]);
+			for (const current of this.revisions) {
+				if (ids.has(current.id)) continue;
+				ids.add(current.id);
+				retained.push(current.status === 'draft' ? { ...clone(current), status: 'archived' } : clone(current));
+			}
+			this.revisions = [nextRevision, ...retained];
+		},
+
+		applyPublishedRevision(revision: DocumentTemplateRevision, consumedRevisionNo: number) {
+			const published = clone(revision);
+			const retained: DocumentTemplateRevision[] = [];
+			const ids = new Set([published.id]);
+			for (const current of this.revisions) {
+				if (ids.has(current.id) || (current.status === 'draft' && current.revision_no === consumedRevisionNo)) continue;
+				ids.add(current.id);
+				retained.push(current.status === 'draft' ? { ...clone(current), status: 'archived' } : clone(current));
+			}
+			this.revisions = [published, ...retained];
+		},
+
+		applyMutation(
+			response: DocumentTemplateMutationResponse,
+			submittedEditGeneration: number,
+			submittedDraft?: DocumentTemplateConfiguration,
+		) {
 			if (!this.detail) return;
 			this.detail = { ...this.detail, version: response.version, draft_revision: clone(response.draft_revision) };
-			this.setBaseline(response.draft_revision.configuration);
-			this.revisions = [clone(response.draft_revision), ...this.revisions.filter(revision => revision.id !== response.draft_revision.id)];
+			this.baseline = deepFreeze(clone(response.draft_revision.configuration));
+			if (this.editGeneration === submittedEditGeneration) this.draft = clone(response.draft_revision.configuration);
+			else if (submittedDraft) this.draft = mergePostDispatchEdits(response.draft_revision.configuration, submittedDraft, this.draft);
+			this.refreshDirty();
+			this.applyDraftRevision(response.draft_revision);
 			this.conflict = null;
 		},
 
-		readFieldErrors(error: ApiError) {
-			this.fieldErrors = error.metadata?.field_errors ? { ...error.metadata.field_errors } : {};
+		readFieldErrors(error: unknown) {
+			const fieldErrors = getApiErrorMetadataValue(error, 'field_errors');
+			this.fieldErrors = isRecord(fieldErrors)
+				? Object.fromEntries(Object.entries(fieldErrors).filter((entry): entry is [string, string] => typeof entry[1] === 'string'))
+				: {};
+		},
+
+		readConflict(error: unknown): boolean {
+			const currentVersion = getApiErrorMetadataValue(error, 'current_version');
+			if (getApiErrorStatus(error) !== 409 || typeof currentVersion !== 'number') return false;
+			this.conflict = { currentVersion };
+			return true;
 		},
 
 		async saveDraft() {
@@ -369,21 +571,12 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 					configuration,
 				});
 				if (request === this.saveGeneration && mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
-					this.detail = { ...this.detail!, version: response.version, draft_revision: clone(response.draft_revision) };
-					this.baseline = deepFreeze(clone(response.draft_revision.configuration));
-					if (this.editGeneration === editGeneration) this.draft = clone(response.draft_revision.configuration);
-					this.refreshDirty();
-					this.conflict = null;
+					this.applyMutation(response, editGeneration);
 				}
 			} catch (error) {
 				if (request === this.saveGeneration && mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
-					const apiError = error as ApiError;
-					this.readFieldErrors(apiError);
-					if ((apiError.statusCode ?? apiError.status) === 409 && typeof apiError.metadata?.current_version === 'number') {
-						this.conflict = { currentVersion: apiError.metadata.current_version };
-					} else {
-						this.error = error instanceof Error ? error.message : 'Failed to save document template';
-					}
+					this.readFieldErrors(error);
+					if (!this.readConflict(error)) this.error = getApiErrorMessage(error, 'Failed to save document template');
 				}
 			} finally {
 				if (request === this.saveGeneration && epoch === this.selectionEpoch) this.saving = false;
@@ -401,6 +594,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			if (!selection || !this.detail || !this.canEdit) return;
 			const request = ++this.previewGeneration;
 			this.previewing = true;
+			this.error = null;
 			await new Promise(resolve => setTimeout(resolve, 400));
 			if (request !== this.previewGeneration || !isSameSelection(this.selected, selection)) {
 				if (request === this.previewGeneration) this.previewing = false;
@@ -418,15 +612,18 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 				} else {
 					const blob = await $api.documentTemplate.previewPdf(selection.channel, selection.templateCode, body);
 					if (request === this.previewGeneration && isSameSelection(this.selected, selection)) {
-						if (!blob || (typeof Blob !== 'undefined' && !(blob instanceof Blob) && Object.prototype.toString.call(blob) !== '[object Blob]')) throw new TypeError('Invalid PDF preview response');
+						this.clearPreview();
+						if (!isBlobResponse(blob)) throw new TypeError('Invalid PDF preview response');
 						if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') throw new TypeError('PDF previews are unavailable in this environment');
 						const objectUrl = URL.createObjectURL(blob);
-						this.clearPreview();
 						this.preview = { channel: 'pdf', blob, objectUrl };
 					}
 				}
 			} catch (error) {
-				if (request === this.previewGeneration && isSameSelection(this.selected, selection)) this.error = error instanceof Error ? error.message : 'Failed to preview document template';
+				if (request === this.previewGeneration && isSameSelection(this.selected, selection)) {
+					if (selection.channel === 'pdf') this.clearPreview();
+					this.error = getApiErrorMessage(error, 'Failed to preview document template');
+				}
 			} finally {
 				if (request === this.previewGeneration) this.previewing = false;
 			}
@@ -438,11 +635,12 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			const request = ++this.testGeneration;
 			const epoch = this.selectionEpoch;
 			this.testing = true;
+			this.error = null;
 			try {
 				const { $api } = useNuxtApp();
 				await $api.documentTemplate.testSend(selection.channel, selection.templateCode, { configuration: this.configurationForRequest() });
 			} catch (error) {
-				if (request === this.testGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) this.error = error instanceof Error ? error.message : String(error);
+				if (request === this.testGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) this.error = getApiErrorMessage(error, 'Failed to send test document template');
 			} finally {
 				if (request === this.testGeneration && epoch === this.selectionEpoch) this.testing = false;
 			}
@@ -470,6 +668,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			const submitted = clone(this.draft);
 			const version = this.detail.version;
 			this.publishing = true;
+			this.error = null;
 			try {
 				const { $api } = useNuxtApp();
 				const response: PublishDocumentTemplateResponse = await $api.documentTemplate.publish(selection.channel, selection.templateCode, {
@@ -484,13 +683,12 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 					this.baseline = deepFreeze(clone(publishedConfiguration));
 					if (this.editGeneration === editGeneration) this.draft = clone(publishedConfiguration);
 					this.refreshDirty();
-					this.revisions = [clone(response.latest_published_revision), ...this.revisions.filter(revision => revision.id !== response.latest_published_revision.id)];
+					this.applyPublishedRevision(response.latest_published_revision, targetRevisionNo);
+					this.conflict = null;
 				}
 			} catch (error) {
 				if (request === this.publishGeneration && mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
-					const apiError = error as ApiError;
-					if ((apiError.statusCode ?? apiError.status) === 409 && typeof apiError.metadata?.current_version === 'number') this.conflict = { currentVersion: apiError.metadata.current_version };
-					else this.error = error instanceof Error ? error.message : String(error);
+					if (!this.readConflict(error)) this.error = getApiErrorMessage(error, 'Failed to publish document template');
 				}
 			} finally {
 				if (request === this.publishGeneration && epoch === this.selectionEpoch) this.publishing = false;
@@ -504,16 +702,17 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			this.revisionsGeneration += 1;
 			this.saving = false; this.publishing = false; this.restoring = false;
 			const epoch = this.selectionEpoch;
+			const editGeneration = this.editGeneration;
+			const submittedDraft = clone(this.draft);
 			this.resetting = true;
+			this.error = null;
 			try {
 				const { $api } = useNuxtApp();
 				const response = await $api.documentTemplate.reset(selection.channel, selection.templateCode, { version: this.detail.version });
-				if (mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) this.applyMutation(response);
+				if (mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) this.applyMutation(response, editGeneration, submittedDraft);
 			} catch (error) {
 				if (mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
-					const apiError = error as ApiError;
-					if ((apiError.statusCode ?? apiError.status) === 409 && typeof apiError.metadata?.current_version === 'number') this.conflict = { currentVersion: apiError.metadata.current_version };
-					else this.error = error instanceof Error ? error.message : String(error);
+					if (!this.readConflict(error)) this.error = getApiErrorMessage(error, 'Failed to reset document template');
 				}
 			} finally {
 				if (epoch === this.selectionEpoch && mutation === this.mutationGeneration) this.resetting = false;
@@ -531,16 +730,17 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			this.revisionsGeneration += 1;
 			this.saving = false; this.publishing = false; this.resetting = false;
 			const epoch = this.selectionEpoch;
+			const editGeneration = this.editGeneration;
+			const submittedDraft = clone(this.draft);
 			this.restoring = true;
+			this.error = null;
 			try {
 				const { $api } = useNuxtApp();
 				const response = await $api.documentTemplate.restore(selection.channel, selection.templateCode, revisionNo, { version: this.detail.version });
-				if (mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) this.applyMutation(response);
+				if (mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) this.applyMutation(response, editGeneration, submittedDraft);
 			} catch (error) {
 				if (mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
-					const apiError = error as ApiError;
-					if ((apiError.statusCode ?? apiError.status) === 409 && typeof apiError.metadata?.current_version === 'number') this.conflict = { currentVersion: apiError.metadata.current_version };
-					else this.error = error instanceof Error ? error.message : String(error);
+					if (!this.readConflict(error)) this.error = getApiErrorMessage(error, 'Failed to restore document template revision');
 				}
 			} finally {
 				if (epoch === this.selectionEpoch && mutation === this.mutationGeneration) this.restoring = false;
