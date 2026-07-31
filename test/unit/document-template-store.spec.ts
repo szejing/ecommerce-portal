@@ -59,6 +59,12 @@ describe('useDocumentTemplateStore', () => {
 		return store;
 	}
 
+	function deferred<T>() {
+		let resolve!: (value: T) => void;
+		let reject!: (reason?: unknown) => void;
+		return { promise: new Promise<T>((resolvePromise, rejectPromise) => { resolve = resolvePromise; reject = rejectPromise; }), resolve, reject };
+	}
+
 	it('keeps edits dirty until explicit save succeeds', async () => {
 		const store = await selectDraft();
 		api.saveDraft.mockResolvedValue({ version: 3, draft_revision: { ...detail.draft_revision!, revision_no: 3, configuration: { content: { greeting: '<p>Hello</p>' } } } });
@@ -127,5 +133,59 @@ describe('useDocumentTemplateStore', () => {
 
 		expect(store.preview).toBeNull();
 		expect(revokeObjectURL).toHaveBeenCalledWith('blob:preview-1');
+	});
+
+	it('clears state immediately and ignores an ABA stale detail response', async () => {
+		const first = deferred<DocumentTemplateDetail>();
+		api.get.mockImplementationOnce(() => first.promise);
+		api.get.mockResolvedValueOnce({ ...detail, template_code: 'invoice' });
+		api.get.mockResolvedValueOnce({ ...detail, display_name: 'Fresh order confirmation' });
+		const store = useDocumentTemplateStore();
+		const firstLoad = store.loadDetail('email', 'order-confirmation');
+		await store.loadDetail('email', 'invoice');
+		const finalLoad = store.loadDetail('email', 'order-confirmation');
+		expect(store.detail).toBeNull();
+		first.resolve({ ...detail, display_name: 'Stale order confirmation' });
+		await Promise.all([firstLoad, finalLoad]);
+		expect(store.detail?.display_name).toBe('Fresh order confirmation');
+	});
+
+	it('preserves a newer edit while updating the saved baseline', async () => {
+		const store = await selectDraft();
+		const save = deferred<{ version: number; draft_revision: NonNullable<DocumentTemplateDetail['draft_revision']> }>();
+		api.saveDraft.mockReturnValue(save.promise);
+		store.setConfigurationPath('content.greeting', '<p>Saved</p>');
+		const pending = store.saveDraft();
+		store.setConfigurationPath('content.greeting', '<p>Newer local</p>');
+		save.resolve({ version: 3, draft_revision: { ...detail.draft_revision!, configuration: { content: { greeting: '<p>Saved</p>' } } } });
+		await pending;
+		expect(store.draft.content?.greeting).toBe('<p>Newer local</p>');
+		expect(store.isDirty).toBe(true);
+		expect(store.detail?.version).toBe(3);
+	});
+
+	it('serializes positive logo ids and omits untouched block inheritance', async () => {
+		const store = await selectDraft();
+		store.draft = { brand: { logoAssetId: 42 } };
+		store.refreshDirty();
+		api.saveDraft.mockResolvedValue({ version: 3, draft_revision: { ...detail.draft_revision!, configuration: { brand: { logoAssetId: 42 } } } });
+		await store.saveDraft();
+		expect(api.saveDraft).toHaveBeenCalledWith('email', 'order-confirmation', {
+			version: 2,
+			configuration: { brand: { logoAssetId: 42 } },
+		});
+	});
+
+	it('does not apply a stale mutation error after dispose', async () => {
+		const store = await selectDraft();
+		const save = deferred<never>();
+		api.saveDraft.mockReturnValue(save.promise);
+		store.setConfigurationPath('content.greeting', '<p>Local</p>');
+		const pending = store.saveDraft();
+		store.dispose();
+		save.reject({ statusCode: 409, metadata: { current_version: 5 } });
+		await pending;
+		expect(store.conflict).toBeNull();
+		expect(store.error).toBeNull();
 	});
 });
