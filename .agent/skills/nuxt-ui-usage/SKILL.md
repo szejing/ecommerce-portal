@@ -1,6 +1,6 @@
 ---
 name: nuxt-ui-usage
-description: Build UIs with @nuxt/ui v4 in the Wemotoo CRM Portal. Use when creating interfaces, forms, tables, modals, SelectMenus, or customizing the theme. Covers project-specific theming (main/secondary colors), component conventions, and integration with i18n.
+description: Use when creating or refactoring @nuxt/ui v4 interfaces, forms, tables, modals, SelectMenus, theme integration, or translated UI in the Wemotoo CRM Portal.
 ---
 
 # Nuxt UI in Wemotoo CRM Portal
@@ -68,7 +68,7 @@ Forms use **UForm** + **Zod** + **createXxxValidation(t)** for i18n:
 <script setup lang="ts">
 import { createCreateTaxValidation } from '~/utils/schema';
 
-const { t: $t } = useI18n();
+const { t } = useI18n();
 const taxSchema = computed(() => createCreateTaxValidation(t));
 </script>
 
@@ -98,7 +98,7 @@ Options from `app/utils/options/` — export `getXxxOptions(t)` returning `{ val
 
 ```vue
 <script setup lang="ts">
-const { t: $t } = useI18n();
+const { t } = useI18n();
 const items = computed(() => getOrderStatusOptions(t));
 </script>
 
@@ -132,7 +132,7 @@ Icons use Iconify format `i-{collection}-{name}`. Collections: `lucide`, `heroic
 ## Checklist for New UI
 
 1. Use semantic colors (`text-default`, `bg-elevated`) or project palette (`main`, `secondary`, `neutral`)
-2. Translate labels with `$t()` or `getXxxOptions(t)`
+2. Translate labels with `t()` or `getXxxOptions(t)`
 3. Put reusable primitives in `components/Z/`
 4. Use `UForm` + Zod schema for forms; schemas in `app/utils/schema/`
 5. Table columns in `app/utils/table-columns/`; options in `app/utils/options/`
@@ -141,4 +141,4 @@ Icons use Iconify format `i-{collection}-{name}`. Collections: `lucide`, `heroic
 
 - [Nuxt UI docs](https://ui.nuxt.com/docs)
 - [Nuxt UI skill](https://github.com/nuxt/ui/tree/v4/skills/nuxt-ui) — install for full component reference
-- [i18n-translation skill](.agent/skills/i18n-translation/SKILL.md) — locale patterns
+- **`i18n-translation`** — locale patterns

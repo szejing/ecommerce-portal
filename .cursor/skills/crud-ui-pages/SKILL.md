@@ -1,7 +1,9 @@
 ---
 name: crud-ui-pages
 description: >-
-  Implements full-entity CRUD in the Wemotoo CRM Portal: thin create/edit pages (ZPagePanel, footer actions), Form*Creation / Form*Update with UForm, Zod schemas in ~/utils/schema, sticky review summary, load/delete on edit routes, store-backed submit, and Pinia state (current_*, new_* with structuredClone, resetNew*). Use when adding or refactoring create/detail/edit flows, FormFooUpdate, schema validation, review panels, or when the user mentions CRUD pages, settings entity forms, or create vs update forms.
+  Use when adding or refactoring full-entity create, detail, edit, update, or
+  delete flows in the Wemotoo CRM Portal, including settings entity forms,
+  Form*Creation, Form*Update, schema validation, or review panels.
 ---
 
 # CRUD UI page logic (portal)
@@ -21,7 +23,7 @@ Pair with **`page-panel-layout`**, **`nuxt-ui-usage`**, **`i18n-translation`**, 
 | Review summary card | `app/components/Form/ShippingZone/ReviewSummary.vue` |
 | Zod factories | `app/utils/schema/ShippingZone/Create/ShippingZoneValidation.ts` |
 | Store: `current_*` + `new_*` + reset | `app/stores/ShippingZone/ShippingZone.ts` |
-| Broader create UX (sections, loading modal) | `form-creation` skill + `app/components/Form/DiscountCreation.vue` |
+| Broader create UX (sections, loading modal) | `form-creation` skill + `app/components/Form/Discount/Creation.vue` |
 
 ## Pinia store: `current_*` and `new_*`
 
@@ -63,7 +65,7 @@ Call **`resetNewXxx()`** from the **`createXxx` action** after success (as in `c
 
 ## Create route (`app/pages/.../create.vue`)
 
-- **`ZPagePanel`**: `id`, `:title` (`$t`), `back-to`, **`grow`**.
+- **`ZPagePanel`**: `id`, `:title` (`t`), `back-to`, **`grow`**.
 - Body: **`div.container.w-full.mx-auto`** (add **`py-4`** if the design needs vertical rhythm; shipping examples omit it) wrapping **`Form…Creation ref="formRef"`** and `@saved` if the form emits after success.
 - **Footer**: Blurred top border, **desktop** row (cancel + primary), **mobile** column (primary full width first). Primary calls **`onSubmit` → `formRef?.submit()`** only — **do not** call the store from the page for create.
 - Script: `storeToRefs` for **`adding`** (or store’s create flag), **`useHead`** title, **`onSaved`** → `navigateTo` list route.
@@ -88,7 +90,7 @@ Call **`resetNewXxx()`** from the **`createXxx` action** after success (as in `c
 ## Form component — review summary
 
 - **Layout**: `grid` on `UForm`: form **`lg:col-span-9`**, review **`lg:col-span-3`** with **`lg:sticky lg:top-4`**.
-- **Data**: A **`computed`** (e.g. `reviewSummary`) derived from the **same** reactive state used by `UForm` so the panel reflects edits live. Use formatted labels (currency, joined lists) and **`$t`/`t`** for status text.
+- **Data**: A **`computed`** (e.g. `reviewSummary`) derived from the **same** reactive state used by `UForm` so the panel reflects edits live. Use formatted labels (currency, joined lists) and **`t`** for status text.
 - **Component**: `Form<Entity>ReviewSummary` with a **documented** interface (e.g. `ShippingZoneReviewSummary`) and presentation-only markup (`UCard`, sections, `dl`/`dt`/`dd`). Pass **`subtitle-key`** for create vs edit when copy differs.
 - **Styling**: Align with existing review cards: primary border accent, check icon in header, **`rounded-xl bg-elevated/60`** sections.
 

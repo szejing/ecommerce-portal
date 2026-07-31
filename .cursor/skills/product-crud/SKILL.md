@@ -1,6 +1,6 @@
 ---
 name: product-crud
-description: Build and update Product CRUD flows in the Wemotoo CRM Portal using the existing Product store, form types, and Product form/page patterns. Use when implementing product create, listing integration, update, delete, or when the user mentions Product CRUD, Product forms, Product store actions, or product management pages.
+description: Use when implementing or refactoring Product create, listing, slug-based detail, update, delete, Product forms, Product store actions, image uploads, or product management pages in the Wemotoo CRM Portal.
 ---
 
 # Product CRUD (portal)
@@ -10,15 +10,16 @@ Use this skill when working on product create/read/update/delete behavior so new
 ## Reference files
 
 - `app/stores/Product/Product.ts`
-- `app/pages/products/index.vue`
+- `app/pages/products/listing.vue`
 - `app/pages/products/create.vue`
+- `app/pages/products/[slug].vue`
 - `app/utils/types/form/product-creation.ts`
 - `app/components/Form/Product/Creation.vue`
 - `app/components/Form/Product/Update.vue`
 
 ## Core pattern
 
-1. Keep Product CRUD business logic in `useProductStore` actions (`getProducts`, `getProduct`, `createProduct`, `updateProduct`, `deleteProduct`).
+1. Keep Product CRUD business logic in `useProductStore` actions (`getProducts`, `getProduct`, `getProductBySlug`, `createProduct`, `updateProduct`, `deleteProduct`).
 2. Keep form payload contracts in `ProductCreate` and `ProductUpdate` from `app/utils/types/form/product-creation.ts`.
 3. Keep page files thin: host form components inside `ZPagePanel`; trigger submit from footer via `formRef.submit()`.
 4. Keep heavy form UX (section nav, scroll-to-error, review summary, price helpers, relation mapping) in `Form/Product/Creation.vue` and `Form/Product/Update.vue`.
@@ -35,6 +36,7 @@ Use this skill when working on product create/read/update/delete behavior so new
 ## Form/page conventions
 
 - `app/pages/products/create.vue` owns footer actions and leave guard; form component owns validation/submission behavior.
+- `app/pages/products/[slug].vue` owns slug-based loading, update/delete footer actions, and clearing `current_product` on route leave.
 - `Form/Product/Creation.vue` and `Form/Product/Update.vue` expose `submit()` with `defineExpose`.
 - Keep relation mapping explicit before submit (`category_codes`, `tag_ids`, `brand_codes`).
 - Preserve confirmation guard for zero `orig_sell_price` before create/update.

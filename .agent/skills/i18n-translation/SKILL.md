@@ -1,6 +1,6 @@
 ---
 name: i18n-translation
-description: Translate UI strings, validation messages, and options in the Wemotoo CRM Portal (Nuxt/Vue). Use when adding i18n support, translating pages/components, or when the user mentions translation, localization, multi-language, Bahasa Melayu, or locale files.
+description: Use when adding or refactoring UI translations, validation messages, option labels, locale files, localization, multi-language behavior, or Bahasa Melayu support in the Wemotoo CRM Portal.
 ---
 
 # i18n Translation for Wemotoo CRM Portal

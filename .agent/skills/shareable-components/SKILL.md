@@ -1,6 +1,6 @@
 ---
 name: shareable-components
-description: Extract duplicate UI into a reusable component when the same block appears in two or more places. Use when the user asks for a shared/shareable component, to deduplicate repeated markup, or when multiple pages or forms use the same section, form block, or UI pattern.
+description: Use when extracting a shared or reusable component, deduplicating repeated markup, or when two or more pages or forms use the same section, form block, card, or UI behavior.
 ---
 
 # Creating Shareable Components
@@ -40,7 +40,7 @@ Prefer **Z** for anything reusable across domains; use **Z/Input/** or **Z/Secti
 
 - Add the new `.vue` file under the chosen path (e.g. `app/components/Z/Input/Product/BasicInfoSection.vue`).
 - Move the shared markup into the new component; replace differing parts with props and events.
-- Use project conventions: `ICONS` from `~/utils/icons`, `$t()` for copy, `UFormField`/`UCard` etc. as in the rest of the app.
+- Use project conventions: `ICONS` from `~/utils/icons`, `t()` for copy, `UFormField`/`UCard` etc. as in the rest of the app.
 - Export a type for the state shape if useful (e.g. `ProductBasicInfoState`) so parents can type their ref.
 
 ### 4. Replace usages
@@ -106,4 +106,4 @@ const state = toRef(props, 'state');
 ## References
 
 - Vue/components rule: `.agent/rules/vue-pages-components.mdc` — structure, naming, Z primitives
-- Nuxt UI usage: `.agent/skills/nuxt-ui-usage/SKILL.md` — forms, UCard, UFormField, theming
+- **`nuxt-ui-usage`** — forms, UCard, UFormField, theming

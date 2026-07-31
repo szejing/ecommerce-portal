@@ -1,7 +1,9 @@
 ---
 name: listing-page
 description: >-
-  Build entity list/index pages in the Wemotoo CRM Portal: ZPagePanel with ZCreateButton in navbar-right, ZSectionFilter* in toolbar, ZTableToolbar + skeleton + UTable + empty state + UPagination, Pinia list/filter/export flags, and table columns from ~/utils/table-columns. Use when adding or refactoring a listing page, index route with a table, “list of X”, browse/manage grid, or marketing/products/settings list views.
+  Use when adding or refactoring an entity listing, index route with a table,
+  browse or manage grid, table filters, pagination, export controls, or selectable
+  columns in the Wemotoo CRM Portal.
 ---
 
 # Listing page (index / table)
@@ -14,7 +16,8 @@ Pair with **`page-panel-layout`** (ZPagePanel slots), **`nuxt-ui-usage`** (UTabl
 
 | Area        | Example |
 |------------|---------|
-| Full page  | `app/pages/products/brands/index.vue` |
+| Full current page | `app/pages/operation/staff-departments/index.vue` |
+| Exportable variant | `app/pages/settings/shipping/zones/index.vue` |
 | With status filter + export stub | `app/pages/marketing/discounts/index.vue` |
 | Product listing variant | `app/pages/products/listing.vue` |
 | Filter only | `app/components/Z/Section/Filter/Brands.vue`, `…/Products.vue`, `…/Discounts.vue` |
@@ -22,7 +25,7 @@ Pair with **`page-panel-layout`** (ZPagePanel slots), **`nuxt-ui-usage`** (UTabl
 ## Page shell (`ZPagePanel`)
 
 1. **`id`** — unique kebab-case (e.g. `products-brands`, `discounts-listing`).
-2. **`:title`** — navbar title via **`$t('nav.*')`** or domain key; keep consistent with navigation.
+2. **`:title`** — navbar title via **`t('nav.*')`** or a domain key; keep consistent with navigation.
 3. **`back-to`** — set when this route is a **child** of a hub (e.g. discounts under `/marketing`). Omit for top-level section roots (e.g. brands under products if the product area is the parent).
 4. **`#navbar-right`** — primary **create** action:
    - Use **`ZCreateButton`** with **`:to`** to the create route and **`:label`** from **`common.add…`** (e.g. `common.addBrand`, `common.addDiscount`).
@@ -36,7 +39,9 @@ Default body wrapper: **`div.space-y-6`**.
 Use **`ZTableToolbar`** immediately below the filter toolbar (still inside `space-y-6`):
 
 - **`v-model`** — `filter.page_size` (or store equivalent).
+- **`v-model:selected-column-keys`** — `selectedColumnKeys` from **`useTableColumnVisibility`**.
 - **`:page-size-options`** — **`options_page_size`** from **`~/utils/options`**.
+- **`:column-options`** — translated **`columnOptions`** whose keys exactly match each table column’s `id` or `accessorKey`.
 - **`:export-enabled`** — `true` when the listing is exportable; `false` only if product explicitly skips export.
 - **`:exporting`** — from store (`exporting: false` in state until export is implemented).
 - **`@update:model-value`** — call store **`updatePageSize`** (or inline `await store.updatePageSize`); same behavior as brands.
@@ -46,7 +51,7 @@ Use **`ZTableToolbar`** immediately below the filter toolbar (still inside `spac
 
 1. **`initialize`** (or equivalent) **`ref(true)`**: on **`onMounted`**, set true, **`await store.get…()`**, then false in **`finally`**.
 2. While **`initialize`**: skeleton block matching table density — **`rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700`**, header row skeleton + **`v-for`** row skeletons (copy **`brands/index.vue`**).
-3. **`UTable`** when not initializing: **`:data`**, **`:columns`** (from **`computed(() => getXColumns(t))`**), **`:loading="loading"`**, **`@select`** for row navigation or modal.
+3. **`UTable`** when not initializing: **`:data`**, **`:columns="visibleColumns"`**, **`:loading="loading"`**, **`@select`** for row navigation or modal.
 4. **`#empty`**: centered column, **`ICONS.ADDITIONAL`**, **`pages.no…Found`**, and a second line **`pages.tryAdjustingFilters`** (same as brands).
 
 ## Pagination
@@ -62,6 +67,7 @@ When **`!initialize && rows.length > 0`**, wrap **`UPagination`** in **`div.sect
 
 - **`useHead({ title: () => t('pages.*Title') })`** — document title pattern **`Wemotoo CRM - …`** (see **`pages.brandsTitle`**, **`pages.discountsTitle`**), not only `nav.*`.
 - **Columns**: **`import { getEntityColumns } from '~/utils/table-columns'`** and **`computed(() => getEntityColumns(t))`**.
+- **Column options**: define a key-to-i18n-label map, pass it to **`columnOptionsFromLabelMap(t, LABELS)`**, then call **`useTableColumnVisibility(columns, columnOptions)`**. Use explicit option objects for composite labels. Pass **`visibleColumns`** to `UTable`.
 - **Store**: **`storeToRefs`** for **`loading`**, list array, **`filter`**, total count, **`exporting`** when export UI is shown.
 
 ## Filter component (`Z/Section/Filter/<Entity>.vue`)
@@ -70,7 +76,7 @@ Auto-import name: **`ZSectionFilter<Entity>`** (PascalCase entity, e.g. **`ZSect
 
 - Root **`div.w-full`**.
 - **Grid** pattern: align with **`Brands`** (search + actions) or **`Products`** / **`Discounts`** (search + optional **status** or other selects + actions): **`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3`**.
-- **Search**: **`UInput`** with **`v-model="filter.query"`**, **`@input="debouncedSearch"`**, label **`$t('components.filter.searchLabel')`** or **`search`**, placeholder from **`$t('components.filter.search…')`** (add a dedicated key per entity; do not hardcode English only if the rest of the app uses i18n for placeholders).
+- **Search**: **`UInput`** with **`v-model="filter.query"`**, **`@input="debouncedSearch"`**, label **`t('components.filter.searchLabel')`** or **`search`**, placeholder from **`t('components.filter.search…')`** (add a dedicated key per entity; do not hardcode English only if the rest of the app uses i18n for placeholders).
 - **Actions**: Clear (**`components.filter.clear`**) + Search (**`components.filter.search`**) with loading/disabled tied to store **`loading`**.
 - **Active filters**: row of **`UBadge`** + **`components.filter.activeFilters`**; removable badges call **`clearFilter`** then **`search`**.
 - **Cleanup**: **`onUnmounted`** clear debounce timeout.

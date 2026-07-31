@@ -1,7 +1,9 @@
 ---
 name: form-creation
 description: >-
-  Build create-entity flows in the Wemotoo CRM Portal using ZPagePanel + footer actions, UForm + Zod schema, optional sticky review column, and Form*Creation components. Use when adding a new “create” page, FormFooCreation.vue, marketing or dashboard create views, submit-from-footer pattern, or when the user mentions form creation, create flow, or entity creation UI.
+  Use when adding or refactoring a create-entity page, Form*Creation component,
+  submit-from-footer flow, validation form, or review summary in the Wemotoo CRM
+  Portal.
 ---
 
 # Form creation (dashboard)
@@ -14,7 +16,7 @@ Pair with **`page-panel-layout`** (shell), **`nuxt-ui-usage`** (UForm / UCard / 
 
 | Pattern | Form component | Page |
 |--------|----------------|------|
-| Simple (form + sticky review, no section nav) | `app/components/Form/DiscountCreation.vue` | `app/pages/marketing/discounts/create.vue` |
+| Simple (form + sticky review, no section nav) | `app/components/Form/Discount/Creation.vue` | `app/pages/marketing/discounts/create.vue` |
 | Review card styling | `app/components/Form/Discount/ReviewSummary.vue` | — |
 | Complex (multi-section, optional sidebar nav) | `app/components/Form/Product/Creation.vue` | `app/pages/products/create.vue` |
 | End-to-end CRUD (create + edit + Zod + review) | `app/components/Form/ShippingZone/Creation.vue` | `app/pages/settings/shipping/zones/create.vue` (see **`crud-ui-pages`**) |
@@ -23,7 +25,7 @@ Use the **simple** pattern by default. Use the **product** pattern only when the
 
 ## Page (`app/pages/.../create.vue`)
 
-1. **`ZPagePanel`** with `id`, `:title` (`$t`), `back-to`, and **`grow`** so the body and footer layout match other create flows.
+1. **`ZPagePanel`** with `id`, `:title` (`t`), `back-to`, and **`grow`** so the body and footer layout match other create flows.
 2. Body: **`div.container.w-full.mx-auto.py-4`** wrapping **`FormEntityCreation ref="formRef"`** (name matches Nuxt auto-import).
 3. **`#footer`**: bordered, backdrop blur, **desktop** row (e.g. cancel + primary) and **mobile** column (primary full width, secondary actions). Primary action calls **`formRef?.submit()`** — do not duplicate submit logic on the page.
 4. **`useHead`** title from i18n.

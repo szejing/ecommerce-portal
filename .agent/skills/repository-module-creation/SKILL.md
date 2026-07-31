@@ -1,7 +1,9 @@
 ---
 name: repository-module-creation
 description: >-
-  Scaffold a new HttpFactory API client module under app/repository/modules/: routes, models/request and models/response files, alignment with ~/utils/types domain types, barrel export, Nuxt API plugin wiring, and integration tests. Use when adding a new repository module, API client module, MerchantRoutes domain, or mirroring product/discount module layout.
+  Use when adding or refactoring an HttpFactory API client module, repository
+  request or response models, MerchantRoutes domain, API plugin registration, or
+  repository integration tests in the Wemotoo CRM Portal.
 ---
 
 # Repository module creation

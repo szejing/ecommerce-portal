@@ -1,10 +1,9 @@
 ---
 name: implementation-and-tests
 description: >-
-  Requires adding or updating automated tests whenever implementing or changing
-  behavior in the Wemotoo CRM Portal. Use when implementing features, fixing
-  bugs, adding server routes, repository modules, composables, or when the user
-  mentions tests, coverage, TDD, or verification.
+  Use when implementing features, changing behavior, fixing bugs, adding server
+  routes, repository modules, composables, or working on tests, coverage, TDD,
+  or verification in the Wemotoo CRM Portal.
 ---
 
 # Implementation and tests (Wemotoo CRM Portal)
