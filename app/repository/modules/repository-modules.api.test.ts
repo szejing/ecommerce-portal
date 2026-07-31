@@ -54,14 +54,49 @@ import TaxGroupModule from './tax-groups/tax-group';
 import TaxRuleModule from './tax-rules/tax-rule';
 import TaxModule from './taxes/tax';
 import VoucherModule from './voucher/voucher';
+import DocumentTemplateModule from './document-template/document-template';
 import type { CreateVoucherReq } from './voucher/models/request/create-voucher.req';
 import { DiscountType, OrderResendEmailAction } from 'yeppi-common';
+import type { DocumentTemplateConfiguration } from '~/utils/types/document-template';
 
 const odata: BaseODataReq = { $top: 10 };
 const dashboardRange = { start_date: '2025-01-01', end_date: '2025-01-31' };
 
 beforeEach(() => {
 	resetFetchMock();
+});
+
+describe('DocumentTemplateModule', () => {
+	const mod = new DocumentTemplateModule();
+
+	it('sends nullable start and end dates unchanged', async () => {
+		await mod.publish('email', 'invoice', {
+			version: 4,
+			revision_no: 5,
+			start_date: null,
+			end_date: '2026-08-31T16:00:00.000Z',
+		});
+
+		expect(lastFetch().opts).toEqual(expect.objectContaining({
+			method: 'POST',
+			body: expect.objectContaining({
+				start_date: null,
+				end_date: '2026-08-31T16:00:00.000Z',
+			}),
+		}));
+	});
+
+	it('requests PDF preview as a Blob', async () => {
+		const configuration: DocumentTemplateConfiguration = {
+			content: { subject: 'Invoice' },
+		};
+		await mod.previewPdf('pdf', 'invoice', { configuration });
+
+		expect(lastFetch().opts).toEqual(expect.objectContaining({
+			method: 'POST',
+			fetchOptions: { responseType: 'blob' },
+		}));
+	});
 });
 
 describe('AuthModule', () => {
