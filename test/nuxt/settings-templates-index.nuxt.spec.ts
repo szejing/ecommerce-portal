@@ -231,6 +231,41 @@ describe('TemplateStudioPage', () => {
 		expect(router.currentRoute.value.query).toMatchObject({ channel: 'pdf', template: 'invoice' });
 	});
 
+	it('replays only the latest query after the initial detail request settles', async () => {
+		const store = useDocumentTemplateStore(useNuxtApp().$pinia as Pinia);
+		const initialDetail = deferred<void>();
+		vi.spyOn(store, 'loadSummaries').mockImplementation(async () => {
+			store.summaries = catalogSummaries;
+		});
+		const loadDetail = vi.spyOn(store, 'loadDetail').mockImplementation(async (channel, templateCode) => {
+			store.selected = { channel, templateCode };
+			if (channel === 'email' && templateCode === 'order-confirmation') await initialDetail.promise;
+		});
+		const mountPromise = mountSuspended(RouteHost, {
+			route: '/settings/templates?channel=email&template=order-confirmation',
+		});
+		const router = useRouter();
+		await vi.waitFor(() => expect(loadDetail).toHaveBeenCalledWith('email', 'order-confirmation'));
+
+		await router.push({ path: '/settings/templates', query: { channel: 'email', template: 'invoice' } });
+		await router.push({ path: '/settings/templates', query: { channel: 'pdf', template: 'receipt' } });
+		expect(router.currentRoute.value.query).toMatchObject({ channel: 'pdf', template: 'receipt' });
+		expect(loadDetail).toHaveBeenCalledOnce();
+
+		initialDetail.resolve();
+		const wrapper = await mountPromise;
+		pageCleanups.push(() => wrapper.unmount());
+		await vi.waitFor(() => expect(loadDetail).toHaveBeenCalledTimes(2));
+
+		expect(loadDetail.mock.calls).toEqual([
+			['email', 'order-confirmation'],
+			['pdf', 'receipt'],
+		]);
+		expect(store.selected).toEqual({ channel: 'pdf', templateCode: 'receipt' });
+		expect(router.currentRoute.value.query).toMatchObject({ channel: 'pdf', template: 'receipt' });
+		expect(watchMocks.templateRegistered).toHaveBeenCalledOnce();
+	});
+
 	it('falls back from a truly invalid URL selection', async () => {
 		const { loadDetail, router } = await mountPage('/settings/templates?channel=pdf&template=not-in-the-catalog');
 

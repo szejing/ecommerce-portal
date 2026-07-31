@@ -87,6 +87,7 @@ const { summaries, selected, isDirty, loadingDetail, summaryError, detailError }
 const templateUpdateConfirmed = ref(false);
 let isActive = true;
 let initialLoadSettled = false;
+let initialRouteSyncPending = false;
 let selectionOperation = 0;
 
 useHead({ title: () => t('pages.templateStudioTitle') });
@@ -195,8 +196,14 @@ onBeforeRouteUpdate((to, from, next) => {
 
 watch(
 	() => [route.query.channel, route.query.template, summaries.value],
-	() => {
-		if (initialLoadSettled) void syncSelectionFromRoute();
+	(next, previous) => {
+		if (!initialLoadSettled) {
+			const queryChanged = queryString(next[0]) !== queryString(previous[0])
+				|| queryString(next[1]) !== queryString(previous[1]);
+			if (queryChanged) initialRouteSyncPending = true;
+			return;
+		}
+		void syncSelectionFromRoute();
 	},
 );
 
@@ -208,5 +215,9 @@ try {
 	// The store exposes a translated shell-safe error region while preserving retry state for later tasks.
 } finally {
 	initialLoadSettled = true;
+	if (isActive && initialRouteSyncPending) {
+		initialRouteSyncPending = false;
+		void syncSelectionFromRoute();
+	}
 }
 </script>
