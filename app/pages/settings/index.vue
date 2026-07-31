@@ -61,6 +61,13 @@ const settingsGroups = computed(() => [
 		items: [{ label: t('nav.systemSettings'), to: '/settings/system' }],
 	},
 	{
+		title: t('nav.templateStudio'),
+		description: t('pages.templateStudioMenuDesc'),
+		icon: ICONS.DOCUMENT,
+		color: 'purple' as const,
+		items: [{ label: t('nav.templateStudio'), to: '/settings/templates' }],
+	},
+	{
 		title: t('nav.shippingSettings'),
 		description: t('pages.shippingSettingsDesc'),
 		icon: ICONS.ORDER,
