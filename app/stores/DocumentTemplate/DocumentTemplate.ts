@@ -208,6 +208,24 @@ function isSameSelection(current: TemplateSelection | null, expected: TemplateSe
 	return current?.channel === expected?.channel && current?.templateCode === expected?.templateCode;
 }
 
+function deduplicateRevisions(revisions: Array<DocumentTemplateRevision | null>): DocumentTemplateRevision[] {
+	const ids = new Set<string>();
+	const unique: DocumentTemplateRevision[] = [];
+	for (const revision of revisions) {
+		if (!revision || ids.has(revision.id)) continue;
+		ids.add(revision.id);
+		unique.push(clone(revision));
+	}
+	return unique;
+}
+
+function isRevisionEligibleNow(revision: DocumentTemplateRevision, now = Date.now()): boolean {
+	const start = revision.start_date ? new Date(revision.start_date).getTime() : null;
+	const end = revision.end_date ? new Date(revision.end_date).getTime() : null;
+	return (start === null || (!Number.isNaN(start) && start <= now))
+		&& (end === null || (!Number.isNaN(end) && now < end));
+}
+
 function pathParts(path: string): [keyof DocumentTemplateConfiguration, string] | null {
 	const [section, key, ...rest] = path.split('.');
 	if (rest.length || !section || !key || !['brand', 'merchantInfo', 'content'].includes(section)) return null;
@@ -380,9 +398,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 				const response = await $api.documentTemplate.get(channel, templateCode);
 				if (request !== this.generation || epoch !== this.selectionEpoch || !isSameSelection(this.selected, selection)) return;
 				this.detail = clone(response);
-				this.revisions = [response.draft_revision, response.latest_published_revision, response.active_revision]
-					.filter((revision): revision is DocumentTemplateRevision => Boolean(revision))
-					.map(clone);
+				this.revisions = deduplicateRevisions([response.draft_revision, response.latest_published_revision, response.active_revision]);
 				this.setBaseline(response.draft_revision?.configuration ?? response.configuration);
 				const active = response.active_revision;
 				this.schedule = {
@@ -502,9 +518,9 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			const retained: DocumentTemplateRevision[] = [];
 			const ids = new Set([nextRevision.id]);
 			for (const current of this.revisions) {
-				if (ids.has(current.id)) continue;
+				if (ids.has(current.id) || current.status === 'draft') continue;
 				ids.add(current.id);
-				retained.push(current.status === 'draft' ? { ...clone(current), status: 'archived' } : clone(current));
+				retained.push(clone(current));
 			}
 			this.revisions = [nextRevision, ...retained];
 		},
@@ -572,6 +588,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 				});
 				if (request === this.saveGeneration && mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
 					this.applyMutation(response, editGeneration);
+					await this.loadRevisions();
 				}
 			} catch (error) {
 				if (request === this.saveGeneration && mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
@@ -614,7 +631,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 					if (request === this.previewGeneration && isSameSelection(this.selected, selection)) {
 						this.clearPreview();
 						if (!isBlobResponse(blob)) throw new TypeError('Invalid PDF preview response');
-						if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') throw new TypeError('PDF previews are unavailable in this environment');
+						if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function' || typeof URL.revokeObjectURL !== 'function') throw new TypeError('PDF previews are unavailable in this environment');
 						const objectUrl = URL.createObjectURL(blob);
 						this.preview = { channel: 'pdf', blob, objectUrl };
 					}
@@ -679,7 +696,14 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 				});
 				if (request === this.publishGeneration && mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
 					const publishedConfiguration = response.latest_published_revision.configuration ?? submitted;
-					this.detail = { ...this.detail!, version: response.version, latest_published_revision: clone(response.latest_published_revision), draft_revision: null };
+					const publishedRevision = clone(response.latest_published_revision);
+					this.detail = {
+						...this.detail!,
+						version: response.version,
+						latest_published_revision: publishedRevision,
+						active_revision: isRevisionEligibleNow(publishedRevision) ? clone(publishedRevision) : this.detail!.active_revision,
+						draft_revision: null,
+					};
 					this.baseline = deepFreeze(clone(publishedConfiguration));
 					if (this.editGeneration === editGeneration) this.draft = clone(publishedConfiguration);
 					this.refreshDirty();
@@ -709,7 +733,10 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			try {
 				const { $api } = useNuxtApp();
 				const response = await $api.documentTemplate.reset(selection.channel, selection.templateCode, { version: this.detail.version });
-				if (mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) this.applyMutation(response, editGeneration, submittedDraft);
+				if (mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
+					this.applyMutation(response, editGeneration, submittedDraft);
+					await this.loadRevisions();
+				}
 			} catch (error) {
 				if (mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
 					if (!this.readConflict(error)) this.error = getApiErrorMessage(error, 'Failed to reset document template');
@@ -737,7 +764,10 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			try {
 				const { $api } = useNuxtApp();
 				const response = await $api.documentTemplate.restore(selection.channel, selection.templateCode, revisionNo, { version: this.detail.version });
-				if (mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) this.applyMutation(response, editGeneration, submittedDraft);
+				if (mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
+					this.applyMutation(response, editGeneration, submittedDraft);
+					await this.loadRevisions();
+				}
 			} catch (error) {
 				if (mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
 					if (!this.readConflict(error)) this.error = getApiErrorMessage(error, 'Failed to restore document template revision');
