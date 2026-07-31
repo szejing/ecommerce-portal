@@ -1103,7 +1103,9 @@
 			"previewComingSoon": "Pratonton e-mel atau PDF yang dipilih akan dipaparkan di sini.",
 			"noTemplates": "Tiada templat dokumen boleh sunting tersedia.",
 			"loadError": "Templat tidak dapat dimuatkan",
+			"loadErrorDescription": "Templat dokumen tidak dapat dimuatkan. Sila cuba lagi.",
 			"loadDetailError": "Templat ini tidak dapat dimuatkan",
+			"loadDetailErrorDescription": "Templat dokumen ini tidak dapat dimuatkan. Sila cuba lagi.",
 			"templateNames": {
 				"email_order_confirmation": "Pengesahan pesanan",
 				"email_invoice": "E-mel invois",

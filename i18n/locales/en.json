@@ -1104,7 +1104,9 @@
 			"previewComingSoon": "The selected email or PDF preview will appear here.",
 			"noTemplates": "No editable document templates are available.",
 			"loadError": "Unable to load templates",
+			"loadErrorDescription": "Document templates could not be loaded. Please try again.",
 			"loadDetailError": "Unable to load this template",
+			"loadDetailErrorDescription": "This document template could not be loaded. Please try again.",
 			"templateNames": {
 				"email_order_confirmation": "Order confirmation",
 				"email_invoice": "Invoice email",

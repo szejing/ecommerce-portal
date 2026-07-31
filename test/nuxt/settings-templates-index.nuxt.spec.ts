@@ -61,6 +61,23 @@ const catalogSummaries: DocumentTemplateSummary[] = [
 	summary('admin-order-alert', 'Admin order alert', 'email', false, 'merchant'),
 ];
 
+const rejectedQueryCases = [
+	{
+		label: 'invalid',
+		query: { channel: 'pdf', template: 'not-in-the-catalog' },
+	},
+	{
+		label: 'locked',
+		query: { channel: 'email', template: 'crm-user-welcome' },
+	},
+] as const;
+
+function deferred<T>() {
+	let resolve!: (value: T) => void;
+	let reject!: (reason?: unknown) => void;
+	return { promise: new Promise<T>((resolvePromise, rejectPromise) => { resolve = resolvePromise; reject = rejectPromise; }), resolve, reject };
+}
+
 const RouteHost = defineComponent({
 	setup: () => () => h(NuxtPage),
 });
@@ -248,14 +265,12 @@ describe('TemplateStudioPage', () => {
 
 	it('loads a dirty navigation selection only after confirmation', async () => {
 		const { wrapper, store, loadDetail, router } = await mountPage();
-		const replace = vi.spyOn(router, 'replace');
 		store.isDirty = true;
 		await nextTick();
 
 		wrapper.getComponent(TemplateNavigation).vm.$emit('select', catalogSummaries[3]);
 		await vi.waitFor(() => expect(overlayMocks.open).toHaveBeenCalledOnce());
 		overlayMocks.props?.onLeave?.();
-		expect(replace).toHaveBeenLastCalledWith('/settings/templates?channel=pdf&template=invoice');
 
 		await vi.waitFor(() => expect(router.currentRoute.value.query).toMatchObject({ channel: 'pdf', template: 'invoice' }));
 		expect(loadDetail).toHaveBeenCalledWith('pdf', 'invoice');
@@ -277,6 +292,70 @@ describe('TemplateStudioPage', () => {
 		expect(router.currentRoute.value.query).toMatchObject({ channel: 'email', template: 'order-confirmation' });
 	});
 
+	for (const { label, query } of rejectedQueryCases) {
+		it(`keeps the current canonical URL and detail when a dirty ${label} query stays`, async () => {
+			const { store, loadDetail, router } = await mountPage('/settings/templates?channel=pdf&template=invoice');
+			store.isDirty = true;
+			await nextTick();
+
+			await router.push({ path: '/settings/templates', query });
+
+			expect(overlayMocks.open).toHaveBeenCalledOnce();
+			expect(router.currentRoute.value.query).toMatchObject({ channel: 'pdf', template: 'invoice' });
+			expect(store.selected).toEqual({ channel: 'pdf', templateCode: 'invoice' });
+			expect(loadDetail).not.toHaveBeenCalledWith('email', 'order-confirmation');
+
+			overlayMocks.props?.onStay?.();
+			expect(overlayMocks.close).toHaveBeenCalledOnce();
+			expect(router.currentRoute.value.query).toMatchObject({ channel: 'pdf', template: 'invoice' });
+		});
+
+		it(`canonicalizes a dirty ${label} query after one leave confirmation`, async () => {
+			const { store, loadDetail, router } = await mountPage('/settings/templates?channel=pdf&template=invoice');
+			store.isDirty = true;
+			await nextTick();
+
+			await router.push({ path: '/settings/templates', query });
+			expect(overlayMocks.open).toHaveBeenCalledOnce();
+			overlayMocks.props?.onLeave?.();
+
+			await vi.waitFor(() => expect(router.currentRoute.value.query).toMatchObject({
+				channel: 'email',
+				template: 'order-confirmation',
+			}));
+			expect(overlayMocks.open).toHaveBeenCalledOnce();
+			expect(loadDetail).toHaveBeenCalledWith('email', 'order-confirmation');
+			expect(store.selected).toEqual({ channel: 'email', templateCode: 'order-confirmation' });
+		});
+	}
+
+	it('does not resume initial selection after leaving while summaries are pending', async () => {
+		const store = useDocumentTemplateStore(useNuxtApp().$pinia as Pinia);
+		store.summaries = catalogSummaries;
+		const summariesRequest = deferred<void>();
+		const loadSummaries = vi.spyOn(store, 'loadSummaries').mockReturnValue(summariesRequest.promise);
+		const loadDetail = vi.spyOn(store, 'loadDetail').mockResolvedValue();
+		const dispose = vi.spyOn(store, 'dispose');
+		const mountPromise = mountSuspended(RouteHost, {
+			route: '/settings/templates?channel=pdf&template=not-in-the-catalog',
+		});
+		const router = useRouter();
+		await vi.waitFor(() => expect(loadSummaries).toHaveBeenCalledOnce());
+
+		const leavePromise = router.push('/settings');
+		await vi.waitFor(() => expect(dispose).toHaveBeenCalledOnce());
+		summariesRequest.resolve();
+		await leavePromise;
+		const wrapper = await mountPromise;
+		pageCleanups.push(() => wrapper.unmount());
+		await nextTick();
+
+		expect(router.currentRoute.value.fullPath).toBe('/settings');
+		expect(store.summaries).toEqual(catalogSummaries);
+		expect(store.selected).toBeNull();
+		expect(loadDetail).not.toHaveBeenCalled();
+	});
+
 	it('localizes fixed catalog names in Malay and falls back for unknown future entries', async () => {
 		await useNuxtApp().$i18n.setLocale('ms');
 		try {
@@ -285,6 +364,29 @@ describe('TemplateStudioPage', () => {
 			expect(wrapper.text()).toContain('Pengesahan pesanan');
 			expect(wrapper.get('[data-testid="template-editor-region"]').text()).toContain('Pengesahan pesanan');
 			expect(wrapper.text()).toContain('Future customer email');
+		} finally {
+			await useNuxtApp().$i18n.setLocale('en');
+		}
+	});
+
+	it('localizes fallback load errors in Malay without replacing API messages', async () => {
+		await useNuxtApp().$i18n.setLocale('ms');
+		try {
+			const { wrapper, store } = await mountPage();
+			store.summaryError = 'Failed to load document templates';
+			store.detailError = 'Failed to load document template';
+			await nextTick();
+
+			expect(wrapper.text()).toContain('Templat dokumen tidak dapat dimuatkan. Sila cuba lagi.');
+			expect(wrapper.text()).toContain('Templat dokumen ini tidak dapat dimuatkan. Sila cuba lagi.');
+			expect(wrapper.text()).not.toContain('Failed to load document template');
+
+			store.summaryError = 'Summary service unavailable';
+			store.detailError = 'Detail service unavailable';
+			await nextTick();
+
+			expect(wrapper.text()).toContain('Summary service unavailable');
+			expect(wrapper.text()).toContain('Detail service unavailable');
 		} finally {
 			await useNuxtApp().$i18n.setLocale('en');
 		}

@@ -12,7 +12,7 @@
 				variant="soft"
 				icon="i-lucide-circle-alert"
 				:title="t('components.templateStudio.loadError')"
-				:description="summaryError"
+				:description="summaryErrorDescription"
 			/>
 
 			<div
@@ -39,7 +39,7 @@
 						variant="soft"
 						icon="i-lucide-circle-alert"
 						:title="t('components.templateStudio.loadDetailError')"
-						:description="detailError"
+						:description="detailErrorDescription"
 					/>
 					<USkeleton v-if="loadingDetail" class="h-80 w-full rounded-xl" />
 					<ZTemplateStudioTemplateEditor
@@ -85,12 +85,22 @@ const overlay = useOverlay();
 const templateStore = useDocumentTemplateStore();
 const { summaries, selected, isDirty, loadingDetail, summaryError, detailError } = storeToRefs(templateStore);
 const templateUpdateConfirmed = ref(false);
+let isActive = true;
+let selectionOperation = 0;
 
 useHead({ title: () => t('pages.templateStudioTitle') });
 
 const selectedSummary = computed(() => summaries.value.find(template =>
 	template.channel === selected.value?.channel && template.template_code === selected.value?.templateCode,
 ));
+const summaryErrorDescription = computed(() => summaryError.value === 'Failed to load document templates'
+	? t('components.templateStudio.loadErrorDescription')
+	: summaryError.value ?? undefined,
+);
+const detailErrorDescription = computed(() => detailError.value === 'Failed to load document template'
+	? t('components.templateStudio.loadDetailErrorDescription')
+	: detailError.value ?? undefined,
+);
 
 function queryString(value: unknown): string | undefined {
 	const candidate = Array.isArray(value) ? value[0] : value;
@@ -103,35 +113,47 @@ function templateLabel(template: DocumentTemplateSummary): string {
 	return te(key) ? t(key) : template.display_name;
 }
 
-function requestedTemplate(): DocumentTemplateSummary | undefined {
-	const channel = queryString(route.query.channel);
-	const templateCode = queryString(route.query.template);
+function requestedTemplate(query = route.query): DocumentTemplateSummary | undefined {
+	const channel = queryString(query.channel);
+	const templateCode = queryString(query.template);
 	return summaries.value.find(template =>
 		template.editable && template.channel === channel && template.template_code === templateCode,
 	) ?? summaries.value.find(template => template.editable);
 }
 
 async function selectTemplate(template: DocumentTemplateSummary): Promise<void> {
-	if (!template.editable) return;
+	const operation = ++selectionOperation;
+	if (!isActive || !template.editable) return;
 	const channel = template.channel;
 	const queryMatches = queryString(route.query.channel) === channel && queryString(route.query.template) === template.template_code;
 	if (!queryMatches) {
 		await router.replace({
 			query: { ...route.query, channel, template: template.template_code },
 		});
-		if (queryString(route.query.channel) !== channel || queryString(route.query.template) !== template.template_code) return;
+		if (!isActive || operation !== selectionOperation
+			|| queryString(route.query.channel) !== channel || queryString(route.query.template) !== template.template_code) return;
 	}
+	if (!isActive || operation !== selectionOperation) return;
 	if (selected.value?.channel === channel && selected.value.templateCode === template.template_code) return;
 	await templateStore.loadDetail(channel, template.template_code);
 }
 
 async function syncSelectionFromRoute(): Promise<void> {
+	if (!isActive) return;
 	const template = requestedTemplate();
 	if (template) await selectTemplate(template);
 }
 
+onScopeDispose(() => {
+	isActive = false;
+	selectionOperation += 1;
+});
+
 useLeavePageGuard(isDirty, {
-	onLeave: () => templateStore.dispose(),
+	onLeave: () => {
+		selectionOperation += 1;
+		templateStore.dispose();
+	},
 });
 
 onBeforeRouteUpdate((to, from, next) => {
@@ -144,24 +166,36 @@ onBeforeRouteUpdate((to, from, next) => {
 	}
 
 	next(false);
+	const targetTemplate = requestedTemplate(to.query);
+	const target = targetTemplate
+		? {
+			path: to.path,
+			query: { ...to.query, channel: targetTemplate.channel, template: targetTemplate.template_code },
+			hash: to.hash,
+		}
+		: to.fullPath;
 	const leaveModal = overlay.create(ZModalLeavePageConfirmation, {
 		props: {
 			title: t('components.templateStudio.changeTemplateTitle'),
 			message: t('components.templateStudio.changeTemplateMessage'),
 			onStay: () => leaveModal.close(),
 			onLeave: () => {
+				if (!isActive) return;
 				templateUpdateConfirmed.value = true;
 				leaveModal.close();
-				void router.replace(to.fullPath);
+				void router.replace(target).finally(() => {
+					templateUpdateConfirmed.value = false;
+				});
 			},
 		},
 	});
 	leaveModal.open();
 });
 
+const initialSelectionOperation = selectionOperation;
 try {
 	await templateStore.loadSummaries();
-	await syncSelectionFromRoute();
+	if (isActive && initialSelectionOperation === selectionOperation) await syncSelectionFromRoute();
 } catch {
 	// The store exposes a translated shell-safe error region while preserving retry state for later tasks.
 }
