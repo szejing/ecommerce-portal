@@ -15,14 +15,12 @@
 					{{ t(block.required ? 'components.templateStudio.requiredSection' : 'components.templateStudio.optionalSection') }}
 				</p>
 			</div>
-			<input
-				type="checkbox"
-				:checked="enabled(block)"
+			<UCheckbox
+				:model-value="enabled(block)"
 				:disabled="block.required"
 				:aria-label="blockLabel(block)"
-				class="size-11 shrink-0 cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-60"
-				@change="toggle(block, $event)"
-			>
+				@update:model-value="toggle(block, $event)"
+			/>
 		</section>
 	</div>
 </template>
@@ -55,13 +53,11 @@ function blockLabel(block: DocumentTemplateBlock): string {
 	return te(key) ? t(key) : block.label;
 }
 
-function toggle(block: DocumentTemplateBlock, event: Event): void {
-	if (block.required) return;
-	const target = event.target;
-	if (!(target instanceof HTMLInputElement)) return;
+function toggle(block: DocumentTemplateBlock, value: boolean | 'indeterminate'): void {
+	if (block.required || typeof value !== 'boolean') return;
 	emit('update:modelValue', props.blocks.map(candidate => ({
 		id: candidate.id,
-		enabled: candidate.required ? true : (candidate.id === block.id ? target.checked : enabled(candidate)),
+		enabled: candidate.required ? true : (candidate.id === block.id ? value : enabled(candidate)),
 		props: {},
 	})));
 }

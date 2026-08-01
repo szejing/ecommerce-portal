@@ -240,20 +240,53 @@ describe('Template Studio controlled content editor', () => {
 });
 
 describe('Template Studio restricted rich text editor', () => {
-	it('restricts the toolbar and formats to bold, italic, and safe links', async () => {
+	it('uses the essential toolbar and formats without image or video controls', async () => {
 		const wrapper = await mountSuspended(RichTextEditor, {
 			props: { modelValue: '<p>Hello</p>' },
 		});
 
-		expect(wrapper.find('.ql-bold').exists()).toBe(true);
-		expect(wrapper.find('.ql-italic').exists()).toBe(true);
-		expect(wrapper.find('.ql-link').exists()).toBe(true);
-		expect(wrapper.find('.ql-image').exists()).toBe(false);
-		expect(wrapper.find('.ql-code-block').exists()).toBe(false);
-		expect(wrapper.find('[data-raw-html]').exists()).toBe(false);
-		expect(wrapper.getComponent({ name: 'QuillEditor' }).props('options')).toMatchObject({
-			formats: ['bold', 'italic', 'link'],
+		const quill = wrapper.getComponent({ name: 'QuillEditor' });
+		expect(quill.props('toolbar')).toBe('essential');
+		expect(quill.props('options')).toMatchObject({
+			formats: expect.arrayContaining(['bold', 'italic', 'underline', 'link', 'list', 'header']),
 		});
+		expect(quill.props('options').formats).not.toContain('image');
+		expect(quill.props('options').formats).not.toContain('video');
+		expect(wrapper.find('.ql-image').exists()).toBe(false);
+		expect(wrapper.find('.ql-video').exists()).toBe(false);
+		expect(wrapper.find('[data-raw-html]').exists()).toBe(false);
+	});
+
+	it('registers quill-mention modules when allowlisted tokens are present', async () => {
+		const wrapper = await mountSuspended(RichTextEditor, {
+			props: { modelValue: '<p>Hello</p>', allowedTokens: ['customerName'] },
+		});
+
+		const modules = wrapper.getComponent({ name: 'QuillEditor' }).props('modules') as Array<{
+			name: string;
+			options?: {
+				mentionDenotationChars?: string[];
+				source?: (searchTerm: string, renderList: (matches: unknown[], term: string) => void) => void;
+			};
+		}>;
+		expect(modules.map((entry) => entry.name)).toEqual(['blots/mention', 'modules/mention']);
+		expect(modules[1]?.options?.mentionDenotationChars).toEqual(['@']);
+
+		const matches: unknown[] = [];
+		modules[1]?.options?.source?.('customer', (items) => {
+			matches.push(...items);
+		});
+		expect(matches).toEqual([
+			expect.objectContaining({ id: 'customerName', value: 'customerName' }),
+		]);
+	});
+
+	it('omits mention modules when there are no allowlisted tokens', async () => {
+		const wrapper = await mountSuspended(RichTextEditor, {
+			props: { modelValue: '<p>Hello</p>', allowedTokens: [] },
+		});
+
+		expect(wrapper.getComponent({ name: 'QuillEditor' }).props('modules')).toBeUndefined();
 	});
 
 	it('inserts an allowlisted rich-text token at the last editor selection after the picker takes focus', async () => {
@@ -382,7 +415,7 @@ describe('Template Studio brand and merchant information editor', () => {
 		expect(wrapper.find('[data-field="brand.logoAssetId"]').exists()).toBe(false);
 	});
 
-	it('shows resolution badges, clears overrides, and limits explicit hiding to approved merchant information', async () => {
+	it('shows resolved brand values and clears overrides for brand and merchant information', async () => {
 		const wrapper = await mountSuspended(BrandEditor, {
 			props: {
 				fields: brandFields,
@@ -394,16 +427,14 @@ describe('Template Studio brand and merchant information editor', () => {
 			},
 		});
 
-		expect(wrapper.get('[data-field="brand.primaryColor"] [data-source="override"]').text()).toBe('Overridden');
-		expect(wrapper.get('[data-field="brand.secondaryColor"] [data-source="store-profile"]').text()).toBe('Inherited from Store Profile');
+		expect(wrapper.get('[data-color-text="brand.primaryColor"]').element).toHaveProperty('value', configuration.brand?.primaryColor);
+		expect(wrapper.get('[data-color-text="brand.secondaryColor"]').element).toHaveProperty('value', '#003B72');
+		expect(wrapper.find('[data-source]').exists()).toBe(false);
 		expect(wrapper.find('[data-field="brand.customCss"]').exists()).toBe(false);
+		expect(wrapper.find('[data-hide]').exists()).toBe(false);
 		await wrapper.get('[data-clear="brand.primaryColor"]').trigger('click');
-		await wrapper.get('[data-hide="merchantInfo.companyName"]').trigger('click');
 
 		expect(wrapper.emitted('clear:path')?.[0]).toEqual(['brand.primaryColor']);
-		expect(wrapper.emitted('update:path')?.[0]).toEqual(['merchantInfo.companyName', '']);
-		expect(wrapper.find('[data-hide="brand.primaryColor"]').exists()).toBe(false);
-		expect(wrapper.find('[data-hide="merchantInfo.companyEmail"]').exists()).toBe(false);
 	});
 
 	it('validates six-digit hex colours before emitting an override', async () => {
@@ -461,14 +492,14 @@ describe('Template Studio brand and merchant information editor', () => {
 		await wrapper.get('[data-clear="brand.primaryColor"]').trigger('click');
 		await wrapper.setProps({ modelValue: {} });
 		expect(wrapper.get('[data-color-text="brand.primaryColor"]').element).toHaveProperty('value', '#EE7F01');
-		expect(wrapper.get('[data-field="brand.primaryColor"] [data-source="default"]').text()).toBe('System default');
+		expect(wrapper.find('[data-source]').exists()).toBe(false);
 
 		await wrapper.setProps({ modelValue: { brand: { primaryColor: '#445566' } } });
 		await wrapper.setProps({ modelValue: {} });
 		expect(wrapper.get('[data-color-text="brand.primaryColor"]').element).toHaveProperty('value', '#EE7F01');
 	});
 
-	it('keeps merchant information controlled after clear, edit, hide, and external updates', async () => {
+	it('keeps merchant information controlled after clear, edit, empty hide, and external updates', async () => {
 		const wrapper = await mountSuspended(BrandEditor, {
 			props: {
 				fields: brandFields,
@@ -487,7 +518,7 @@ describe('Template Studio brand and merchant information editor', () => {
 		expect(input.element).toHaveProperty('value', 'Store Profile merchant');
 
 		await input.setValue('Edited merchant');
-		await wrapper.get('[data-hide="merchantInfo.companyName"]').trigger('click');
+		await input.setValue('');
 		expect(wrapper.emitted('update:path')?.at(-2)).toEqual(['merchantInfo.companyName', 'Edited merchant']);
 		expect(wrapper.emitted('update:path')?.at(-1)).toEqual(['merchantInfo.companyName', '']);
 
@@ -740,9 +771,11 @@ describe('Template Studio section editor', () => {
 			props: { blocks: invoiceBlocks, modelValue: configuration.blocks },
 		});
 
-		expect(wrapper.get('[data-block="orderItems"] input').attributes('disabled')).toBeDefined();
+		const required = wrapper.get('[data-block="orderItems"]').getComponent({ name: 'UCheckbox' });
+		expect(required.props('disabled')).toBe(true);
 		expect(wrapper.find('[data-drag-handle]').exists()).toBe(false);
-		await wrapper.get('[data-block="taxSummary"] input').setValue(true);
+
+		wrapper.get('[data-block="taxSummary"]').getComponent({ name: 'UCheckbox' }).vm.$emit('update:modelValue', true);
 
 		expect(wrapper.emitted('update:modelValue')?.[0]).toEqual([[
 			{ id: 'merchantContact', enabled: true, props: {} },

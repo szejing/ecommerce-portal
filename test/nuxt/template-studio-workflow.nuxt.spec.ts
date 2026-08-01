@@ -10,7 +10,6 @@ import ActivationWindow from '~/components/Z/TemplateStudio/ActivationWindow.vue
 import DateTimePicker from '~/components/Z/DateTimePicker.vue';
 import BrandEditor from '~/components/Z/TemplateStudio/BrandEditor.vue';
 import ContentEditor from '~/components/Z/TemplateStudio/ContentEditor.vue';
-import RevisionHistory from '~/components/Z/TemplateStudio/RevisionHistory.vue';
 import SectionEditor from '~/components/Z/TemplateStudio/SectionEditor.vue';
 import TemplateEditor from '~/components/Z/TemplateStudio/TemplateEditor.vue';
 import TemplatePreview from '~/components/Z/TemplateStudio/TemplatePreview.vue';
@@ -267,59 +266,6 @@ describe('ActivationWindow', () => {
 	});
 });
 
-describe('RevisionHistory', () => {
-	it('shows boundary labels and revision administration details', async () => {
-		const wrapper = await mountSuspended(RevisionHistory, {
-			props: {
-				revisions: [
-					revision(4, { created_by: 'Jane Admin' }),
-					revision(5, { start_date: '2026-08-01T00:00:00.000Z' }),
-					revision(3, { end_date: '2026-07-31T04:00:00.000Z' }),
-				],
-				activeRevisionId: 'revision-4',
-				now: new Date('2026-07-31T04:00:00.000Z'),
-				timezone: 'Asia/Kuala_Lumpur',
-				schemaVersion: 1,
-				systemTemplateVersion: 1,
-				canRestore: true,
-			},
-		});
-
-		expect(wrapper.text()).toContain('Active');
-		expect(wrapper.text()).toContain('Scheduled');
-		expect(wrapper.text()).toContain('Expired');
-		expect(wrapper.text()).toContain('Jane Admin');
-		expect(wrapper.text()).toContain('Revision 4');
-		expect(wrapper.text()).toContain('Published');
-		expect(wrapper.text()).toContain('Starts');
-		expect(wrapper.text()).toContain('Ends');
-	});
-
-	it('disables restore when either catalog version is incompatible', async () => {
-		const wrapper = await mountSuspended(RevisionHistory, {
-			props: {
-				revisions: [revision(4, { schema_version: 2 }), revision(3, { system_template_version: 2 })],
-				schemaVersion: 1,
-				systemTemplateVersion: 1,
-				canRestore: true,
-			},
-		});
-
-		expect(wrapper.findAll('[data-action="restore"]')).toHaveLength(2);
-		expect(wrapper.findAll('[data-action="restore"]').every(button => button.attributes('disabled') !== undefined)).toBe(true);
-		expect(wrapper.text()).toContain('Incompatible');
-	});
-
-	it('fails closed when authoritative catalog versions are absent', async () => {
-		const wrapper = await mountSuspended(RevisionHistory, {
-			props: { revisions: [revision(4)], canRestore: true },
-		});
-
-		expect(wrapper.get('[data-action="restore"]').attributes('disabled')).toBeDefined();
-		expect(wrapper.text()).toContain('Incompatible');
-	});
-});
-
 describe('Template Studio workflow', () => {
 	const cleanups: Array<() => void> = [];
 
@@ -394,12 +340,13 @@ describe('Template Studio workflow', () => {
 		await nextTick();
 		expect(store.draft.content?.subject).toBe('Updated invoice');
 
-		await wrapper.findAll('[role="tab"]').find(tab => tab.text() === 'Sections')!.trigger('mousedown', {
+		await wrapper.findAll('[role="tab"]').find(tab => tab.text() === 'Brand')!.trigger('mousedown', {
 			button: 0,
 			ctrlKey: false,
 		});
 		await nextTick();
-		expect(wrapper.findComponent(SectionEditor).exists()).toBe(true);
+		expect(wrapper.findComponent(BrandEditor).exists()).toBe(true);
+		expect(wrapper.findComponent(SectionEditor).exists()).toBe(false);
 	});
 
 	it('uses catalog defaults after clearing an override and sends the same resolved contract to preview', async () => {
@@ -431,7 +378,7 @@ describe('Template Studio workflow', () => {
 		await editor.get('[data-clear="brand.primaryColor"]').trigger('click');
 		await nextTick();
 		expect(editor.get('[data-color-text="brand.primaryColor"]').element).toHaveProperty('value', '#EE7F01');
-		expect(editor.get('[data-field="brand.primaryColor"] [data-source="default"]').text()).toBe('System default');
+		expect(editor.find('[data-source]').exists()).toBe(false);
 		expect(store.draft.brand).toBeUndefined();
 
 		await vi.advanceTimersByTimeAsync(400);
@@ -553,16 +500,9 @@ describe('Template Studio workflow', () => {
 		expect(unsaved.wrapper.text()).toContain('Save a draft before publishing');
 	});
 
-	it.each(['publish', 'restore', 'reset'] as const)('requires one confirmation before %s', async (action) => {
+	it.each(['publish', 'reset'] as const)('requires one confirmation before %s', async (action) => {
 		const { wrapper, store } = await mountWorkflow();
-		const actionSpy = vi.spyOn(store, action === 'restore' ? 'restoreRevision' : action === 'reset' ? 'resetTemplate' : 'publish').mockResolvedValue();
-		if (action === 'restore') {
-			await wrapper.findAll('[role="tab"]').find(tab => tab.text() === 'History')!.trigger('mousedown', {
-				button: 0,
-				ctrlKey: false,
-			});
-			await nextTick();
-		}
+		const actionSpy = vi.spyOn(store, action === 'reset' ? 'resetTemplate' : 'publish').mockResolvedValue();
 
 		await wrapper.get(`[data-action="${action === 'publish' ? 'publish-now' : action}"]`).trigger('click');
 
@@ -579,29 +519,7 @@ describe('Template Studio workflow', () => {
 		expect(wrapper.find('[data-action="publish-now"]').exists()).toBe(false);
 		expect(wrapper.find('[data-action="schedule"]').exists()).toBe(false);
 		expect(wrapper.find('[data-action="reset"]').exists()).toBe(false);
-
-		wrapper.getComponent(TemplateEditor).vm.$emit('update:activeTab', 'history');
-		await nextTick();
-		expect(wrapper.find('[data-action="restore"]').exists()).toBe(false);
-	});
-
-	it('uses authoritative catalog versions instead of a stale current draft for restore compatibility', async () => {
-		const { wrapper, store } = await mountWorkflow();
-		store.detail = {
-			...store.detail!,
-			catalog_schema_version: 2,
-			catalog_system_template_version: 2,
-		};
-		await nextTick();
-		await wrapper.findAll('[role="tab"]').find(tab => tab.text() === 'History')!.trigger('mousedown', {
-			button: 0,
-			ctrlKey: false,
-		});
-		await nextTick();
-
-		const restoreButtons = wrapper.findAll('[data-action="restore"]');
-		expect(restoreButtons.length).toBeGreaterThan(0);
-		expect(restoreButtons.every(button => button.attributes('disabled') !== undefined)).toBe(true);
+		expect(wrapper.findAll('[role="tab"]').some(tab => tab.text() === 'History')).toBe(false);
 	});
 
 	it('never renders test send for PDF templates', async () => {
@@ -609,23 +527,14 @@ describe('Template Studio workflow', () => {
 		expect(wrapper.find('[data-action="test-send"]').exists()).toBe(false);
 	});
 
-	it.each(['restore', 'reset'] as const)('returns to clean Content after a successful %s-created draft', async (action) => {
+	it('returns to clean Content after a successful reset-created draft', async () => {
 		const { wrapper, store } = await mountWorkflow();
-		const createdDraft = revision(8, { id: `draft-${action}`, status: 'draft', published_at: null });
-		if (action === 'restore') {
-			vi.spyOn(useNuxtApp().$api.documentTemplate, 'restore').mockResolvedValue({ version: 4, draft_revision: createdDraft });
-			await wrapper.findAll('[role="tab"]').find(tab => tab.text() === 'History')!.trigger('mousedown', {
-				button: 0,
-				ctrlKey: false,
-			});
-			await nextTick();
-		} else {
-			vi.spyOn(useNuxtApp().$api.documentTemplate, 'reset').mockResolvedValue({ version: 4, draft_revision: createdDraft });
-			wrapper.getComponent(TemplateEditor).vm.$emit('update:activeTab', 'brand');
-			await nextTick();
-		}
+		const createdDraft = revision(8, { id: 'draft-reset', status: 'draft', published_at: null });
+		vi.spyOn(useNuxtApp().$api.documentTemplate, 'reset').mockResolvedValue({ version: 4, draft_revision: createdDraft });
+		wrapper.getComponent(TemplateEditor).vm.$emit('update:activeTab', 'brand');
+		await nextTick();
 
-		await wrapper.get(`[data-action="${action}"]`).trigger('click');
+		await wrapper.get('[data-action="reset"]').trigger('click');
 		await overlayMocks.props?.onConfirm?.();
 
 		expect(wrapper.getComponent(TemplateEditor).props('activeTab')).toBe('content');
@@ -661,7 +570,7 @@ describe('Template Studio workflow', () => {
 
 		const editor = wrapper.getComponent(BrandEditor);
 		expect(editor.get('[data-color-text="brand.primaryColor"]').element).toHaveProperty('value', '#EE7F01');
-		expect(editor.get('[data-field="brand.primaryColor"] [data-source="default"]').text()).toBe('System default');
+		expect(editor.find('[data-source]').exists()).toBe(false);
 		expect(store.detail?.catalog_default_values.brand?.primaryColor).toBe('#EE7F01');
 		expect(store.detail?.effective_preview_values.brand?.primaryColor).toBe('#112233');
 	});

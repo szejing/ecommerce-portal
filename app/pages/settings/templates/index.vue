@@ -15,172 +15,122 @@
 				:description="summaryErrorDescription"
 			/>
 
-			<div
-				v-if="summaries.length"
-				data-testid="template-studio-shell"
-				class="grid min-w-0 gap-4 xl:grid-cols-[17rem_minmax(0,1fr)_minmax(19rem,24rem)] xl:gap-6"
-			>
-				<aside data-testid="template-navigation-region" class="min-w-0 xl:self-start">
-					<UCard :ui="{ body: 'p-3 sm:p-3' }">
-						<ZTemplateStudioTemplateNavigation
-							:templates="summaries"
-							:selected="selected"
-							:template-label="templateLabel"
-							@select="selectTemplate"
-						/>
-					</UCard>
-				</aside>
+			<div v-if="summaries.length" data-testid="template-studio-shell" class="space-y-4">
+				<div data-testid="template-navigation-region" class="min-w-0">
+					<ZTemplateStudioTemplateNavigation :templates="summaries" :selected="selected" :template-label="templateLabel" @select="selectTemplate" />
+				</div>
 
-				<main data-testid="template-editor-region" class="min-w-0">
-					<div
-						v-if="conflict"
-						data-testid="template-conflict"
-						class="mb-4 flex flex-col gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4 sm:flex-row sm:items-center sm:justify-between"
-					>
-						<div class="min-w-0">
-							<p class="font-semibold text-default">{{ t('components.templateStudio.conflictTitle') }}</p>
-							<p class="text-sm text-muted">{{ t('components.templateStudio.conflictDescription', { version: conflict.currentVersion }) }}</p>
-						</div>
-						<UButton
-							data-action="reload-server-version"
-							type="button"
-							color="warning"
-							variant="outline"
-							icon="i-lucide-refresh-cw"
-							class="min-h-11 shrink-0"
-							@click="reloadServerVersion"
+				<div class="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(19rem,24rem)] xl:gap-6">
+					<main data-testid="template-editor-region" class="min-w-0">
+						<div
+							v-if="conflict"
+							data-testid="template-conflict"
+							class="mb-4 flex flex-col gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4 sm:flex-row sm:items-center sm:justify-between"
 						>
-							{{ t('components.templateStudio.reloadServerVersion') }}
-						</UButton>
-					</div>
-					<UAlert
-						v-else-if="actionErrorDescription"
-						class="mb-4"
-						color="error"
-						variant="soft"
-						icon="i-lucide-circle-alert"
-						:title="t('components.templateStudio.actionErrorTitle')"
-						:description="actionErrorDescription"
-					/>
-					<UAlert
-						v-if="detailError"
-						class="mb-4"
-						color="error"
-						variant="soft"
-						icon="i-lucide-circle-alert"
-						:title="t('components.templateStudio.loadDetailError')"
-						:description="detailErrorDescription"
-					/>
-					<USkeleton v-if="loadingDetail" class="h-80 w-full rounded-xl" />
-					<ZTemplateStudioTemplateEditor
-						v-else
-						v-model:active-tab="activeTab"
-						:template-name="selectedSummary ? templateLabel(selectedSummary) : undefined"
-					>
-						<template #actions>
+							<div class="min-w-0">
+								<p class="font-semibold text-default">{{ t('components.templateStudio.conflictTitle') }}</p>
+								<p class="text-sm text-muted">{{ t('components.templateStudio.conflictDescription', { version: conflict.currentVersion }) }}</p>
+							</div>
 							<UButton
-								v-if="canEdit"
-								data-action="save-draft"
+								data-action="reload-server-version"
 								type="button"
-								icon="i-lucide-save"
-								:disabled="!isDirty"
-								:loading="saving"
-								class="min-h-11"
-								@click="saveDraft"
-							>
-								{{ t('components.templateStudio.saveDraft') }}
-							</UButton>
-							<UButton
-								v-if="canEdit && selected?.channel === 'email'"
-								data-action="test-send"
-								type="button"
-								color="neutral"
+								color="warning"
 								variant="outline"
-								icon="i-lucide-mail-check"
-								:loading="testing"
-								class="min-h-11"
-								@click="testSend"
+								icon="i-lucide-refresh-cw"
+								@click="reloadServerVersion"
 							>
-								{{ t('components.templateStudio.sendTest') }}
+								{{ t('components.templateStudio.reloadServerVersion') }}
 							</UButton>
-							<UButton
-								v-if="canReset"
-								data-action="reset"
-								type="button"
-								color="error"
-								variant="outline"
-								icon="i-lucide-rotate-ccw"
-								:loading="resetting"
-								class="min-h-11"
-								@click="requestReset"
-							>
-								{{ t('components.templateStudio.resetToDefault') }}
-							</UButton>
-						</template>
+						</div>
+						<UAlert
+							v-else-if="actionErrorDescription"
+							class="mb-4"
+							color="error"
+							variant="soft"
+							icon="i-lucide-circle-alert"
+							:title="t('components.templateStudio.actionErrorTitle')"
+							:description="actionErrorDescription"
+						/>
+						<UAlert
+							v-if="detailError"
+							class="mb-4"
+							color="error"
+							variant="soft"
+							icon="i-lucide-circle-alert"
+							:title="t('components.templateStudio.loadDetailError')"
+							:description="detailErrorDescription"
+						/>
+						<USkeleton v-if="loadingDetail" class="h-80 w-full rounded-xl" />
+						<ZTemplateStudioTemplateEditor v-else v-model:active-tab="activeTab" :template-name="selectedSummary ? templateLabel(selectedSummary) : undefined">
+							<template #actions>
+								<UButton v-if="canEdit" data-action="save-draft" type="button" icon="i-lucide-save" :disabled="!isDirty" :loading="saving" @click="saveDraft">
+									{{ t('components.templateStudio.saveDraft') }}
+								</UButton>
+								<UButton
+									v-if="canEdit && selected?.channel === 'email'"
+									data-action="test-send"
+									type="button"
+									color="neutral"
+									variant="outline"
+									icon="i-lucide-mail-check"
+									:loading="testing"
+									@click="testSend"
+								>
+									{{ t('components.templateStudio.sendTest') }}
+								</UButton>
+								<UButton
+									v-if="canReset"
+									data-action="reset"
+									type="button"
+									color="error"
+									variant="outline"
+									icon="i-lucide-rotate-ccw"
+									:loading="resetting"
+									@click="requestReset"
+								>
+									{{ t('components.templateStudio.resetToDefault') }}
+								</UButton>
+							</template>
 
-						<template #content>
-							<ZTemplateStudioContentEditor
-								v-if="detail"
-								:entry="detail"
-								:model-value="draft"
-								:field-errors="fieldErrors"
-								@update:path="templateStore.setConfigurationPath"
-							/>
-						</template>
-						<template #brand>
-							<ZTemplateStudioBrandEditor
-								v-if="detail"
-								:fields="detail.fields"
-								:model-value="draft"
-								:inherited="detail.inherited_values"
-								:system-defaults="detail.catalog_default_values"
-								:field-errors="fieldErrors"
-								@update:path="templateStore.setConfigurationPath"
-								@clear:path="templateStore.clearConfigurationOverride"
-							/>
-						</template>
-						<template #sections>
-							<ZTemplateStudioSectionEditor
-								v-if="detail"
-								:blocks="detail.blocks"
-								:model-value="draft.blocks"
-								@update:model-value="updateBlocks"
-							/>
-						</template>
-						<template #history>
-							<ZTemplateStudioRevisionHistory
-								:revisions="revisions"
-								:active-revision-id="detail?.active_revision?.id"
-								:schema-version="compatibleVersions.schemaVersion"
-								:system-template-version="compatibleVersions.systemTemplateVersion"
-								:timezone="schedule.timezone"
-								:can-restore="canRestore"
-								:restoring-revision-no="restoringRevisionNo"
-								@restore="requestRestore"
-							/>
-						</template>
-						<template v-if="canPublish" #administration>
-							<ZTemplateStudioActivationWindow
-								:start-date="schedule.startDate"
-								:end-date="schedule.endDate"
-								:timezone="schedule.timezone"
-								:disabled="publishDisabled"
-								:disabled-reason="publishDisabledReason"
-								:loading="publishing"
-								@confirm="requestPublish"
-							/>
-						</template>
-					</ZTemplateStudioTemplateEditor>
-				</main>
+							<template #content>
+								<ZTemplateStudioContentEditor
+									v-if="detail"
+									:entry="detail"
+									:model-value="draft"
+									:field-errors="fieldErrors"
+									@update:path="templateStore.setConfigurationPath"
+								/>
+							</template>
+							<template #brand>
+								<ZTemplateStudioBrandEditor
+									v-if="detail"
+									:fields="detail.fields"
+									:model-value="draft"
+									:inherited="detail.inherited_values"
+									:system-defaults="detail.catalog_default_values"
+									:field-errors="fieldErrors"
+									@update:path="templateStore.setConfigurationPath"
+									@clear:path="templateStore.clearConfigurationOverride"
+								/>
+							</template>
+							<template v-if="canPublish" #administration>
+								<ZTemplateStudioActivationWindow
+									:start-date="schedule.startDate"
+									:end-date="schedule.endDate"
+									:timezone="schedule.timezone"
+									:disabled="publishDisabled"
+									:disabled-reason="publishDisabledReason"
+									:loading="publishing"
+									@confirm="requestPublish"
+								/>
+							</template>
+						</ZTemplateStudioTemplateEditor>
+					</main>
 
-				<aside data-testid="template-preview-region" class="min-w-0 self-start xl:sticky xl:top-4">
-					<ZTemplateStudioTemplatePreview
-						:channel="selected?.channel ?? 'email'"
-						:preview="preview"
-						:loading="previewing"
-						@refresh="refreshPreview"
-					/>
-				</aside>
+					<aside data-testid="template-preview-region" class="min-w-0 self-start xl:sticky xl:top-4">
+						<ZTemplateStudioTemplatePreview :channel="selected?.channel ?? 'email'" :preview="preview" :loading="previewing" @refresh="refreshPreview" />
+					</aside>
+				</div>
 			</div>
 
 			<UCard v-else-if="!summaryError">
@@ -196,7 +146,7 @@
 <script setup lang="ts">
 import { ZModalConfirmation, ZModalLeavePageConfirmation } from '#components';
 import { useDocumentTemplateStore } from '~/stores/DocumentTemplate/DocumentTemplate';
-import type { DocumentTemplateConfiguration, DocumentTemplateSummary } from '~/utils/types/document-template';
+import type { DocumentTemplateSummary } from '~/utils/types/document-template';
 
 const { t, te } = useI18n();
 const route = useRoute();
@@ -209,7 +159,6 @@ const {
 	detail,
 	draft,
 	preview,
-	revisions,
 	isDirty,
 	loadingDetail,
 	summaryError,
@@ -225,11 +174,9 @@ const {
 	resetting,
 	canEdit,
 	canPublish,
-	canRestore,
 	canReset,
 } = storeToRefs(templateStore);
 const activeTab = ref('content');
-const restoringRevisionNo = ref<number>();
 const templateUpdateConfirmed = ref(false);
 let isActive = true;
 let storeDisposed = false;
@@ -239,16 +186,14 @@ let selectionOperation = 0;
 
 useHead({ title: () => t('pages.templateStudioTitle') });
 
-const selectedSummary = computed(() => summaries.value.find(template =>
-	template.channel === selected.value?.channel && template.template_code === selected.value?.templateCode,
-));
-const summaryErrorDescription = computed(() => summaryError.value === 'Failed to load document templates'
-	? t('components.templateStudio.loadErrorDescription')
-	: summaryError.value ?? undefined,
+const selectedSummary = computed(() =>
+	summaries.value.find((template) => template.channel === selected.value?.channel && template.template_code === selected.value?.templateCode),
 );
-const detailErrorDescription = computed(() => detailError.value === 'Failed to load document template'
-	? t('components.templateStudio.loadDetailErrorDescription')
-	: detailError.value ?? undefined,
+const summaryErrorDescription = computed(() =>
+	summaryError.value === 'Failed to load document templates' ? t('components.templateStudio.loadErrorDescription') : (summaryError.value ?? undefined),
+);
+const detailErrorDescription = computed(() =>
+	detailError.value === 'Failed to load document template' ? t('components.templateStudio.loadDetailErrorDescription') : (detailError.value ?? undefined),
 );
 const actionErrorKeys: Record<string, string> = {
 	'Failed to save document template': 'components.templateStudio.saveError',
@@ -256,8 +201,6 @@ const actionErrorKeys: Record<string, string> = {
 	'Failed to send test document template': 'components.templateStudio.testSendError',
 	'Failed to publish document template': 'components.templateStudio.publishError',
 	'Failed to reset document template': 'components.templateStudio.resetError',
-	'Failed to restore document template revision': 'components.templateStudio.restoreError',
-	'Failed to load document template revisions': 'components.templateStudio.historyError',
 	'Save draft before publishing': 'components.templateStudio.saveBeforePublishing',
 	'Schedule date is invalid': 'components.templateStudio.scheduleInvalidDate',
 	'Schedule start must be before its end': 'components.templateStudio.scheduleEndAfterStart',
@@ -272,12 +215,6 @@ const publishDisabledReason = computed(() => {
 	if (isDirty.value) return t('components.templateStudio.saveBeforePublishing');
 	if (!detail.value?.draft_revision) return t('components.templateStudio.saveDraftBeforePublishing');
 	return undefined;
-});
-const compatibleVersions = computed(() => {
-	return {
-		schemaVersion: detail.value?.catalog_schema_version,
-		systemTemplateVersion: detail.value?.catalog_system_template_version,
-	};
 });
 
 function queryString(value: unknown): string | undefined {
@@ -294,9 +231,10 @@ function templateLabel(template: DocumentTemplateSummary): string {
 function requestedTemplate(query = route.query): DocumentTemplateSummary | undefined {
 	const channel = queryString(query.channel);
 	const templateCode = queryString(query.template);
-	return summaries.value.find(template =>
-		template.editable && template.channel === channel && template.template_code === templateCode,
-	) ?? summaries.value.find(template => template.editable);
+	return (
+		summaries.value.find((template) => template.editable && template.channel === channel && template.template_code === templateCode) ??
+		summaries.value.find((template) => template.editable)
+	);
 }
 
 async function selectTemplate(template: DocumentTemplateSummary): Promise<void> {
@@ -308,8 +246,13 @@ async function selectTemplate(template: DocumentTemplateSummary): Promise<void> 
 		await router.replace({
 			query: { ...route.query, channel, template: template.template_code },
 		});
-		if (!isActive || operation !== selectionOperation
-			|| queryString(route.query.channel) !== channel || queryString(route.query.template) !== template.template_code) return;
+		if (
+			!isActive ||
+			operation !== selectionOperation ||
+			queryString(route.query.channel) !== channel ||
+			queryString(route.query.template) !== template.template_code
+		)
+			return;
 	}
 	if (!isActive || operation !== selectionOperation) return;
 	if (selected.value?.channel === channel && selected.value.templateCode === template.template_code) return;
@@ -341,16 +284,6 @@ useLeavePageGuard(isDirty, {
 		disposeTemplateStore();
 	},
 });
-
-function updateBlocks(blocks: NonNullable<DocumentTemplateConfiguration['blocks']>): void {
-	if (!detail.value) return;
-	for (const block of blocks) {
-		const descriptor = detail.value.blocks.find(candidate => candidate.id === block.id);
-		if (!descriptor || descriptor.required) continue;
-		const current = draft.value.blocks?.find(candidate => candidate.id === block.id)?.enabled ?? descriptor.default_enabled;
-		if (current !== block.enabled) templateStore.setBlockEnabled(block.id, block.enabled);
-	}
-}
 
 function openConfirmation(title: string, message: string, action: () => Promise<void>): void {
 	const confirmModal = overlay.create(ZModalConfirmation, {
@@ -407,8 +340,13 @@ function requestPublish(window: { startDate: Date | null; endDate: Date | null }
 		t(scheduled ? 'components.templateStudio.scheduleConfirmMessage' : 'components.templateStudio.publishConfirmMessage', { number: target.revisionNo }),
 		async () => {
 			const currentDraft = detail.value?.draft_revision;
-			if (!selectionMatches(target.channel, target.templateCode) || isDirty.value
-				|| currentDraft?.id !== target.revisionId || currentDraft.revision_no !== target.revisionNo) return;
+			if (
+				!selectionMatches(target.channel, target.templateCode) ||
+				isDirty.value ||
+				currentDraft?.id !== target.revisionId ||
+				currentDraft.revision_no !== target.revisionNo
+			)
+				return;
 			const confirmationError = activationError(activation);
 			if (confirmationError) {
 				templateStore.error = confirmationError;
@@ -429,36 +367,11 @@ function requestReset(): void {
 	const version = detail.value?.version;
 	const previousDraftId = detail.value?.draft_revision?.id;
 	if (!selection || version === undefined) return;
-	openConfirmation(
-		t('components.templateStudio.resetConfirmTitle'),
-		t('components.templateStudio.resetConfirmMessage'),
-		async () => {
-			if (!selectionMatches(selection.channel, selection.templateCode) || detail.value?.version !== version) return;
-			await templateStore.resetTemplate();
-			if (!conflict.value && detail.value?.draft_revision?.id !== previousDraftId && !isDirty.value) activeTab.value = 'content';
-		},
-	);
-}
-
-function requestRestore(revisionNo: number): void {
-	const selection = selected.value;
-	const version = detail.value?.version;
-	const previousDraftId = detail.value?.draft_revision?.id;
-	if (!selection || version === undefined) return;
-	openConfirmation(
-		t('components.templateStudio.restoreConfirmTitle'),
-		t('components.templateStudio.restoreConfirmMessage', { number: revisionNo }),
-		async () => {
-			if (!selectionMatches(selection.channel, selection.templateCode) || detail.value?.version !== version) return;
-			restoringRevisionNo.value = revisionNo;
-			try {
-				await templateStore.restoreRevision(revisionNo);
-				if (!conflict.value && detail.value?.draft_revision?.id !== previousDraftId && !isDirty.value) activeTab.value = 'content';
-			} finally {
-				restoringRevisionNo.value = undefined;
-			}
-		},
-	);
+	openConfirmation(t('components.templateStudio.resetConfirmTitle'), t('components.templateStudio.resetConfirmMessage'), async () => {
+		if (!selectionMatches(selection.channel, selection.templateCode) || detail.value?.version !== version) return;
+		await templateStore.resetTemplate();
+		if (!conflict.value && detail.value?.draft_revision?.id !== previousDraftId && !isDirty.value) activeTab.value = 'content';
+	});
 }
 
 async function saveDraft(): Promise<void> {
@@ -479,8 +392,8 @@ async function reloadServerVersion(): Promise<void> {
 }
 
 onBeforeRouteUpdate((to, from, next) => {
-	const templateChanged = queryString(to.query.channel) !== queryString(from.query.channel)
-		|| queryString(to.query.template) !== queryString(from.query.template);
+	const templateChanged =
+		queryString(to.query.channel) !== queryString(from.query.channel) || queryString(to.query.template) !== queryString(from.query.template);
 	if (templateUpdateConfirmed.value || !templateChanged || !isDirty.value) {
 		templateUpdateConfirmed.value = false;
 		next();
@@ -491,10 +404,10 @@ onBeforeRouteUpdate((to, from, next) => {
 	const targetTemplate = requestedTemplate(to.query);
 	const target = targetTemplate
 		? {
-			path: to.path,
-			query: { ...to.query, channel: targetTemplate.channel, template: targetTemplate.template_code },
-			hash: to.hash,
-		}
+				path: to.path,
+				query: { ...to.query, channel: targetTemplate.channel, template: targetTemplate.template_code },
+				hash: to.hash,
+			}
 		: to.fullPath;
 	const leaveModal = overlay.create(ZModalLeavePageConfirmation, {
 		props: {
@@ -518,8 +431,7 @@ watch(
 	() => [route.query.channel, route.query.template, summaries.value],
 	(next, previous) => {
 		if (!initialLoadSettled) {
-			const queryChanged = queryString(next[0]) !== queryString(previous[0])
-				|| queryString(next[1]) !== queryString(previous[1]);
+			const queryChanged = queryString(next[0]) !== queryString(previous[0]) || queryString(next[1]) !== queryString(previous[1]);
 			if (queryChanged) initialRouteSyncPending = true;
 			return;
 		}
@@ -533,13 +445,6 @@ watch(
 		if (isActive && templateStore.detail && templateStore.selected) void templateStore.previewDraft();
 	},
 	{ deep: true },
-);
-
-watch(
-	() => [activeTab.value, selected.value?.channel, selected.value?.templateCode] as const,
-	([tab]) => {
-		if (isActive && tab === 'history' && selected.value) void templateStore.loadRevisions();
-	},
 );
 
 const initialSelectionOperation = selectionOperation;

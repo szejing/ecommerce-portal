@@ -10,7 +10,7 @@
 				color="neutral"
 				variant="soft"
 				size="sm"
-				class="min-h-11 font-mono text-xs"
+				class="font-mono cursor-pointer"
 				@click="insert(token.value)"
 			>
 				{{ token.value }}
@@ -22,18 +22,21 @@
 <script setup lang="ts">
 import { insertTemplateToken } from '~/utils/document-template';
 
-const props = withDefaults(defineProps<{
-	allowedTokens: readonly string[];
-	modelValue?: string;
-	selectionStart?: number;
-	selectionEnd?: number;
-	maxLength?: number;
-}>(), {
-	modelValue: undefined,
-	selectionStart: undefined,
-	selectionEnd: undefined,
-	maxLength: undefined,
-});
+const props = withDefaults(
+	defineProps<{
+		allowedTokens: readonly string[];
+		modelValue?: string;
+		selectionStart?: number;
+		selectionEnd?: number;
+		maxLength?: number;
+	}>(),
+	{
+		modelValue: undefined,
+		selectionStart: undefined,
+		selectionEnd: undefined,
+		maxLength: undefined,
+	},
+);
 
 const emit = defineEmits<{
 	'update:modelValue': [value: string];
@@ -70,7 +73,7 @@ function insert(token: string): void {
 
 	const start = props.selectionStart ?? props.modelValue.length;
 	const end = props.selectionEnd ?? start;
-	const allowedTokens = tokens.value.map(item => item.value);
+	const allowedTokens = tokens.value.map((item) => item.value);
 	const result = insertTemplateToken(props.modelValue, start, end, token, allowedTokens);
 	if (props.maxLength !== undefined && result.value.length > props.maxLength) return;
 	emit('select', token);

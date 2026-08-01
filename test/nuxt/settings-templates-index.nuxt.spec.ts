@@ -105,15 +105,24 @@ const RouteHost = defineComponent({
 });
 
 describe('TemplateNavigation', () => {
-	it('groups editable customer emails and PDFs and marks locked entries', async () => {
+	it('lists only editable templates in a select', async () => {
 		const wrapper = await mountSuspended(TemplateNavigation, {
 			props: { templates: catalogSummaries },
 		});
 
-		expect(wrapper.text()).toContain('Customer emails');
-		expect(wrapper.text()).toContain('PDF documents');
-		expect(wrapper.findAll('[data-template-state="locked"]')).toHaveLength(4);
-		expect(wrapper.findAll('[data-template-state="locked"]').every(item => item.attributes('disabled') !== undefined)).toBe(true);
+		const select = wrapper.getComponent({ name: 'USelect' });
+		const items = select.props('items') as Array<{ label: string; value: string }>;
+
+		expect(wrapper.find('[data-testid="template-navigation"]').exists()).toBe(true);
+		expect(items.map((item) => item.value)).toEqual([
+			'email:order-confirmation',
+			'email:invoice',
+			'pdf:invoice',
+			'pdf:receipt',
+			'email:future-customer-email',
+		]);
+		expect(items.every((item) => !item.value.includes('forgot-password') && !item.value.includes('crm-user-welcome'))).toBe(true);
+		expect(wrapper.text()).not.toContain('Locked templates');
 	});
 
 	it('emits only editable template selections', async () => {
@@ -121,22 +130,23 @@ describe('TemplateNavigation', () => {
 			props: { templates: catalogSummaries },
 		});
 
-		await wrapper.get('[data-template-key="email:order-confirmation"]').trigger('click');
-		await wrapper.get('[data-template-key="email:forgot-password"]').trigger('click');
+		const select = wrapper.getComponent({ name: 'USelect' });
+		select.vm.$emit('update:modelValue', 'email:order-confirmation');
+		await nextTick();
+		select.vm.$emit('update:modelValue', 'email:forgot-password');
+		await nextTick();
 
 		expect(wrapper.emitted('select')).toEqual([[catalogSummaries[1]]]);
 	});
 
-	it('uses a compact selector below the desktop breakpoint', async () => {
+	it('selects a template from the dropdown', async () => {
 		const wrapper = await mountSuspended(TemplateNavigation, {
 			props: { templates: catalogSummaries },
 		});
 
-		expect(wrapper.get('[data-testid="template-navigation-mobile"]').classes()).toContain('xl:hidden');
-		expect(wrapper.get('[data-testid="template-navigation-desktop"]').classes()).toContain('xl:block');
-		const select = wrapper.getComponent({ name: 'USelectMenu' });
 		expect(wrapper.find('[aria-label="Template navigation"]').exists()).toBe(true);
 
+		const select = wrapper.getComponent({ name: 'USelect' });
 		select.vm.$emit('update:modelValue', 'pdf:invoice');
 		await nextTick();
 		expect(wrapper.emitted('select')).toEqual([[catalogSummaries[3]]]);
@@ -148,8 +158,6 @@ describe('TemplateEditor', () => {
 		const slots = {
 			content: '<div data-testid="content-editor-slot">Content controls</div>',
 			brand: '<div>Brand controls</div>',
-			sections: '<div>Section controls</div>',
-			history: '<div>Revision history</div>',
 		};
 		const wrapper = await mountSuspended(TemplateEditor, {
 			slots: {
@@ -158,20 +166,14 @@ describe('TemplateEditor', () => {
 		});
 		const tabs = wrapper.getComponent({ name: 'UTabs' });
 
-		expect((tabs.props('items') as Array<{ label: string }>).map(item => item.label)).toEqual(['Content', 'Brand', 'Sections', 'History']);
+		expect((tabs.props('items') as Array<{ label: string }>).map(item => item.label)).toEqual(['Content', 'Brand']);
 		expect(wrapper.get('[data-testid="content-editor-slot"]').text()).toBe('Content controls');
 
-		for (const [value, copy] of [
-			['brand', 'Brand controls'],
-			['sections', 'Section controls'],
-			['history', 'Revision history'],
-		] as const) {
-			const activeWrapper = await mountSuspended(TemplateEditor, {
-				props: { activeTab: value },
-				slots,
-			});
-			expect(activeWrapper.text()).toContain(copy);
-		}
+		const activeWrapper = await mountSuspended(TemplateEditor, {
+			props: { activeTab: 'brand' },
+			slots,
+		});
+		expect(activeWrapper.text()).toContain('Brand controls');
 	});
 });
 
@@ -282,12 +284,13 @@ describe('TemplateStudioPage', () => {
 		expect(router.currentRoute.value.query).toMatchObject({ channel: 'pdf', template: 'invoice' });
 	});
 
-	it('renders navigation, editor, and preview as a responsive three-region shell', async () => {
+	it('renders navigation above a responsive editor and preview shell', async () => {
 		const { wrapper } = await mountPage();
 		const shell = wrapper.get('[data-testid="template-studio-shell"]');
 
-		expect(shell.classes().some(className => className.startsWith('xl:grid-cols-'))).toBe(true);
+		expect(shell.classes()).toContain('space-y-4');
 		expect(wrapper.find('[data-testid="template-navigation-region"]').exists()).toBe(true);
+		expect(wrapper.getComponent({ name: 'USelect' }).exists()).toBe(true);
 		expect(wrapper.find('[data-testid="template-editor-region"]').exists()).toBe(true);
 		expect(wrapper.get('[data-testid="template-preview-region"]').classes()).toContain('xl:sticky');
 	});
@@ -430,10 +433,11 @@ describe('TemplateStudioPage', () => {
 		await useNuxtApp().$i18n.setLocale('ms');
 		try {
 			const { wrapper } = await mountPage();
+			const items = wrapper.getComponent({ name: 'USelect' }).props('items') as Array<{ label: string; value: string }>;
 
 			expect(wrapper.text()).toContain('Pengesahan pesanan');
 			expect(wrapper.get('[data-testid="template-editor-region"]').text()).toContain('Pengesahan pesanan');
-			expect(wrapper.text()).toContain('Future customer email');
+			expect(items.find((item) => item.value === 'email:future-customer-email')?.label).toBe('Future customer email');
 		} finally {
 			await useNuxtApp().$i18n.setLocale('en');
 		}

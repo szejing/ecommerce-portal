@@ -1,18 +1,12 @@
 <template>
 	<div class="space-y-3">
-		<div :id="toolbarId" class="ql-toolbar ql-snow" role="toolbar" :aria-label="t('components.templateStudio.richTextToolbar')">
-			<span class="ql-formats">
-				<button type="button" class="ql-bold" :aria-label="t('components.templateStudio.bold')" />
-				<button type="button" class="ql-italic" :aria-label="t('components.templateStudio.italic')" />
-				<button type="button" class="ql-link" :aria-label="t('components.templateStudio.link')" />
-			</span>
-		</div>
 		<QuillEditor
 			ref="editorRef"
 			:content="modelValue"
 			content-type="html"
 			theme="snow"
-			:toolbar="`#${toolbarId}`"
+			toolbar="essential"
+			:modules="mentionModules"
 			:options="{ placeholder, formats }"
 			class="template-rich-text-editor"
 			@ready="rememberEditor"
@@ -29,7 +23,9 @@
 
 <script setup lang="ts">
 import { Delta, QuillEditor } from '@vueup/vue-quill';
+import { Mention, MentionBlot } from 'quill-mention';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
+import 'quill-mention/dist/quill.mention.css';
 
 type QuillRange = { index: number; length: number };
 type QuillInstance = {
@@ -37,6 +33,15 @@ type QuillInstance = {
 	getSelection: (focus?: boolean) => QuillRange | null;
 	updateContents: (change: Delta, source?: string) => void;
 	setSelection: (index: number, length: number, source?: string) => void;
+	deleteText: (index: number, length: number, source?: string) => void;
+	insertText: (index: number, text: string, source?: string) => void;
+};
+
+type MentionListItem = { id: string; value: string };
+type MentionModuleHost = {
+	quill: QuillInstance;
+	mentionCharPos?: number;
+	cursorPos?: number;
 };
 
 const props = withDefaults(defineProps<{
@@ -56,9 +61,20 @@ const emit = defineEmits<{
 	'update:modelValue': [value: string];
 }>();
 
-const { t } = useI18n();
-const toolbarId = `template-rich-text-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
-const formats = ['bold', 'italic', 'link'];
+const ESSENTIAL_FORMATS = [
+	'header',
+	'bold',
+	'italic',
+	'underline',
+	'list',
+	'align',
+	'blockquote',
+	'code-block',
+	'link',
+	'color',
+] as const;
+
+const formats = [...ESSENTIAL_FORMATS];
 const editorRef = ref<{
 	getQuill?: () => QuillInstance;
 	setContents?: (content: string, source?: string) => void;
@@ -66,6 +82,64 @@ const editorRef = ref<{
 const quill = shallowRef<QuillInstance>();
 const selection = ref<QuillRange>({ index: 0, length: 0 });
 let rejectedContentUpdate = false;
+
+function tokenName(token: string): string {
+	return /^\{\{([^{}]+)\}\}$/.exec(token)?.[1] ?? token;
+}
+
+function tokenValue(token: string): string {
+	return `{{${tokenName(token)}}}`;
+}
+
+const mentionModules = computed(() => {
+	if (!props.allowedTokens.length) return undefined;
+
+	const items: MentionListItem[] = [];
+	const seen = new Set<string>();
+	for (const token of props.allowedTokens) {
+		const name = tokenName(token);
+		if (!name || seen.has(name)) continue;
+		seen.add(name);
+		items.push({ id: name, value: name });
+	}
+
+	return [
+		{ name: 'blots/mention', module: MentionBlot },
+		{
+			name: 'modules/mention',
+			module: Mention,
+			options: {
+				mentionDenotationChars: ['@'],
+				allowedChars: /^[A-Za-z0-9_]*$/,
+				showDenotationChar: false,
+				spaceAfterInsert: true,
+				source: (
+					searchTerm: string,
+					renderList: (matches: MentionListItem[], term: string) => void,
+				) => {
+					const term = searchTerm.toLowerCase();
+					const matches = !term
+						? items
+						: items.filter((item) => item.value.toLowerCase().includes(term));
+					renderList(matches, searchTerm);
+				},
+				onSelect(this: MentionModuleHost, item: MentionListItem | DOMStringMap) {
+					const name = String(item.value ?? item.id ?? '');
+					if (!name) return;
+					const token = tokenValue(name);
+					const editor = this.quill;
+					const start = this.mentionCharPos;
+					const end = this.cursorPos;
+					if (start === undefined || end === undefined) return;
+					editor.deleteText(start, end - start, 'user');
+					editor.insertText(start, token, 'user');
+					editor.insertText(start + token.length, ' ', 'user');
+					editor.setSelection(start + token.length + 1, 0, 'user');
+				},
+			},
+		},
+	];
+});
 
 function rememberEditor(instance: QuillInstance): void {
 	quill.value = instance;
@@ -127,8 +201,11 @@ watch(() => props.ariaLabel, (value) => {
 }
 
 :deep(.ql-toolbar.ql-snow button) {
-	min-height: 2.75rem;
-	min-width: 2.75rem;
+	height: 1.75rem;
+	width: 1.75rem;
+	min-height: 1.75rem;
+	min-width: 1.75rem;
+	padding: 0.2rem;
 }
 
 :deep(.ql-container.ql-snow) {

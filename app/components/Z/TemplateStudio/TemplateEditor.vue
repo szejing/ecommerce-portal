@@ -18,16 +18,6 @@
 					<div class="py-10 text-center text-sm text-muted">{{ t('components.templateStudio.brandComingSoon') }}</div>
 				</slot>
 			</template>
-			<template #sections>
-				<slot name="sections">
-					<div class="py-10 text-center text-sm text-muted">{{ t('components.templateStudio.sectionsComingSoon') }}</div>
-				</slot>
-			</template>
-			<template #history>
-				<slot name="history">
-					<div class="py-10 text-center text-sm text-muted">{{ t('components.templateStudio.historyComingSoon') }}</div>
-				</slot>
-			</template>
 		</UTabs>
 
 		<div v-if="$slots.administration" class="border-t border-default px-4 py-4 sm:px-6">
@@ -51,7 +41,5 @@ const activeTab = defineModel<string>('activeTab', { default: 'content' });
 const tabItems = computed<TabsItem[]>(() => [
 	{ label: t('components.templateStudio.content'), value: 'content', slot: 'content', icon: 'i-lucide-type' },
 	{ label: t('components.templateStudio.brand'), value: 'brand', slot: 'brand', icon: 'i-lucide-palette' },
-	{ label: t('components.templateStudio.sections'), value: 'sections', slot: 'sections', icon: 'i-lucide-layout-list' },
-	{ label: t('components.templateStudio.history'), value: 'history', slot: 'history', icon: 'i-lucide-history' },
 ]);
 </script>

@@ -1,11 +1,6 @@
 <template>
 	<div class="space-y-6">
-		<section
-			v-for="field in contentFields"
-			:key="field.path"
-			:data-field="field.path"
-			class="space-y-3 rounded-xl border border-default p-4"
-		>
+		<section v-for="field in contentFields" :key="field.path" :data-field="field.path" class="space-y-3 rounded-xl border border-default p-4">
 			<UFormField :label="fieldLabel(field)" :name="field.path" :required="!field.allow_blank">
 				<UInput
 					v-if="field.path === 'content.subject'"
@@ -38,12 +33,7 @@
 				@inserted="(_value, cursor) => setCursor(field.path, cursor)"
 			/>
 
-			<p
-				v-if="fieldErrors[field.path]"
-				:data-field-error="field.path"
-				class="text-sm text-error"
-				role="alert"
-			>
+			<p v-if="fieldErrors[field.path]" :data-field-error="field.path" class="text-sm text-error" role="alert">
 				{{ fieldErrors[field.path] }}
 			</p>
 		</section>
@@ -51,23 +41,22 @@
 </template>
 
 <script setup lang="ts">
-import type {
-	DocumentTemplateChannel,
-	DocumentTemplateConfiguration,
-	DocumentTemplateField,
-} from '~/utils/types/document-template';
+import type { DocumentTemplateChannel, DocumentTemplateConfiguration, DocumentTemplateField } from '~/utils/types/document-template';
 
-const props = withDefaults(defineProps<{
-	entry: {
-		channel: DocumentTemplateChannel;
-		fields: DocumentTemplateField[];
-		allowed_tokens: string[];
-	};
-	modelValue: DocumentTemplateConfiguration;
-	fieldErrors?: Record<string, string>;
-}>(), {
-	fieldErrors: () => ({}),
-});
+const props = withDefaults(
+	defineProps<{
+		entry: {
+			channel: DocumentTemplateChannel;
+			fields: DocumentTemplateField[];
+			allowed_tokens: string[];
+		};
+		modelValue: DocumentTemplateConfiguration;
+		fieldErrors?: Record<string, string>;
+	}>(),
+	{
+		fieldErrors: () => ({}),
+	},
+);
 
 const emit = defineEmits<{
 	'update:path': [path: string, value: string];
@@ -77,11 +66,13 @@ const { t, te } = useI18n();
 const selections = reactive<Record<string, { start: number; end: number }>>({});
 const allowedContentFields = new Set(['content.subject', 'content.greeting', 'content.introduction', 'content.footer']);
 
-const contentFields = computed(() => props.entry.fields.filter((field) => {
-	if (!allowedContentFields.has(field.path)) return false;
-	if (field.path === 'content.subject') return props.entry.channel === 'email' && field.kind === 'plain-text';
-	return field.kind === 'rich-text';
-}));
+const contentFields = computed(() =>
+	props.entry.fields.filter((field) => {
+		if (!allowedContentFields.has(field.path)) return false;
+		if (field.path === 'content.subject') return props.entry.channel === 'email' && field.kind === 'plain-text';
+		return field.kind === 'rich-text';
+	}),
+);
 
 function tokenName(token: string): string {
 	return /^\{\{([^{}]+)\}\}$/.exec(token)?.[1] ?? token;
@@ -89,7 +80,7 @@ function tokenName(token: string): string {
 
 function allowedTokens(field: DocumentTemplateField): string[] {
 	const entryTokens = new Set(props.entry.allowed_tokens.map(tokenName));
-	return field.allowed_tokens.filter(token => entryTokens.has(tokenName(token)));
+	return field.allowed_tokens.filter((token) => entryTokens.has(tokenName(token)));
 }
 
 function fieldValue(path: string): string {
