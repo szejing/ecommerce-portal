@@ -180,9 +180,11 @@ describe('ActivationWindow', () => {
 		expect(publishNow.emitted('confirm')).toEqual([[{ startDate: null, endDate: null }]]);
 
 		const schedule = await mountSuspended(ActivationWindow, {
-			props: { timezone: 'Asia/Kuala_Lumpur', startDate: null, endDate: null },
+			props: { timezone: 'Asia/Kuala_Lumpur' },
 		});
-		await schedule.get('[data-mode="schedule"]').trigger('click');
+		await schedule.get('[data-action="open-schedule"]').trigger('click');
+		await flushPromises();
+		await schedule.get('[data-action="apply-schedule"]').trigger('click');
 		await schedule.get('[data-action="schedule"]').trigger('click');
 		expect(schedule.emitted('confirm')).toEqual([[{ startDate: null, endDate: null }]]);
 	});
@@ -197,7 +199,7 @@ describe('ActivationWindow', () => {
 			},
 		});
 
-		await wrapper.get('[data-mode="schedule"]').trigger('click');
+		// props with dates arm scheduled state
 		await wrapper.get('[data-action="schedule"]').trigger('click');
 
 		expect(wrapper.emitted('confirm')).toBeUndefined();
@@ -213,7 +215,6 @@ describe('ActivationWindow', () => {
 			});
 			vi.setSystemTime(new Date('2026-08-03T00:00:00.000Z'));
 
-			await wrapper.get('[data-mode="schedule"]').trigger('click');
 			await wrapper.get('[data-action="schedule"]').trigger('click');
 
 			expect(wrapper.emitted('confirm')).toBeUndefined();
@@ -223,6 +224,20 @@ describe('ActivationWindow', () => {
 		}
 	});
 
+	it('clears an armed schedule back to Publish now', async () => {
+		const wrapper = await mountSuspended(ActivationWindow, {
+			props: {
+				timezone: 'Asia/Kuala_Lumpur',
+				startDate: new Date('2026-08-07T08:00:00+08:00'),
+			},
+		});
+		expect(wrapper.find('[data-action="schedule"]').exists()).toBe(true);
+		await wrapper.get('[data-action="clear-schedule"]').trigger('click');
+		expect(wrapper.find('[data-action="publish-now"]').exists()).toBe(true);
+		await wrapper.get('[data-action="publish-now"]').trigger('click');
+		expect(wrapper.emitted('confirm')).toEqual([[{ startDate: null, endDate: null }]]);
+	});
+
 	it('passes localized Malay controls and an accessible time label to the date-time picker', async () => {
 		try {
 			await useNuxtApp().$i18n.setLocale('ms');
@@ -230,7 +245,8 @@ describe('ActivationWindow', () => {
 				props: { timezone: 'Asia/Kuala_Lumpur' },
 			});
 
-			await wrapper.get('[data-mode="schedule"]').trigger('click');
+			await wrapper.get('[data-action="open-schedule"]').trigger('click');
+			await flushPromises();
 			await wrapper.get('[data-date="start"]').trigger('click');
 			await flushPromises();
 			const picker = wrapper.getComponent(DateTimePicker);
