@@ -1,7 +1,10 @@
 <template>
 	<UCard :ui="{ body: 'p-0 sm:p-0' }">
-		<div v-if="templateName" class="border-b border-default px-4 py-4 sm:px-6">
-			<h2 class="truncate text-lg font-semibold text-default">{{ templateName }}</h2>
+		<div v-if="templateName || $slots.actions" class="flex flex-col gap-4 border-b border-default px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+			<h2 v-if="templateName" class="truncate text-lg font-semibold text-default">{{ templateName }}</h2>
+			<div v-if="$slots.actions" class="flex flex-wrap gap-2 lg:justify-end">
+				<slot name="actions" />
+			</div>
 		</div>
 
 		<UTabs v-model="activeTab" :items="tabItems" class="w-full px-4 py-4 sm:px-6">
@@ -26,6 +29,10 @@
 				</slot>
 			</template>
 		</UTabs>
+
+		<div v-if="$slots.administration" class="border-t border-default px-4 py-4 sm:px-6">
+			<slot name="administration" />
+		</div>
 	</UCard>
 </template>
 

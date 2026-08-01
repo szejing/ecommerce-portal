@@ -33,6 +33,7 @@ export type DocumentTemplateRevisionSummary = {
 	status: DocumentTemplateRevisionStatus;
 	schema_version: number;
 	system_template_version: number;
+	created_by: string | null;
 	start_date: string | null;
 	end_date: string | null;
 	published_at: string | null;
@@ -82,6 +83,8 @@ export type DocumentTemplateListResponse = {
 };
 
 export type DocumentTemplateDetail = DocumentTemplateDescriptor & {
+	catalog_schema_version: number;
+	catalog_system_template_version: number;
 	fields: DocumentTemplateField[];
 	blocks: DocumentTemplateBlock[];
 	allowed_tokens: string[];

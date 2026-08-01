@@ -32,6 +32,36 @@
 				</aside>
 
 				<main data-testid="template-editor-region" class="min-w-0">
+					<div
+						v-if="conflict"
+						data-testid="template-conflict"
+						class="mb-4 flex flex-col gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4 sm:flex-row sm:items-center sm:justify-between"
+					>
+						<div class="min-w-0">
+							<p class="font-semibold text-default">{{ t('components.templateStudio.conflictTitle') }}</p>
+							<p class="text-sm text-muted">{{ t('components.templateStudio.conflictDescription', { version: conflict.currentVersion }) }}</p>
+						</div>
+						<UButton
+							data-action="reload-server-version"
+							type="button"
+							color="warning"
+							variant="outline"
+							icon="i-lucide-refresh-cw"
+							class="min-h-11 shrink-0"
+							@click="reloadServerVersion"
+						>
+							{{ t('components.templateStudio.reloadServerVersion') }}
+						</UButton>
+					</div>
+					<UAlert
+						v-else-if="actionErrorDescription"
+						class="mb-4"
+						color="error"
+						variant="soft"
+						icon="i-lucide-circle-alert"
+						:title="t('components.templateStudio.actionErrorTitle')"
+						:description="actionErrorDescription"
+					/>
 					<UAlert
 						v-if="detailError"
 						class="mb-4"
@@ -44,22 +74,112 @@
 					<USkeleton v-if="loadingDetail" class="h-80 w-full rounded-xl" />
 					<ZTemplateStudioTemplateEditor
 						v-else
+						v-model:active-tab="activeTab"
 						:template-name="selectedSummary ? templateLabel(selectedSummary) : undefined"
-					/>
+					>
+						<template #actions>
+							<UButton
+								v-if="canEdit"
+								data-action="save-draft"
+								type="button"
+								icon="i-lucide-save"
+								:disabled="!isDirty"
+								:loading="saving"
+								class="min-h-11"
+								@click="saveDraft"
+							>
+								{{ t('components.templateStudio.saveDraft') }}
+							</UButton>
+							<UButton
+								v-if="canEdit && selected?.channel === 'email'"
+								data-action="test-send"
+								type="button"
+								color="neutral"
+								variant="outline"
+								icon="i-lucide-mail-check"
+								:loading="testing"
+								class="min-h-11"
+								@click="testSend"
+							>
+								{{ t('components.templateStudio.sendTest') }}
+							</UButton>
+							<UButton
+								v-if="canReset"
+								data-action="reset"
+								type="button"
+								color="error"
+								variant="outline"
+								icon="i-lucide-rotate-ccw"
+								:loading="resetting"
+								class="min-h-11"
+								@click="requestReset"
+							>
+								{{ t('components.templateStudio.resetToDefault') }}
+							</UButton>
+						</template>
+
+						<template #content>
+							<ZTemplateStudioContentEditor
+								v-if="detail"
+								:entry="detail"
+								:model-value="draft"
+								:field-errors="fieldErrors"
+								@update:path="templateStore.setConfigurationPath"
+							/>
+						</template>
+						<template #brand>
+							<ZTemplateStudioBrandEditor
+								v-if="detail"
+								:fields="detail.fields"
+								:model-value="draft"
+								:inherited="detail.inherited_values"
+								:system-defaults="detail.effective_preview_values"
+								:field-errors="fieldErrors"
+								@update:path="templateStore.setConfigurationPath"
+								@clear:path="templateStore.clearConfigurationOverride"
+							/>
+						</template>
+						<template #sections>
+							<ZTemplateStudioSectionEditor
+								v-if="detail"
+								:blocks="detail.blocks"
+								:model-value="draft.blocks"
+								@update:model-value="updateBlocks"
+							/>
+						</template>
+						<template #history>
+							<ZTemplateStudioRevisionHistory
+								:revisions="revisions"
+								:active-revision-id="detail?.active_revision?.id"
+								:schema-version="compatibleVersions.schemaVersion"
+								:system-template-version="compatibleVersions.systemTemplateVersion"
+								:timezone="schedule.timezone"
+								:can-restore="canRestore"
+								:restoring-revision-no="restoringRevisionNo"
+								@restore="requestRestore"
+							/>
+						</template>
+						<template v-if="canPublish" #administration>
+							<ZTemplateStudioActivationWindow
+								:start-date="schedule.startDate"
+								:end-date="schedule.endDate"
+								:timezone="schedule.timezone"
+								:disabled="publishDisabled"
+								:disabled-reason="publishDisabledReason"
+								:loading="publishing"
+								@confirm="requestPublish"
+							/>
+						</template>
+					</ZTemplateStudioTemplateEditor>
 				</main>
 
 				<aside data-testid="template-preview-region" class="min-w-0 self-start xl:sticky xl:top-4">
-					<UCard>
-						<div class="flex min-h-64 flex-col items-center justify-center gap-3 py-8 text-center">
-							<div class="flex size-12 items-center justify-center rounded-full bg-elevated">
-								<UIcon name="i-lucide-panel-right" class="size-6 text-muted" />
-							</div>
-							<div class="space-y-1">
-								<h2 class="font-semibold text-default">{{ t('components.templateStudio.preview') }}</h2>
-								<p class="text-sm text-muted">{{ t('components.templateStudio.previewComingSoon') }}</p>
-							</div>
-						</div>
-					</UCard>
+					<ZTemplateStudioTemplatePreview
+						:channel="selected?.channel ?? 'email'"
+						:preview="preview"
+						:loading="previewing"
+						@refresh="refreshPreview"
+					/>
 				</aside>
 			</div>
 
@@ -74,18 +194,45 @@
 </template>
 
 <script setup lang="ts">
-import { ZModalLeavePageConfirmation } from '#components';
+import { ZModalConfirmation, ZModalLeavePageConfirmation } from '#components';
 import { useDocumentTemplateStore } from '~/stores/DocumentTemplate/DocumentTemplate';
-import type { DocumentTemplateSummary } from '~/utils/types/document-template';
+import type { DocumentTemplateConfiguration, DocumentTemplateSummary } from '~/utils/types/document-template';
 
 const { t, te } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const overlay = useOverlay();
 const templateStore = useDocumentTemplateStore();
-const { summaries, selected, isDirty, loadingDetail, summaryError, detailError } = storeToRefs(templateStore);
+const {
+	summaries,
+	selected,
+	detail,
+	draft,
+	preview,
+	revisions,
+	isDirty,
+	loadingDetail,
+	summaryError,
+	detailError,
+	error,
+	conflict,
+	fieldErrors,
+	schedule,
+	saving,
+	previewing,
+	publishing,
+	testing,
+	resetting,
+	canEdit,
+	canPublish,
+	canRestore,
+	canReset,
+} = storeToRefs(templateStore);
+const activeTab = ref('content');
+const restoringRevisionNo = ref<number>();
 const templateUpdateConfirmed = ref(false);
 let isActive = true;
+let storeDisposed = false;
 let initialLoadSettled = false;
 let initialRouteSyncPending = false;
 let selectionOperation = 0;
@@ -103,6 +250,35 @@ const detailErrorDescription = computed(() => detailError.value === 'Failed to l
 	? t('components.templateStudio.loadDetailErrorDescription')
 	: detailError.value ?? undefined,
 );
+const actionErrorKeys: Record<string, string> = {
+	'Failed to save document template': 'components.templateStudio.saveError',
+	'Failed to preview document template': 'components.templateStudio.previewError',
+	'Failed to send test document template': 'components.templateStudio.testSendError',
+	'Failed to publish document template': 'components.templateStudio.publishError',
+	'Failed to reset document template': 'components.templateStudio.resetError',
+	'Failed to restore document template revision': 'components.templateStudio.restoreError',
+	'Failed to load document template revisions': 'components.templateStudio.historyError',
+	'Save draft before publishing': 'components.templateStudio.saveBeforePublishing',
+	'Schedule date is invalid': 'components.templateStudio.scheduleInvalidDate',
+	'Schedule start must be before its end': 'components.templateStudio.scheduleEndAfterStart',
+	'Schedule end must be in the future': 'components.templateStudio.scheduleEndFuture',
+};
+const actionErrorDescription = computed(() => {
+	if (!error.value || conflict.value) return undefined;
+	return t(actionErrorKeys[error.value] ?? 'components.templateStudio.actionErrorDescription');
+});
+const publishDisabled = computed(() => isDirty.value || !detail.value?.draft_revision);
+const publishDisabledReason = computed(() => {
+	if (isDirty.value) return t('components.templateStudio.saveBeforePublishing');
+	if (!detail.value?.draft_revision) return t('components.templateStudio.saveDraftBeforePublishing');
+	return undefined;
+});
+const compatibleVersions = computed(() => {
+	return {
+		schemaVersion: detail.value?.catalog_schema_version,
+		systemTemplateVersion: detail.value?.catalog_system_template_version,
+	};
+});
 
 function queryString(value: unknown): string | undefined {
 	const candidate = Array.isArray(value) ? value[0] : value;
@@ -137,6 +313,7 @@ async function selectTemplate(template: DocumentTemplateSummary): Promise<void> 
 	}
 	if (!isActive || operation !== selectionOperation) return;
 	if (selected.value?.channel === channel && selected.value.templateCode === template.template_code) return;
+	activeTab.value = 'content';
 	await templateStore.loadDetail(channel, template.template_code);
 }
 
@@ -146,17 +323,160 @@ async function syncSelectionFromRoute(): Promise<void> {
 	if (template) await selectTemplate(template);
 }
 
+function disposeTemplateStore(): void {
+	if (storeDisposed) return;
+	storeDisposed = true;
+	templateStore.dispose();
+}
+
 onScopeDispose(() => {
 	isActive = false;
 	selectionOperation += 1;
+	disposeTemplateStore();
 });
 
 useLeavePageGuard(isDirty, {
 	onLeave: () => {
 		selectionOperation += 1;
-		templateStore.dispose();
+		disposeTemplateStore();
 	},
 });
+
+function updateBlocks(blocks: NonNullable<DocumentTemplateConfiguration['blocks']>): void {
+	if (!detail.value) return;
+	for (const block of blocks) {
+		const descriptor = detail.value.blocks.find(candidate => candidate.id === block.id);
+		if (!descriptor || descriptor.required) continue;
+		const current = draft.value.blocks?.find(candidate => candidate.id === block.id)?.enabled ?? descriptor.default_enabled;
+		if (current !== block.enabled) templateStore.setBlockEnabled(block.id, block.enabled);
+	}
+}
+
+function openConfirmation(title: string, message: string, action: () => Promise<void>): void {
+	const confirmModal = overlay.create(ZModalConfirmation, {
+		props: {
+			title,
+			message,
+			onConfirm: async () => {
+				try {
+					await action();
+				} finally {
+					confirmModal.close();
+				}
+			},
+			onCancel: () => confirmModal.close(),
+		},
+	});
+	confirmModal.open();
+}
+
+function selectionMatches(channel: string, templateCode: string): boolean {
+	return isActive && selected.value?.channel === channel && selected.value.templateCode === templateCode;
+}
+
+type ActivationDates = { startDate: Date | null; endDate: Date | null };
+
+function activationError(window: ActivationDates, now = Date.now()): string | undefined {
+	if ((window.startDate && Number.isNaN(window.startDate.getTime())) || (window.endDate && Number.isNaN(window.endDate.getTime()))) {
+		return 'Schedule date is invalid';
+	}
+	if (window.startDate && window.endDate && window.endDate.getTime() <= window.startDate.getTime()) {
+		return 'Schedule start must be before its end';
+	}
+	if (window.endDate && window.endDate.getTime() <= now) return 'Schedule end must be in the future';
+	return undefined;
+}
+
+function requestPublish(window: { startDate: Date | null; endDate: Date | null }): void {
+	const selection = selected.value;
+	const draftRevision = detail.value?.draft_revision;
+	if (!selection || !draftRevision || publishDisabled.value) return;
+	const activation = {
+		startDate: window.startDate ? new Date(window.startDate) : null,
+		endDate: window.endDate ? new Date(window.endDate) : null,
+	};
+	const validationError = activationError(activation);
+	if (validationError) {
+		templateStore.error = validationError;
+		return;
+	}
+	const target = { ...selection, revisionId: draftRevision.id, revisionNo: draftRevision.revision_no };
+	const scheduled = activation.startDate !== null || activation.endDate !== null;
+	openConfirmation(
+		t(scheduled ? 'components.templateStudio.scheduleConfirmTitle' : 'components.templateStudio.publishConfirmTitle'),
+		t(scheduled ? 'components.templateStudio.scheduleConfirmMessage' : 'components.templateStudio.publishConfirmMessage', { number: target.revisionNo }),
+		async () => {
+			const currentDraft = detail.value?.draft_revision;
+			if (!selectionMatches(target.channel, target.templateCode) || isDirty.value
+				|| currentDraft?.id !== target.revisionId || currentDraft.revision_no !== target.revisionNo) return;
+			const confirmationError = activationError(activation);
+			if (confirmationError) {
+				templateStore.error = confirmationError;
+				return;
+			}
+			templateStore.schedule = {
+				...templateStore.schedule,
+				startDate: activation.startDate ? new Date(activation.startDate) : null,
+				endDate: activation.endDate ? new Date(activation.endDate) : null,
+			};
+			await templateStore.publish(target.revisionNo);
+		},
+	);
+}
+
+function requestReset(): void {
+	const selection = selected.value;
+	const version = detail.value?.version;
+	const previousDraftId = detail.value?.draft_revision?.id;
+	if (!selection || version === undefined) return;
+	openConfirmation(
+		t('components.templateStudio.resetConfirmTitle'),
+		t('components.templateStudio.resetConfirmMessage'),
+		async () => {
+			if (!selectionMatches(selection.channel, selection.templateCode) || detail.value?.version !== version) return;
+			await templateStore.resetTemplate();
+			if (!conflict.value && detail.value?.draft_revision?.id !== previousDraftId && !isDirty.value) activeTab.value = 'content';
+		},
+	);
+}
+
+function requestRestore(revisionNo: number): void {
+	const selection = selected.value;
+	const version = detail.value?.version;
+	const previousDraftId = detail.value?.draft_revision?.id;
+	if (!selection || version === undefined) return;
+	openConfirmation(
+		t('components.templateStudio.restoreConfirmTitle'),
+		t('components.templateStudio.restoreConfirmMessage', { number: revisionNo }),
+		async () => {
+			if (!selectionMatches(selection.channel, selection.templateCode) || detail.value?.version !== version) return;
+			restoringRevisionNo.value = revisionNo;
+			try {
+				await templateStore.restoreRevision(revisionNo);
+				if (!conflict.value && detail.value?.draft_revision?.id !== previousDraftId && !isDirty.value) activeTab.value = 'content';
+			} finally {
+				restoringRevisionNo.value = undefined;
+			}
+		},
+	);
+}
+
+async function saveDraft(): Promise<void> {
+	await templateStore.saveDraft();
+}
+
+async function testSend(): Promise<void> {
+	await templateStore.testSend();
+}
+
+async function refreshPreview(): Promise<void> {
+	if (isActive) await templateStore.previewDraft();
+}
+
+async function reloadServerVersion(): Promise<void> {
+	await templateStore.reloadAfterConflict();
+	if (!conflict.value) activeTab.value = 'content';
+}
 
 onBeforeRouteUpdate((to, from, next) => {
 	const templateChanged = queryString(to.query.channel) !== queryString(from.query.channel)
@@ -204,6 +524,21 @@ watch(
 			return;
 		}
 		void syncSelectionFromRoute();
+	},
+);
+
+watch(
+	() => templateStore.draft,
+	() => {
+		if (isActive && templateStore.detail && templateStore.selected) void templateStore.previewDraft();
+	},
+	{ deep: true },
+);
+
+watch(
+	() => [activeTab.value, selected.value?.channel, selected.value?.templateCode] as const,
+	([tab]) => {
+		if (isActive && tab === 'history' && selected.value) void templateStore.loadRevisions();
 	},
 );
 

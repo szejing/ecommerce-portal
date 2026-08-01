@@ -34,6 +34,8 @@ const detail: DocumentTemplateDetail = {
 	category: 'customer',
 	editable: true,
 	version: 2,
+	catalog_schema_version: 1,
+	catalog_system_template_version: 1,
 	fields: [{ path: 'content.greeting', label: 'Greeting', kind: 'rich-text', max_length: 500, allow_blank: true, allowed_tokens: ['{{customer.name}}'] }],
 	blocks: [{ id: 'order-items', label: 'Order items', required: true, default_enabled: true }],
 	allowed_tokens: ['{{customer.name}}'],
@@ -41,7 +43,7 @@ const detail: DocumentTemplateDetail = {
 	inherited_values: { merchantInfo: { companyName: 'Aster Home' } },
 	effective_preview_values: { merchantInfo: { companyName: 'Aster Home' } },
 	draft_revision: {
-		id: 'draft-1', revision_no: 2, status: 'draft', schema_version: 1, system_template_version: 1,
+		id: 'draft-1', revision_no: 2, status: 'draft', schema_version: 1, system_template_version: 1, created_by: null,
 		start_date: null, end_date: null, published_at: null, created_at: '2026-07-31T00:00:00.000Z',
 		configuration: { content: { greeting: '<p>Welcome</p>' }, blocks: [{ id: 'order-items', enabled: true, props: {} }] },
 	},
