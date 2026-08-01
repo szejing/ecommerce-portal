@@ -114,6 +114,20 @@ const configuration: DocumentTemplateConfiguration = {
 	],
 };
 
+function deferred<T>(): {
+	promise: Promise<T>;
+	resolve: (value: T) => void;
+	reject: (reason?: unknown) => void;
+} {
+	let resolve!: (value: T) => void;
+	let reject!: (reason?: unknown) => void;
+	const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+		resolve = resolvePromise;
+		reject = rejectPromise;
+	});
+	return { promise, resolve, reject };
+}
+
 afterEach(async () => {
 	vi.restoreAllMocks();
 	if (useNuxtApp().$i18n.locale.value !== 'en') await useNuxtApp().$i18n.setLocale('en');
@@ -503,6 +517,143 @@ describe('Template Studio brand and merchant information editor', () => {
 			modelValue: { ...configuration, brand: { ...configuration.brand, logoAssetId: 99 } },
 		});
 		expect(wrapper.get('[data-logo-preview]').attributes('src')).toBe('https://cdn.example.com/inherited-logo.png');
+	});
+
+	it('ignores a pending logo upload after the override is cleared', async () => {
+		const pending = deferred<{ image: { id: number; url: string } }>();
+		vi.spyOn(useNuxtApp().$api.image, 'upload').mockReturnValue(pending.promise);
+		const wrapper = await mountSuspended(BrandEditor, {
+			props: {
+				fields: brandFields,
+				modelValue: {
+					...configuration,
+					brand: { ...configuration.brand, logoAssetId: 7 },
+				},
+				logoUrl: 'https://cdn.example.com/current-logo.png',
+			},
+		});
+		wrapper.getComponent({ name: 'UFileUpload' }).vm.$emit(
+			'update:modelValue',
+			new File(['a'], 'a.png', { type: 'image/png' }),
+		);
+		await nextTick();
+		expect(wrapper.getComponent({ name: 'UFileUpload' }).props('disabled')).toBe(true);
+
+		await wrapper.get('[data-clear="brand.logoAssetId"]').trigger('click');
+		pending.resolve({ image: { id: 41, url: 'https://cdn.example.com/stale-a.png' } });
+		await flushPromises();
+
+		expect(wrapper.emitted('update:path')).toBeUndefined();
+		expect(wrapper.find('[data-logo-preview]').exists()).toBe(false);
+		expect(wrapper.getComponent({ name: 'UFileUpload' }).props('disabled')).toBe(false);
+	});
+
+	it('ignores a pending logo upload after an external controlled logo change', async () => {
+		const pending = deferred<{ image: { id: number; url: string } }>();
+		vi.spyOn(useNuxtApp().$api.image, 'upload').mockReturnValue(pending.promise);
+		const wrapper = await mountSuspended(BrandEditor, {
+			props: {
+				fields: brandFields,
+				modelValue: {
+					...configuration,
+					brand: { ...configuration.brand, logoAssetId: 7 },
+				},
+				logoUrl: 'https://cdn.example.com/current-logo.png',
+			},
+		});
+		wrapper.getComponent({ name: 'UFileUpload' }).vm.$emit(
+			'update:modelValue',
+			new File(['a'], 'a.png', { type: 'image/png' }),
+		);
+		await wrapper.setProps({
+			modelValue: {
+				...configuration,
+				brand: { ...configuration.brand, logoAssetId: 9 },
+			},
+			logoUrl: 'https://cdn.example.com/reset-logo.png',
+		});
+
+		pending.resolve({ image: { id: 41, url: 'https://cdn.example.com/stale-a.png' } });
+		await flushPromises();
+		expect(wrapper.emitted('update:path')).toBeUndefined();
+		expect(wrapper.get('[data-logo-preview]').attributes('src')).toBe('https://cdn.example.com/reset-logo.png');
+		expect(wrapper.getComponent({ name: 'UFileUpload' }).props('disabled')).toBe(false);
+	});
+
+	it('lets only the newest overlapping logo upload update the controlled value', async () => {
+		const uploadA = deferred<{ image: { id: number; url: string } }>();
+		const uploadB = deferred<{ image: { id: number; url: string } }>();
+		vi.spyOn(useNuxtApp().$api.image, 'upload')
+			.mockReturnValueOnce(uploadA.promise)
+			.mockReturnValueOnce(uploadB.promise);
+		const wrapper = await mountSuspended(BrandEditor, {
+			props: { fields: brandFields, modelValue: configuration, inherited: {} },
+		});
+		const fileUpload = wrapper.getComponent({ name: 'UFileUpload' });
+		fileUpload.vm.$emit('update:modelValue', new File(['a'], 'a.png', { type: 'image/png' }));
+		fileUpload.vm.$emit('update:modelValue', new File(['b'], 'b.png', { type: 'image/png' }));
+
+		uploadB.resolve({ image: { id: 52, url: 'https://cdn.example.com/logo-b.png' } });
+		await flushPromises();
+		expect(wrapper.emitted('update:path')).toEqual([['brand.logoAssetId', 52]]);
+		expect(wrapper.get('[data-logo-preview]').attributes('src')).toBe('https://cdn.example.com/logo-b.png');
+
+		uploadA.resolve({ image: { id: 51, url: 'https://cdn.example.com/logo-a.png' } });
+		await flushPromises();
+		expect(wrapper.emitted('update:path')).toEqual([['brand.logoAssetId', 52]]);
+		expect(wrapper.get('[data-logo-preview]').attributes('src')).toBe('https://cdn.example.com/logo-b.png');
+	});
+
+	it('does not let a stale rejection replace the current upload loading or error state', async () => {
+		const uploadA = deferred<{ image: { id: number; url: string } }>();
+		const uploadB = deferred<{ image: { id: number; url: string } }>();
+		vi.spyOn(useNuxtApp().$api.image, 'upload')
+			.mockReturnValueOnce(uploadA.promise)
+			.mockReturnValueOnce(uploadB.promise);
+		const wrapper = await mountSuspended(BrandEditor, {
+			props: { fields: brandFields, modelValue: configuration, inherited: {} },
+		});
+		const fileUpload = wrapper.getComponent({ name: 'UFileUpload' });
+		fileUpload.vm.$emit('update:modelValue', new File(['a'], 'a.png', { type: 'image/png' }));
+		fileUpload.vm.$emit('update:modelValue', new File(['b'], 'b.png', { type: 'image/png' }));
+
+		uploadA.reject(new Error(IMAGE_FORMAT_ERROR_MESSAGE));
+		await flushPromises();
+		expect(wrapper.find('[data-field="brand.logoAssetId"] [role="alert"]').exists()).toBe(false);
+		expect(fileUpload.props('disabled')).toBe(true);
+
+		uploadB.resolve({ image: { id: 52, url: 'https://cdn.example.com/logo-b.png' } });
+		await flushPromises();
+		expect(wrapper.find('[data-field="brand.logoAssetId"] [role="alert"]').exists()).toBe(false);
+		expect(fileUpload.props('disabled')).toBe(false);
+	});
+
+	it('ignores a pending logo upload after the editor unmounts', async () => {
+		const pending = deferred<{ image: { id: number; url: string } }>();
+		vi.spyOn(useNuxtApp().$api.image, 'upload').mockReturnValue(pending.promise);
+		const onUpdatePath = vi.fn();
+		const wrapper = await mountSuspended(BrandEditor, {
+			props: {
+				fields: brandFields,
+				modelValue: configuration,
+				inherited: {},
+				'onUpdate:path': onUpdatePath,
+			},
+		});
+		wrapper.getComponent({ name: 'UFileUpload' }).vm.$emit(
+			'update:modelValue',
+			new File(['a'], 'a.png', { type: 'image/png' }),
+		);
+		const setupState = (wrapper.vm as unknown as {
+			$: { setupState: { uploading: boolean; logoPreviewUrl?: string } };
+		}).$.setupState;
+		wrapper.unmount();
+		pending.resolve({ image: { id: 41, url: 'https://cdn.example.com/stale-a.png' } });
+		await flushPromises();
+
+		expect(onUpdatePath).not.toHaveBeenCalled();
+		expect(setupState.uploading).toBe(true);
+		expect(setupState.logoPreviewUrl).toBeUndefined();
 	});
 
 	it('uses the managed logo upload and persists only the returned asset ID', async () => {

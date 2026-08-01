@@ -147,6 +147,13 @@ const logoPreviewUrl = ref(props.logoUrl);
 const transientLogoAssetId = ref<number>();
 const uploading = ref(false);
 const uploadError = ref('');
+let logoUploadGeneration = 0;
+
+function invalidateLogoUpload(): void {
+	logoUploadGeneration += 1;
+	uploading.value = false;
+	uploadError.value = '';
+}
 
 const editableFields = computed(() => props.fields.filter((field) => {
 	if (field.kind === 'asset') return field.path === 'brand.logoAssetId';
@@ -166,16 +173,30 @@ watch(
 	{ deep: true, immediate: true },
 );
 
-watch(() => props.modelValue.brand?.logoAssetId, (value) => {
-	if (value === transientLogoAssetId.value) return;
-	transientLogoAssetId.value = undefined;
-	logoPreviewUrl.value = props.logoUrl;
-});
+watch(
+	() => [
+		props.modelValue,
+		props.modelValue.brand?.logoAssetId,
+		props.inherited.brand?.logoAssetId,
+		props.systemDefaults.brand?.logoAssetId,
+		props.logoUrl,
+		props.fields,
+	] as const,
+	([, logoAssetId, inheritedLogoAssetId, defaultLogoAssetId, logoUrl, fields], previous) => {
+		const appliesCurrentUpload = transientLogoAssetId.value !== undefined
+			&& logoAssetId === transientLogoAssetId.value
+			&& inheritedLogoAssetId === previous[2]
+			&& defaultLogoAssetId === previous[3]
+			&& logoUrl === previous[4]
+			&& fields === previous[5];
+		if (appliesCurrentUpload) return;
+		invalidateLogoUpload();
+		transientLogoAssetId.value = undefined;
+		logoPreviewUrl.value = logoUrl;
+	},
+);
 
-watch(() => props.logoUrl, (value) => {
-	transientLogoAssetId.value = undefined;
-	logoPreviewUrl.value = value;
-});
+onBeforeUnmount(() => { logoUploadGeneration += 1; });
 
 function pathParts(path: string): ['brand' | 'merchantInfo', string] | null {
 	const [section, key, ...rest] = path.split('.');
@@ -268,9 +289,9 @@ function clearOverride(path: string): void {
 		delete colorErrors[path];
 	}
 	if (path === 'brand.logoAssetId') {
+		invalidateLogoUpload();
 		transientLogoAssetId.value = undefined;
 		logoPreviewUrl.value = undefined;
-		uploadError.value = '';
 	}
 	emit('clear:path', path);
 }
@@ -282,20 +303,38 @@ function hideField(path: string): void {
 async function uploadLogo(value: File | File[] | null | undefined): Promise<void> {
 	const file = Array.isArray(value) ? value[0] : value;
 	if (!file) return;
+	const requestGeneration = ++logoUploadGeneration;
+	const selectionIdentity = {
+		modelValue: props.modelValue,
+		logoAssetId: props.modelValue.brand?.logoAssetId,
+		inheritedLogoAssetId: props.inherited.brand?.logoAssetId,
+		defaultLogoAssetId: props.systemDefaults.brand?.logoAssetId,
+		logoUrl: props.logoUrl,
+		fields: props.fields,
+	};
+	const isCurrentRequest = (): boolean => requestGeneration === logoUploadGeneration
+		&& selectionIdentity.modelValue === props.modelValue
+		&& selectionIdentity.logoAssetId === props.modelValue.brand?.logoAssetId
+		&& selectionIdentity.inheritedLogoAssetId === props.inherited.brand?.logoAssetId
+		&& selectionIdentity.defaultLogoAssetId === props.systemDefaults.brand?.logoAssetId
+		&& selectionIdentity.logoUrl === props.logoUrl
+		&& selectionIdentity.fields === props.fields;
 	uploading.value = true;
 	uploadError.value = '';
 	try {
 		const { image } = await $api.image.upload(file, dir.merchant, 'merchant-logo');
+		if (!isCurrentRequest()) return;
 		if (!(typeof image?.id === 'number' && image.id > 0)) throw new Error(t('components.templateStudio.logoUploadError'));
 		transientLogoAssetId.value = image.id;
 		logoPreviewUrl.value = typeof image.url === 'string' ? image.url : undefined;
 		emit('update:path', 'brand.logoAssetId', image.id);
 	} catch (error) {
+		if (!isCurrentRequest()) return;
 		uploadError.value = error instanceof Error && error.message === IMAGE_FORMAT_ERROR_MESSAGE
 			? t('components.templateStudio.logoUnsupportedFormatError')
 			: t('components.templateStudio.logoUploadError');
 	} finally {
-		uploading.value = false;
+		if (requestGeneration === logoUploadGeneration) uploading.value = false;
 	}
 }
 </script>
