@@ -105,6 +105,7 @@ function fieldLabel(field: DocumentTemplateField): string {
 }
 
 function updateField(path: string, value: string): void {
+	if (fieldValue(path) === value) return;
 	emit('update:path', path, value);
 }
 

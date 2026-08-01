@@ -327,8 +327,10 @@ describe('Template Studio restricted rich text editor', () => {
 			getSelection: vi.fn(() => ({ index: 0, length: 0 })),
 			deleteText: vi.fn(),
 			insertText: vi.fn(),
+			insertEmbed: vi.fn(),
 			updateContents: vi.fn(),
 			setSelection: vi.fn(),
+			getIndex: vi.fn(),
 		};
 		const quill = wrapper.getComponent({ name: 'QuillEditor' });
 		quill.vm.$emit('ready', editor);
@@ -338,12 +340,12 @@ describe('Template Studio restricted rich text editor', () => {
 		expect(editor.updateContents).toHaveBeenCalledWith(expect.anything(), 'user');
 		expect((editor.updateContents.mock.calls[0]?.[0] as { ops: unknown[] }).ops).toEqual([
 			{ retain: 4 },
-			{ insert: '{{customerName}}' },
+			{ insert: { templateToken: '{{customerName}}' } },
 			{ delete: 3 },
 		]);
 		expect(editor.deleteText).not.toHaveBeenCalled();
 		expect(editor.insertText).not.toHaveBeenCalled();
-		expect(editor.setSelection).toHaveBeenCalledWith(20, 0, 'silent');
+		expect(editor.setSelection).toHaveBeenCalledWith(5, 0, 'silent');
 	});
 
 	it('keeps the parent and editor synchronized when a selected token replacement exceeds the limit', async () => {
@@ -362,10 +364,12 @@ describe('Template Studio restricted rich text editor', () => {
 		const editor = {
 			root: document.createElement('div'),
 			getSelection: vi.fn(),
-			deleteText: vi.fn(() => quill.vm.$emit('update:content', '<p>Hello ld</p>')),
-			insertText: vi.fn(() => quill.vm.$emit('update:content', '<p>Hello {{customerName}}ld</p>')),
+			deleteText: vi.fn(),
+			insertText: vi.fn(),
+			insertEmbed: vi.fn(),
 			updateContents: vi.fn(() => quill.vm.$emit('update:content', '<p>Hello {{customerName}}ld</p>')),
 			setSelection: vi.fn(),
+			getIndex: vi.fn(),
 		};
 		quill.vm.$emit('ready', editor);
 		quill.vm.$emit('selectionChange', { range: { index: 6, length: 3 } });
@@ -422,6 +426,37 @@ describe('Template Studio restricted rich text editor', () => {
 
 		quill.vm.$emit('update:content', '<p>12345</p>');
 		expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['<p>12345</p>']);
+	});
+
+	it('registers a templateToken embed format and hydrates allowlisted tokens as chips in HTML', async () => {
+		const wrapper = await mountSuspended(RichTextEditor, {
+			props: {
+				modelValue: '<p>Hello {{customerName}}</p>',
+				allowedTokens: ['customerName'],
+			},
+		});
+		const quill = wrapper.getComponent({ name: 'QuillEditor' });
+		expect(quill.props('options').formats).toContain('templateToken');
+		// Content passed into Quill should be hydrated chip HTML, not raw braces only:
+		expect(String(quill.props('content'))).toContain('data-token="customerName"');
+		expect(String(quill.props('content'))).not.toContain('{{unknown}}');
+	});
+
+	it('serializes templateToken chips back to literal {{token}} on emit', async () => {
+		const wrapper = await mountSuspended(RichTextEditor, {
+			props: {
+				modelValue: '<p>Hello {{customerName}}</p>',
+				allowedTokens: ['{{customerName}}'],
+			},
+		});
+		const quill = wrapper.getComponent({ name: 'QuillEditor' });
+		quill.vm.$emit(
+			'update:content',
+			'<p>Hello <span class="template-token-chip" data-token="customerName">{{customerName}}</span></p>',
+		);
+		await nextTick();
+		expect(wrapper.emitted('update:modelValue')?.[0]?.[0]).toContain('{{customerName}}');
+		expect(wrapper.emitted('update:modelValue')?.[0]?.[0]).not.toContain('template-token-chip');
 	});
 });
 
