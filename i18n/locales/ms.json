@@ -1208,6 +1208,7 @@
 			"loadDetailError": "Templat ini tidak dapat dimuatkan",
 			"loadDetailErrorDescription": "Templat dokumen ini tidak dapat dimuatkan. Sila cuba lagi.",
 			"availableTokens": "Token tersedia",
+			"removeToken": "Buang token {token}",
 			"richTextToolbar": "Pemformatan teks berformat",
 			"bold": "Tebal",
 			"italic": "Condong",

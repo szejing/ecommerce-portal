@@ -1209,6 +1209,7 @@
 			"loadDetailError": "Unable to load this template",
 			"loadDetailErrorDescription": "This document template could not be loaded. Please try again.",
 			"availableTokens": "Available tokens",
+			"removeToken": "Remove token {token}",
 			"richTextToolbar": "Rich text formatting",
 			"bold": "Bold",
 			"italic": "Italic",
