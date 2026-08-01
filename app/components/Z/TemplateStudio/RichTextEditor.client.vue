@@ -89,9 +89,34 @@ const quill = shallowRef<QuillInstance>();
 const selection = ref<QuillRange>({ index: 0, length: 0 });
 let rejectedContentUpdate = false;
 let removeClickBound = false;
-
-const editorContent = computed(() =>
+/** Last serialized storage HTML we emitted (or last external model applied). */
+let lastSerialized = props.modelValue;
+/**
+ * Hydrated HTML shown to Quill. Only updated for external modelValue changes —
+ * never re-hydrated from self-echo, or Quill's embed DOM fights setHTML.
+ */
+const editorContent = ref(
 	hydrateTemplateTokensInHtml(props.modelValue, props.allowedTokens),
+);
+
+function currentSerializedFromEditor(): string | undefined {
+	const root = quill.value?.root;
+	if (!root?.innerHTML) return undefined;
+	return serializeTemplateTokenHtml(root.innerHTML);
+}
+
+function applyExternalModelValue(html: string): void {
+	lastSerialized = html;
+	editorContent.value = hydrateTemplateTokensInHtml(html, props.allowedTokens);
+}
+
+watch(
+	() => props.modelValue,
+	(next) => {
+		const live = currentSerializedFromEditor();
+		if (next === lastSerialized || (live !== undefined && next === live)) return;
+		applyExternalModelValue(next);
+	},
 );
 
 function tokenName(token: string): string {
@@ -185,9 +210,12 @@ function updateContent(value: unknown): void {
 	const serialized = serializeTemplateTokenHtml(value);
 	if (props.maxLength !== undefined && serialized.length > props.maxLength) {
 		rejectedContentUpdate = true;
-		editorRef.value?.setContents?.(editorContent.value, 'silent');
+		const restore = hydrateTemplateTokensInHtml(props.modelValue, props.allowedTokens);
+		editorContent.value = restore;
+		editorRef.value?.setContents?.(restore, 'silent');
 		return;
 	}
+	lastSerialized = serialized;
 	emit('update:modelValue', serialized);
 }
 

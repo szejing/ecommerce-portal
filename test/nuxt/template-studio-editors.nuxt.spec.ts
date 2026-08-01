@@ -431,15 +431,18 @@ describe('Template Studio restricted rich text editor', () => {
 	it('registers a templateToken embed format and hydrates allowlisted tokens as chips in HTML', async () => {
 		const wrapper = await mountSuspended(RichTextEditor, {
 			props: {
-				modelValue: '<p>Hello {{customerName}}</p>',
+				modelValue: '<p>Hello {{customerName}} and {{unknown}}</p>',
 				allowedTokens: ['customerName'],
 			},
 		});
 		const quill = wrapper.getComponent({ name: 'QuillEditor' });
 		expect(quill.props('options').formats).toContain('templateToken');
+		const content = String(quill.props('content'));
 		// Content passed into Quill should be hydrated chip HTML, not raw braces only:
-		expect(String(quill.props('content'))).toContain('data-token="customerName"');
-		expect(String(quill.props('content'))).not.toContain('{{unknown}}');
+		expect(content).toContain('data-token="customerName"');
+		// Unknown tokens stay literal text (un-chipped):
+		expect(content).toContain('{{unknown}}');
+		expect(content).not.toContain('data-token="unknown"');
 	});
 
 	it('serializes templateToken chips back to literal {{token}} on emit', async () => {
