@@ -35,6 +35,7 @@ import ReasonModule from './reason/reason';
 import NotificationModule from './notification/notification';
 import StaffDepartmentModule from './staff-department/staff-department';
 import ActivityLogModule from './activity-log/activity-log';
+import DocumentTemplateModule from './document-template/document-template';
 
 export {
 	CrmUserModule,
@@ -74,4 +75,5 @@ export {
 	NotificationModule,
 	StaffDepartmentModule,
 	ActivityLogModule,
+	DocumentTemplateModule,
 };

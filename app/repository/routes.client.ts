@@ -293,6 +293,17 @@ const MerchantRoutes = {
 		Update: (code: string) => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.REASONS}/${encodeURIComponent(code)}`,
 		Delete: (code: string) => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.REASONS}/${encodeURIComponent(code)}`,
 	},
+	DocumentTemplates: {
+		List: () => `${prefix}/${API_PATH.MERCHANT}/document-templates`,
+		Single: (channel: string, templateCode: string) => `${prefix}/${API_PATH.MERCHANT}/document-templates/${encodeURIComponent(channel)}/${encodeURIComponent(templateCode)}`,
+		SaveDraft: (channel: string, templateCode: string) => `${prefix}/${API_PATH.MERCHANT}/document-templates/${encodeURIComponent(channel)}/${encodeURIComponent(templateCode)}/draft`,
+		Preview: (channel: string, templateCode: string) => `${prefix}/${API_PATH.MERCHANT}/document-templates/${encodeURIComponent(channel)}/${encodeURIComponent(templateCode)}/preview`,
+		TestSend: (channel: string, templateCode: string) => `${prefix}/${API_PATH.MERCHANT}/document-templates/${encodeURIComponent(channel)}/${encodeURIComponent(templateCode)}/test-send`,
+		Publish: (channel: string, templateCode: string) => `${prefix}/${API_PATH.MERCHANT}/document-templates/${encodeURIComponent(channel)}/${encodeURIComponent(templateCode)}/publish`,
+		Reset: (channel: string, templateCode: string) => `${prefix}/${API_PATH.MERCHANT}/document-templates/${encodeURIComponent(channel)}/${encodeURIComponent(templateCode)}/reset`,
+		Revisions: (channel: string, templateCode: string) => `${prefix}/${API_PATH.MERCHANT}/document-templates/${encodeURIComponent(channel)}/${encodeURIComponent(templateCode)}/revisions`,
+		Restore: (channel: string, templateCode: string, revisionNo: number | string) => `${prefix}/${API_PATH.MERCHANT}/document-templates/${encodeURIComponent(channel)}/${encodeURIComponent(templateCode)}/revisions/${encodeURIComponent(String(revisionNo))}/restore`,
+	},
 };
 
 export default MerchantRoutes;

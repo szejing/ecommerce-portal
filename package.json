@@ -45,6 +45,7 @@
 		"nuxt": "4.4.8",
 		"pinia": "^3.0.4",
 		"postcss": "^8.5.15",
+		"quill-mention": "^6.1.1",
 		"vee-validate": "^4.15.1",
 		"vue": "latest",
 		"vue-router": "latest",

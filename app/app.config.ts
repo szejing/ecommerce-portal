@@ -26,6 +26,13 @@ export default defineAppConfig({
 			},
 		},
 
+		//* * UButton */
+		button: {
+			slots: {
+				base: 'cursor-pointer',
+			},
+		},
+
 		//* * UBadge */
 		badge: {
 			slots: {
