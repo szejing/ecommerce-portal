@@ -41,6 +41,7 @@ const detail: DocumentTemplateDetail = {
 	allowed_tokens: ['{{customer.name}}'],
 	configuration: { content: { greeting: '<p>Welcome</p>' }, blocks: [{ id: 'order-items', enabled: true, props: {} }] },
 	inherited_values: { merchantInfo: { companyName: 'Aster Home' } },
+	catalog_default_values: { brand: { primaryColor: '#EE7F01' } },
 	effective_preview_values: { merchantInfo: { companyName: 'Aster Home' } },
 	draft_revision: {
 		id: 'draft-1', revision_no: 2, status: 'draft', schema_version: 1, system_template_version: 1, created_by: null,

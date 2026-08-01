@@ -47,7 +47,14 @@
 									{{ dateLabel(startDate, 'components.templateStudio.immediate') }}
 								</UButton>
 								<template #content="{ close }">
-									<ZDateTimePicker v-model="startDate" @close="close" />
+									<ZDateTimePicker
+										v-model="startDate"
+										:select-time-label="t('components.templateStudio.selectTime')"
+										:time-input-label="t('components.templateStudio.activationTimeInput')"
+										:cancel-label="t('components.templateStudio.cancelDateTime')"
+										:apply-label="t('components.templateStudio.applyDateTime')"
+										@close="close"
+									/>
 								</template>
 							</UPopover>
 							<UButton
@@ -78,7 +85,14 @@
 									{{ dateLabel(endDate, 'components.templateStudio.indefinite') }}
 								</UButton>
 								<template #content="{ close }">
-									<ZDateTimePicker v-model="endDate" @close="close" />
+									<ZDateTimePicker
+										v-model="endDate"
+										:select-time-label="t('components.templateStudio.selectTime')"
+										:time-input-label="t('components.templateStudio.activationTimeInput')"
+										:cancel-label="t('components.templateStudio.cancelDateTime')"
+										:apply-label="t('components.templateStudio.applyDateTime')"
+										@close="close"
+									/>
 								</template>
 							</UPopover>
 							<UButton

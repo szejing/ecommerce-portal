@@ -90,6 +90,7 @@ export type DocumentTemplateDetail = DocumentTemplateDescriptor & {
 	allowed_tokens: string[];
 	configuration: DocumentTemplateConfiguration;
 	inherited_values: { merchantInfo?: DocumentTemplateConfiguration['merchantInfo'] };
+	catalog_default_values: DocumentTemplateConfiguration;
 	effective_preview_values: DocumentTemplateConfiguration;
 	draft_revision: DocumentTemplateRevision | null;
 	latest_published_revision: DocumentTemplateRevision | null;

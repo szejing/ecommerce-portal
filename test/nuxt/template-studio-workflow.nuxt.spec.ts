@@ -3,9 +3,12 @@ import { setActivePinia } from 'pinia';
 import { defineComponent, h, nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime';
+import { flushPromises } from '@vue/test-utils';
 import { KEY, UserRoles } from 'yeppi-common';
 import { NuxtPage } from '#components';
 import ActivationWindow from '~/components/Z/TemplateStudio/ActivationWindow.vue';
+import DateTimePicker from '~/components/Z/DateTimePicker.vue';
+import BrandEditor from '~/components/Z/TemplateStudio/BrandEditor.vue';
 import ContentEditor from '~/components/Z/TemplateStudio/ContentEditor.vue';
 import RevisionHistory from '~/components/Z/TemplateStudio/RevisionHistory.vue';
 import SectionEditor from '~/components/Z/TemplateStudio/SectionEditor.vue';
@@ -105,6 +108,7 @@ const detailFixture: DocumentTemplateDetail = {
 	allowed_tokens: ['invoiceNumber'],
 	configuration: savedDraft.configuration,
 	inherited_values: { merchantInfo: { companyName: 'Aster Home' } },
+	catalog_default_values: { brand: { primaryColor: '#EE7F01' } },
 	effective_preview_values: { ...savedDraft.configuration, brand: { primaryColor: '#EE7F01' } },
 	draft_revision: savedDraft,
 	latest_published_revision: activeRevision,
@@ -216,6 +220,33 @@ describe('ActivationWindow', () => {
 			expect(wrapper.get('[role="alert"]').text()).toContain('future');
 		} finally {
 			vi.useRealTimers();
+		}
+	});
+
+	it('passes localized Malay controls and an accessible time label to the date-time picker', async () => {
+		try {
+			await useNuxtApp().$i18n.setLocale('ms');
+			const wrapper = await mountSuspended(ActivationWindow, {
+				props: { timezone: 'Asia/Kuala_Lumpur' },
+			});
+
+			await wrapper.get('[data-mode="schedule"]').trigger('click');
+			await wrapper.get('[data-date="start"]').trigger('click');
+			await flushPromises();
+			const picker = wrapper.getComponent(DateTimePicker);
+
+			expect(picker.props()).toMatchObject({
+				selectTimeLabel: 'Pilih masa',
+				cancelLabel: 'Batal',
+				applyLabel: 'Guna',
+				timeInputLabel: 'Masa pengaktifan',
+			});
+			expect(picker.get('input[type="time"]').attributes('aria-label')).toBe('Masa pengaktifan');
+			expect(picker.text()).toContain('Batal');
+			expect(picker.text()).toContain('Guna');
+			expect(picker.text()).not.toContain('Cancel');
+		} finally {
+			await useNuxtApp().$i18n.setLocale('en');
 		}
 	});
 });
@@ -353,6 +384,42 @@ describe('Template Studio workflow', () => {
 		});
 		await nextTick();
 		expect(wrapper.findComponent(SectionEditor).exists()).toBe(true);
+	});
+
+	it('uses catalog defaults after clearing an override and sends the same resolved contract to preview', async () => {
+		const { wrapper, store, previewDraft } = await mountWorkflow();
+		previewDraft.mockRestore();
+		store.detail = {
+			...store.detail!,
+			catalog_default_values: { brand: { primaryColor: '#EE7F01' } },
+			effective_preview_values: { brand: { primaryColor: '#112233' } },
+		};
+		store.setBaseline({ brand: { primaryColor: '#112233' } });
+		const apiPreview = vi.spyOn(useNuxtApp().$api.documentTemplate, 'previewEmail').mockResolvedValue({
+			html: '<p style="color:#EE7F01">Catalog default</p>',
+			subject: 'Invoice',
+			revision_id: null,
+			revision_no: null,
+		});
+		vi.useFakeTimers();
+
+		await wrapper.findAll('[role="tab"]').find(tab => tab.text() === 'Brand')!.trigger('mousedown', {
+			button: 0,
+			ctrlKey: false,
+		});
+		await nextTick();
+		const editor = wrapper.getComponent(BrandEditor);
+		expect(editor.props('systemDefaults')).toEqual({ brand: { primaryColor: '#EE7F01' } });
+		expect(editor.get('[data-color-text="brand.primaryColor"]').element).toHaveProperty('value', '#112233');
+
+		await editor.get('[data-clear="brand.primaryColor"]').trigger('click');
+		await nextTick();
+		expect(editor.get('[data-color-text="brand.primaryColor"]').element).toHaveProperty('value', '#EE7F01');
+		expect(editor.get('[data-field="brand.primaryColor"] [data-source="default"]').text()).toBe('System default');
+		expect(store.draft.brand).toBeUndefined();
+
+		await vi.advanceTimersByTimeAsync(400);
+		expect(apiPreview).toHaveBeenCalledWith('email', 'invoice', { configuration: {} });
 	});
 
 	it('debounces edited previews by 400 ms, supports manual refresh, and cancels on unmount', async () => {
@@ -548,6 +615,39 @@ describe('Template Studio workflow', () => {
 		expect(wrapper.getComponent(TemplateEditor).props('activeTab')).toBe('content');
 		expect(store.detail?.draft_revision?.id).toBe(createdDraft.id);
 		expect(store.isDirty).toBe(false);
+	});
+
+	it('resolves the catalog default after reset without retaining the previous effective override', async () => {
+		const { wrapper, store } = await mountWorkflow();
+		store.detail = {
+			...store.detail!,
+			catalog_default_values: { brand: { primaryColor: '#EE7F01' } },
+			effective_preview_values: { brand: { primaryColor: '#112233' } },
+		};
+		store.setBaseline({ brand: { primaryColor: '#112233' } });
+		vi.spyOn(useNuxtApp().$api.documentTemplate, 'reset').mockResolvedValue({
+			version: 4,
+			draft_revision: revision(8, {
+				id: 'draft-reset-default',
+				status: 'draft',
+				published_at: null,
+				configuration: {},
+			}),
+		});
+
+		await wrapper.get('[data-action="reset"]').trigger('click');
+		await overlayMocks.props?.onConfirm?.();
+		await wrapper.findAll('[role="tab"]').find(tab => tab.text() === 'Brand')!.trigger('mousedown', {
+			button: 0,
+			ctrlKey: false,
+		});
+		await nextTick();
+
+		const editor = wrapper.getComponent(BrandEditor);
+		expect(editor.get('[data-color-text="brand.primaryColor"]').element).toHaveProperty('value', '#EE7F01');
+		expect(editor.get('[data-field="brand.primaryColor"] [data-source="default"]').text()).toBe('System default');
+		expect(store.detail?.catalog_default_values.brand?.primaryColor).toBe('#EE7F01');
+		expect(store.detail?.effective_preview_values.brand?.primaryColor).toBe('#112233');
 	});
 
 	it('shows a compact 409 conflict with an explicit server reload and no raw error text', async () => {

@@ -133,7 +133,7 @@
 								:fields="detail.fields"
 								:model-value="draft"
 								:inherited="detail.inherited_values"
-								:system-defaults="detail.effective_preview_values"
+								:system-defaults="detail.catalog_default_values"
 								:field-errors="fieldErrors"
 								@update:path="templateStore.setConfigurationPath"
 								@clear:path="templateStore.clearConfigurationOverride"

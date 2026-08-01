@@ -448,6 +448,26 @@ describe('Template Studio brand and merchant information editor', () => {
 			.toHaveProperty('value', '#ABCDEF');
 	});
 
+	it('drops a cleared or reset override from its local colour cache and resolves the catalog default', async () => {
+		const wrapper = await mountSuspended(BrandEditor, {
+			props: {
+				fields: brandFields,
+				modelValue: { brand: { primaryColor: '#112233' } },
+				inherited: {},
+				systemDefaults: { brand: { primaryColor: '#EE7F01' } },
+			},
+		});
+
+		await wrapper.get('[data-clear="brand.primaryColor"]').trigger('click');
+		await wrapper.setProps({ modelValue: {} });
+		expect(wrapper.get('[data-color-text="brand.primaryColor"]').element).toHaveProperty('value', '#EE7F01');
+		expect(wrapper.get('[data-field="brand.primaryColor"] [data-source="default"]').text()).toBe('System default');
+
+		await wrapper.setProps({ modelValue: { brand: { primaryColor: '#445566' } } });
+		await wrapper.setProps({ modelValue: {} });
+		expect(wrapper.get('[data-color-text="brand.primaryColor"]').element).toHaveProperty('value', '#EE7F01');
+	});
+
 	it('keeps merchant information controlled after clear, edit, hide, and external updates', async () => {
 		const wrapper = await mountSuspended(BrandEditor, {
 			props: {
