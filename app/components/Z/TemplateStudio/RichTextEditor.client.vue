@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { Delta, Quill, QuillEditor } from '@vueup/vue-quill';
+import { Delta, QuillEditor } from '@vueup/vue-quill';
 import { Mention, MentionBlot } from 'quill-mention';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import 'quill-mention/dist/quill.mention.css';
@@ -37,7 +37,6 @@ type QuillContents = { ops?: Array<{ insert?: string | Record<string, unknown> }
 type QuillInstance = {
 	root: HTMLElement;
 	getSelection: (focus?: boolean) => QuillRange | null;
-	getIndex: (blot: unknown) => number;
 	getContents: () => QuillContents;
 	on: (event: string, handler: (...args: unknown[]) => void) => void;
 	updateContents: (change: Delta, source?: string) => void;
@@ -92,7 +91,6 @@ const editorRef = ref<{
 const quill = shallowRef<QuillInstance>();
 const selection = ref<QuillRange>({ index: 0, length: 0 });
 let rejectedContentUpdate = false;
-const removeClickBoundEditors = new WeakSet<object>();
 const textChangeBoundEditors = new WeakSet<object>();
 let chipifying = false;
 /** Last serialized storage HTML we emitted (or last external model applied). */
@@ -183,28 +181,6 @@ const mentionModules = computed(() => {
 	];
 });
 
-function bindTokenRemove(editor: QuillInstance): void {
-	if (removeClickBoundEditors.has(editor) || !editor.root?.addEventListener) return;
-	removeClickBoundEditors.add(editor);
-	editor.root.addEventListener('click', (event: Event) => {
-		const target = event.target as HTMLElement | null;
-		const button = target?.closest?.('[data-token-remove]') as HTMLElement | null;
-		if (!button || !editor.root.contains(button)) return;
-		event.preventDefault();
-		event.stopPropagation();
-		const chip = button.closest('.template-token-chip');
-		if (!chip) return;
-		const blot = Quill.find(chip);
-		if (!blot) return;
-		const index = editor.getIndex(blot);
-		editor.deleteText(index, 1, 'user');
-	});
-}
-
-/**
- * Convert newly completed allowlisted `{{token}}` plain text into embeds.
- * Uses deleteText/insertEmbed (api source) — does not rebind `:content`.
- */
 function chipifyPlainTokensInEditor(editor: QuillInstance): void {
 	if (chipifying || !props.allowedTokens.length) return;
 	const ops = editor.getContents?.()?.ops;
@@ -251,7 +227,6 @@ function bindPlainTokenChipify(editor: QuillInstance): void {
 function rememberEditor(instance: QuillInstance): void {
 	quill.value = instance;
 	if (props.ariaLabel) instance.root.setAttribute('aria-label', props.ariaLabel);
-	bindTokenRemove(instance);
 	bindPlainTokenChipify(instance);
 }
 
@@ -334,8 +309,8 @@ watch(() => props.ariaLabel, (value) => {
 :deep(.ql-editor .template-token-chip) {
 	display: inline-flex;
 	align-items: center;
-	gap: 0.25rem;
-	border-radius: 9999px;
+	border-radius: 0.375rem;
+	margin-right: 0.25rem;
 	border: 1px solid color-mix(in oklab, var(--ui-primary) 30%, transparent);
 	background-color: color-mix(in oklab, var(--ui-primary) 10%, transparent);
 	padding: 0.125rem 0.5rem;
@@ -345,16 +320,5 @@ watch(() => props.ariaLabel, (value) => {
 	color: var(--ui-primary);
 	vertical-align: middle;
 	user-select: none;
-}
-
-:deep(.ql-editor .template-token-chip button[data-token-remove]) {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 1rem;
-	height: 1rem;
-	border-radius: 9999px;
-	color: var(--ui-primary);
-	cursor: pointer;
 }
 </style>

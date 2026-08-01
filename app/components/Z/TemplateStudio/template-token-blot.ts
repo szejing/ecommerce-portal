@@ -16,8 +16,8 @@ export class TemplateTokenBlot extends Embed {
 		node.classList.add(
 			'inline-flex',
 			'items-center',
-			'gap-1',
-			'rounded-full',
+			'rounded-md',
+			'mr-1',
 			'border',
 			'border-primary/30',
 			'bg-primary/10',
@@ -27,16 +27,7 @@ export class TemplateTokenBlot extends Embed {
 			'text-xs',
 			'text-primary',
 		);
-		const label = document.createElement('span');
-		label.textContent = token;
-		node.appendChild(label);
-		const remove = document.createElement('button');
-		remove.type = 'button';
-		remove.setAttribute('data-token-remove', name);
-		remove.setAttribute('aria-label', `Remove token ${token}`);
-		remove.className = 'inline-flex size-4 items-center justify-center rounded-full text-primary';
-		remove.textContent = '×';
-		node.appendChild(remove);
+		node.textContent = token;
 		return node;
 	}
 
@@ -68,7 +59,7 @@ export function hydrateTemplateTokensInHtml(html: string, allowedTokens: readonl
 		if (segment.type === 'text') return segment.value;
 		const name = segment.value.slice(2, -2);
 		const safeName = escapeHtmlAttr(name);
-		return `<span class="template-token-chip" data-token="${safeName}">${segment.value}<button type="button" data-token-remove="${safeName}">×</button></span>`;
+		return `<span class="template-token-chip" data-token="${safeName}">${segment.value}</span>`;
 	}).join('');
 }
 

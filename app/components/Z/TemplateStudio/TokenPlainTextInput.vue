@@ -24,7 +24,6 @@
 				<ZTemplateStudioTokenChip
 					v-else
 					:token="segment.value"
-					@remove="removeAt(segment.start, segment.end)"
 				/>
 			</template>
 		</div>

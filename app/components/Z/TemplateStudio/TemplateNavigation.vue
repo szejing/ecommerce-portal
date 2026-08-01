@@ -10,7 +10,7 @@
 			color="neutral"
 			variant="outline"
 			class="w-full max-w-md"
-			:ui="{ base: 'min-h-11', trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
+			:ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
 		/>
 	</div>
 </template>
@@ -18,13 +18,16 @@
 <script setup lang="ts">
 import type { DocumentTemplateSummary } from '~/utils/types/document-template';
 
-const props = withDefaults(defineProps<{
-	templates: DocumentTemplateSummary[];
-	selected?: { channel: DocumentTemplateSummary['channel']; templateCode: string } | null;
-	templateLabel?: (template: DocumentTemplateSummary) => string;
-}>(), {
-	selected: null,
-});
+const props = withDefaults(
+	defineProps<{
+		templates: DocumentTemplateSummary[];
+		selected?: { channel: DocumentTemplateSummary['channel']; templateCode: string } | null;
+		templateLabel?: (template: DocumentTemplateSummary) => string;
+	}>(),
+	{
+		selected: null,
+	},
+);
 
 const emit = defineEmits<{
 	select: [template: DocumentTemplateSummary];
