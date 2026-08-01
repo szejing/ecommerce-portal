@@ -461,6 +461,51 @@ describe('Template Studio restricted rich text editor', () => {
 		expect(wrapper.emitted('update:modelValue')?.[0]?.[0]).toContain('{{customerName}}');
 		expect(wrapper.emitted('update:modelValue')?.[0]?.[0]).not.toContain('template-token-chip');
 	});
+
+	it('chipifies typed/pasted allowlisted {{tokens}} on user text-change without rebinding content', async () => {
+		const textChangeHandlers: Array<(...args: unknown[]) => void> = [];
+		const editor = {
+			root: document.createElement('div'),
+			getSelection: vi.fn(() => ({ index: 22, length: 0 })),
+			getContents: vi.fn(() => ({
+				ops: [{ insert: 'Hello {{customerName}}\n' }],
+			})),
+			deleteText: vi.fn(),
+			insertEmbed: vi.fn(),
+			insertText: vi.fn(),
+			updateContents: vi.fn(),
+			setSelection: vi.fn(),
+			getIndex: vi.fn(),
+			on: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
+				if (event === 'text-change') textChangeHandlers.push(handler);
+			}),
+		};
+		const wrapper = await mountSuspended(RichTextEditor, {
+			props: {
+				modelValue: '<p>Hello</p>',
+				allowedTokens: ['customerName'],
+			},
+		});
+		const quill = wrapper.getComponent({ name: 'QuillEditor' });
+		const contentBeforeReady = String(quill.props('content'));
+		quill.vm.$emit('ready', editor);
+		await nextTick();
+
+		expect(textChangeHandlers).toHaveLength(1);
+		textChangeHandlers[0]?.({}, {}, 'user');
+
+		expect(editor.deleteText).toHaveBeenCalledWith(6, 16, 'api');
+		expect(editor.insertEmbed).toHaveBeenCalledWith(6, 'templateToken', '{{customerName}}', 'api');
+		expect(editor.setSelection).toHaveBeenCalledWith(7, 0, 'silent');
+		// Self-echo guard path: do not fight Quill by rebinding hydrated :content
+		expect(String(quill.props('content'))).toBe(contentBeforeReady);
+
+		editor.deleteText.mockClear();
+		editor.insertEmbed.mockClear();
+		textChangeHandlers[0]?.({}, {}, 'api');
+		expect(editor.deleteText).not.toHaveBeenCalled();
+		expect(editor.insertEmbed).not.toHaveBeenCalled();
+	});
 });
 
 describe('Template Studio brand and merchant information editor', () => {

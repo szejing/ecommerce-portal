@@ -26,16 +26,20 @@ import { Delta, Quill, QuillEditor } from '@vueup/vue-quill';
 import { Mention, MentionBlot } from 'quill-mention';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import 'quill-mention/dist/quill.mention.css';
+import { planPlainTextTokenChipify } from '~/utils/document-template';
 import {
 	hydrateTemplateTokensInHtml,
 	serializeTemplateTokenHtml,
 } from './template-token-blot';
 
 type QuillRange = { index: number; length: number };
+type QuillContents = { ops?: Array<{ insert?: string | Record<string, unknown> }> };
 type QuillInstance = {
 	root: HTMLElement;
 	getSelection: (focus?: boolean) => QuillRange | null;
 	getIndex: (blot: unknown) => number;
+	getContents: () => QuillContents;
+	on: (event: string, handler: (...args: unknown[]) => void) => void;
 	updateContents: (change: Delta, source?: string) => void;
 	setSelection: (index: number, length: number, source?: string) => void;
 	deleteText: (index: number, length: number, source?: string) => void;
@@ -88,7 +92,9 @@ const editorRef = ref<{
 const quill = shallowRef<QuillInstance>();
 const selection = ref<QuillRange>({ index: 0, length: 0 });
 let rejectedContentUpdate = false;
-let removeClickBound = false;
+const removeClickBoundEditors = new WeakSet<object>();
+const textChangeBoundEditors = new WeakSet<object>();
+let chipifying = false;
 /** Last serialized storage HTML we emitted (or last external model applied). */
 let lastSerialized = props.modelValue;
 /**
@@ -178,8 +184,8 @@ const mentionModules = computed(() => {
 });
 
 function bindTokenRemove(editor: QuillInstance): void {
-	if (removeClickBound || !editor.root?.addEventListener) return;
-	removeClickBound = true;
+	if (removeClickBoundEditors.has(editor) || !editor.root?.addEventListener) return;
+	removeClickBoundEditors.add(editor);
 	editor.root.addEventListener('click', (event: Event) => {
 		const target = event.target as HTMLElement | null;
 		const button = target?.closest?.('[data-token-remove]') as HTMLElement | null;
@@ -195,10 +201,58 @@ function bindTokenRemove(editor: QuillInstance): void {
 	});
 }
 
+/**
+ * Convert newly completed allowlisted `{{token}}` plain text into embeds.
+ * Uses deleteText/insertEmbed (api source) — does not rebind `:content`.
+ */
+function chipifyPlainTokensInEditor(editor: QuillInstance): void {
+	if (chipifying || !props.allowedTokens.length) return;
+	const ops = editor.getContents?.()?.ops;
+	if (!ops?.length) return;
+	const replacements = planPlainTextTokenChipify(ops, props.allowedTokens);
+	if (!replacements.length) return;
+
+	chipifying = true;
+	try {
+		const sel = editor.getSelection?.(false);
+		let cursor = sel?.index ?? null;
+
+		for (let i = replacements.length - 1; i >= 0; i--) {
+			const replacement = replacements[i]!;
+			if (cursor !== null) {
+				if (cursor >= replacement.index + replacement.length) {
+					cursor -= replacement.length - 1;
+				} else if (cursor > replacement.index) {
+					cursor = replacement.index + 1;
+				}
+			}
+			editor.deleteText(replacement.index, replacement.length, 'api');
+			editor.insertEmbed(replacement.index, 'templateToken', replacement.token, 'api');
+		}
+
+		if (cursor !== null) {
+			editor.setSelection(cursor, 0, 'silent');
+			selection.value = { index: cursor, length: 0 };
+		}
+	} finally {
+		chipifying = false;
+	}
+}
+
+function bindPlainTokenChipify(editor: QuillInstance): void {
+	if (typeof editor.on !== 'function' || textChangeBoundEditors.has(editor)) return;
+	textChangeBoundEditors.add(editor);
+	editor.on('text-change', (_delta, _oldDelta, source) => {
+		if (source !== 'user') return;
+		chipifyPlainTokensInEditor(editor);
+	});
+}
+
 function rememberEditor(instance: QuillInstance): void {
 	quill.value = instance;
 	if (props.ariaLabel) instance.root.setAttribute('aria-label', props.ariaLabel);
 	bindTokenRemove(instance);
+	bindPlainTokenChipify(instance);
 }
 
 function rememberSelection(payload: { range?: QuillRange | null }): void {

@@ -3,6 +3,7 @@ import {
 	getRevisionActivationStatus,
 	insertTemplateToken,
 	normalizeTemplateToken,
+	planPlainTextTokenChipify,
 	removeTemplateTokenAt,
 	resolveFieldValue,
 	splitTemplateTokenSegments,
@@ -57,6 +58,29 @@ describe('document template helpers', () => {
 	it('normalizes bare names and braced tokens to {{name}}', () => {
 		expect(normalizeTemplateToken('customer.name')).toBe('{{customer.name}}');
 		expect(normalizeTemplateToken('{{customer.name}}')).toBe('{{customer.name}}');
+	});
+
+	it('plans Quill plain-text chipify only for allowlisted complete tokens', () => {
+		expect(planPlainTextTokenChipify(
+			[{ insert: 'Hi {{customer.name}} and {{unknown}}!\n' }],
+			['{{customer.name}}'],
+		)).toEqual([
+			{ index: 3, length: 17, token: '{{customer.name}}' },
+		]);
+		expect(planPlainTextTokenChipify(
+			[
+				{ insert: 'Hi ' },
+				{ insert: { templateToken: '{{customer.name}}' } },
+				{ insert: ' and {{customer.name}}!\n' },
+			],
+			['{{customer.name}}'],
+		)).toEqual([
+			{ index: 9, length: 17, token: '{{customer.name}}' },
+		]);
+		expect(planPlainTextTokenChipify(
+			[{ insert: 'Hello {{\n' }],
+			['{{customer.name}}'],
+		)).toEqual([]);
 	});
 
 	it('splits only allowlisted well-formed tokens into chip segments', () => {

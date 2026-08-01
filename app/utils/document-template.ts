@@ -127,3 +127,42 @@ export function insertTemplateToken(
 		cursor: start + token.length,
 	};
 }
+
+/** Quill Delta op shape used when scanning for plain-text tokens to chipify. */
+export type QuillInsertOp = { insert?: string | Record<string, unknown> };
+
+export type PlainTextTokenChipifyPlan = {
+	index: number;
+	length: number;
+	token: string;
+};
+
+/**
+ * Find allowlisted `{{token}}` runs that still exist as plain text in Quill ops
+ * (not already templateToken embeds). Incomplete `{{` never matches.
+ */
+export function planPlainTextTokenChipify(
+	ops: ReadonlyArray<QuillInsertOp>,
+	allowedTokens: readonly string[],
+): PlainTextTokenChipifyPlan[] {
+	if (!allowedTokens.length || !ops.length) return [];
+	const plans: PlainTextTokenChipifyPlan[] = [];
+	let index = 0;
+	for (const op of ops) {
+		const insert = op.insert;
+		if (typeof insert === 'string') {
+			for (const segment of splitTemplateTokenSegments(insert, allowedTokens)) {
+				if (segment.type !== 'token') continue;
+				plans.push({
+					index: index + segment.start,
+					length: segment.end - segment.start,
+					token: segment.value,
+				});
+			}
+			index += insert.length;
+		} else if (insert && typeof insert === 'object') {
+			index += 1;
+		}
+	}
+	return plans;
+}

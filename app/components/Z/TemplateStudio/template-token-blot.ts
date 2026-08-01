@@ -54,13 +54,21 @@ if (!Quill.imports['formats/templateToken']) {
 	Quill.register(TemplateTokenBlot);
 }
 
+function escapeHtmlAttr(value: string): string {
+	return value
+		.replace(/&/g, '&amp;')
+		.replace(/"/g, '&quot;')
+		.replace(/</g, '&lt;');
+}
+
 export function hydrateTemplateTokensInHtml(html: string, allowedTokens: readonly string[]): string {
 	if (!html || !allowedTokens.length) return html;
 	const segments = splitTemplateTokenSegments(html, allowedTokens);
 	return segments.map((segment) => {
 		if (segment.type === 'text') return segment.value;
 		const name = segment.value.slice(2, -2);
-		return `<span class="template-token-chip" data-token="${name}">${segment.value}<button type="button" data-token-remove="${name}">×</button></span>`;
+		const safeName = escapeHtmlAttr(name);
+		return `<span class="template-token-chip" data-token="${safeName}">${segment.value}<button type="button" data-token-remove="${safeName}">×</button></span>`;
 	}).join('');
 }
 
