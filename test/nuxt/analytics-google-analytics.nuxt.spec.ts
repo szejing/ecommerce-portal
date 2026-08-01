@@ -82,4 +82,24 @@ describe('GoogleAnalyticsPage', () => {
 
 		expect(wrapper.text()).not.toContain('Measurement ID saved.');
 	});
+
+	it('clears a previous success status before rendering a later validation error', async () => {
+		const wrapper = await mountSuspended(GoogleAnalyticsPage, {
+			global: {
+				stubs: {
+					ZPagePanel: { template: '<main><slot /><slot name="navbar-right" /></main>' },
+				},
+			},
+		});
+
+		await wrapper.get('input[placeholder="G-XXXXXXXXXX"]').setValue('g-merchant2');
+		await wrapper.get('form').trigger('submit');
+		expect(wrapper.text()).toContain('Measurement ID saved.');
+
+		await wrapper.get('input[placeholder="G-XXXXXXXXXX"]').setValue('invalid');
+		await wrapper.get('form').trigger('submit');
+
+		expect(wrapper.text()).not.toContain('Measurement ID saved.');
+		expect(wrapper.text()).toContain('Enter a valid GA4 Measurement ID in the format G-XXXXXXXXXX.');
+	});
 });

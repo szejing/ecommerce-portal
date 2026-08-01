@@ -70,6 +70,7 @@ if (!initialSetting) {
 }
 
 const persistMeasurementId = async (candidate: string) => {
+	statusMessage.value = '';
 	const result = resolveGoogleAnalyticsSetting(candidate);
 	if (!result.ok) {
 		validationError.value = t(result.errorKey);
@@ -83,7 +84,6 @@ const persistMeasurementId = async (candidate: string) => {
 	}
 
 	validationError.value = '';
-	statusMessage.value = '';
 	measurementId.value = result.value;
 	setting.set_value = result.value;
 	settingsStore.addToUpdatedSettings(setting);
