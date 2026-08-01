@@ -5,6 +5,7 @@ import ContentEditor from '~/components/Z/TemplateStudio/ContentEditor.vue';
 import BrandEditor from '~/components/Z/TemplateStudio/BrandEditor.vue';
 import SectionEditor from '~/components/Z/TemplateStudio/SectionEditor.vue';
 import TokenPicker from '~/components/Z/TemplateStudio/TokenPicker.vue';
+import TokenPlainTextInput from '~/components/Z/TemplateStudio/TokenPlainTextInput.vue';
 import RichTextEditor from '~/components/Z/TemplateStudio/RichTextEditor.client.vue';
 import { IMAGE_FORMAT_ERROR_MESSAGE } from '~/repository/modules/image/image';
 import type {
@@ -141,9 +142,10 @@ describe('Template Studio controlled content editor', () => {
 				modelValue: configuration,
 			},
 		});
-		const subject = wrapper.get('[data-field="content.subject"] input').element as HTMLInputElement;
-		subject.setSelectionRange(8, 8);
-		await wrapper.get('[data-field="content.subject"] input').trigger('select');
+		expect(wrapper.get('[data-field="content.subject"] [data-testid="token-plain-text-input"]').exists()).toBe(true);
+		const plain = wrapper.getComponent(TokenPlainTextInput);
+		plain.vm.setSelection(8, 8);
+		await nextTick();
 		await wrapper.get('[data-field="content.subject"] [data-token="invoiceNumber"]').trigger('click');
 
 		expect(wrapper.find('[data-field="content.subject"]').exists()).toBe(true);
@@ -162,6 +164,16 @@ describe('Template Studio controlled content editor', () => {
 		greetingEditor.vm.$emit('update:content', 'x'.repeat(500));
 		await nextTick();
 		expect(wrapper.emitted('update:path')?.[1]).toEqual(['content.greeting', 'x'.repeat(500)]);
+
+		await wrapper.setProps({
+			modelValue: {
+				...configuration,
+				content: { subject: 'Hi {{customerName}}', greeting: configuration.content?.greeting },
+			},
+		});
+		await nextTick();
+		expect(wrapper.get('[data-field="content.subject"] [data-token-chip="customerName"]').exists()).toBe(true);
+		expect(wrapper.find('[data-field="content.subject"] [data-token-chip="unknown"]').exists()).toBe(false);
 
 		const pdfWrapper = await mountSuspended(ContentEditor, {
 			props: {

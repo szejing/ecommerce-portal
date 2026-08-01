@@ -2,14 +2,14 @@
 	<div class="space-y-6">
 		<section v-for="field in contentFields" :key="field.path" :data-field="field.path" class="space-y-3 rounded-xl border border-default p-4">
 			<UFormField :label="fieldLabel(field)" :name="field.path" :required="!field.allow_blank">
-				<UInput
+				<ZTemplateStudioTokenPlainTextInput
 					v-if="field.path === 'content.subject'"
 					:model-value="fieldValue(field.path)"
-					:maxlength="field.max_length"
-					@update:model-value="updateField(field.path, String($event ?? ''))"
-					@select="rememberSelection(field.path, $event)"
-					@click="rememberSelection(field.path, $event)"
-					@keyup="rememberSelection(field.path, $event)"
+					:allowed-tokens="allowedTokens(field)"
+					:max-length="field.max_length"
+					:aria-label="fieldLabel(field)"
+					@update:model-value="updateField(field.path, $event)"
+					@selection-change="(sel) => { selections[field.path] = sel }"
 				/>
 				<ZTemplateStudioRichTextEditor
 					v-else
@@ -41,6 +41,7 @@
 </template>
 
 <script setup lang="ts">
+import { normalizeTemplateToken } from '~/utils/document-template';
 import type { DocumentTemplateChannel, DocumentTemplateConfiguration, DocumentTemplateField } from '~/utils/types/document-template';
 
 const props = withDefaults(
@@ -80,7 +81,9 @@ function tokenName(token: string): string {
 
 function allowedTokens(field: DocumentTemplateField): string[] {
 	const entryTokens = new Set(props.entry.allowed_tokens.map(tokenName));
-	return field.allowed_tokens.filter((token) => entryTokens.has(tokenName(token)));
+	return field.allowed_tokens
+		.filter((token) => entryTokens.has(tokenName(token)))
+		.map((token) => normalizeTemplateToken(token));
 }
 
 function fieldValue(path: string): string {
@@ -96,15 +99,6 @@ function fieldLabel(field: DocumentTemplateField): string {
 
 function updateField(path: string, value: string): void {
 	emit('update:path', path, value);
-}
-
-function rememberSelection(path: string, event: Event): void {
-	const target = event.target;
-	if (!(target instanceof HTMLInputElement)) return;
-	selections[path] = {
-		start: target.selectionStart ?? target.value.length,
-		end: target.selectionEnd ?? target.value.length,
-	};
 }
 
 function selectionFor(path: string): { start: number; end: number } {
