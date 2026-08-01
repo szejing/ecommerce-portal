@@ -15,7 +15,7 @@
 				:description="summaryErrorDescription"
 			/>
 
-			<div v-if="summaries.length" data-testid="template-studio-shell" class="space-y-4">
+			<section v-if="summaries.length" data-testid="template-studio-shell" class="space-y-4">
 				<div data-testid="template-navigation-region" class="min-w-0">
 					<ZTemplateStudioTemplateNavigation :templates="summaries" :selected="selected" :template-label="templateLabel" @select="selectTemplate" />
 				</div>
@@ -108,6 +108,7 @@
 									:model-value="draft"
 									:inherited="detail.inherited_values"
 									:system-defaults="detail.catalog_default_values"
+									:logo-url="storeThumbnailUrl"
 									:field-errors="fieldErrors"
 									@update:path="templateStore.setConfigurationPath"
 									@clear:path="templateStore.clearConfigurationOverride"
@@ -131,7 +132,7 @@
 						<ZTemplateStudioTemplatePreview :channel="selected?.channel ?? 'email'" :preview="preview" :loading="previewing" @refresh="refreshPreview" />
 					</aside>
 				</div>
-			</div>
+			</section>
 
 			<UCard v-else-if="!summaryError">
 				<div class="flex min-h-52 flex-col items-center justify-center gap-3 py-8 text-center">
@@ -145,7 +146,9 @@
 
 <script setup lang="ts">
 import { ZModalConfirmation, ZModalLeavePageConfirmation } from '#components';
+import { GROUP_CODE, MERCHANT } from 'yeppi-common';
 import { useDocumentTemplateStore } from '~/stores/DocumentTemplate/DocumentTemplate';
+import { useMerchantInfoStore } from '~/stores/MerchantInfo/MerchantInfo';
 import type { DocumentTemplateSummary } from '~/utils/types/document-template';
 
 const { t, te } = useI18n();
@@ -153,6 +156,7 @@ const route = useRoute();
 const router = useRouter();
 const overlay = useOverlay();
 const templateStore = useDocumentTemplateStore();
+const merchantInfoStore = useMerchantInfoStore();
 const {
 	summaries,
 	selected,
@@ -185,6 +189,12 @@ let initialRouteSyncPending = false;
 let selectionOperation = 0;
 
 useHead({ title: () => t('pages.templateStudioTitle') });
+
+const storeThumbnailUrl = computed(() => {
+	if (typeof draft.value?.brand?.logoAssetId === 'number') return undefined;
+	const url = merchantInfoStore.getMerchantInfo(GROUP_CODE.INFO, MERCHANT.THUMBNAIL)?.getString()?.trim();
+	return url || undefined;
+});
 
 const selectedSummary = computed(() =>
 	summaries.value.find((template) => template.channel === selected.value?.channel && template.template_code === selected.value?.templateCode),

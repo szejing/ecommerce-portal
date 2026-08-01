@@ -21,10 +21,7 @@
 		>
 			<template v-for="(segment, index) in segments" :key="segmentKey(segment, index)">
 				<span v-if="segment.type === 'text'">{{ segment.value }}</span>
-				<ZTemplateStudioTokenChip
-					v-else
-					:token="segment.value"
-				/>
+				<ZTemplateStudioTokenChip v-else :token="segment.value" />
 			</template>
 		</div>
 	</div>
@@ -314,20 +311,10 @@ function onBeforeInput(event: Event): void {
 	const collapsed = selectionStart.value === selectionEnd.value;
 	if (!collapsed) return;
 
-	const key
-		= inputEvent.inputType === 'deleteContentBackward'
-			? 'Backspace'
-			: inputEvent.inputType === 'deleteContentForward'
-				? 'Delete'
-				: null;
+	const key = inputEvent.inputType === 'deleteContentBackward' ? 'Backspace' : inputEvent.inputType === 'deleteContentForward' ? 'Delete' : null;
 	if (!key) return;
 
-	const bounds = templateTokenBoundsForDelete(
-		props.modelValue,
-		selectionStart.value,
-		key,
-		props.allowedTokens,
-	);
+	const bounds = templateTokenBoundsForDelete(props.modelValue, selectionStart.value, key, props.allowedTokens);
 	if (!bounds) return;
 
 	event.preventDefault();

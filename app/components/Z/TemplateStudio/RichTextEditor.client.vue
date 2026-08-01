@@ -5,7 +5,7 @@
 			:content="editorContent"
 			content-type="html"
 			theme="snow"
-			toolbar="essential"
+			:toolbar="toolbar"
 			:modules="mentionModules"
 			:options="{ placeholder, formats }"
 			class="template-rich-text-editor"
@@ -13,11 +13,7 @@
 			@selection-change="rememberSelection"
 			@update:content="updateContent"
 		/>
-		<ZTemplateStudioTokenPicker
-			v-if="allowedTokens.length"
-			:allowed-tokens="allowedTokens"
-			@select="insertToken"
-		/>
+		<ZTemplateStudioTokenPicker v-if="allowedTokens.length" :allowed-tokens="allowedTokens" @select="insertToken" />
 	</div>
 </template>
 
@@ -27,10 +23,7 @@ import { Mention, MentionBlot } from 'quill-mention';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import 'quill-mention/dist/quill.mention.css';
 import { planPlainTextTokenChipify } from '~/utils/document-template';
-import {
-	hydrateTemplateTokensInHtml,
-	serializeTemplateTokenHtml,
-} from './template-token-blot';
+import { hydrateTemplateTokensInHtml, serializeTemplateTokenHtml } from './template-token-blot';
 
 type QuillRange = { index: number; length: number };
 type QuillContents = { ops?: Array<{ insert?: string | Record<string, unknown> }> };
@@ -53,37 +46,34 @@ type MentionModuleHost = {
 	cursorPos?: number;
 };
 
-const props = withDefaults(defineProps<{
-	modelValue: string;
-	allowedTokens?: readonly string[];
-	placeholder?: string;
-	maxLength?: number;
-	ariaLabel?: string;
-}>(), {
-	allowedTokens: () => [],
-	placeholder: undefined,
-	maxLength: undefined,
-	ariaLabel: undefined,
-});
+const props = withDefaults(
+	defineProps<{
+		modelValue: string;
+		allowedTokens?: readonly string[];
+		placeholder?: string;
+		maxLength?: number;
+		ariaLabel?: string;
+	}>(),
+	{
+		allowedTokens: () => [],
+		placeholder: undefined,
+		maxLength: undefined,
+		ariaLabel: undefined,
+	},
+);
 
 const emit = defineEmits<{
 	'update:modelValue': [value: string];
 }>();
 
-const ESSENTIAL_FORMATS = [
-	'header',
-	'bold',
-	'italic',
-	'underline',
-	'list',
-	'align',
-	'blockquote',
-	'code-block',
-	'link',
-	'color',
-] as const;
+const ESSENTIAL_FORMATS = ['bold', 'italic', 'underline', 'list', 'link'] as const;
 
 const formats = [...ESSENTIAL_FORMATS, 'templateToken'];
+const toolbar = [
+	['bold', 'italic', 'underline'],
+	[{ list: 'ordered' }, { list: 'bullet' }],
+	['link'],
+];
 const editorRef = ref<{
 	getQuill?: () => QuillInstance;
 	setContents?: (content: string, source?: string) => void;
@@ -99,9 +89,7 @@ let lastSerialized = props.modelValue;
  * Hydrated HTML shown to Quill. Only updated for external modelValue changes —
  * never re-hydrated from self-echo, or Quill's embed DOM fights setHTML.
  */
-const editorContent = ref(
-	hydrateTemplateTokensInHtml(props.modelValue, props.allowedTokens),
-);
+const editorContent = ref(hydrateTemplateTokensInHtml(props.modelValue, props.allowedTokens));
 
 function currentSerializedFromEditor(): string | undefined {
 	const root = quill.value?.root;
@@ -153,14 +141,9 @@ const mentionModules = computed(() => {
 				allowedChars: /^[A-Za-z0-9_]*$/,
 				showDenotationChar: false,
 				spaceAfterInsert: true,
-				source: (
-					searchTerm: string,
-					renderList: (matches: MentionListItem[], term: string) => void,
-				) => {
+				source: (searchTerm: string, renderList: (matches: MentionListItem[], term: string) => void) => {
 					const term = searchTerm.toLowerCase();
-					const matches = !term
-						? items
-						: items.filter((item) => item.value.toLowerCase().includes(term));
+					const matches = !term ? items : items.filter((item) => item.value.toLowerCase().includes(term));
 					renderList(matches, searchTerm);
 				},
 				onSelect(this: MentionModuleHost, item: MentionListItem | DOMStringMap) {
@@ -265,10 +248,7 @@ function insertToken(token: string): void {
 	}
 	const range = selection.value;
 	rejectedContentUpdate = false;
-	const change = new Delta()
-		.retain(range.index)
-		.delete(range.length)
-		.insert({ templateToken: value });
+	const change = new Delta().retain(range.index).delete(range.length).insert({ templateToken: value });
 	editor.updateContents(change, 'user');
 	if (rejectedContentUpdate) {
 		editor.setSelection(range.index, range.length, 'silent');
@@ -279,25 +259,38 @@ function insertToken(token: string): void {
 	selection.value = { index: range.index + 1, length: 0 };
 }
 
-watch(() => props.ariaLabel, (value) => {
-	if (!quill.value) return;
-	if (value) quill.value.root.setAttribute('aria-label', value);
-	else quill.value.root.removeAttribute('aria-label');
-});
+watch(
+	() => props.ariaLabel,
+	(value) => {
+		if (!quill.value) return;
+		if (value) quill.value.root.setAttribute('aria-label', value);
+		else quill.value.root.removeAttribute('aria-label');
+	},
+);
 </script>
 
 <style scoped>
 :deep(.ql-toolbar.ql-snow) {
 	border-color: var(--ui-border);
 	border-radius: var(--ui-radius) var(--ui-radius) 0 0;
+	padding: 0.3rem 0.4rem;
+}
+
+:deep(.ql-toolbar.ql-snow .ql-formats) {
+	margin-right: 0.625rem;
 }
 
 :deep(.ql-toolbar.ql-snow button) {
-	height: 1.75rem;
-	width: 1.75rem;
-	min-height: 1.75rem;
-	min-width: 1.75rem;
-	padding: 0.2rem;
+	height: 1.5rem;
+	width: 1.5rem;
+	min-height: 1.5rem;
+	min-width: 1.5rem;
+	padding: 0.15rem;
+}
+
+:deep(.ql-toolbar.ql-snow button svg) {
+	height: 1rem;
+	width: 1rem;
 }
 
 :deep(.ql-container.ql-snow) {

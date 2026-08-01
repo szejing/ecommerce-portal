@@ -13,7 +13,7 @@
 					variant="outline"
 					icon="i-lucide-refresh-cw"
 					:loading="loading"
-					class="min-h-11 shrink-0"
+					class="shrink-0"
 					@click="emit('refresh')"
 				>
 					{{ t('components.templateStudio.refreshPreview') }}
@@ -28,7 +28,7 @@
 						:variant="viewport === 'desktop' ? 'solid' : 'ghost'"
 						color="neutral"
 						:aria-pressed="viewport === 'desktop'"
-						class="min-h-11 flex-1 justify-center"
+						class="flex-1 justify-center"
 						@click="viewport = 'desktop'"
 					>
 						{{ t('components.templateStudio.desktop') }}
@@ -39,7 +39,7 @@
 						:variant="viewport === 'mobile' ? 'solid' : 'ghost'"
 						color="neutral"
 						:aria-pressed="viewport === 'mobile'"
-						class="min-h-11 flex-1 justify-center"
+						class="flex-1 justify-center"
 						@click="viewport = 'mobile'"
 					>
 						{{ t('components.templateStudio.mobile') }}
@@ -52,12 +52,7 @@
 					class="mx-auto w-full overflow-hidden rounded-lg border border-default bg-white transition-[max-width]"
 					:class="viewport === 'mobile' ? 'max-w-[390px]' : 'max-w-full'"
 				>
-					<iframe
-						sandbox=""
-						:srcdoc="emailSrcdoc"
-						:title="t('components.templateStudio.emailPreviewTitle')"
-						class="h-[42rem] w-full border-0 bg-white"
-					/>
+					<iframe sandbox="" :srcdoc="emailSrcdoc" :title="t('components.templateStudio.emailPreviewTitle')" class="h-[42rem] w-full border-0 bg-white" />
 				</div>
 				<PreviewEmptyState v-else />
 			</div>
@@ -83,14 +78,17 @@
 import type { EmailPreview, PdfPreview } from '~/stores/DocumentTemplate/DocumentTemplate';
 import type { DocumentTemplateChannel } from '~/utils/types/document-template';
 
-const props = withDefaults(defineProps<{
-	channel: DocumentTemplateChannel;
-	preview?: EmailPreview | PdfPreview | null;
-	loading?: boolean;
-}>(), {
-	preview: null,
-	loading: false,
-});
+const props = withDefaults(
+	defineProps<{
+		channel: DocumentTemplateChannel;
+		preview?: EmailPreview | PdfPreview | null;
+		loading?: boolean;
+	}>(),
+	{
+		preview: null,
+		loading: false,
+	},
+);
 
 const emit = defineEmits<{
 	refresh: [];
@@ -98,20 +96,26 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const viewport = ref<'desktop' | 'mobile'>('desktop');
-const csp = "default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; font-src https: data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
+const csp =
+	"default-src 'none'; img-src https: data:; style-src 'unsafe-inline'; font-src https: data:; connect-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
 const cspMeta = `<meta http-equiv="Content-Security-Policy" content="${csp}">`;
 
-const emailPreview = computed(() => props.channel === 'email' && props.preview?.channel === 'email' ? props.preview : null);
-const pdfPreview = computed(() => props.channel === 'pdf' && props.preview?.channel === 'pdf' ? props.preview : null);
+const emailPreview = computed(() => (props.channel === 'email' && props.preview?.channel === 'email' ? props.preview : null));
+const pdfPreview = computed(() => (props.channel === 'pdf' && props.preview?.channel === 'pdf' ? props.preview : null));
 const emailSrcdoc = computed(() => {
 	const html = emailPreview.value?.html ?? '';
-	if (/<head(?:\s[^>]*)?>/i.test(html)) return html.replace(/<head(?:\s[^>]*)?>/i, match => `${match}${cspMeta}`);
+	if (/<head(?:\s[^>]*)?>/i.test(html)) return html.replace(/<head(?:\s[^>]*)?>/i, (match) => `${match}${cspMeta}`);
 	return `<!doctype html><html><head>${cspMeta}</head><body>${html}</body></html>`;
 });
 
 const PreviewEmptyState = defineComponent({
-	setup: () => () => h('div', {
-		class: 'flex min-h-64 items-center justify-center rounded-lg border border-dashed border-default p-6 text-center text-sm text-muted',
-	}, t('components.templateStudio.previewEmpty')),
+	setup: () => () =>
+		h(
+			'div',
+			{
+				class: 'flex min-h-64 items-center justify-center rounded-lg border border-dashed border-default p-6 text-center text-sm text-muted',
+			},
+			t('components.templateStudio.previewEmpty'),
+		),
 });
 </script>
