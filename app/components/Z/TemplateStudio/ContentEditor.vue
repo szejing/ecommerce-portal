@@ -4,6 +4,7 @@
 			<UFormField :label="fieldLabel(field)" :name="field.path" :required="!field.allow_blank">
 				<ZTemplateStudioTokenPlainTextInput
 					v-if="field.path === 'content.subject'"
+					:ref="bindSubjectPlainTextInput"
 					:model-value="fieldValue(field.path)"
 					:allowed-tokens="allowedTokens(field)"
 					:max-length="field.max_length"
@@ -65,7 +66,13 @@ const emit = defineEmits<{
 
 const { t, te } = useI18n();
 const selections = reactive<Record<string, { start: number; end: number }>>({});
+type SubjectPlainTextInputExpose = { setSelection: (start: number, end?: number) => void };
+const subjectPlainTextInput = ref<SubjectPlainTextInputExpose | null>(null);
 const allowedContentFields = new Set(['content.subject', 'content.greeting', 'content.introduction', 'content.footer']);
+
+function bindSubjectPlainTextInput(el: unknown): void {
+	subjectPlainTextInput.value = (el as SubjectPlainTextInputExpose | null) ?? null;
+}
 
 const contentFields = computed(() =>
 	props.entry.fields.filter((field) => {
@@ -108,5 +115,8 @@ function selectionFor(path: string): { start: number; end: number } {
 
 function setCursor(path: string, cursor: number): void {
 	selections[path] = { start: cursor, end: cursor };
+	if (path === 'content.subject') {
+		subjectPlainTextInput.value?.setSelection(cursor, cursor);
+	}
 }
 </script>

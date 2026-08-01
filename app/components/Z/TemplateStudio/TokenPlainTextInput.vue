@@ -4,6 +4,7 @@
 		:class="{ 'text-muted': showPlaceholder }"
 	>
 		<div
+			:key="domSyncKey"
 			ref="editableRef"
 			data-testid="token-plain-text-input"
 			role="textbox"
@@ -62,6 +63,7 @@ const emit = defineEmits<{
 const editableRef = ref<HTMLElement | null>(null);
 const selectionStart = ref(0);
 const selectionEnd = ref(0);
+const domSyncKey = ref(0);
 let applyingExternalValue = false;
 let pendingCaret: { start: number; end: number } | null = null;
 
@@ -95,8 +97,14 @@ function removeAt(start: number, end: number): void {
 
 function commitValue(value: string, start: number, end: number): void {
 	if (props.maxLength !== undefined && value.length > props.maxLength) {
+		// Contenteditable already mutated — remount from modelValue so excess text is not left in the DOM.
+		applyingExternalValue = true;
+		domSyncKey.value += 1;
 		pendingCaret = { start: selectionStart.value, end: selectionEnd.value };
-		void nextTick(() => restoreCaret());
+		void nextTick(() => {
+			restoreCaret();
+			applyingExternalValue = false;
+		});
 		return;
 	}
 	emitSelection(start, end);
@@ -329,6 +337,7 @@ watch(
 	async () => {
 		applyingExternalValue = true;
 		await nextTick();
+		// Prefer pendingCaret set by setSelection (e.g. TokenPicker insert) over stale selectionStart/End.
 		restoreCaret();
 		applyingExternalValue = false;
 		pendingCaret = null;
