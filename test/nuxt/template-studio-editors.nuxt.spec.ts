@@ -156,6 +156,24 @@ describe('Template Studio controlled content editor', () => {
 			'content.subject',
 			'Invoice {{invoiceNumber}}for ',
 		]);
+		// Insert at offset 8 → cursor after `{{invoiceNumber}}` (must not clamp to pre-insert length).
+		const expectedCursor = 8 + '{{invoiceNumber}}'.length;
+		expect(plain.vm.selectionStart).toBe(expectedCursor);
+		expect(plain.vm.selectionEnd).toBe(expectedCursor);
+
+		await wrapper.setProps({
+			modelValue: {
+				...configuration,
+				content: {
+					...configuration.content,
+					subject: 'Invoice {{invoiceNumber}}for ',
+				},
+			},
+		});
+		await nextTick();
+		expect(plain.vm.selectionStart).toBe(expectedCursor);
+		expect(plain.vm.selectionEnd).toBe(expectedCursor);
+
 		const greetingEditor = wrapper.get('[data-field="content.greeting"]')
 			.getComponent({ name: 'QuillEditor' });
 		greetingEditor.vm.$emit('update:content', 'x'.repeat(501));

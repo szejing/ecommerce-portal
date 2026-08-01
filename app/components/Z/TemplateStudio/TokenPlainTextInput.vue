@@ -75,18 +75,29 @@ function segmentKey(segment: TemplateTokenSegment, index: number): string {
 	return `text:${index}:${segment.value.length}`;
 }
 
-function emitSelection(start: number, end: number): void {
-	const length = props.modelValue.length;
+function clampSelection(start: number, end: number, length: number): { start: number; end: number } {
 	const nextStart = Math.max(0, Math.min(start, length));
 	const nextEnd = Math.max(nextStart, Math.min(end, length));
-	selectionStart.value = nextStart;
-	selectionEnd.value = nextEnd;
-	emit('selection-change', { start: nextStart, end: nextEnd });
+	return { start: nextStart, end: nextEnd };
+}
+
+function emitSelection(start: number, end: number): void {
+	const clamped = clampSelection(start, end, props.modelValue.length);
+	selectionStart.value = clamped.start;
+	selectionEnd.value = clamped.end;
+	emit('selection-change', { start: clamped.start, end: clamped.end });
 }
 
 function setSelection(start: number, end: number = start): void {
-	emitSelection(start, end);
-	pendingCaret = { start: selectionStart.value, end: selectionEnd.value };
+	// Keep the requested caret even when modelValue is still stale (TokenPicker
+	// emits update:modelValue then inserted in the same turn). Clamping here
+	// would emit selection-change and clobber parent setCursor offsets.
+	const nextStart = Math.max(0, start);
+	const nextEnd = Math.max(nextStart, end);
+	pendingCaret = { start: nextStart, end: nextEnd };
+	selectionStart.value = nextStart;
+	selectionEnd.value = nextEnd;
+	emit('selection-change', { start: nextStart, end: nextEnd });
 	void nextTick(() => restoreCaret());
 }
 
@@ -338,6 +349,13 @@ watch(
 		applyingExternalValue = true;
 		await nextTick();
 		// Prefer pendingCaret set by setSelection (e.g. TokenPicker insert) over stale selectionStart/End.
+		if (pendingCaret) {
+			const clamped = clampSelection(pendingCaret.start, pendingCaret.end, props.modelValue.length);
+			pendingCaret = clamped;
+			selectionStart.value = clamped.start;
+			selectionEnd.value = clamped.end;
+			emit('selection-change', { start: clamped.start, end: clamped.end });
+		}
 		restoreCaret();
 		applyingExternalValue = false;
 		pendingCaret = null;
