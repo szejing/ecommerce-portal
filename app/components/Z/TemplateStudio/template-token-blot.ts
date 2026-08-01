@@ -3,11 +3,11 @@ import Embed from 'quill/blots/embed';
 import { normalizeTemplateToken, splitTemplateTokenSegments } from '~/utils/document-template';
 
 export class TemplateTokenBlot extends Embed {
-	static blotName = 'templateToken';
-	static className = 'template-token-chip';
-	static tagName = 'SPAN';
+	static override blotName = 'templateToken';
+	static override className = 'template-token-chip';
+	static override tagName = 'SPAN';
 
-	static create(value: string) {
+	static override create(value: string) {
 		const node = super.create(value) as HTMLElement;
 		const token = normalizeTemplateToken(value);
 		const name = token.slice(2, -2);
@@ -40,7 +40,7 @@ export class TemplateTokenBlot extends Embed {
 		return node;
 	}
 
-	static value(domNode: HTMLElement) {
+	static override value(domNode: HTMLElement) {
 		const name = domNode.getAttribute('data-token') ?? '';
 		return normalizeTemplateToken(name);
 	}
