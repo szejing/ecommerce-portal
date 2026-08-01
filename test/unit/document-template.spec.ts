@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
 	getRevisionActivationStatus,
 	insertTemplateToken,
+	normalizeTemplateToken,
+	removeTemplateTokenAt,
 	resolveFieldValue,
+	splitTemplateTokenSegments,
+	templateTokenBoundsForDelete,
 	toUtcIsoOrNull,
 } from '../../app/utils/document-template';
 
@@ -48,5 +52,45 @@ describe('document template helpers', () => {
 			value: 'Hello',
 			cursor: 5,
 		});
+	});
+
+	it('normalizes bare names and braced tokens to {{name}}', () => {
+		expect(normalizeTemplateToken('customer.name')).toBe('{{customer.name}}');
+		expect(normalizeTemplateToken('{{customer.name}}')).toBe('{{customer.name}}');
+	});
+
+	it('splits only allowlisted well-formed tokens into chip segments', () => {
+		expect(splitTemplateTokenSegments('Hi {{customer.name}} and {{unknown}}!', ['{{customer.name}}'])).toEqual([
+			{ type: 'text', value: 'Hi ' },
+			{ type: 'token', value: '{{customer.name}}', start: 3, end: 20 },
+			{ type: 'text', value: ' and {{unknown}}!' },
+		]);
+	});
+
+	it('ignores nested or incomplete braces', () => {
+		expect(splitTemplateTokenSegments('a {{b {{c}} d', ['{{c}}'])).toEqual([
+			{ type: 'text', value: 'a {{b ' },
+			{ type: 'token', value: '{{c}}', start: 6, end: 11 },
+			{ type: 'text', value: ' d' },
+		]);
+		expect(splitTemplateTokenSegments('Hello {{', ['{{customer.name}}'])).toEqual([
+			{ type: 'text', value: 'Hello {{' },
+		]);
+	});
+
+	it('removes one token occurrence by range and places the cursor at the cut', () => {
+		expect(removeTemplateTokenAt('Hi {{customer.name}}!', 3, 20)).toEqual({
+			value: 'Hi !',
+			cursor: 3,
+		});
+	});
+
+	it('expands Backspace/Delete against an adjacent allowlisted token to the full chip range', () => {
+		const value = 'Hi {{customer.name}}!';
+		const allowed = ['{{customer.name}}'];
+		expect(templateTokenBoundsForDelete(value, 20, 'Backspace', allowed)).toEqual({ start: 3, end: 20 });
+		expect(templateTokenBoundsForDelete(value, 3, 'Delete', allowed)).toEqual({ start: 3, end: 20 });
+		expect(templateTokenBoundsForDelete(value, 2, 'Backspace', allowed)).toBeNull();
+		expect(templateTokenBoundsForDelete(value, 21, 'Delete', allowed)).toBeNull();
 	});
 });
