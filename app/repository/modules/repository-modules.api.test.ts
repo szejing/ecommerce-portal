@@ -92,10 +92,8 @@ describe('DocumentTemplateModule', () => {
 		};
 		await mod.previewPdf('pdf', 'invoice', { configuration });
 
-		expect(lastFetch().opts).toEqual(expect.objectContaining({
-			method: 'POST',
-			fetchOptions: { responseType: 'blob' },
-		}));
+		expect(lastFetch().opts.method).toBe('POST');
+		expect(lastFetch().opts.responseType).toBe('blob');
 	});
 });
 
