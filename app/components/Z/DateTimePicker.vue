@@ -4,12 +4,18 @@
 
 		<div class="flex items-center gap-2 px-4 pb-2">
 			<UIcon name="i-heroicons-clock" class="text-gray-500" />
-			<UInput v-model="timeValue" type="time" placeholder="Select time" class="flex-1" />
+			<UInput
+				v-model="timeValue"
+				type="time"
+				:placeholder="selectTimeLabel"
+				:aria-label="timeInputLabel"
+				class="flex-1"
+			/>
 		</div>
 
 		<div class="flex justify-end gap-2 px-4 pb-2">
-			<UButton variant="ghost" size="sm" @click="emit('close')"> Cancel </UButton>
-			<UButton size="sm" @click="applyDateTime"> Apply </UButton>
+			<UButton variant="ghost" size="sm" @click="emit('close')"> {{ cancelLabel }} </UButton>
+			<UButton size="sm" @click="applyDateTime"> {{ applyLabel }} </UButton>
 		</div>
 	</div>
 </template>
@@ -34,6 +40,22 @@ const props = defineProps({
 		type: Date,
 		default: null,
 	},
+	selectTimeLabel: {
+		type: String,
+		default: 'Select time',
+	},
+	timeInputLabel: {
+		type: String,
+		default: 'Time',
+	},
+	cancelLabel: {
+		type: String,
+		default: 'Cancel',
+	},
+	applyLabel: {
+		type: String,
+		default: 'Apply',
+	},
 });
 
 const emit = defineEmits(['update:model-value', 'close']);
@@ -55,7 +77,7 @@ const getDateFromModelValue = (): Date | null => {
 const minDateValue = computed(() => dateToCalendarDate(props.minDate));
 const maxDateValue = computed(() => dateToCalendarDate(props.maxDate));
 
-const internalDate = ref<DateValue | undefined>(dateToCalendarDate(getDateFromModelValue()));
+const internalDate = shallowRef<DateValue | undefined>(dateToCalendarDate(getDateFromModelValue()));
 const timeValue = ref<string>('');
 
 // Initialize time from modelValue
