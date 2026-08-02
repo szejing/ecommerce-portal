@@ -7,12 +7,12 @@ import type {
 	DocumentTemplateChannel,
 	DocumentTemplateConfiguration,
 	DocumentTemplateDetail,
-	DocumentTemplateMutationResponse,
 	DocumentTemplateRevision,
 	DocumentTemplateSummary,
-	PreviewEmailDocumentTemplateResponse,
-	PublishDocumentTemplateResponse,
 } from '~/utils/types/document-template';
+import type { DocumentTemplateMutationResp } from '~/repository/modules/document-template/models/response/mutation.resp';
+import type { PreviewEmailDocumentTemplateResp } from '~/repository/modules/document-template/models/response/preview-email.resp';
+import type { PublishDocumentTemplateResp } from '~/repository/modules/document-template/models/response/publish.resp';
 
 export type EmailPreview = { channel: 'email'; html: string; subject: string; revisionId: string | null; revisionNo: number | null };
 export type PdfPreview = { channel: 'pdf'; blob: Blob; objectUrl: string };
@@ -204,6 +204,9 @@ function mergePostDispatchEdits(
 	return mergeRecords(server as UnknownRecord, submitted as UnknownRecord, local as UnknownRecord, true) as DocumentTemplateConfiguration;
 }
 
+/** Debounce for live email preview while typing. PDF previews stay refresh-only. */
+export const EMAIL_PREVIEW_DEBOUNCE_MS = 800;
+
 function isSameSelection(current: TemplateSelection | null, expected: TemplateSelection | null): boolean {
 	return current?.channel === expected?.channel && current?.templateCode === expected?.templateCode;
 }
@@ -240,6 +243,8 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 		baseline: deepFreeze(emptyConfiguration()) as DocumentTemplateConfiguration,
 		draft: emptyConfiguration() as DocumentTemplateConfiguration,
 		preview: null as EmailPreview | PdfPreview | null,
+		previewStale: false,
+		previewedConfigurationKey: null as string | null,
 		revisions: [] as DocumentTemplateRevision[],
 		isDirty: false,
 		loadingSummaries: false,
@@ -352,11 +357,36 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 		clearPreview() {
 			const objectUrl = this.preview?.channel === 'pdf' ? this.preview.objectUrl : null;
 			this.preview = null;
+			this.previewStale = false;
+			this.previewedConfigurationKey = null;
 			if (objectUrl && typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
 				try {
 					URL.revokeObjectURL(objectUrl);
 				} catch {
 					// The preview is already cleared; URL cleanup is best-effort in non-browser runtimes.
+				}
+			}
+		},
+
+		markPreviewStale() {
+			if (this.preview) this.previewStale = true;
+		},
+
+		previewConfigurationKey(channel: DocumentTemplateChannel, templateCode: string, configuration: DocumentTemplateConfiguration): string {
+			return `${channel}:${templateCode}:${stableSerialize(configuration)}`;
+		},
+
+		replacePreview(next: EmailPreview | PdfPreview) {
+			const previous = this.preview;
+			this.preview = next;
+			this.previewStale = false;
+			if (previous?.channel === 'pdf' && (next.channel !== 'pdf' || previous.objectUrl !== next.objectUrl)) {
+				if (typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
+					try {
+						URL.revokeObjectURL(previous.objectUrl);
+					} catch {
+						// Best-effort URL cleanup in non-browser runtimes.
+					}
 				}
 			}
 		},
@@ -431,10 +461,6 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			const parts = pathParts(path);
 			const field = this.detail?.fields.find(candidate => candidate.path === path);
 			if (!parts || !field || (path === 'brand.logoAssetId' ? !(typeof value === 'number' && value > 0) : typeof value !== 'string')) return;
-			if (typeof value === 'string' && !field.allow_blank && value === '') {
-				this.fieldErrors = { ...this.fieldErrors, [path]: `${field.label} cannot be blank` };
-				return;
-			}
 			if (typeof value === 'string' && value.length > field.max_length) {
 				this.fieldErrors = { ...this.fieldErrors, [path]: `${field.label} is too long` };
 				return;
@@ -443,8 +469,14 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			const [section, key] = parts;
 			const sectionValues = { ...(this.draft[section] as Record<string, string> | undefined), [key]: value };
 			this.draft = { ...this.draft, [section]: sectionValues };
-			const { [path]: _fieldError, ...fieldErrors } = this.fieldErrors;
-			this.fieldErrors = fieldErrors;
+			// Keep draft in sync while editing so required fields can be cleared and retyped;
+			// blank required values still surface a field error until filled again.
+			if (typeof value === 'string' && !field.allow_blank && value === '') {
+				this.fieldErrors = { ...this.fieldErrors, [path]: `${field.label} cannot be blank` };
+			} else {
+				const { [path]: _fieldError, ...fieldErrors } = this.fieldErrors;
+				this.fieldErrors = fieldErrors;
+			}
 			this.editGeneration += 1;
 			this.refreshDirty();
 		},
@@ -538,7 +570,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 		},
 
 		applyMutation(
-			response: DocumentTemplateMutationResponse,
+			response: DocumentTemplateMutationResp,
 			submittedEditGeneration: number,
 			submittedDraft?: DocumentTemplateConfiguration,
 		) {
@@ -606,39 +638,54 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			await this.loadDetail(selection.channel, selection.templateCode);
 		},
 
-		async previewDraft() {
+		async previewDraft(options: { debounceMs?: number; force?: boolean } = {}) {
 			const selection = this.selected;
 			if (!selection || !this.detail || !this.canEdit) return;
+			const debounceMs = options.debounceMs ?? 0;
+			const force = options.force ?? debounceMs === 0;
 			const request = ++this.previewGeneration;
 			this.previewing = true;
 			this.error = null;
-			await new Promise(resolve => setTimeout(resolve, 400));
+			if (debounceMs > 0) await new Promise(resolve => setTimeout(resolve, debounceMs));
 			if (request !== this.previewGeneration || !isSameSelection(this.selected, selection)) {
+				if (request === this.previewGeneration) this.previewing = false;
+				return;
+			}
+			const configuration = this.configurationForRequest();
+			const configurationKey = this.previewConfigurationKey(selection.channel, selection.templateCode, configuration);
+			if (!force && this.preview && this.previewedConfigurationKey === configurationKey) {
+				this.previewStale = false;
 				if (request === this.previewGeneration) this.previewing = false;
 				return;
 			}
 			try {
 				const { $api } = useNuxtApp();
-				const body = { configuration: this.configurationForRequest() };
+				const body = { configuration };
 				if (selection.channel === 'email') {
-					const response: PreviewEmailDocumentTemplateResponse = await $api.documentTemplate.previewEmail(selection.channel, selection.templateCode, body);
+					const response: PreviewEmailDocumentTemplateResp = await $api.documentTemplate.previewEmail(selection.channel, selection.templateCode, body);
 					if (request === this.previewGeneration && isSameSelection(this.selected, selection)) {
-						this.clearPreview();
-						this.preview = { channel: 'email', html: response.html, subject: response.subject, revisionId: response.revision_id, revisionNo: response.revision_no };
+						this.replacePreview({
+							channel: 'email',
+							html: response.html,
+							subject: response.subject,
+							revisionId: response.revision_id,
+							revisionNo: response.revision_no,
+						});
+						this.previewedConfigurationKey = configurationKey;
 					}
 				} else {
 					const blob = await $api.documentTemplate.previewPdf(selection.channel, selection.templateCode, body);
 					if (request === this.previewGeneration && isSameSelection(this.selected, selection)) {
-						this.clearPreview();
 						if (!isBlobResponse(blob)) throw new TypeError('Invalid PDF preview response');
 						if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function' || typeof URL.revokeObjectURL !== 'function') throw new TypeError('PDF previews are unavailable in this environment');
 						const objectUrl = URL.createObjectURL(blob);
-						this.preview = { channel: 'pdf', blob, objectUrl };
+						this.replacePreview({ channel: 'pdf', blob, objectUrl });
+						this.previewedConfigurationKey = configurationKey;
 					}
 				}
 			} catch (error) {
 				if (request === this.previewGeneration && isSameSelection(this.selected, selection)) {
-					if (selection.channel === 'pdf') this.clearPreview();
+					this.previewStale = Boolean(this.preview);
 					this.error = getApiErrorMessage(error, 'Failed to preview document template');
 				}
 			} finally {
@@ -688,7 +735,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			this.error = null;
 			try {
 				const { $api } = useNuxtApp();
-				const response: PublishDocumentTemplateResponse = await $api.documentTemplate.publish(selection.channel, selection.templateCode, {
+				const response: PublishDocumentTemplateResp = await $api.documentTemplate.publish(selection.channel, selection.templateCode, {
 					version,
 					revision_no: targetRevisionNo,
 					start_date: toUtcIsoOrNull(this.schedule.startDate),

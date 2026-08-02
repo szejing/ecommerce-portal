@@ -78,10 +78,6 @@ export type DocumentTemplateSummary = DocumentTemplateDescriptor & {
 	expired_revisions: DocumentTemplateRevisionSummary[];
 };
 
-export type DocumentTemplateListResponse = {
-	document_templates: DocumentTemplateSummary[];
-};
-
 export type DocumentTemplateDetail = DocumentTemplateDescriptor & {
 	catalog_schema_version: number;
 	catalog_system_template_version: number;
@@ -96,44 +92,6 @@ export type DocumentTemplateDetail = DocumentTemplateDescriptor & {
 	latest_published_revision: DocumentTemplateRevision | null;
 	active_revision: DocumentTemplateRevision | null;
 };
-
-export type SaveDocumentTemplateDraftRequest = {
-	version: number;
-	configuration: DocumentTemplateConfiguration;
-};
-
-export type PreviewDocumentTemplateRequest = {
-	configuration: DocumentTemplateConfiguration;
-};
-
-export type PublishDocumentTemplateRequest = {
-	version: number;
-	revision_no: number;
-	start_date: string | null;
-	end_date: string | null;
-};
-
-export type DocumentTemplateVersionRequest = { version: number };
-
-export type DocumentTemplateMutationResponse = {
-	version: number;
-	draft_revision: DocumentTemplateRevision;
-};
-
-export type PublishDocumentTemplateResponse = {
-	version: number;
-	latest_published_revision: DocumentTemplateRevision;
-};
-
-export type PreviewEmailDocumentTemplateResponse = {
-	html: string;
-	subject: string;
-	revision_id: string | null;
-	revision_no: number | null;
-};
-
-export type TestSendDocumentTemplateResponse = { message: string };
-export type DocumentTemplateRevisionsResponse = { revisions: DocumentTemplateRevision[] };
 
 export type DocumentTemplateVersionConflict = {
 	code: 409;

@@ -15,6 +15,7 @@ import TemplateEditor from '~/components/Z/TemplateStudio/TemplateEditor.vue';
 import TemplatePreview from '~/components/Z/TemplateStudio/TemplatePreview.vue';
 import { useAuthStore } from '~/stores/Auth/Auth';
 import {
+	EMAIL_PREVIEW_DEBOUNCE_MS,
 	useDocumentTemplateStore,
 	type EmailPreview,
 	type PdfPreview,
@@ -167,6 +168,23 @@ describe('TemplatePreview', () => {
 		expect(createObjectUrl).not.toHaveBeenCalled();
 		wrapper.unmount();
 		expect(revokeObjectUrl).not.toHaveBeenCalled();
+	});
+
+	it('shows an updating overlay while loading without clearing the current email frame', async () => {
+		const wrapper = await mountSuspended(TemplatePreview, {
+			props: { channel: 'email', preview: emailPreview, loading: true },
+		});
+
+		expect(wrapper.get('iframe').attributes('srcdoc')).toContain('<h1>Invoice</h1>');
+		expect(wrapper.get('[data-preview-updating]').text()).toContain('Updating preview');
+	});
+
+	it('shows a stale badge when the preview is outdated', async () => {
+		const wrapper = await mountSuspended(TemplatePreview, {
+			props: { channel: 'pdf', preview: pdfPreview, stale: true },
+		});
+
+		expect(wrapper.text()).toContain('Preview outdated');
 	});
 });
 
@@ -381,11 +399,11 @@ describe('Template Studio workflow', () => {
 		expect(editor.find('[data-source]').exists()).toBe(false);
 		expect(store.draft.brand).toBeUndefined();
 
-		await vi.advanceTimersByTimeAsync(400);
+		await vi.advanceTimersByTimeAsync(EMAIL_PREVIEW_DEBOUNCE_MS);
 		expect(apiPreview).toHaveBeenCalledWith('email', 'invoice', { configuration: {} });
 	});
 
-	it('debounces edited previews by 400 ms, supports manual refresh, and cancels on unmount', async () => {
+	it('debounces edited email previews, supports immediate refresh, and cancels on unmount', async () => {
 		const { wrapper, store, previewDraft } = await mountWorkflow();
 		previewDraft.mockRestore();
 		const apiPreview = vi.spyOn(useNuxtApp().$api.documentTemplate, 'previewEmail').mockResolvedValue({
@@ -400,21 +418,40 @@ describe('Template Studio workflow', () => {
 		await nextTick();
 		store.setConfigurationPath('content.greeting', '<p>Latest</p>');
 		await nextTick();
-		await vi.advanceTimersByTimeAsync(399);
+		await vi.advanceTimersByTimeAsync(EMAIL_PREVIEW_DEBOUNCE_MS - 1);
 		expect(apiPreview).not.toHaveBeenCalled();
 		await vi.advanceTimersByTimeAsync(1);
 		expect(apiPreview).toHaveBeenCalledOnce();
 
 		await wrapper.get('[data-action="refresh-preview"]').trigger('click');
-		await vi.advanceTimersByTimeAsync(400);
+		await flushPromises();
 		expect(apiPreview).toHaveBeenCalledTimes(2);
 
 		store.setConfigurationPath('content.greeting', '<p>Unmounted</p>');
 		await nextTick();
 		wrapper.unmount();
-		await vi.advanceTimersByTimeAsync(400);
+		await vi.advanceTimersByTimeAsync(EMAIL_PREVIEW_DEBOUNCE_MS);
 		expect(apiPreview).toHaveBeenCalledTimes(2);
 		expect(store.preview).toBeNull();
+	});
+
+	it('marks PDF preview stale on edits without auto-requesting a render', async () => {
+		const { wrapper, store, previewDraft } = await mountWorkflow({ channel: 'pdf' });
+		previewDraft.mockRestore();
+		const apiPreview = vi.spyOn(useNuxtApp().$api.documentTemplate, 'previewPdf').mockResolvedValue(new Blob(['pdf']));
+		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:pdf') });
+		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
+		store.preview = { channel: 'pdf', blob: new Blob(['old']), objectUrl: 'blob:old' };
+		store.previewStale = false;
+		vi.useFakeTimers();
+
+		store.setConfigurationPath('content.greeting', '<p>Changed</p>');
+		await nextTick();
+		await vi.advanceTimersByTimeAsync(EMAIL_PREVIEW_DEBOUNCE_MS);
+
+		expect(apiPreview).not.toHaveBeenCalled();
+		expect(store.previewStale).toBe(true);
+		expect(wrapper.text()).toContain('Preview outdated');
 	});
 
 	it('publishes the exact saved draft with null activation boundaries only after confirmation', async () => {

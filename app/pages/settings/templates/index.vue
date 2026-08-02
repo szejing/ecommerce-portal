@@ -129,7 +129,13 @@
 					</main>
 
 					<aside data-testid="template-preview-region" class="min-w-0 self-start xl:sticky xl:top-4">
-						<ZTemplateStudioTemplatePreview :channel="selected?.channel ?? 'email'" :preview="preview" :loading="previewing" @refresh="refreshPreview" />
+						<ZTemplateStudioTemplatePreview
+							:channel="selected?.channel ?? 'email'"
+							:preview="preview"
+							:loading="previewing"
+							:stale="previewStale"
+							@refresh="refreshPreview"
+						/>
 					</aside>
 				</div>
 			</section>
@@ -147,7 +153,7 @@
 <script setup lang="ts">
 import { ZModalConfirmation, ZModalLeavePageConfirmation } from '#components';
 import { GROUP_CODE, MERCHANT } from 'yeppi-common';
-import { useDocumentTemplateStore } from '~/stores/DocumentTemplate/DocumentTemplate';
+import { EMAIL_PREVIEW_DEBOUNCE_MS, useDocumentTemplateStore } from '~/stores/DocumentTemplate/DocumentTemplate';
 import { useMerchantInfoStore } from '~/stores/MerchantInfo/MerchantInfo';
 import type { DocumentTemplateSummary } from '~/utils/types/document-template';
 
@@ -163,6 +169,7 @@ const {
 	detail,
 	draft,
 	preview,
+	previewStale,
 	isDirty,
 	loadingDetail,
 	summaryError,
@@ -268,6 +275,8 @@ async function selectTemplate(template: DocumentTemplateSummary): Promise<void> 
 	if (selected.value?.channel === channel && selected.value.templateCode === template.template_code) return;
 	activeTab.value = 'content';
 	await templateStore.loadDetail(channel, template.template_code);
+	if (!selectionMatches(channel, template.template_code)) return;
+	void templateStore.previewDraft();
 }
 
 async function syncSelectionFromRoute(): Promise<void> {
@@ -381,6 +390,7 @@ function requestReset(): void {
 		if (!selectionMatches(selection.channel, selection.templateCode) || detail.value?.version !== version) return;
 		await templateStore.resetTemplate();
 		if (!conflict.value && detail.value?.draft_revision?.id !== previousDraftId && !isDirty.value) activeTab.value = 'content';
+		if (selectionMatches(selection.channel, selection.templateCode)) void templateStore.previewDraft();
 	});
 }
 
@@ -452,7 +462,12 @@ watch(
 watch(
 	() => templateStore.draft,
 	() => {
-		if (isActive && templateStore.detail && templateStore.selected) void templateStore.previewDraft();
+		if (!isActive || !templateStore.detail || !templateStore.selected || !templateStore.isDirty) return;
+		if (templateStore.selected.channel === 'pdf') {
+			templateStore.markPreviewStale();
+			return;
+		}
+		void templateStore.previewDraft({ debounceMs: EMAIL_PREVIEW_DEBOUNCE_MS });
 	},
 	{ deep: true },
 );

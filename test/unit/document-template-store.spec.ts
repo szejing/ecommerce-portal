@@ -6,9 +6,9 @@ import { useDocumentTemplateStore } from '../../app/stores/DocumentTemplate/Docu
 import type {
 	DocumentTemplateConfiguration,
 	DocumentTemplateDetail,
-	DocumentTemplateMutationResponse,
 	DocumentTemplateRevision,
 } from '../../app/utils/types/document-template';
+import type { DocumentTemplateMutationResp } from '../../app/repository/modules/document-template/models/response/mutation.resp';
 
 vi.mock('../../app/stores/AppUi/AppUi', () => ({
 	useAppUiStore: () => ({ showToast: vi.fn(), setExcludeRoutes: vi.fn() }),
@@ -137,6 +137,29 @@ describe('useDocumentTemplateStore', () => {
 		});
 		expect(store.isDirty).toBe(false);
 		expect(store.detail?.version).toBe(3);
+	});
+
+	it('allows clearing a required field while keeping a blank validation error', async () => {
+		const store = await selectDraft();
+		store.detail!.fields.push({
+			path: 'content.subject',
+			label: 'Subject',
+			kind: 'plain-text',
+			max_length: 200,
+			allow_blank: false,
+			allowed_tokens: [],
+		});
+		store.setConfigurationPath('content.subject', 'Invoice {{invoiceNumber}}');
+
+		store.setConfigurationPath('content.subject', '');
+
+		expect(store.draft.content?.subject).toBe('');
+		expect(store.fieldErrors['content.subject']).toBe('Subject cannot be blank');
+		expect(store.isDirty).toBe(true);
+
+		store.setConfigurationPath('content.subject', 'Restored');
+		expect(store.draft.content?.subject).toBe('Restored');
+		expect(store.fieldErrors['content.subject']).toBeUndefined();
 	});
 
 	it('preserves local edits and exposes reload action on HTTP 409', async () => {
@@ -532,7 +555,7 @@ describe('useDocumentTemplateStore', () => {
 		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
 		store.detail!.fields.push({ path: 'content.footer', label: 'Footer', kind: 'rich-text', max_length: 500, allow_blank: true, allowed_tokens: [] });
 		store.setConfigurationPath('content.footer', '<p>Before reset</p>');
-		const request = deferred<DocumentTemplateMutationResponse>();
+		const request = deferred<DocumentTemplateMutationResp>();
 		api.reset.mockReturnValue(request.promise);
 		const pending = store.reset();
 		store.setConfigurationPath('content.greeting', '<p>Newer local</p>');
@@ -557,7 +580,7 @@ describe('useDocumentTemplateStore', () => {
 		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
 		store.detail!.fields.push({ path: 'content.footer', label: 'Footer', kind: 'rich-text', max_length: 500, allow_blank: true, allowed_tokens: [] });
 		store.setConfigurationPath('content.footer', '<p>Before reset</p>');
-		const request = deferred<DocumentTemplateMutationResponse>();
+		const request = deferred<DocumentTemplateMutationResp>();
 		api.reset.mockReturnValue(request.promise);
 		const pending = store.reset();
 		store.setConfigurationPath('content.greeting', '<p>Newer local</p>');
@@ -576,7 +599,7 @@ describe('useDocumentTemplateStore', () => {
 		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
 		store.detail!.blocks.push({ id: 'footer', label: 'Footer', required: false, default_enabled: true });
 		store.setBlockEnabled('footer', true);
-		const request = deferred<DocumentTemplateMutationResponse>();
+		const request = deferred<DocumentTemplateMutationResp>();
 		api.restore.mockReturnValue(request.promise);
 		const pending = store.restore(1);
 		store.setBlockEnabled('footer', false);
@@ -670,7 +693,7 @@ describe('useDocumentTemplateStore', () => {
 		expect(store.isDirty).toBe(true);
 	});
 
-	it('clears and revokes the previous PDF when a replacement response is invalid', async () => {
+	it('keeps the previous PDF when a replacement response is invalid', async () => {
 		const createObjectURL = vi.fn(() => 'blob:preview-1');
 		const revokeObjectURL = vi.fn();
 		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
@@ -684,12 +707,13 @@ describe('useDocumentTemplateStore', () => {
 
 		await store.previewDraft();
 
-		expect(store.preview).toBeNull();
-		expect(revokeObjectURL).toHaveBeenCalledWith('blob:preview-1');
+		expect(store.preview).toMatchObject({ channel: 'pdf', objectUrl: 'blob:preview-1' });
+		expect(store.previewStale).toBe(true);
+		expect(revokeObjectURL).not.toHaveBeenCalled();
 		expect(store.error).toBe('Invalid PDF preview response');
 	});
 
-	it('clears and revokes the previous PDF when its replacement request rejects', async () => {
+	it('keeps the previous PDF when its replacement request rejects', async () => {
 		const revokeObjectURL = vi.fn();
 		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:preview-1') });
 		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
@@ -702,8 +726,9 @@ describe('useDocumentTemplateStore', () => {
 
 		await store.previewDraft();
 
-		expect(store.preview).toBeNull();
-		expect(revokeObjectURL).toHaveBeenCalledWith('blob:preview-1');
+		expect(store.preview).toMatchObject({ channel: 'pdf', objectUrl: 'blob:preview-1' });
+		expect(store.previewStale).toBe(true);
+		expect(revokeObjectURL).not.toHaveBeenCalled();
 		expect(store.error).toBe('Replacement failed');
 	});
 
@@ -757,7 +782,7 @@ describe('useDocumentTemplateStore', () => {
 		expect(store.error).toBe('Invalid PDF preview response');
 	});
 
-	it('fails safely and clears the prior PDF when object URL APIs are missing', async () => {
+	it('keeps the prior PDF when a later refresh cannot create object URLs', async () => {
 		const revokeObjectURL = vi.fn();
 		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:first') });
 		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
@@ -770,8 +795,9 @@ describe('useDocumentTemplateStore', () => {
 
 		await store.previewDraft();
 
-		expect(store.preview).toBeNull();
-		expect(revokeObjectURL).toHaveBeenCalledWith('blob:first');
+		expect(store.preview).toMatchObject({ channel: 'pdf', objectUrl: 'blob:first' });
+		expect(store.previewStale).toBe(true);
+		expect(revokeObjectURL).not.toHaveBeenCalled();
 		expect(store.error).toBe('PDF previews are unavailable in this environment');
 		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: undefined });
 		expect(() => store.clearPreview()).not.toThrow();

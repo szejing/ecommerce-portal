@@ -3,7 +3,12 @@
 		<div class="space-y-4">
 			<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 				<div class="min-w-0">
-					<h2 class="font-semibold text-default">{{ t('components.templateStudio.preview') }}</h2>
+					<div class="flex flex-wrap items-center gap-2">
+						<h2 class="font-semibold text-default">{{ t('components.templateStudio.preview') }}</h2>
+						<UBadge v-if="stale && !loading" color="warning" variant="subtle" size="sm">
+							{{ t('components.templateStudio.previewStale') }}
+						</UBadge>
+					</div>
 					<p v-if="emailPreview?.subject" class="truncate text-xs text-muted">{{ emailPreview.subject }}</p>
 				</div>
 				<UButton
@@ -49,25 +54,39 @@
 				<div
 					v-if="emailPreview"
 					data-preview-frame
-					class="mx-auto w-full overflow-hidden rounded-lg border border-default bg-white transition-[max-width]"
+					class="relative mx-auto w-full overflow-hidden rounded-lg border border-default bg-white transition-[max-width]"
 					:class="viewport === 'mobile' ? 'max-w-[390px]' : 'max-w-full'"
 				>
 					<iframe sandbox="" :srcdoc="emailSrcdoc" :title="t('components.templateStudio.emailPreviewTitle')" class="h-[42rem] w-full border-0 bg-white" />
+					<div
+						v-if="loading"
+						data-preview-updating
+						class="absolute inset-0 flex items-center justify-center bg-white/70 text-sm font-medium text-muted"
+					>
+						{{ t('components.templateStudio.previewUpdating') }}
+					</div>
 				</div>
 				<PreviewEmptyState v-else />
 			</div>
 
 			<div v-else class="space-y-3">
-				<object
-					v-if="pdfPreview"
-					data-preview-frame
-					:data="pdfPreview.objectUrl"
-					type="application/pdf"
-					class="h-[42rem] w-full rounded-lg border border-default bg-white"
-					:aria-label="t('components.templateStudio.pdfPreviewTitle')"
-				>
-					<p class="p-4 text-sm text-muted">{{ t('components.templateStudio.pdfPreviewUnavailable') }}</p>
-				</object>
+				<div v-if="pdfPreview" data-preview-frame class="relative">
+					<object
+						:data="pdfPreview.objectUrl"
+						type="application/pdf"
+						class="h-[42rem] w-full rounded-lg border border-default bg-white"
+						:aria-label="t('components.templateStudio.pdfPreviewTitle')"
+					>
+						<p class="p-4 text-sm text-muted">{{ t('components.templateStudio.pdfPreviewUnavailable') }}</p>
+					</object>
+					<div
+						v-if="loading"
+						data-preview-updating
+						class="absolute inset-0 flex items-center justify-center rounded-lg bg-white/70 text-sm font-medium text-muted"
+					>
+						{{ t('components.templateStudio.previewUpdating') }}
+					</div>
+				</div>
 				<PreviewEmptyState v-else />
 			</div>
 		</div>
@@ -83,10 +102,12 @@ const props = withDefaults(
 		channel: DocumentTemplateChannel;
 		preview?: EmailPreview | PdfPreview | null;
 		loading?: boolean;
+		stale?: boolean;
 	}>(),
 	{
 		preview: null,
 		loading: false,
+		stale: false,
 	},
 );
 
@@ -115,7 +136,7 @@ const PreviewEmptyState = defineComponent({
 			{
 				class: 'flex min-h-64 items-center justify-center rounded-lg border border-dashed border-default p-6 text-center text-sm text-muted',
 			},
-			t('components.templateStudio.previewEmpty'),
+			t(props.channel === 'pdf' ? 'components.templateStudio.previewEmptyPdf' : 'components.templateStudio.previewEmpty'),
 		),
 });
 </script>

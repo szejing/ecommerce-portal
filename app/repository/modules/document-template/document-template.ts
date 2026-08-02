@@ -1,25 +1,22 @@
 import HttpFactory from '~/repository/factory';
 import MerchantRoutes from '~/repository/routes.client';
-import type {
-	DocumentTemplateChannel,
-	DocumentTemplateDetail,
-	DocumentTemplateListResponse,
-	DocumentTemplateMutationResponse,
-	DocumentTemplateRevisionsResponse,
-	DocumentTemplateVersionRequest,
-	PreviewDocumentTemplateRequest,
-	PreviewEmailDocumentTemplateResponse,
-	PublishDocumentTemplateRequest,
-	PublishDocumentTemplateResponse,
-	SaveDocumentTemplateDraftRequest,
-	TestSendDocumentTemplateResponse,
-} from '~/utils/types/document-template';
+import type { DocumentTemplateChannel, DocumentTemplateDetail } from '~/utils/types/document-template';
+import type { PreviewDocumentTemplateReq } from './models/request/preview.req';
+import type { PublishDocumentTemplateReq } from './models/request/publish.req';
+import type { SaveDocumentTemplateDraftReq } from './models/request/save-draft.req';
+import type { DocumentTemplateVersionReq } from './models/request/version.req';
+import type { DocumentTemplateListResp } from './models/response/list.resp';
+import type { DocumentTemplateMutationResp } from './models/response/mutation.resp';
+import type { PreviewEmailDocumentTemplateResp } from './models/response/preview-email.resp';
+import type { PublishDocumentTemplateResp } from './models/response/publish.resp';
+import type { DocumentTemplateRevisionsResp } from './models/response/revisions.resp';
+import type { TestSendDocumentTemplateResp } from './models/response/test-send.resp';
 
 class DocumentTemplateModule extends HttpFactory {
 	private readonly RESOURCE = MerchantRoutes.DocumentTemplates;
 
-	async list(): Promise<DocumentTemplateListResponse> {
-		return await this.call<DocumentTemplateListResponse>({
+	async list(): Promise<DocumentTemplateListResp> {
+		return await this.call<DocumentTemplateListResp>({
 			method: 'GET',
 			url: this.RESOURCE.List(),
 		});
@@ -35,9 +32,9 @@ class DocumentTemplateModule extends HttpFactory {
 	async saveDraft(
 		channel: DocumentTemplateChannel,
 		templateCode: string,
-		body: SaveDocumentTemplateDraftRequest,
-	): Promise<DocumentTemplateMutationResponse> {
-		return await this.call<DocumentTemplateMutationResponse>({
+		body: SaveDocumentTemplateDraftReq,
+	): Promise<DocumentTemplateMutationResp> {
+		return await this.call<DocumentTemplateMutationResp>({
 			method: 'PUT',
 			url: this.RESOURCE.SaveDraft(channel, templateCode),
 			body,
@@ -47,9 +44,9 @@ class DocumentTemplateModule extends HttpFactory {
 	async previewEmail(
 		channel: 'email',
 		templateCode: string,
-		body: PreviewDocumentTemplateRequest,
-	): Promise<PreviewEmailDocumentTemplateResponse> {
-		return await this.call<PreviewEmailDocumentTemplateResponse>({
+		body: PreviewDocumentTemplateReq,
+	): Promise<PreviewEmailDocumentTemplateResp> {
+		return await this.call<PreviewEmailDocumentTemplateResp>({
 			method: 'POST',
 			url: this.RESOURCE.Preview(channel, templateCode),
 			body,
@@ -59,7 +56,7 @@ class DocumentTemplateModule extends HttpFactory {
 	async previewPdf(
 		channel: 'pdf',
 		templateCode: string,
-		body: PreviewDocumentTemplateRequest,
+		body: PreviewDocumentTemplateReq,
 	): Promise<Blob> {
 		return await this.call<Blob>({
 			method: 'POST',
@@ -72,9 +69,9 @@ class DocumentTemplateModule extends HttpFactory {
 	async testSend(
 		channel: 'email',
 		templateCode: string,
-		body: PreviewDocumentTemplateRequest,
-	): Promise<TestSendDocumentTemplateResponse> {
-		return await this.call<TestSendDocumentTemplateResponse>({
+		body: PreviewDocumentTemplateReq,
+	): Promise<TestSendDocumentTemplateResp> {
+		return await this.call<TestSendDocumentTemplateResp>({
 			method: 'POST',
 			url: this.RESOURCE.TestSend(channel, templateCode),
 			body,
@@ -84,9 +81,9 @@ class DocumentTemplateModule extends HttpFactory {
 	async publish(
 		channel: DocumentTemplateChannel,
 		templateCode: string,
-		body: PublishDocumentTemplateRequest,
-	): Promise<PublishDocumentTemplateResponse> {
-		return await this.call<PublishDocumentTemplateResponse>({
+		body: PublishDocumentTemplateReq,
+	): Promise<PublishDocumentTemplateResp> {
+		return await this.call<PublishDocumentTemplateResp>({
 			method: 'POST',
 			url: this.RESOURCE.Publish(channel, templateCode),
 			body,
@@ -96,17 +93,17 @@ class DocumentTemplateModule extends HttpFactory {
 	async reset(
 		channel: DocumentTemplateChannel,
 		templateCode: string,
-		body: DocumentTemplateVersionRequest,
-	): Promise<DocumentTemplateMutationResponse> {
-		return await this.call<DocumentTemplateMutationResponse>({
+		body: DocumentTemplateVersionReq,
+	): Promise<DocumentTemplateMutationResp> {
+		return await this.call<DocumentTemplateMutationResp>({
 			method: 'POST',
 			url: this.RESOURCE.Reset(channel, templateCode),
 			body,
 		});
 	}
 
-	async listRevisions(channel: DocumentTemplateChannel, templateCode: string): Promise<DocumentTemplateRevisionsResponse> {
-		return await this.call<DocumentTemplateRevisionsResponse>({
+	async listRevisions(channel: DocumentTemplateChannel, templateCode: string): Promise<DocumentTemplateRevisionsResp> {
+		return await this.call<DocumentTemplateRevisionsResp>({
 			method: 'GET',
 			url: this.RESOURCE.Revisions(channel, templateCode),
 		});
@@ -116,9 +113,9 @@ class DocumentTemplateModule extends HttpFactory {
 		channel: DocumentTemplateChannel,
 		templateCode: string,
 		revisionNo: number,
-		body: DocumentTemplateVersionRequest,
-	): Promise<DocumentTemplateMutationResponse> {
-		return await this.call<DocumentTemplateMutationResponse>({
+		body: DocumentTemplateVersionReq,
+	): Promise<DocumentTemplateMutationResp> {
+		return await this.call<DocumentTemplateMutationResp>({
 			method: 'POST',
 			url: this.RESOURCE.Restore(channel, templateCode, revisionNo),
 			body,

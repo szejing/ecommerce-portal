@@ -8,10 +8,12 @@
 			ref="editableRef"
 			data-testid="token-plain-text-input"
 			role="textbox"
+			aria-multiline="false"
 			contenteditable="true"
-			class="w-full outline-none whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted"
+			class="w-full outline-none whitespace-nowrap overflow-x-auto empty:before:content-[attr(data-placeholder)] empty:before:text-muted"
 			:aria-label="ariaLabel"
 			:data-placeholder="placeholder || ''"
+			@keydown="onKeyDown"
 			@beforeinput="onBeforeInput"
 			@input="onInput"
 			@click="syncSelectionFromDom"
@@ -20,7 +22,11 @@
 			@selectstart="syncSelectionFromDom"
 		>
 			<template v-for="(segment, index) in segments" :key="segmentKey(segment, index)">
-				<span v-if="segment.type === 'text'">{{ segment.value }}</span>
+				<!--
+					v-text / {{ }} rewrite textContent on every keystroke and reset the caret to 0.
+					vTextStable only writes when the DOM text actually differs.
+				-->
+				<span v-if="segment.type === 'text'" v-text-stable="segment.value"></span>
 				<ZTemplateStudioTokenChip v-else :token="segment.value" />
 			</template>
 		</div>
@@ -28,6 +34,7 @@
 </template>
 
 <script setup lang="ts">
+import type { Directive } from 'vue';
 import {
 	normalizeTemplateToken,
 	removeTemplateTokenAt,
@@ -60,15 +67,36 @@ const editableRef = ref<HTMLElement | null>(null);
 const selectionStart = ref(0);
 const selectionEnd = ref(0);
 const domSyncKey = ref(0);
+const renderedValue = ref(props.modelValue);
 let applyingExternalValue = false;
 let pendingCaret: { start: number; end: number } | null = null;
+let lastEmittedValue: string | null = null;
 
-const segments = computed(() => splitTemplateTokenSegments(props.modelValue, props.allowedTokens));
-const showPlaceholder = computed(() => !props.modelValue && !!props.placeholder);
+const segments = computed(() => splitTemplateTokenSegments(renderedValue.value, props.allowedTokens));
+const showPlaceholder = computed(() => !renderedValue.value && !!props.placeholder);
+
+/** Avoid caret reset: browsers move selection to 0 when textContent is assigned, even to the same string. */
+const vTextStable: Directive<HTMLElement, string> = {
+	mounted(el, binding) {
+		el.textContent = binding.value ?? '';
+	},
+	updated(el, binding) {
+		const next = binding.value ?? '';
+		if (el.textContent === next) return;
+		el.textContent = next;
+	},
+};
 
 function segmentKey(segment: TemplateTokenSegment, index: number): string {
-	if (segment.type === 'token') return `token:${segment.start}:${segment.value}`;
-	return `text:${index}:${segment.value.length}`;
+	// Stable keys — length/start in the key remounts nodes on every keystroke and drops the caret.
+	if (segment.type === 'token') return `token:${index}:${segment.value}`;
+	return `text:${index}`;
+}
+
+function tokenStructureKey(value: string): string {
+	return splitTemplateTokenSegments(value, props.allowedTokens)
+		.map((segment) => (segment.type === 'token' ? `T:${segment.value}` : 't'))
+		.join('|');
 }
 
 function clampSelection(start: number, end: number, length: number): { start: number; end: number } {
@@ -78,7 +106,7 @@ function clampSelection(start: number, end: number, length: number): { start: nu
 }
 
 function emitSelection(start: number, end: number): void {
-	const clamped = clampSelection(start, end, props.modelValue.length);
+	const clamped = clampSelection(start, end, renderedValue.value.length);
 	selectionStart.value = clamped.start;
 	selectionEnd.value = clamped.end;
 	emit('selection-change', { start: clamped.start, end: clamped.end });
@@ -98,13 +126,14 @@ function setSelection(start: number, end: number = start): void {
 }
 
 function removeAt(start: number, end: number): void {
-	const result = removeTemplateTokenAt(props.modelValue, start, end);
+	const result = removeTemplateTokenAt(renderedValue.value, start, end);
 	commitValue(result.value, result.cursor, result.cursor);
 }
 
 function commitValue(value: string, start: number, end: number): void {
+	value = flattenSingleLine(value);
 	if (props.maxLength !== undefined && value.length > props.maxLength) {
-		// Contenteditable already mutated — remount from modelValue so excess text is not left in the DOM.
+		// Contenteditable already mutated — remount from rendered value so excess text is not left in the DOM.
 		applyingExternalValue = true;
 		domSyncKey.value += 1;
 		pendingCaret = { start: selectionStart.value, end: selectionEnd.value };
@@ -114,18 +143,38 @@ function commitValue(value: string, start: number, end: number): void {
 		});
 		return;
 	}
-	emitSelection(start, end);
-	pendingCaret = { start, end };
+	// Clamp against the value being committed, not the stale modelValue length.
+	const clamped = clampSelection(start, end, value.length);
+	selectionStart.value = clamped.start;
+	selectionEnd.value = clamped.end;
+	emit('selection-change', { start: clamped.start, end: clamped.end });
+	pendingCaret = { start: clamped.start, end: clamped.end };
+
+	const structureChanged = tokenStructureKey(renderedValue.value) !== tokenStructureKey(value);
+	renderedValue.value = value;
+
 	if (value !== props.modelValue) {
+		lastEmittedValue = value;
 		emit('update:modelValue', value);
-	} else {
-		void nextTick(() => restoreCaret());
 	}
+
+	if (structureChanged) {
+		// Token chips changed — remount segment DOM then restore caret.
+		domSyncKey.value += 1;
+		void nextTick(() => restoreCaret());
+		return;
+	}
+
+	// Plain-text typing: vTextStable skips identical textContent writes, so the caret stays put.
+	// Still restore after programmatic text changes where the directive did write.
+	void nextTick(() => {
+		if (pendingCaret) restoreCaret();
+	});
 }
 
 function serializeEditable(): string {
 	const root = editableRef.value;
-	if (!root) return props.modelValue;
+	if (!root) return renderedValue.value;
 
 	let result = '';
 	const walk = (node: Node) => {
@@ -304,9 +353,36 @@ function syncSelectionFromDom(): void {
 	emitSelection(Math.min(start, end), Math.max(start, end));
 }
 
+function measureDomSelection(): { start: number; end: number } | null {
+	const selection = window.getSelection();
+	const root = editableRef.value;
+	if (!selection || !root || selection.rangeCount === 0) return null;
+	const range = selection.getRangeAt(0);
+	if (!root.contains(range.startContainer) || !root.contains(range.endContainer)) return null;
+
+	const start = offsetFromDom(range.startContainer, range.startOffset);
+	const end = offsetFromDom(range.endContainer, range.endOffset);
+	return { start: Math.min(start, end), end: Math.max(start, end) };
+}
+
+function flattenSingleLine(value: string): string {
+	return value.replace(/\r\n|\r|\n/g, ' ');
+}
+
+function onKeyDown(event: KeyboardEvent): void {
+	if (event.key !== 'Enter') return;
+	event.preventDefault();
+}
+
 function onBeforeInput(event: Event): void {
 	const inputEvent = event as InputEvent;
 	if (inputEvent.isComposing) return;
+
+	// Subject is single-line — block soft/hard breaks from Enter or IME.
+	if (inputEvent.inputType === 'insertParagraph' || inputEvent.inputType === 'insertLineBreak') {
+		event.preventDefault();
+		return;
+	}
 
 	const collapsed = selectionStart.value === selectionEnd.value;
 	if (!collapsed) return;
@@ -314,7 +390,7 @@ function onBeforeInput(event: Event): void {
 	const key = inputEvent.inputType === 'deleteContentBackward' ? 'Backspace' : inputEvent.inputType === 'deleteContentForward' ? 'Delete' : null;
 	if (!key) return;
 
-	const bounds = templateTokenBoundsForDelete(props.modelValue, selectionStart.value, key, props.allowedTokens);
+	const bounds = templateTokenBoundsForDelete(renderedValue.value, selectionStart.value, key, props.allowedTokens);
 	if (!bounds) return;
 
 	event.preventDefault();
@@ -322,25 +398,59 @@ function onBeforeInput(event: Event): void {
 }
 
 function onInput(): void {
-	if (applyingExternalValue) return;
-	syncSelectionFromDom();
-	const nextValue = serializeEditable();
-	const caret = Math.min(selectionStart.value, nextValue.length);
-	commitValue(nextValue, caret, caret);
+	if (applyingExternalValue) {
+		void nextTick(() => {
+			if (applyingExternalValue) return;
+			onInput();
+		});
+		return;
+	}
+	const nextValue = flattenSingleLine(serializeEditable());
+	// Read caret from the live DOM without clamping to the stale modelValue length.
+	const measured = measureDomSelection();
+	const start = measured ? Math.min(measured.start, nextValue.length) : nextValue.length;
+	const end = measured ? Math.min(measured.end, nextValue.length) : nextValue.length;
+	commitValue(nextValue, start, end);
 }
 
 watch(
 	() => props.modelValue,
-	async () => {
+	async (next) => {
+		// Self-echo from our emit — do not remount; vTextStable keeps the caret when text matches.
+		if (lastEmittedValue !== null && next === lastEmittedValue) {
+			lastEmittedValue = null;
+			const live = serializeEditable();
+			if (live !== next) {
+				const measured = measureDomSelection();
+				const start = measured ? Math.min(measured.start, live.length) : live.length;
+				const end = measured ? Math.min(measured.end, live.length) : live.length;
+				commitValue(live, start, end);
+			} else if (renderedValue.value !== next) {
+				renderedValue.value = next;
+			}
+			return;
+		}
+
+		lastEmittedValue = null;
+		if (renderedValue.value === next && serializeEditable() === next) {
+			return;
+		}
+
+		renderedValue.value = next;
 		applyingExternalValue = true;
+		domSyncKey.value += 1;
 		await nextTick();
-		// Prefer pendingCaret set by setSelection (e.g. TokenPicker insert) over stale selectionStart/End.
 		if (pendingCaret) {
-			const clamped = clampSelection(pendingCaret.start, pendingCaret.end, props.modelValue.length);
+			const clamped = clampSelection(pendingCaret.start, pendingCaret.end, renderedValue.value.length);
 			pendingCaret = clamped;
 			selectionStart.value = clamped.start;
 			selectionEnd.value = clamped.end;
 			emit('selection-change', { start: clamped.start, end: clamped.end });
+		} else {
+			pendingCaret = {
+				start: renderedValue.value.length,
+				end: renderedValue.value.length,
+			};
 		}
 		restoreCaret();
 		applyingExternalValue = false;
@@ -349,8 +459,8 @@ watch(
 );
 
 onMounted(() => {
-	selectionStart.value = props.modelValue.length;
-	selectionEnd.value = props.modelValue.length;
+	selectionStart.value = renderedValue.value.length;
+	selectionEnd.value = renderedValue.value.length;
 });
 
 defineExpose({

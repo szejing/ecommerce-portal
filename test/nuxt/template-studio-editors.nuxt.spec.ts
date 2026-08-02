@@ -202,6 +202,107 @@ describe('Template Studio controlled content editor', () => {
 		expect(pdfWrapper.find('[data-field="content.subject"]').exists()).toBe(false);
 	});
 
+	it('keeps the caret after typed characters when the controlled value catches up', async () => {
+		const wrapper = await mountSuspended(TokenPlainTextInput, {
+			props: {
+				modelValue: '',
+				allowedTokens: ['{{customerName}}'],
+			},
+		});
+		const editable = wrapper.get('[data-testid="token-plain-text-input"]');
+		const root = editable.element as HTMLElement;
+		const textHost = (root.querySelector('span') ?? root) as HTMLElement;
+		textHost.textContent = 'Ab';
+		const textNode = textHost.firstChild as Text;
+		const range = document.createRange();
+		range.setStart(textNode, 2);
+		range.collapse(true);
+		const selection = window.getSelection();
+		selection?.removeAllRanges();
+		selection?.addRange(range);
+
+		await editable.trigger('input');
+
+		expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['Ab']);
+		expect(wrapper.vm.selectionStart).toBe(2);
+		expect(wrapper.vm.selectionEnd).toBe(2);
+
+		await wrapper.setProps({ modelValue: 'Ab' });
+		await nextTick();
+		expect(wrapper.vm.selectionStart).toBe(2);
+		expect(wrapper.vm.selectionEnd).toBe(2);
+
+		// DOM caret must stay at the end — resetting to 0 produces garbled subjects like HeyYourHeyYou…
+		const live = window.getSelection();
+		expect(live?.rangeCount).toBeGreaterThan(0);
+		const liveRange = live!.getRangeAt(0);
+		expect(liveRange.startOffset).toBe(2);
+		expect(liveRange.collapsed).toBe(true);
+		expect(root.textContent).toBe('Ab');
+	});
+
+	it('keeps the subject on one line and blocks Enter', async () => {
+		const wrapper = await mountSuspended(TokenPlainTextInput, {
+			props: {
+				modelValue: 'Hello',
+				allowedTokens: ['{{orderNumber}}'],
+			},
+		});
+		const editable = wrapper.get('[data-testid="token-plain-text-input"]');
+		expect(editable.attributes('aria-multiline')).toBe('false');
+		expect(editable.classes()).toContain('whitespace-nowrap');
+
+		await editable.trigger('keydown', { key: 'Enter' });
+		expect(wrapper.emitted('update:modelValue')).toBeUndefined();
+
+		const root = editable.element as HTMLElement;
+		const textHost = (root.querySelector('span') ?? root) as HTMLElement;
+		textHost.textContent = 'Hello\nWorld';
+		const textNode = textHost.firstChild as Text;
+		const range = document.createRange();
+		range.setStart(textNode, textNode.textContent?.length ?? 0);
+		range.collapse(true);
+		window.getSelection()?.removeAllRanges();
+		window.getSelection()?.addRange(range);
+		await editable.trigger('input');
+
+		expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['Hello World']);
+	});
+
+	it('does not drop subject keystrokes while the controlled value echoes back', async () => {
+		const wrapper = await mountSuspended(TokenPlainTextInput, {
+			props: {
+				modelValue: '',
+				allowedTokens: ['{{orderNumber}}'],
+			},
+		});
+		const editable = wrapper.get('[data-testid="token-plain-text-input"]');
+
+		async function typeIntoEditable(value: string): Promise<void> {
+			const root = editable.element as HTMLElement;
+			const textHost = (root.querySelector('span') ?? root) as HTMLElement;
+			textHost.textContent = value;
+			const textNode = textHost.firstChild as Text;
+			const range = document.createRange();
+			range.setStart(textNode, value.length);
+			range.collapse(true);
+			window.getSelection()?.removeAllRanges();
+			window.getSelection()?.addRange(range);
+			await editable.trigger('input');
+		}
+
+		await typeIntoEditable('H');
+		expect(wrapper.emitted('update:modelValue')?.[0]).toEqual(['H']);
+
+		// Type ahead of the parent echo, then apply the stale echo — live DOM must win.
+		await typeIntoEditable('Hye');
+		await wrapper.setProps({ modelValue: 'H' });
+		await nextTick();
+
+		const emissions = wrapper.emitted('update:modelValue') ?? [];
+		expect(emissions.at(-1)).toEqual(['Hye']);
+	});
+
 	it('keeps token input catalog-owned and displays backend field errors beside the matching field', async () => {
 		const tokenWrapper = await mountSuspended(TokenPicker, {
 			props: {
