@@ -1,12 +1,11 @@
 import { defineStore } from 'pinia';
-import { KEY, UserRoles } from 'yeppi-common';
+import { KEY, UserRoles, type ErrorResponse } from 'yeppi-common';
 import { options_page_size } from '~/utils/options';
 import type { CRMUser, CrmUserCreate } from '~/utils/types/crm-user';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
 import type { BaseODataReq } from '~/repository/base/base.req';
 import type { UpdateCrmUserReq } from '~/repository/modules/crm-user/request/update-crm-user.req';
 import type { ChangePasswordReq } from '~/repository/modules/crm-user/request/change-password.req';
-import type { ErrorResponse } from '~/repository/base/error';
 import type { ResetPasswordReq } from '~/repository/modules/crm-user/request/reset-password.req';
 
 type CrmUserFilter = {

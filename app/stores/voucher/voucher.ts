@@ -1,13 +1,12 @@
 import { options_page_size } from '~/utils/options';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
 import type { BaseODataReq } from '~/repository/base/base.req';
 import type { CreateVoucherReq } from '~/repository/modules/voucher/models/request/create-voucher.req';
 import type { UpdateVoucherReq } from '~/repository/modules/voucher/models/request/update-voucher.req';
 import type { VoucherFormState } from '~/utils/types/form/voucher-creation';
 import type { Voucher } from '~/utils/types/voucher';
 import { defaultVoucherRelations, removeDuplicateExpands } from 'yeppi-common';
-import type { AllocationType } from 'yeppi-common';
+import type { AllocationType, ErrorResponse } from 'yeppi-common';
 
 type VoucherFilter = {
 	query: string;

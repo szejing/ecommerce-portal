@@ -1,7 +1,7 @@
 import { options_page_size } from '~/utils/options';
 import type { Outlet } from '~/utils/types/outlet';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
+import type { ErrorResponse } from 'yeppi-common';
 import type { OutletCreate } from '~/utils/types/form/outlet-creation';
 import type { BaseODataReq } from '~/repository/base/base.req';
 

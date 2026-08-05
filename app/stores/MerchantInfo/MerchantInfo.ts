@@ -1,10 +1,9 @@
 import { defineStore } from 'pinia';
 import { MerchantInfo } from '~/utils/types/merchant-info';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
 import type { Currency } from '~/utils/types/currency';
 import { dir } from '~/utils/constants/dir';
-import { GROUP_CODE, MERCHANT } from 'yeppi-common';
+import { GROUP_CODE, MERCHANT, type ErrorResponse } from 'yeppi-common';
 
 const initial: MerchantInfo[] = [];
 

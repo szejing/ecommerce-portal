@@ -3,7 +3,7 @@ import { options_page_size } from '~/utils/options';
 
 import type { ProductType } from '~/utils/types/product-type';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
+import type { ErrorResponse } from 'yeppi-common';
 import type { ProductTypeCreate } from '~/utils/types/form/product-type-creation';
 import type { BaseODataReq } from '~/repository/base/base.req';
 

@@ -1,9 +1,8 @@
-import { GROUP_CODE } from 'yeppi-common';
+import { GROUP_CODE, type ErrorResponse } from 'yeppi-common';
 import { defineStore } from 'pinia';
 import { Setting } from '~/utils/types/setting';
 import type { SettingSegment } from '~/utils/types/setting-segment';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
 
 export const useSettingStore = defineStore('settingStore', {
 	state: () => ({

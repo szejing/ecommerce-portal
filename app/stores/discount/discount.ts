@@ -1,10 +1,9 @@
 import { options_page_size } from '~/utils/options';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
 import type { BaseODataReq } from '~/repository/base/base.req';
 import type { CreateDiscountReq } from '~/repository/modules/discount/models/request/create-discount.req';
 import type { UpdateDiscountReq } from '~/repository/modules/discount/models/request/update-discount.req';
-import { AllocationType, defaultDiscountRelations, DiscountType, removeDuplicateExpands } from 'yeppi-common';
+import { AllocationType, defaultDiscountRelations, DiscountType, removeDuplicateExpands, type ErrorResponse } from 'yeppi-common';
 import type { Discount } from '~/utils/types/discount';
 import type { DiscountCreate } from '~/utils/types/form/discount-creation';
 

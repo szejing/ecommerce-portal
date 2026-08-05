@@ -1,12 +1,11 @@
 import { defineStore } from 'pinia';
-import { KEY } from 'yeppi-common';
+import { KEY, type ErrorResponse } from 'yeppi-common';
 import { useAppStore } from '~/stores/App';
 import { useAppUiStore } from '~/stores/AppUi/AppUi';
 import { ensureMerchantIdCookie, resolveSessionMerchantId, writeWmidToStorage } from '~/utils/auth/merchant-id';
 import type { User } from '~/utils/types/user';
 import type { LoginResp } from '~/repository/modules/auth/models/response/login.resp';
 import type { VerifyResp } from '~/repository/modules/auth/models/response/verify.resp';
-import type { ErrorResponse } from '~/repository/base/error';
 
 export const useAuthStore = defineStore('authStore', {
 	state: () => ({

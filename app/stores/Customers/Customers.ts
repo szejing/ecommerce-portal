@@ -1,10 +1,9 @@
 import { defineStore } from 'pinia';
-import { KEY } from 'yeppi-common';
+import { KEY, type ErrorResponse } from 'yeppi-common';
 import { options_page_size } from '~/utils/options';
 import type { Customer } from '~/utils/types/customer';
 import type { OrderHistory } from '~/utils/types/order-history';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
 import { sub } from 'date-fns';
 import type { Range } from '~/utils/interface';
 import { getFormattedDate } from 'yeppi-common';

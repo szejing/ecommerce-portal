@@ -1,9 +1,8 @@
 import { defineStore } from 'pinia';
 import { failedNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
 import type { Notification, NotificationCenter, NotificationItem } from '~/utils/types/notification';
 import type { BaseODataReq } from '~/repository/base/base.req';
-import type { NotificationType } from 'yeppi-common';
+import type { NotificationType, ErrorResponse } from 'yeppi-common';
 
 type NotificationQueryOptions = BaseODataReq & {
 	includeRead?: boolean;

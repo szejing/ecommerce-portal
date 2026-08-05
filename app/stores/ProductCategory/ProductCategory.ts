@@ -3,7 +3,7 @@ import { options_page_size } from '~/utils/options';
 import type { CategoryCreate } from '~/utils/types/form/category-creation';
 import type { Category } from '~/utils/types/category';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
+import type { ErrorResponse } from 'yeppi-common';
 import { dir } from '~/utils/constants/dir';
 import type { BaseODataReq } from '~/repository/base/base.req';
 import type { ImageReq } from '~/repository/modules/image/models/request/image.req';

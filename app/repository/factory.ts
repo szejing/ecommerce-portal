@@ -1,4 +1,5 @@
 import type { NitroFetchOptions } from 'nitropack';
+import { getErrorResponse } from 'yeppi-common';
 import { ApiErrorModel } from '~/utils/types/api-error-model';
 
 interface IHttpFactory {
@@ -63,7 +64,7 @@ class HttpFactory {
 			// if (error instanceof 401) {
 			// 	refresh token -> call again
 			// }
-			const apiError = error?.data?.data?.error;
+			const apiError = getErrorResponse(error) ?? error?.data?.data?.error;
 			throw apiError?.message ? apiError : new ApiErrorModel(500, 'Internal Server Error');
 		}
 	}

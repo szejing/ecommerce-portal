@@ -1,11 +1,10 @@
 /* eslint-disable indent */
 /* eslint-disable @stylistic/indent */
 import { defineStore } from 'pinia';
-import type { OrderResendEmailAction, OrderStatus } from 'yeppi-common';
+import type { OrderResendEmailAction, OrderStatus, ErrorResponse } from 'yeppi-common';
 import { getFormattedDate } from 'yeppi-common';
 import { options_page_size } from '~/utils/options';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
 import type { Bill } from '~/utils/types/bill';
 import type { OrderHistory } from '~/utils/types/order-history';
 

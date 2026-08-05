@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import type { BaseODataReq } from '~/repository/base/base.req';
-import type { ErrorResponse } from '~/repository/base/error';
+import type { ErrorResponse } from 'yeppi-common';
 import type { StaffDepartment, StaffDepartmentPayload } from '~/utils/types/staff-department';
 import { options_page_size } from '~/utils/options';
 import { failedNotification, successNotification } from '../AppUi/AppUi';

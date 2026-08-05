@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia';
-import { defaultShippingZoneRelations, KEY, removeDuplicateExpands } from 'yeppi-common';
+import { defaultShippingZoneRelations, KEY, removeDuplicateExpands, type ErrorResponse } from 'yeppi-common';
 import { options_page_size } from '../../utils/options';
 import { successNotification, failedNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
 import type { BaseODataReq } from '~/repository/base/base.req';
 import type { ShippingZone } from '~/utils/types/shipping-zone';
 import type { ShippingZoneCreateStorePayload } from '~/repository/modules/shipping-zone/models/request/create-shipping-zone.req';

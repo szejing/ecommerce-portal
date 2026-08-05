@@ -1,6 +1,6 @@
 import { options_page_size } from '~/utils/options';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
+import type { ErrorResponse } from 'yeppi-common';
 import type { Brand } from '~/utils/types/brand';
 import type { BrandCreate } from '~/utils/types/form/brand-creation';
 import type { BaseODataReq } from '~/repository/base/base.req';

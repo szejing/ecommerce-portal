@@ -3,7 +3,7 @@ import { options_page_size } from '~/utils/options';
 import type { TagCreate } from '~/utils/types/form/tag-creation';
 import type { Tag } from '~/utils/types/tag';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
+import type { ErrorResponse } from 'yeppi-common';
 import type { BaseODataReq } from '~/repository/base/base.req';
 
 type TagFilter = {

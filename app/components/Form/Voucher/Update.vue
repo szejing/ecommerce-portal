@@ -27,7 +27,7 @@
 
 <script lang="ts" setup>
 import { startOfDay } from 'date-fns';
-import { AllocationType, DiscountType } from 'yeppi-common';
+import { AllocationType, DiscountType, type ErrorResponse } from 'yeppi-common';
 import { getFormattedDate } from 'yeppi-common';
 import type { FormErrorEvent, FormSubmitEvent } from '#ui/types';
 import { ZModalLoading } from '#components';
@@ -39,7 +39,6 @@ import { buildDiscountApplySummaryLine } from '~/utils/discount/apply-summary';
 import { buildDiscountConditionReviewItems } from '~/utils/discount/discount-condition-review-lines';
 import type { Voucher } from '~/utils/types/voucher';
 import type { VoucherFormState } from '~/utils/types/form/voucher-creation';
-import type { ErrorResponse } from '~/repository/base/error';
 import { failedNotification } from '~/stores/AppUi/AppUi';
 import { applyDiscountToFormState, emptyDiscountFormEditableState } from '~/utils/types/form/discount-creation';
 import type { CreateDiscountConditionReq } from '~/repository/modules/discount/models/request/create-discount.req';

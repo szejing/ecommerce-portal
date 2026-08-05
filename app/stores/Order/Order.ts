@@ -1,12 +1,11 @@
 /* eslint-disable indent */
 /* eslint-disable @stylistic/indent */
 import { defineStore } from 'pinia';
-import { defaultOrderRelations, getFormattedDate, removeDuplicateExpands, OrderStatus, PaymentStatus, type OrderResendEmailAction } from 'yeppi-common';
+import { defaultOrderRelations, getFormattedDate, removeDuplicateExpands, OrderStatus, PaymentStatus, type OrderResendEmailAction, type ErrorResponse } from 'yeppi-common';
 import { getDefaultOrderStatuses, options_page_size } from '~/utils/options';
 import { buildOrderStatusODataFilter } from '~/utils/order-status-filter';
 import { buildOrderExportQueryParams, type OrderExportOptions } from '~/utils/order-export';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
 import type { CustomerModel } from '~/utils/models/customer.model';
 import type { ItemModel } from '~/utils/models/item.model';
 import type { PaymentModel } from '~/utils/models/payment.model';

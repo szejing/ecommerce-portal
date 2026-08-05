@@ -1,6 +1,5 @@
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
-import { getFormattedDate } from 'yeppi-common';
+import { getFormattedDate, type ErrorResponse } from 'yeppi-common';
 import { initialEmptySaleSumm } from './models/sale-summ.model';
 import { initialEmptySaleSummItem } from './models/sale-summ-items.model';
 import { initialEmptySaleSummPayment } from './models/sale-summ-payments.model';

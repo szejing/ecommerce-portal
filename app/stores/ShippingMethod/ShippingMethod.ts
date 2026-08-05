@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia';
-import { defaultShippingMethodRelations, KEY, removeDuplicateExpands } from 'yeppi-common';
+import { defaultShippingMethodRelations, KEY, removeDuplicateExpands, type ErrorResponse } from 'yeppi-common';
 import { options_page_size } from '../../utils/options';
 import { successNotification, failedNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
 import type { BaseODataReq } from '~/repository/base/base.req';
 import type { ShippingMethodOption } from '~/utils/types/order-fulfillment-shipping';
 import type { ShippingMethodUpdateBody, ShippingMethodWriteBody } from '~/repository/modules/shipping-method/models/request/create-shipping-method.req';

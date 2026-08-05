@@ -1,6 +1,6 @@
 import { format, sub } from 'date-fns';
 import type { BaseODataReq } from '~/repository/base/base.req';
-import type { ErrorResponse } from '~/repository/base/error';
+import type { ErrorResponse } from 'yeppi-common';
 import { failedNotification } from '~/stores/AppUi/AppUi';
 import { options_page_size } from '~/utils/options';
 import type {

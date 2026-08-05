@@ -1,6 +1,6 @@
 import { options_page_size } from '~/utils/options';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
+import type { ErrorResponse } from 'yeppi-common';
 import type { TaxGroup } from '~/utils/types/tax-group';
 import type { TaxGroupCreate } from '~/utils/types/form/tax/tax-group-creation';
 

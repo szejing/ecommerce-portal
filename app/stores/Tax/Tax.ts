@@ -1,6 +1,6 @@
 import { options_page_size } from '~/utils/options';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
+import type { ErrorResponse } from 'yeppi-common';
 import type { Tax } from '~/utils/types/tax';
 import type { TaxCreate } from '~/utils/types/form/tax/tax-creation';
 import type { BaseODataReq } from '~/repository/base/base.req';

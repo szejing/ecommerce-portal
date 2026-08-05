@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { KEY } from 'yeppi-common';
+import { KEY, type ErrorResponse } from 'yeppi-common';
 import { options_page_size } from '~/utils/options';
 import type { Affiliate, AffiliateTier, AffiliateReport } from '~/utils/types/affiliate';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
@@ -7,7 +7,6 @@ import type { BaseODataReq } from '~/repository/base/base.req';
 import type { CreateAffiliateReq } from '~/repository/modules/affiliate/request/create-affiliate.req';
 import type { CreateAffiliateTierReq } from '~/repository/modules/affiliate/request/create-tier.req';
 import type { PatchAffiliateTierReq } from '~/repository/modules/affiliate/request/patch-tier.req';
-import type { ErrorResponse } from '~/repository/base/error';
 import { useAuthStore } from '..';
 
 type AffiliateFilter = {

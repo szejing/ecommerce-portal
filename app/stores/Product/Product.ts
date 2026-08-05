@@ -1,8 +1,7 @@
-import { defaultProductRelations, getFormattedDate, ProductStatus, removeDuplicateExpands } from 'yeppi-common';
+import { defaultProductRelations, getFormattedDate, ProductStatus, removeDuplicateExpands, type ErrorResponse } from 'yeppi-common';
 import { options_page_size } from '~/utils/options';
 import type { Product } from '~/utils/types/product';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
 import type { ProductCreate, ProductUpdate } from '~/utils/types/form/product-creation';
 import { dir } from '~/utils/constants/dir';
 import type { BaseODataReq } from '~/repository/base/base.req';

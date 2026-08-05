@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia';
-import { KEY } from 'yeppi-common';
+import { KEY, type ErrorResponse } from 'yeppi-common';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
 import type { UpdateFulfillmentReq } from '~/repository/modules/fulfillment/models/request/update-fulfillment.req';
 import type { FulfillmentBatch } from '~/utils/types/order-fulfillment-shipping';
 

@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia';
-import { KEY } from 'yeppi-common';
+import { KEY, type ErrorResponse } from 'yeppi-common';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
 import type { BaseODataReq } from '~/repository/base/base.req';
-import type { ErrorResponse } from '~/repository/base/error';
 import type { Courier } from '~/utils/types/courier';
 import type { CourierWriteBody } from '~/repository/modules/courier/models/request/create-courier.req';
 import type { UpdateCourierReq } from '~/repository/modules/courier/models/request/update-courier.req';

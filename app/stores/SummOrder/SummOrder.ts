@@ -1,9 +1,8 @@
 import type { SummDaily, SummCustomer, SummProduct } from '~/utils/types/summ-orders';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
 import { initialEmptyOrderSumm } from './model/order-summ.model';
 import { initialEmptyOrderSummItem } from './model/order-summ-item.model';
-import { getFormattedDate } from 'yeppi-common';
+import { getFormattedDate, type ErrorResponse } from 'yeppi-common';
 import { initialEmptyOrderSummCustomer } from './model/order-summ-customer.model';
 import type { Range } from '~/utils/interface';
 import { buildSummOrderItemODataFilter } from '~/utils/summ-order-item-filter';

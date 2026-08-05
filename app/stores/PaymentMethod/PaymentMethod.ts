@@ -1,6 +1,6 @@
 import type { PaymentMethod } from '~/utils/types/payment-method';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
+import type { ErrorResponse } from 'yeppi-common';
 import { options_page_size } from '~/utils/options';
 import type { BaseODataReq } from '~/repository/base/base.req';
 import type { UpdatePaymentMethodBody } from '~/repository/modules/payment-method/models/request/update-payment-method.req';

@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia';
-import { KEY, ReasonType } from 'yeppi-common';
+import { KEY, ReasonType, type ErrorResponse } from 'yeppi-common';
 import { options_page_size } from '../../utils/options';
 import { successNotification, failedNotification } from '../AppUi/AppUi';
-import type { ErrorResponse } from '~/repository/base/error';
 import type { BaseODataReq } from '~/repository/base/base.req';
 import type { Reason } from '~/utils/types/reason';
 import type { ReasonCreateStorePayload, ReasonUpdateStorePayload } from '~/repository/modules/reason/models/request/create-reason.req';
