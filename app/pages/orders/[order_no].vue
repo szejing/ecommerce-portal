@@ -92,84 +92,7 @@
 					</UCard>
 
 					<!-- Order Items -->
-					<UCard v-if="orderForModal" class="items-card">
-						<template #header>
-							<div class="card-header">
-								<h2 class="card-title">
-									<UIcon :name="ICONS.PRODUCT" class="w-5 h-5" />
-									{{ t('components.orderDetail.orderItems') }}
-								</h2>
-								<div class="flex items-center gap-2">
-									<span v-if="order?.status === OrderStatus.PENDING_PAYMENT" class="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
-										<UIcon name="i-heroicons-pencil" class="w-3 h-3" />
-										{{ t('components.orderDetail.editable') }}
-									</span>
-									<span v-else-if="order?.status === OrderStatus.COMPLETED" class="text-xs text-green-600 font-medium">
-										<UIcon name="i-heroicons-pencil" class="w-3 h-3" />
-										{{ t('components.orderDetail.editable') }}
-									</span>
-									<UPopover v-else overlay>
-										<UButton color="neutral" :trailing-icon="ICONS.QUESTION_MARK" variant="soft" size="xs" />
-										<template #content>
-											<div class="p-4 max-w-xs">
-												<p class="text-sm">
-													{{ t('components.orderDetail.orderNotEditableMessage') }}<br />
-													<b class="text-primary">{{ t('components.orderDetail.changeStatusToEdit') }}</b>
-												</p>
-											</div>
-										</template>
-									</UPopover>
-								</div>
-							</div>
-						</template>
-
-						<UTable :data="items ?? []" :columns="order_detail_item_columns" :meta="order_items_table_meta" class="w-full" @select="onOrderItemRowSelect">
-							<template #item-cell="{ row }">
-								<ZSectionOrderDetailItems column="item" :item="row.original" :currency-code="currency_code" />
-							</template>
-							<template #unitSellPrice-cell="{ row }">
-								<ZSectionOrderDetailItems column="unitSellPrice" :item="row.original" :currency-code="currency_code" />
-							</template>
-							<template #qty-cell="{ row }">
-								<ZSectionOrderDetailItems column="qty" :item="row.original" :currency-code="currency_code" />
-							</template>
-							<template #lineTotal-cell="{ row }">
-								<ZSectionOrderDetailItems column="lineTotal" :item="row.original" :currency-code="currency_code" />
-							</template>
-						</UTable>
-
-						<div class="order-items-bill-summary border-default divide-y divide-default border-t">
-							<div class="grid grid-cols-[2fr_1fr_1fr_1fr] items-center">
-								<div class="col-span-2" />
-								<div class="p-4 text-left text-muted italic font-normal">{{ t('components.orderDetail.subTotal') }}</div>
-								<div class="p-4 text-center font-bold text-lg italic">{{ formatCurrency(record?.gross_amt ?? 0, currency_code) }}</div>
-							</div>
-							<div v-if="(record?.order_type ?? OrderType.PICKUP) === OrderType.DELIVERY" class="grid grid-cols-[2fr_1fr_1fr_1fr] items-center">
-								<div class="col-span-2" />
-								<div class="p-4 text-left text-muted italic font-normal">
-									{{ t('components.fulfillment.shippingFee') }}
-									<span v-if="shipping_fee_method_hint" class="text-xs font-normal not-italic text-muted leading-tight max-w-full">
-										{{ shipping_fee_method_hint }}
-									</span>
-								</div>
-								<div class="p-4 text-center font-bold text-lg italic">
-									<div class="flex flex-col items-center gap-0.5">
-										<span>{{ formatCurrency(shipping_fee_total, currency_code) }}</span>
-									</div>
-								</div>
-							</div>
-							<div v-for="tax in record?.taxes ?? []" :key="tax.tax_code" class="grid grid-cols-[2fr_1fr_1fr_1fr] items-center">
-								<div class="col-span-2" />
-								<div class="p-4 text-left text-muted italic font-normal">{{ tax.tax_desc }}</div>
-								<div class="p-4 text-center text-error italic">-{{ formatCurrency(tax.tax_amt, currency_code) }}</div>
-							</div>
-							<div class="grid grid-cols-[2fr_1fr_1fr_1fr] items-center border-b-4 border-double border-default">
-								<div class="col-span-2" />
-								<div class="p-4 text-left italic font-bold">{{ t('components.orderDetail.netTotal') }}</div>
-								<div class="p-4 text-center font-bold text-lg italic">{{ formatCurrency(order?.payable_total ?? 0, currency_code) }}</div>
-							</div>
-						</div>
-					</UCard>
+					<ZSectionOrderDetailItems v-if="orderForModal" :order="orderForModal" @refresh="onItemsRefresh" />
 
 					<!-- Remarks Section -->
 					<UCard v-if="record?.remarks" class="remarks-card">
@@ -266,17 +189,13 @@
 </template>
 
 <script lang="ts" setup>
-import type { TableRow } from '@nuxt/ui';
-import type { TableMeta, Row } from '@tanstack/vue-table';
-import { ZModalConfirmation, ZModalInformation, ZModalOrderDetailCustomer, ZModalOrderDetailItem } from '#components';
-import { OrderItemStatus, OrderResendEmailAction, OrderStatus, OrderType, formatCurrency } from 'yeppi-common';
+import { ZModalConfirmation, ZModalOrderDetailCustomer } from '#components';
+import { OrderResendEmailAction, OrderStatus, OrderType } from 'yeppi-common';
 import { successNotification } from '~/stores/AppUi/AppUi';
 import { ICONS } from '~/utils/icons';
-import type { ItemModel } from '~/utils/models/item.model';
 import type { OrderHistory } from '~/utils/types/order-history';
-import { getOrderDetailItemColumns } from '~/utils/table-columns';
 import { resolveOrderResendEmailAction } from '~/utils/resolve-order-resend-email-action';
-import { getFulfillmentMethodDescriptions, sumFulfillmentShippingFees } from '~/utils/fulfillment';
+import { getFulfillmentMethodDescriptions } from '~/utils/fulfillment';
 import Activities from '~/components/ActivityLog/Activities.vue';
 import { useMediaQuery } from '@vueuse/core';
 
@@ -323,13 +242,6 @@ const order_fulfillment_method_label = computed(() => {
 	return isDelivery ? t('components.orderDetail.orderTypeDelivery') : t('components.orderDetail.orderTypePickup');
 });
 
-/** Distinct fulfillment method descriptions for the Shipping row. */
-const shipping_fee_method_hint = computed(() => {
-	return getFulfillmentMethodDescriptions(record.value?.fulfillments ?? []).join(', ');
-});
-
-const shipping_fee_total = computed(() => sumFulfillmentShippingFees(record.value?.fulfillments ?? []));
-
 const orderForModal = computed((): OrderHistory | undefined => {
 	return order.value;
 });
@@ -341,14 +253,7 @@ const new_order_status = ref<OrderStatus>(OrderStatus.PENDING_PAYMENT);
 
 const customer = computed(() => record.value?.customer);
 
-const items = computed(() => record.value?.items);
-const currency_code = computed(() => record.value?.currency.code);
-
 const { t } = useI18n();
-
-const order_detail_items_editable = computed(() => order.value?.status === OrderStatus.PENDING_PAYMENT);
-
-const order_detail_item_columns = computed(() => getOrderDetailItemColumns(t));
 
 const resend_email_action = computed<ResendEmailAction | undefined>(() => {
 	const current = order.value;
@@ -402,57 +307,6 @@ const resend_email_button_text = computed(() => {
 	}
 	return `Resend ${resend_email_label.value}`;
 });
-
-const order_items_table_meta = computed<TableMeta<ItemModel>>(() => ({
-	class: {
-		tr: (row: Row<ItemModel>) =>
-			order_detail_items_editable.value && row.original.status === OrderItemStatus.ACTIVE ? 'cursor-pointer hover:bg-neutral-50' : '',
-	},
-}));
-
-const openOrderItemEdit = (item: ItemModel) => {
-	if (!orderForModal.value) return;
-
-	if (item.status === OrderItemStatus.ACTIVE) {
-		const itemModal = overlay.create(ZModalOrderDetailItem, {
-			props: {
-				order: orderForModal.value,
-				item: JSON.parse(JSON.stringify(item)),
-				onCancel: () => {
-					itemModal.close();
-				},
-				onUpdate: (requiresRefresh: boolean) => {
-					if (requiresRefresh) {
-						onItemsRefresh();
-					}
-					itemModal.close();
-				},
-			},
-		});
-
-		itemModal.open();
-	} else {
-		const infoModal = overlay.create(ZModalInformation, {
-			props: {
-				title: 'Warning',
-				message: 'Unable to edit this item because it is already voided by customer.',
-				action: 'confirm',
-				onConfirm: () => {
-					infoModal.close();
-				},
-			},
-		});
-
-		infoModal.open();
-	}
-};
-
-const onOrderItemRowSelect = (_e: Event, row: TableRow<ItemModel>) => {
-	const item = row.original;
-	if (!item || !order_detail_items_editable.value) return;
-	if (item.status !== OrderItemStatus.ACTIVE) return;
-	openOrderItemEdit(item);
-};
 
 const REFRESH_COOLDOWN_SECONDS = 5;
 const refresh_cooldown = ref(0);
@@ -807,14 +661,12 @@ const editCustomerDetail = async () => {
 }
 
 .customer-card,
-.items-card,
 .remarks-card {
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 	transition: box-shadow 0.2s ease;
 }
 
 .customer-card:hover,
-.items-card:hover,
 .remarks-card:hover {
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }

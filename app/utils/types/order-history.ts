@@ -1,5 +1,6 @@
 import type { OrderRequestType, OrderStatus, OrderType, PaymentStatus, ReasonType } from 'yeppi-common';
 import type { TaxModel } from '../models/tax.model';
+import type { OrderDiscountModel } from '../models/order-discount.model';
 import type { Currency } from './currency';
 import type { ItemModel, PaymentModel, CustomerModel } from '../models';
 import type { FulfillmentBatch, FulfillmentLifecycleStatusValue, OrderActivity } from './order-fulfillment-shipping';
@@ -60,6 +61,7 @@ export type OrderHistory = {
 	payments: PaymentModel[];
 	customer: CustomerModel;
 	taxes: TaxModel[];
+	discounts: OrderDiscountModel[];
 	created_at: Date;
 	fulfillments: FulfillmentBatch[];
 	activities?: OrderActivity[];
