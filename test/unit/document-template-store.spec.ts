@@ -232,6 +232,29 @@ describe('useDocumentTemplateStore', () => {
 		expect(revokeObjectURL).toHaveBeenCalledWith('blob:preview-1');
 	});
 
+	it('keeps the newest overlapping email preview response', async () => {
+		const store = await selectDraft();
+		const older = deferred<{ html: string; subject: string; revision_id: null; revision_no: null }>();
+		const newer = deferred<{ html: string; subject: string; revision_id: null; revision_no: null }>();
+		api.previewEmail.mockReturnValueOnce(older.promise).mockReturnValueOnce(newer.promise);
+
+		const olderPreview = store.previewDraft();
+		const newerPreview = store.previewDraft();
+		newer.resolve({ html: '<p>Newest</p>', subject: 'Newest', revision_id: null, revision_no: null });
+		await newerPreview;
+		older.resolve({ html: '<p>Older</p>', subject: 'Older', revision_id: null, revision_no: null });
+		await olderPreview;
+
+		expect(store.preview).toEqual({
+			channel: 'email',
+			html: '<p>Newest</p>',
+			subject: 'Newest',
+			revisionId: null,
+			revisionNo: null,
+		});
+		expect(store.previewStale).toBe(false);
+	});
+
 	it('clears state immediately and ignores an ABA stale detail response', async () => {
 		const first = deferred<DocumentTemplateDetail>();
 		api.get.mockImplementationOnce(() => first.promise);

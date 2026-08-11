@@ -477,6 +477,8 @@ describe('Template Studio workflow', () => {
 	});
 
 	it('converts local schedule boundaries to UTC for the exact saved draft', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-07-31T00:00:00.000Z'));
 		const { wrapper } = await mountWorkflow();
 		const publish = vi.spyOn(useNuxtApp().$api.documentTemplate, 'publish').mockResolvedValue({
 			version: 4,
