@@ -193,7 +193,6 @@ let isActive = true;
 let storeDisposed = false;
 let initialLoadSettled = false;
 let initialRouteSyncPending = false;
-let selectionOperation = 0;
 
 useHead({ title: () => t('pages.templateStudioTitle') });
 
@@ -255,7 +254,6 @@ function requestedTemplate(query = route.query): DocumentTemplateSummary | undef
 }
 
 async function selectTemplate(template: DocumentTemplateSummary): Promise<void> {
-	const operation = ++selectionOperation;
 	if (!isActive || !template.editable) return;
 	const channel = template.channel;
 	const queryMatches = queryString(route.query.channel) === channel && queryString(route.query.template) === template.template_code;
@@ -263,20 +261,12 @@ async function selectTemplate(template: DocumentTemplateSummary): Promise<void> 
 		await router.replace({
 			query: { ...route.query, channel, template: template.template_code },
 		});
-		if (
-			!isActive ||
-			operation !== selectionOperation ||
-			queryString(route.query.channel) !== channel ||
-			queryString(route.query.template) !== template.template_code
-		)
-			return;
+		return;
 	}
-	if (!isActive || operation !== selectionOperation) return;
+	if (!isActive) return;
 	if (selected.value?.channel === channel && selected.value.templateCode === template.template_code) return;
 	activeTab.value = 'content';
-	await templateStore.loadDetail(channel, template.template_code);
-	if (!selectionMatches(channel, template.template_code)) return;
-	void templateStore.previewDraft();
+	await templateStore.openTemplate(channel, template.template_code);
 }
 
 async function syncSelectionFromRoute(): Promise<void> {
@@ -293,15 +283,11 @@ function disposeTemplateStore(): void {
 
 onScopeDispose(() => {
 	isActive = false;
-	selectionOperation += 1;
 	disposeTemplateStore();
 });
 
 useLeavePageGuard(isDirty, {
-	onLeave: () => {
-		selectionOperation += 1;
-		disposeTemplateStore();
-	},
+	onLeave: disposeTemplateStore,
 });
 
 function openConfirmation(title: string, message: string, action: () => Promise<void>): void {
@@ -320,10 +306,6 @@ function openConfirmation(title: string, message: string, action: () => Promise<
 		},
 	});
 	confirmModal.open();
-}
-
-function selectionMatches(channel: string, templateCode: string): boolean {
-	return isActive && selected.value?.channel === channel && selected.value.templateCode === templateCode;
 }
 
 function requestPublish(window: { startDate: Date | null; endDate: Date | null }): void {
@@ -411,10 +393,9 @@ watch(
 	},
 );
 
-const initialSelectionOperation = selectionOperation;
 try {
-	await templateStore.loadSummaries();
-	if (isActive && initialSelectionOperation === selectionOperation) await syncSelectionFromRoute();
+	await templateStore.loadCatalog();
+	if (isActive) await syncSelectionFromRoute();
 } catch {
 	// The store exposes a translated shell-safe error region while preserving retry state for later tasks.
 } finally {

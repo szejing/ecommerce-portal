@@ -455,6 +455,10 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			}
 		},
 
+		async loadCatalog() {
+			await this.loadSummaries();
+		},
+
 		async loadDetail(channel: DocumentTemplateChannel, templateCode: string) {
 			const selection = { channel, templateCode };
 			this.resetDetailSelection();
@@ -485,6 +489,13 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			} finally {
 				if (request === this.generation && epoch === this.selectionEpoch) this.loadingDetail = false;
 			}
+		},
+
+		async openTemplate(channel: DocumentTemplateChannel, templateCode: string) {
+			const selection = { channel, templateCode };
+			await this.loadDetail(channel, templateCode);
+			if (!this.detail || !isSameSelection(this.selected, selection)) return;
+			await this.previewDraft();
 		},
 
 		async loadRevisions() {

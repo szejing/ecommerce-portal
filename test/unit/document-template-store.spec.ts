@@ -201,6 +201,58 @@ describe('useDocumentTemplateStore', () => {
 		expect(store.detail?.template_code).toBe('invoice');
 	});
 
+	it('opens a template with authoritative detail and its initial preview', async () => {
+		api.previewEmail.mockResolvedValue({ html: '<p>Initial preview</p>', subject: 'Initial', revision_id: 'draft-1', revision_no: 2 });
+		const store = useDocumentTemplateStore();
+
+		await store.openTemplate('email', 'order-confirmation');
+
+		expect(store.selected).toEqual({ channel: 'email', templateCode: 'order-confirmation' });
+		expect(store.detail?.template_code).toBe('order-confirmation');
+		expect(store.preview).toEqual({
+			channel: 'email',
+			html: '<p>Initial preview</p>',
+			subject: 'Initial',
+			revisionId: 'draft-1',
+			revisionNo: 2,
+		});
+	});
+
+	it('opens only the newest template when detail requests overlap', async () => {
+		const firstDetail = deferred<DocumentTemplateDetail>();
+		api.get.mockReturnValueOnce(firstDetail.promise).mockResolvedValueOnce({ ...structuredClone(detail), template_code: 'invoice' });
+		api.previewEmail.mockResolvedValue({ html: '<p>Invoice</p>', subject: 'Invoice', revision_id: null, revision_no: null });
+		const store = useDocumentTemplateStore();
+
+		const firstOpen = store.openTemplate('email', 'order-confirmation');
+		await store.openTemplate('email', 'invoice');
+		firstDetail.resolve(structuredClone(detail));
+		await firstOpen;
+
+		expect(store.selected).toEqual({ channel: 'email', templateCode: 'invoice' });
+		expect(store.detail?.template_code).toBe('invoice');
+		expect(store.preview).toMatchObject({ channel: 'email', html: '<p>Invoice</p>' });
+		expect(api.previewEmail).toHaveBeenCalledOnce();
+		expect(api.previewEmail).toHaveBeenCalledWith('email', 'invoice', expect.any(Object));
+	});
+
+	it('does not resume an open after the editing session is disposed', async () => {
+		const pendingDetail = deferred<DocumentTemplateDetail>();
+		api.get.mockReturnValue(pendingDetail.promise);
+		api.previewEmail.mockResolvedValue({ html: '<p>Late</p>', subject: 'Late', revision_id: null, revision_no: null });
+		const store = useDocumentTemplateStore();
+		const opening = store.openTemplate('email', 'order-confirmation');
+
+		store.dispose();
+		pendingDetail.resolve(structuredClone(detail));
+		await opening;
+
+		expect(store.selected).toBeNull();
+		expect(store.detail).toBeNull();
+		expect(store.preview).toBeNull();
+		expect(api.previewEmail).not.toHaveBeenCalled();
+	});
+
 	it('deduplicates latest and active revisions by id when loading detail', async () => {
 		api.get.mockResolvedValue({
 			...structuredClone(detail),
