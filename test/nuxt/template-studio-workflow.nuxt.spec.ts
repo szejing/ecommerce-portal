@@ -541,7 +541,9 @@ describe('Template Studio workflow', () => {
 
 	it.each(['publish', 'reset'] as const)('requires one confirmation before %s', async (action) => {
 		const { wrapper, store } = await mountWorkflow();
-		const actionSpy = vi.spyOn(store, action === 'reset' ? 'resetTemplate' : 'publish').mockResolvedValue();
+		const actionSpy = action === 'reset'
+			? vi.spyOn(store, 'confirmReset').mockResolvedValue('completed')
+			: vi.spyOn(store, 'confirmPublish').mockResolvedValue('completed');
 
 		await wrapper.get(`[data-action="${action === 'publish' ? 'publish-now' : action}"]`).trigger('click');
 

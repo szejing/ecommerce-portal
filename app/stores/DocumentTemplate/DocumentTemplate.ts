@@ -27,6 +27,12 @@ export type TemplatePublishPreparation =
 	| { status: 'ready'; intent: TemplatePublishIntent; scheduled: boolean }
 	| { status: 'rejected' };
 export type TemplateMutationOutcome = 'completed' | 'stale' | 'failed';
+export type TemplateResetIntent = {
+	channel: DocumentTemplateChannel;
+	templateCode: string;
+	version: number;
+	draftRevisionId: string | null;
+};
 type TemplateSelection = { channel: DocumentTemplateChannel; templateCode: string };
 type TemplateSchedule = { startDate: Date | null; endDate: Date | null; timezone: string };
 type UnknownRecord = Record<string, unknown>;
@@ -865,9 +871,29 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			}
 		},
 
-		async reset() {
+		prepareReset(): TemplateResetIntent | null {
+			if (!this.selected || !this.detail || !this.canReset) return null;
+			return {
+				...this.selected,
+				version: this.detail.version,
+				draftRevisionId: this.detail.draft_revision?.id ?? null,
+			};
+		},
+
+		async confirmReset(intent: TemplateResetIntent): Promise<TemplateMutationOutcome> {
+			if (
+				!isSameSelection(this.selected, intent)
+				|| this.detail?.version !== intent.version
+				|| (this.detail.draft_revision?.id ?? null) !== intent.draftRevisionId
+			) return 'stale';
+			const outcome = await this.reset();
+			if (outcome === 'completed' && isSameSelection(this.selected, intent)) await this.refreshPreview();
+			return outcome;
+		},
+
+		async reset(): Promise<TemplateMutationOutcome> {
 			const selection = this.selected;
-			if (!selection || !this.detail || !this.canReset) return;
+			if (!selection || !this.detail || !this.canReset) return 'stale';
 			const mutation = ++this.mutationGeneration;
 			this.revisionsGeneration += 1;
 			this.saving = false; this.publishing = false; this.restoring = false;
@@ -882,18 +908,22 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 				if (mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
 					this.applyMutation(response, editGeneration, submittedDraft);
 					await this.loadRevisions();
+					return 'completed';
 				}
+				return 'stale';
 			} catch (error) {
 				if (mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
 					if (!this.readConflict(error)) this.error = getApiErrorMessage(error, 'Failed to reset document template');
+					return 'failed';
 				}
+				return 'stale';
 			} finally {
 				if (epoch === this.selectionEpoch && mutation === this.mutationGeneration) this.resetting = false;
 			}
 		},
 
-		async resetTemplate() {
-			await this.reset();
+		async resetTemplate(): Promise<TemplateMutationOutcome> {
+			return await this.reset();
 		},
 
 		async restore(revisionNo: number) {

@@ -712,6 +712,43 @@ describe('useDocumentTemplateStore', () => {
 		expect(store.isDirty).toBe(true);
 	});
 
+	it('rejects reset confirmation after the authoritative draft changes', async () => {
+		const store = await selectDraft();
+		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
+		const intent = store.prepareReset();
+		expect(intent).not.toBeNull();
+		api.get.mockResolvedValue({
+			...structuredClone(detail),
+			version: 3,
+			draft_revision: revision({ id: 'draft-newer', revision_no: 3, status: 'draft' }),
+		});
+		await store.loadDetail('email', 'order-confirmation');
+
+		const outcome = intent ? await store.confirmReset(intent) : 'failed';
+
+		expect(outcome).toBe('stale');
+		expect(api.reset).not.toHaveBeenCalled();
+	});
+
+	it('completes reset with authoritative revisions and a refreshed preview', async () => {
+		const store = await selectDraft();
+		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
+		const intent = store.prepareReset();
+		const resetDraft = revision({ id: 'draft-reset-complete', revision_no: 3, status: 'draft', configuration: {} });
+		api.reset.mockResolvedValue({ version: 3, draft_revision: resetDraft });
+		api.listRevisions.mockResolvedValue({ revisions: [resetDraft, existingPublished] });
+		api.previewEmail.mockResolvedValue({ html: '<p>Reset preview</p>', subject: 'Reset', revision_id: resetDraft.id, revision_no: 3 });
+
+		const outcome = intent ? await store.confirmReset(intent) : 'failed';
+
+		expect(outcome).toBe('completed');
+		expect(store.detail?.draft_revision).toEqual(resetDraft);
+		expect(store.revisions).toEqual([resetDraft, existingPublished]);
+		expect(store.isDirty).toBe(false);
+		expect(api.previewEmail).toHaveBeenCalledWith('email', 'order-confirmation', { configuration: {} });
+		expect(store.preview).toMatchObject({ channel: 'email', html: '<p>Reset preview</p>', subject: 'Reset' });
+	});
+
 	it('does not restore untouched fields when reset removes their entire section', async () => {
 		const store = await selectDraft();
 		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;

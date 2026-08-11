@@ -339,15 +339,10 @@ function requestPublish(window: { startDate: Date | null; endDate: Date | null }
 }
 
 function requestReset(): void {
-	const selection = selected.value;
-	const version = detail.value?.version;
-	const previousDraftId = detail.value?.draft_revision?.id;
-	if (!selection || version === undefined) return;
+	const intent = templateStore.prepareReset();
+	if (!intent) return;
 	openConfirmation(t('components.templateStudio.resetConfirmTitle'), t('components.templateStudio.resetConfirmMessage'), async () => {
-		if (!selectionMatches(selection.channel, selection.templateCode) || detail.value?.version !== version) return;
-		await templateStore.resetTemplate();
-		if (!conflict.value && detail.value?.draft_revision?.id !== previousDraftId && !isDirty.value) activeTab.value = 'content';
-		if (selectionMatches(selection.channel, selection.templateCode)) void templateStore.previewDraft();
+		if (await templateStore.confirmReset(intent) === 'completed') activeTab.value = 'content';
 	});
 }
 
