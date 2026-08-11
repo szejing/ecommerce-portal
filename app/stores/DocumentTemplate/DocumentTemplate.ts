@@ -95,6 +95,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 	let testGeneration = 0;
 	let previewedConfigurationKey: string | null = null;
 	let previewTimer: ReturnType<typeof setTimeout> | null = null;
+	const publishIntentSnapshots = new WeakMap<TemplatePublishIntent, TemplatePublishIntent>();
 
 	const loading = computed(() => loadingSummaries.value || loadingDetail.value);
 	const canEdit = computed(() => {
@@ -269,11 +270,17 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 	}
 
 	function schedulePreviewAfterEdit(): void {
-		if (!selected.value || !detail.value || !isDirty.value) return;
+		if (!selected.value || !detail.value) return;
 		previewGeneration += 1;
 		cancelPreviewTimer();
+		const configurationKey = `${selected.value.channel}:${selected.value.templateCode}:${stableSerialize(configurationForRequest())}`;
 		if (selected.value.channel === 'pdf') {
-			if (preview.value) previewStale.value = true;
+			previewStale.value = Boolean(preview.value) && previewedConfigurationKey !== configurationKey;
+			previewing.value = false;
+			return;
+		}
+		if (preview.value && previewedConfigurationKey === configurationKey) {
+			previewStale.value = false;
 			previewing.value = false;
 			return;
 		}
@@ -546,10 +553,21 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 			error.value = validationError;
 			return { status: 'rejected' };
 		}
+		const intent: TemplatePublishIntent = {
+			...selection,
+			revisionId: draftRevision.id,
+			revisionNo: draftRevision.revision_no,
+			...activation,
+		};
+		publishIntentSnapshots.set(intent, {
+			...intent,
+			startDate: intent.startDate ? new Date(intent.startDate) : null,
+			endDate: intent.endDate ? new Date(intent.endDate) : null,
+		});
 		return {
 			status: 'ready',
 			scheduled: activation.startDate !== null || activation.endDate !== null,
-			intent: { ...selection, revisionId: draftRevision.id, revisionNo: draftRevision.revision_no, ...activation },
+			intent,
 		};
 	}
 
@@ -604,24 +622,27 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 	}
 
 	async function confirmPublish(intent: TemplatePublishIntent): Promise<TemplateMutationOutcome> {
-		const validationError = activationError(intent);
+		const preparedIntent = publishIntentSnapshots.get(intent);
+		if (!preparedIntent) return 'stale';
+		publishIntentSnapshots.delete(intent);
+		const validationError = activationError(preparedIntent);
 		if (validationError) {
 			error.value = validationError;
 			return 'failed';
 		}
 		const currentDraft = detail.value?.draft_revision;
 		if (
-			!isSameSelection(selected.value, intent)
+			!isSameSelection(selected.value, preparedIntent)
 			|| isDirty.value
-			|| currentDraft?.id !== intent.revisionId
-			|| currentDraft.revision_no !== intent.revisionNo
+			|| currentDraft?.id !== preparedIntent.revisionId
+			|| currentDraft.revision_no !== preparedIntent.revisionNo
 		) return 'stale';
 		schedule.value = {
 			...schedule.value,
-			startDate: intent.startDate ? new Date(intent.startDate) : null,
-			endDate: intent.endDate ? new Date(intent.endDate) : null,
+			startDate: preparedIntent.startDate ? new Date(preparedIntent.startDate) : null,
+			endDate: preparedIntent.endDate ? new Date(preparedIntent.endDate) : null,
 		};
-		return await publish(intent.revisionNo);
+		return await publish(preparedIntent.revisionNo);
 	}
 
 	function prepareReset(): TemplateResetIntent | null {

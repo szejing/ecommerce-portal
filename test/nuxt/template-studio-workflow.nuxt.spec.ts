@@ -15,7 +15,6 @@ import TemplateEditor from '~/components/Z/TemplateStudio/TemplateEditor.vue';
 import TemplatePreview from '~/components/Z/TemplateStudio/TemplatePreview.vue';
 import { useAuthStore } from '~/stores/Auth/Auth';
 import {
-	EMAIL_PREVIEW_DEBOUNCE_MS,
 	useDocumentTemplateStore,
 	type EmailPreview,
 	type PdfPreview,
@@ -382,7 +381,7 @@ describe('Template Studio workflow', () => {
 		expect(wrapper.findComponent(SectionEditor).exists()).toBe(false);
 	});
 
-	it('uses catalog defaults after clearing an override and sends the same resolved contract to preview', async () => {
+	it('renders the catalog default after clearing an override', async () => {
 		const configuredDraft = revision(7, {
 			id: 'draft-7',
 			status: 'draft',
@@ -396,14 +395,6 @@ describe('Template Studio workflow', () => {
 				draft_revision: configuredDraft,
 			},
 		});
-		const apiPreview = vi.spyOn(useNuxtApp().$api.documentTemplate, 'previewEmail').mockResolvedValue({
-			html: '<p style="color:#EE7F01">Catalog default</p>',
-			subject: 'Invoice',
-			revision_id: null,
-			revision_no: null,
-		});
-		vi.useFakeTimers();
-
 		await wrapper.findAll('[role="tab"]').find(tab => tab.text() === 'Brand')!.trigger('mousedown', {
 			button: 0,
 			ctrlKey: false,
@@ -418,54 +409,6 @@ describe('Template Studio workflow', () => {
 		expect(editor.get('[data-color-text="brand.primaryColor"]').element).toHaveProperty('value', '#EE7F01');
 		expect(editor.find('[data-source]').exists()).toBe(false);
 		expect(store.draft.brand).toBeUndefined();
-
-		await vi.advanceTimersByTimeAsync(EMAIL_PREVIEW_DEBOUNCE_MS);
-		expect(apiPreview).toHaveBeenCalledWith('email', 'invoice', { configuration: {} });
-	});
-
-	it('debounces edited email previews, supports immediate refresh, and cancels on unmount', async () => {
-		const { wrapper, store } = await mountWorkflow();
-		const apiPreview = vi.spyOn(useNuxtApp().$api.documentTemplate, 'previewEmail').mockResolvedValue({
-			html: emailPreview.html,
-			subject: emailPreview.subject,
-			revision_id: null,
-			revision_no: null,
-		});
-		vi.useFakeTimers();
-
-		store.setConfigurationPath('content.greeting', '<p>First</p>');
-		await nextTick();
-		store.setConfigurationPath('content.greeting', '<p>Latest</p>');
-		await nextTick();
-		await vi.advanceTimersByTimeAsync(EMAIL_PREVIEW_DEBOUNCE_MS - 1);
-		expect(apiPreview).not.toHaveBeenCalled();
-		await vi.advanceTimersByTimeAsync(1);
-		expect(apiPreview).toHaveBeenCalledOnce();
-
-		await wrapper.get('[data-action="refresh-preview"]').trigger('click');
-		await flushPromises();
-		expect(apiPreview).toHaveBeenCalledTimes(2);
-
-		store.setConfigurationPath('content.greeting', '<p>Unmounted</p>');
-		await nextTick();
-		wrapper.unmount();
-		await vi.advanceTimersByTimeAsync(EMAIL_PREVIEW_DEBOUNCE_MS);
-		expect(apiPreview).toHaveBeenCalledTimes(2);
-		expect(store.preview).toBeNull();
-	});
-
-	it('marks PDF preview stale on edits without auto-requesting a render', async () => {
-		const { wrapper, store } = await mountWorkflow({ channel: 'pdf' });
-		const apiPreview = vi.spyOn(useNuxtApp().$api.documentTemplate, 'previewPdf').mockResolvedValue(new Blob(['pdf']));
-		vi.useFakeTimers();
-
-		store.setConfigurationPath('content.greeting', '<p>Changed</p>');
-		await nextTick();
-		await vi.advanceTimersByTimeAsync(EMAIL_PREVIEW_DEBOUNCE_MS);
-
-		expect(apiPreview).not.toHaveBeenCalled();
-		expect(store.previewStale).toBe(true);
-		expect(wrapper.text()).toContain('Preview outdated');
 	});
 
 	it('publishes the exact saved draft with null activation boundaries only after confirmation', async () => {

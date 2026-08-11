@@ -368,6 +368,23 @@ describe('useDocumentTemplateStore editing session', () => {
 		expect(store.preview).toMatchObject({ channel: 'email', html: '<p>Newest</p>', subject: 'Newest' });
 	});
 
+	it('rejects an in-flight dirty preview after the edit returns to baseline', async () => {
+		const store = await openEmail();
+		const dirtyPreview = deferred<{ html: string; subject: string; revision_id: null; revision_no: null }>();
+		api.previewEmail.mockReturnValueOnce(dirtyPreview.promise);
+		vi.useFakeTimers();
+
+		store.setConfigurationPath('content.greeting', '<p>Dirty</p>');
+		await vi.advanceTimersByTimeAsync(EMAIL_PREVIEW_DEBOUNCE_MS);
+		store.setConfigurationPath('content.greeting', '<p>Welcome</p>');
+		dirtyPreview.resolve({ html: '<p>Dirty preview</p>', subject: 'Dirty', revision_id: null, revision_no: null });
+		await Promise.resolve();
+		await Promise.resolve();
+
+		expect(store.isDirty).toBe(false);
+		expect(store.preview).toMatchObject({ channel: 'email', html: '<p>Preview</p>', subject: 'Preview' });
+	});
+
 	it('marks a retained PDF preview outdated without automatically rendering another PDF', async () => {
 		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:pdf') });
 		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
@@ -453,6 +470,31 @@ describe('useDocumentTemplateStore editing session', () => {
 				startDate: new Date('2026-08-01T00:00:00.000Z'),
 				endDate: new Date('2026-08-07T00:00:00.000Z'),
 			},
+		});
+	});
+
+	it('publishes the prepared activation snapshot when intent dates are mutated later', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-07-31T00:00:00.000Z'));
+		const store = await openEmail();
+		grantAdministration();
+		const published = revision({ id: 'published-now', status: 'published', published_at: '2026-08-01T00:00:00.000Z' });
+		api.publish.mockResolvedValue({ version: 3, latest_published_revision: published });
+		const prepared = store.preparePublish({
+			startDate: new Date('2026-08-01T08:00:00+08:00'),
+			endDate: new Date('2026-08-07T08:00:00+08:00'),
+		});
+		if (prepared.status !== 'ready') throw new Error('Expected publication intent');
+
+		prepared.intent.startDate!.setUTCFullYear(2030);
+		prepared.intent.endDate!.setUTCFullYear(2030);
+		await store.confirmPublish(prepared.intent);
+
+		expect(api.publish).toHaveBeenCalledWith('email', 'order-confirmation', {
+			version: 2,
+			revision_no: 2,
+			start_date: '2026-08-01T00:00:00.000Z',
+			end_date: '2026-08-07T00:00:00.000Z',
 		});
 	});
 
