@@ -1,0 +1,3 @@
+# Keep portal workflows in Pinia
+
+Template Studio, Shipment Arrangement, and Order History will be deepened within their Pinia modules instead of extracting framework-neutral workflow cores. This favors locality and the portal's established maintenance model; Template Token semantics remain a deep in-process module because editor-instance DOM and Quill state are not shared workflow state and sit behind two real adapters. Pinia modules are the sole writers of workflow state and own browser-resource lifecycles, while Vue modules own confirmations, translations, and notifications; existing repository modules remain the internal transport seam rather than introducing a generic transport abstraction.
