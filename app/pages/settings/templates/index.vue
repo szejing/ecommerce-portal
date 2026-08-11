@@ -333,7 +333,7 @@ async function saveDraft(): Promise<void> {
 }
 
 async function testSend(): Promise<void> {
-	await templateStore.testSend();
+	await templateStore.sendTest();
 }
 
 async function refreshPreview(): Promise<void> {
@@ -341,7 +341,7 @@ async function refreshPreview(): Promise<void> {
 }
 
 async function reloadServerVersion(): Promise<void> {
-	await templateStore.reloadAfterConflict();
+	await templateStore.reloadServerVersion();
 	if (!conflict.value) activeTab.value = 'content';
 }
 
@@ -356,13 +356,14 @@ onBeforeRouteUpdate((to, from, next) => {
 
 	next(false);
 	const targetTemplate = requestedTemplate(to.query);
-	const target = targetTemplate
-		? {
-				path: to.path,
-				query: { ...to.query, channel: targetTemplate.channel, template: targetTemplate.template_code },
-				hash: to.hash,
-			}
-		: to.fullPath;
+	let target: Parameters<typeof router.push>[0] = to.fullPath;
+	if (targetTemplate) {
+		target = {
+			path: to.path,
+			query: { ...to.query, channel: targetTemplate.channel, template: targetTemplate.template_code },
+			hash: to.hash,
+		};
+	}
 	const leaveModal = overlay.create(ZModalLeavePageConfirmation, {
 		props: {
 			title: t('components.templateStudio.changeTemplateTitle'),

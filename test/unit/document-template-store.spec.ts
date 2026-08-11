@@ -3,11 +3,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { UserRoles } from 'yeppi-common';
 import { useAuthStore } from '../../app/stores/Auth/Auth';
 import { EMAIL_PREVIEW_DEBOUNCE_MS, useDocumentTemplateStore } from '../../app/stores/DocumentTemplate/DocumentTemplate';
-import type {
-	DocumentTemplateConfiguration,
-	DocumentTemplateDetail,
-	DocumentTemplateRevision,
-} from '../../app/utils/types/document-template';
+import type { DocumentTemplateDetail, DocumentTemplateRevision } from '../../app/utils/types/document-template';
 import type { DocumentTemplateMutationResp } from '../../app/repository/modules/document-template/models/response/mutation.resp';
 
 vi.mock('../../app/stores/AppUi/AppUi', () => ({
@@ -27,7 +23,7 @@ const api = {
 	restore: vi.fn(),
 };
 
-const detail: DocumentTemplateDetail = {
+const baseDetail: DocumentTemplateDetail = {
 	template_code: 'order-confirmation',
 	channel: 'email',
 	display_name: 'Order confirmation',
@@ -36,7 +32,9 @@ const detail: DocumentTemplateDetail = {
 	version: 2,
 	catalog_schema_version: 1,
 	catalog_system_template_version: 1,
-	fields: [{ path: 'content.greeting', label: 'Greeting', kind: 'rich-text', max_length: 500, allow_blank: true, allowed_tokens: ['{{customer.name}}'] }],
+	fields: [
+		{ path: 'content.greeting', label: 'Greeting', kind: 'rich-text', max_length: 500, allow_blank: true, allowed_tokens: ['{{customer.name}}'] },
+	],
 	blocks: [{ id: 'order-items', label: 'Order items', required: true, default_enabled: true }],
 	allowed_tokens: ['{{customer.name}}'],
 	configuration: { content: { greeting: '<p>Welcome</p>' }, blocks: [{ id: 'order-items', enabled: true, props: {} }] },
@@ -44,8 +42,16 @@ const detail: DocumentTemplateDetail = {
 	catalog_default_values: { brand: { primaryColor: '#EE7F01' } },
 	effective_preview_values: { merchantInfo: { companyName: 'Aster Home' } },
 	draft_revision: {
-		id: 'draft-1', revision_no: 2, status: 'draft', schema_version: 1, system_template_version: 1, created_by: null,
-		start_date: null, end_date: null, published_at: null, created_at: '2026-07-31T00:00:00.000Z',
+		id: 'draft-1',
+		revision_no: 2,
+		status: 'draft',
+		schema_version: 1,
+		system_template_version: 1,
+		created_by: null,
+		start_date: null,
+		end_date: null,
+		published_at: null,
+		created_at: '2026-07-31T00:00:00.000Z',
 		configuration: { content: { greeting: '<p>Welcome</p>' }, blocks: [{ id: 'order-items', enabled: true, props: {} }] },
 	},
 	latest_published_revision: null,
@@ -56,75 +62,151 @@ const originalBlobDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'Blob
 const originalCreateObjectUrlDescriptor = Object.getOwnPropertyDescriptor(URL, 'createObjectURL');
 const originalRevokeObjectUrlDescriptor = Object.getOwnPropertyDescriptor(URL, 'revokeObjectURL');
 
-function restoreProperty(target: object, key: PropertyKey, descriptor: PropertyDescriptor | undefined) {
+function restoreProperty(target: object, key: PropertyKey, descriptor: PropertyDescriptor | undefined): void {
 	if (descriptor) Object.defineProperty(target, key, descriptor);
 	else Reflect.deleteProperty(target, key);
 }
 
-function revision(overrides: Partial<DocumentTemplateRevision>): DocumentTemplateRevision {
+function deferred<T>() {
+	let resolve!: (value: T) => void;
+	let reject!: (reason?: unknown) => void;
+	const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+		resolve = resolvePromise;
+		reject = rejectPromise;
+	});
+	return { promise, resolve, reject };
+}
+
+function revision(overrides: Partial<DocumentTemplateRevision> = {}): DocumentTemplateRevision {
 	return {
-		...structuredClone(detail.draft_revision!),
+		...structuredClone(baseDetail.draft_revision!),
 		...overrides,
-		configuration: overrides.configuration ?? structuredClone(detail.draft_revision!.configuration),
+		configuration: overrides.configuration ?? structuredClone(baseDetail.draft_revision!.configuration),
 	};
 }
 
-const existingPublished = revision({
+const publishedRevision = revision({
 	id: 'published-1',
 	revision_no: 1,
 	status: 'published',
 	published_at: '2026-07-30T00:00:00.000Z',
 });
-const existingArchived = revision({ id: 'archived-1', revision_no: 0, status: 'archived' });
 
-describe('useDocumentTemplateStore', () => {
+describe('useDocumentTemplateStore editing session', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia());
 		Object.values(api).forEach(mock => mock.mockReset());
-		api.get.mockResolvedValue(structuredClone(detail));
+		api.list.mockResolvedValue({ document_templates: [] });
+		api.get.mockResolvedValue(structuredClone(baseDetail));
+		api.previewEmail.mockResolvedValue({ html: '<p>Preview</p>', subject: 'Preview', revision_id: null, revision_no: null });
 		api.listRevisions.mockResolvedValue({ revisions: [] });
 		(globalThis as unknown as { useNuxtApp: () => unknown }).useNuxtApp = () => ({ $api: { documentTemplate: api } });
-		useAuthStore().user = { id: 'staff-1', role: UserRoles.MERCHANT_STAFF, email_address: 'staff@example.test', name: 'Staff', dial_code: '+60', phone_no: '123456789' };
+		useAuthStore().user = {
+			id: 'staff-1',
+			role: UserRoles.MERCHANT_STAFF,
+			email_address: 'staff@example.test',
+			name: 'Staff',
+			dial_code: '+60',
+			phone_no: '123456789',
+		};
 	});
 
 	afterEach(() => {
+		useDocumentTemplateStore().dispose();
 		restoreProperty(globalThis, 'Blob', originalBlobDescriptor);
 		restoreProperty(URL, 'createObjectURL', originalCreateObjectUrlDescriptor);
 		restoreProperty(URL, 'revokeObjectURL', originalRevokeObjectUrlDescriptor);
 		vi.useRealTimers();
 	});
 
-	async function selectDraft() {
+	async function openEmail() {
 		const store = useDocumentTemplateStore();
-		await store.loadDetail('email', 'order-confirmation');
+		await store.openTemplate('email', 'order-confirmation');
 		return store;
 	}
 
-	function deferred<T>() {
-		let resolve!: (value: T) => void;
-		let reject!: (reason?: unknown) => void;
-		return { promise: new Promise<T>((resolvePromise, rejectPromise) => { resolve = resolvePromise; reject = rejectPromise; }), resolve, reject };
+	function grantAdministration(): void {
+		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
 	}
 
-	function seedRevisionHistory(store: ReturnType<typeof useDocumentTemplateStore>) {
-		store.revisions = [structuredClone(detail.draft_revision!), structuredClone(existingPublished), structuredClone(existingArchived)];
+	async function publishDraft(store: ReturnType<typeof useDocumentTemplateStore>, startDate: Date | null = null, endDate: Date | null = null) {
+		const preparation = store.preparePublish({ startDate, endDate });
+		return preparation.status === 'ready' ? await store.confirmPublish(preparation.intent) : 'failed';
 	}
 
-	function expectSingleDraftHistory(store: ReturnType<typeof useDocumentTemplateStore>, nextDraftId: string) {
-		expect(store.revisions.map(({ id, status }) => ({ id, status }))).toEqual([
-			{ id: nextDraftId, status: 'draft' },
-			{ id: 'draft-1', status: 'archived' },
-			{ id: 'published-1', status: 'published' },
-			{ id: 'archived-1', status: 'archived' },
-		]);
-		expect(store.revisions.filter(candidate => candidate.status === 'draft')).toHaveLength(1);
-		expect(store.revisions[2]).toEqual(existingPublished);
-		expect(store.revisions[3]).toEqual(existingArchived);
-	}
+	it('exposes semantic state and intent without implementation controls', () => {
+		const store = useDocumentTemplateStore();
+
+		expect(Object.keys(store)).not.toEqual(expect.arrayContaining([
+			'generation',
+			'selectionEpoch',
+			'editGeneration',
+			'mutationGeneration',
+			'summariesGeneration',
+			'saveGeneration',
+			'previewGeneration',
+			'publishGeneration',
+			'revisionsGeneration',
+			'testGeneration',
+			'previewedConfigurationKey',
+		]));
+		for (const key of ['loadDetail', 'loadRevisions', 'previewDraft', 'configurationForRequest', 'publish', 'reset', 'clearPreview']) {
+			expect(store).not.toHaveProperty(key);
+		}
+	});
+
+	it('opens a Document Template with authoritative detail and initial preview', async () => {
+		const store = await openEmail();
+
+		expect(store.selected).toEqual({ channel: 'email', templateCode: 'order-confirmation' });
+		expect(store.detail?.template_code).toBe('order-confirmation');
+		expect(store.preview).toEqual({ channel: 'email', html: '<p>Preview</p>', subject: 'Preview', revisionId: null, revisionNo: null });
+	});
+
+	it('keeps only the newest selection across A-B-A detail races', async () => {
+		const first = deferred<DocumentTemplateDetail>();
+		api.get
+			.mockReturnValueOnce(first.promise)
+			.mockResolvedValueOnce({ ...structuredClone(baseDetail), template_code: 'invoice' })
+			.mockResolvedValueOnce({ ...structuredClone(baseDetail), display_name: 'Fresh order confirmation' });
+		const store = useDocumentTemplateStore();
+
+		const firstOpen = store.openTemplate('email', 'order-confirmation');
+		await store.openTemplate('email', 'invoice');
+		const finalOpen = store.openTemplate('email', 'order-confirmation');
+		first.resolve({ ...structuredClone(baseDetail), display_name: 'Stale order confirmation' });
+		await Promise.all([firstOpen, finalOpen]);
+
+		expect(store.selected).toEqual({ channel: 'email', templateCode: 'order-confirmation' });
+		expect(store.detail?.display_name).toBe('Fresh order confirmation');
+		expect(api.previewEmail).toHaveBeenCalledTimes(2);
+	});
+
+	it('disposes pending catalog, detail, and preview work without resurfacing state', async () => {
+		const catalog = deferred<{ document_templates: [] }>();
+		const detail = deferred<DocumentTemplateDetail>();
+		api.list.mockReturnValue(catalog.promise);
+		api.get.mockReturnValue(detail.promise);
+		const store = useDocumentTemplateStore();
+		const loadingCatalog = store.loadCatalog();
+		const opening = store.openTemplate('email', 'order-confirmation');
+
+		store.dispose();
+		catalog.resolve({ document_templates: [] });
+		detail.resolve(structuredClone(baseDetail));
+		await Promise.all([loadingCatalog, opening]);
+
+		expect(store.loading).toBe(false);
+		expect(store.selected).toBeNull();
+		expect(store.detail).toBeNull();
+		expect(store.preview).toBeNull();
+		expect(api.previewEmail).not.toHaveBeenCalled();
+	});
 
 	it('keeps edits dirty until explicit save succeeds', async () => {
-		const store = await selectDraft();
-		api.saveDraft.mockResolvedValue({ version: 3, draft_revision: { ...detail.draft_revision!, revision_no: 3, configuration: { content: { greeting: '<p>Hello</p>' } } } });
+		const store = await openEmail();
+		const saved = revision({ revision_no: 3, configuration: { content: { greeting: '<p>Hello</p>' } } });
+		api.saveDraft.mockResolvedValue({ version: 3, draft_revision: saved });
 
 		store.setConfigurationPath('content.greeting', '<p>Hello</p>');
 		expect(store.isDirty).toBe(true);
@@ -139,186 +221,126 @@ describe('useDocumentTemplateStore', () => {
 		expect(store.detail?.version).toBe(3);
 	});
 
-	it('allows clearing a required field while keeping a blank validation error', async () => {
-		const store = await selectDraft();
-		store.detail!.fields.push({
-			path: 'content.subject',
-			label: 'Subject',
-			kind: 'plain-text',
-			max_length: 200,
-			allow_blank: false,
-			allowed_tokens: [],
+	it('allows clearing required content while exposing a semantic field error', async () => {
+		api.get.mockResolvedValue({
+			...structuredClone(baseDetail),
+			fields: [
+				...baseDetail.fields,
+				{ path: 'content.subject', label: 'Subject', kind: 'plain-text', max_length: 200, allow_blank: false, allowed_tokens: [] },
+			],
 		});
-		store.setConfigurationPath('content.subject', 'Invoice {{invoiceNumber}}');
+		const store = await openEmail();
 
+		store.setConfigurationPath('content.subject', 'Invoice');
 		store.setConfigurationPath('content.subject', '');
 
 		expect(store.draft.content?.subject).toBe('');
 		expect(store.fieldErrors['content.subject']).toBe('Subject cannot be blank');
 		expect(store.isDirty).toBe(true);
-
-		store.setConfigurationPath('content.subject', 'Restored');
-		expect(store.draft.content?.subject).toBe('Restored');
-		expect(store.fieldErrors['content.subject']).toBeUndefined();
 	});
 
-	it('preserves local edits and exposes reload action on HTTP 409', async () => {
-		const store = await selectDraft();
-		store.setConfigurationPath('content.greeting', '<p>Local</p>');
-		api.saveDraft.mockRejectedValue({
-			metadata: { request_id: 'transport-1' },
-			response: { data: { statusCode: 409, metadata: { current_version: 4 } } },
+	it('preserves edits made while save is pending', async () => {
+		const store = await openEmail();
+		const saving = deferred<{ version: number; draft_revision: DocumentTemplateRevision }>();
+		api.saveDraft.mockReturnValue(saving.promise);
+		store.setConfigurationPath('content.greeting', '<p>Saved</p>');
+		const pending = store.saveDraft();
+		store.setConfigurationPath('content.greeting', '<p>Newer local</p>');
+		saving.resolve({ version: 3, draft_revision: revision({ revision_no: 3, configuration: { content: { greeting: '<p>Saved</p>' } } }) });
+
+		await pending;
+
+		expect(store.draft.content?.greeting).toBe('<p>Newer local</p>');
+		expect(store.isDirty).toBe(true);
+		expect(store.detail?.version).toBe(3);
+	});
+
+	it('preserves field edits made while reset is pending', async () => {
+		api.get.mockResolvedValue({
+			...structuredClone(baseDetail),
+			fields: [
+				...baseDetail.fields,
+				{ path: 'content.footer', label: 'Footer', kind: 'rich-text', max_length: 500, allow_blank: true, allowed_tokens: [] },
+			],
 		});
+		const store = await openEmail();
+		grantAdministration();
+		store.setConfigurationPath('content.footer', '<p>Before reset</p>');
+		const intent = store.prepareReset()!;
+		const resetting = deferred<DocumentTemplateMutationResp>();
+		api.reset.mockReturnValue(resetting.promise);
+		const pending = store.confirmReset(intent);
+		store.setConfigurationPath('content.greeting', '<p>Newer local</p>');
+		const serverDraft = revision({
+			id: 'draft-reset',
+			revision_no: 3,
+			configuration: { content: { greeting: '<p>Reset baseline</p>', footer: '<p>Reset footer</p>' } },
+		});
+		resetting.resolve({ version: 3, draft_revision: serverDraft });
+
+		await pending;
+
+		expect(store.draft.content).toEqual({ greeting: '<p>Newer local</p>', footer: '<p>Reset footer</p>' });
+		expect(store.isDirty).toBe(true);
+	});
+
+	it('preserves block edits made while restore is pending', async () => {
+		api.get.mockResolvedValue({
+			...structuredClone(baseDetail),
+			blocks: [...baseDetail.blocks, { id: 'footer', label: 'Footer', required: false, default_enabled: true }],
+		});
+		const store = await openEmail();
+		grantAdministration();
+		store.setBlockEnabled('footer', true);
+		const restoring = deferred<DocumentTemplateMutationResp>();
+		api.restore.mockReturnValue(restoring.promise);
+		const pending = store.restoreRevision(1);
+		store.setBlockEnabled('footer', false);
+		const serverDraft = revision({
+			id: 'draft-restore',
+			revision_no: 3,
+			configuration: {
+				blocks: [
+					{ id: 'order-items', enabled: true, props: {} },
+					{ id: 'footer', enabled: true, props: {} },
+					{ id: 'server-added', enabled: true, props: {} },
+				],
+			},
+		});
+		restoring.resolve({ version: 3, draft_revision: serverDraft });
+
+		await pending;
+
+		expect(store.draft.blocks?.find(block => block.id === 'footer')?.enabled).toBe(false);
+		expect(store.draft.blocks?.find(block => block.id === 'server-added')?.enabled).toBe(true);
+		expect(store.isDirty).toBe(true);
+	});
+
+	it('preserves local edits and exposes reload intent after a 409 conflict', async () => {
+		const store = await openEmail();
+		store.setConfigurationPath('content.greeting', '<p>Local</p>');
+		api.saveDraft.mockRejectedValue({ response: { data: { statusCode: 409, metadata: { current_version: 4 } } } });
 
 		await store.saveDraft();
 
 		expect(store.conflict).toEqual({ currentVersion: 4 });
 		expect(store.draft.content?.greeting).toBe('<p>Local</p>');
-		expect(store.isDirty).toBe(true);
+		api.get.mockResolvedValue({ ...structuredClone(baseDetail), version: 4 });
+		await store.reloadServerVersion();
+		expect(store.detail?.version).toBe(4);
+		expect(store.conflict).toBeNull();
 	});
 
-	it('never exposes publish actions to staff roles', () => {
-		const auth = useAuthStore();
-		auth.user = { id: 'staff-1', role: UserRoles.MERCHANT_STAFF, email_address: 'staff@example.test', name: 'Staff', dial_code: '+60', phone_no: '123456789' };
-		const store = useDocumentTemplateStore();
-
-		expect(store.canPublish).toBe(false);
-		expect(store.canEdit).toBe(true);
-	});
-
-	it('ignores stale detail results after a newer selection', async () => {
-		let resolveFirst!: (value: DocumentTemplateDetail) => void;
-		api.get.mockImplementationOnce(() => new Promise(resolve => { resolveFirst = resolve; }));
-		api.get.mockResolvedValueOnce({ ...detail, template_code: 'invoice', display_name: 'Invoice' });
-		const store = useDocumentTemplateStore();
-
-		const first = store.loadDetail('email', 'order-confirmation');
-		await store.loadDetail('email', 'invoice');
-		resolveFirst(detail);
-		await first;
-
-		expect(store.selected).toEqual({ channel: 'email', templateCode: 'invoice' });
-		expect(store.detail?.template_code).toBe('invoice');
-	});
-
-	it('opens a template with authoritative detail and its initial preview', async () => {
-		api.previewEmail.mockResolvedValue({ html: '<p>Initial preview</p>', subject: 'Initial', revision_id: 'draft-1', revision_no: 2 });
-		const store = useDocumentTemplateStore();
-
-		await store.openTemplate('email', 'order-confirmation');
-
-		expect(store.selected).toEqual({ channel: 'email', templateCode: 'order-confirmation' });
-		expect(store.detail?.template_code).toBe('order-confirmation');
-		expect(store.preview).toEqual({
-			channel: 'email',
-			html: '<p>Initial preview</p>',
-			subject: 'Initial',
-			revisionId: 'draft-1',
-			revisionNo: 2,
-		});
-	});
-
-	it('opens only the newest template when detail requests overlap', async () => {
-		const firstDetail = deferred<DocumentTemplateDetail>();
-		api.get.mockReturnValueOnce(firstDetail.promise).mockResolvedValueOnce({ ...structuredClone(detail), template_code: 'invoice' });
-		api.previewEmail.mockResolvedValue({ html: '<p>Invoice</p>', subject: 'Invoice', revision_id: null, revision_no: null });
-		const store = useDocumentTemplateStore();
-
-		const firstOpen = store.openTemplate('email', 'order-confirmation');
-		await store.openTemplate('email', 'invoice');
-		firstDetail.resolve(structuredClone(detail));
-		await firstOpen;
-
-		expect(store.selected).toEqual({ channel: 'email', templateCode: 'invoice' });
-		expect(store.detail?.template_code).toBe('invoice');
-		expect(store.preview).toMatchObject({ channel: 'email', html: '<p>Invoice</p>' });
-		expect(api.previewEmail).toHaveBeenCalledOnce();
-		expect(api.previewEmail).toHaveBeenCalledWith('email', 'invoice', expect.any(Object));
-	});
-
-	it('does not resume an open after the editing session is disposed', async () => {
-		const pendingDetail = deferred<DocumentTemplateDetail>();
-		api.get.mockReturnValue(pendingDetail.promise);
-		api.previewEmail.mockResolvedValue({ html: '<p>Late</p>', subject: 'Late', revision_id: null, revision_no: null });
-		const store = useDocumentTemplateStore();
-		const opening = store.openTemplate('email', 'order-confirmation');
-
-		store.dispose();
-		pendingDetail.resolve(structuredClone(detail));
-		await opening;
-
-		expect(store.selected).toBeNull();
-		expect(store.detail).toBeNull();
-		expect(store.preview).toBeNull();
-		expect(api.previewEmail).not.toHaveBeenCalled();
-	});
-
-	it('deduplicates latest and active revisions by id when loading detail', async () => {
-		api.get.mockResolvedValue({
-			...structuredClone(detail),
-			latest_published_revision: structuredClone(existingPublished),
-			active_revision: structuredClone(existingPublished),
-		});
-		const store = useDocumentTemplateStore();
-
-		await store.loadDetail('email', 'order-confirmation');
-
-		expect(store.revisions.map(candidate => candidate.id)).toEqual(['draft-1', 'published-1']);
-		expect(store.revisions[1]).toEqual(existingPublished);
-	});
-
-	it('replaces and revokes a PDF preview URL without mixing it into an email preview', async () => {
-		const createObjectURL = vi.fn(() => 'blob:preview-1');
-		const revokeObjectURL = vi.fn();
-		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
-		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
-		api.get.mockResolvedValue({ ...detail, channel: 'pdf' });
-		api.previewPdf.mockResolvedValue(new Blob(['pdf']));
-		const store = useDocumentTemplateStore();
-		await store.loadDetail('pdf', 'order-confirmation');
-
-		await store.previewDraft();
-		store.clearPreview();
-
-		expect(store.preview).toBeNull();
-		expect(revokeObjectURL).toHaveBeenCalledWith('blob:preview-1');
-	});
-
-	it('keeps the newest overlapping email preview response', async () => {
-		const store = await selectDraft();
-		const older = deferred<{ html: string; subject: string; revision_id: null; revision_no: null }>();
-		const newer = deferred<{ html: string; subject: string; revision_id: null; revision_no: null }>();
-		api.previewEmail.mockReturnValueOnce(older.promise).mockReturnValueOnce(newer.promise);
-
-		const olderPreview = store.previewDraft();
-		const newerPreview = store.previewDraft();
-		newer.resolve({ html: '<p>Newest</p>', subject: 'Newest', revision_id: null, revision_no: null });
-		await newerPreview;
-		older.resolve({ html: '<p>Older</p>', subject: 'Older', revision_id: null, revision_no: null });
-		await olderPreview;
-
-		expect(store.preview).toEqual({
-			channel: 'email',
-			html: '<p>Newest</p>',
-			subject: 'Newest',
-			revisionId: null,
-			revisionNo: null,
-		});
-		expect(store.previewStale).toBe(false);
-	});
-
-	it('coalesces email edits into one preview of the latest draft', async () => {
-		const store = await selectDraft();
-		api.previewEmail.mockResolvedValue({ html: '<p>Initial</p>', subject: 'Initial', revision_id: null, revision_no: null });
-		await store.previewDraft();
+	it('coalesces email edits into one latest preview request', async () => {
+		const store = await openEmail();
 		api.previewEmail.mockClear();
+		api.previewEmail.mockResolvedValue({ html: '<p>Latest</p>', subject: 'Latest', revision_id: null, revision_no: null });
 		vi.useFakeTimers();
 
 		store.setConfigurationPath('content.greeting', '<p>First</p>');
 		store.setConfigurationPath('content.greeting', '<p>Latest</p>');
 		await vi.advanceTimersByTimeAsync(EMAIL_PREVIEW_DEBOUNCE_MS - 1);
 		expect(api.previewEmail).not.toHaveBeenCalled();
-
 		await vi.advanceTimersByTimeAsync(1);
 
 		expect(api.previewEmail).toHaveBeenCalledOnce();
@@ -330,123 +352,89 @@ describe('useDocumentTemplateStore', () => {
 		});
 	});
 
-	it('keeps a PDF preview and marks it outdated after an edit', async () => {
-		const createObjectURL = vi.fn(() => 'blob:preview-pdf');
-		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+	it('keeps the newest overlapping email preview response', async () => {
+		const store = await openEmail();
+		const older = deferred<{ html: string; subject: string; revision_id: null; revision_no: null }>();
+		const newer = deferred<{ html: string; subject: string; revision_id: null; revision_no: null }>();
+		api.previewEmail.mockReturnValueOnce(older.promise).mockReturnValueOnce(newer.promise);
+
+		const olderPreview = store.refreshPreview();
+		const newerPreview = store.refreshPreview();
+		newer.resolve({ html: '<p>Newest</p>', subject: 'Newest', revision_id: null, revision_no: null });
+		await newerPreview;
+		older.resolve({ html: '<p>Older</p>', subject: 'Older', revision_id: null, revision_no: null });
+		await olderPreview;
+
+		expect(store.preview).toMatchObject({ channel: 'email', html: '<p>Newest</p>', subject: 'Newest' });
+	});
+
+	it('marks a retained PDF preview outdated without automatically rendering another PDF', async () => {
+		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:pdf') });
 		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
-		api.get.mockResolvedValue({ ...detail, channel: 'pdf' });
+		api.get.mockResolvedValue({ ...structuredClone(baseDetail), channel: 'pdf' });
 		api.previewPdf.mockResolvedValue(new Blob(['pdf']));
 		const store = useDocumentTemplateStore();
-		await store.loadDetail('pdf', 'order-confirmation');
-		await store.previewDraft();
+		await store.openTemplate('pdf', 'order-confirmation');
 		api.previewPdf.mockClear();
 
 		store.setConfigurationPath('content.greeting', '<p>Changed</p>');
 
-		expect(store.preview?.channel).toBe('pdf');
+		expect(store.preview).toMatchObject({ channel: 'pdf', objectUrl: 'blob:pdf' });
 		expect(store.previewStale).toBe(true);
 		expect(api.previewPdf).not.toHaveBeenCalled();
 	});
 
-	it('clears state immediately and ignores an ABA stale detail response', async () => {
-		const first = deferred<DocumentTemplateDetail>();
-		api.get.mockImplementationOnce(() => first.promise);
-		api.get.mockResolvedValueOnce({ ...detail, template_code: 'invoice' });
-		api.get.mockResolvedValueOnce({ ...detail, display_name: 'Fresh order confirmation' });
+	it('replaces and revokes PDF Blob URLs on refresh and disposal', async () => {
+		const createObjectURL = vi.fn().mockReturnValueOnce('blob:first').mockReturnValueOnce('blob:second');
+		const revokeObjectURL = vi.fn();
+		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
+		api.get.mockResolvedValue({ ...structuredClone(baseDetail), channel: 'pdf' });
+		api.previewPdf.mockResolvedValue(new Blob(['pdf']));
 		const store = useDocumentTemplateStore();
-		const firstLoad = store.loadDetail('email', 'order-confirmation');
-		await store.loadDetail('email', 'invoice');
-		const finalLoad = store.loadDetail('email', 'order-confirmation');
-		expect(store.detail).toBeNull();
-		first.resolve({ ...detail, display_name: 'Stale order confirmation' });
-		await Promise.all([firstLoad, finalLoad]);
-		expect(store.detail?.display_name).toBe('Fresh order confirmation');
-	});
+		await store.openTemplate('pdf', 'order-confirmation');
 
-	it('preserves a newer edit while updating the saved baseline', async () => {
-		const store = await selectDraft();
-		const save = deferred<{ version: number; draft_revision: NonNullable<DocumentTemplateDetail['draft_revision']> }>();
-		api.saveDraft.mockReturnValue(save.promise);
-		store.setConfigurationPath('content.greeting', '<p>Saved</p>');
-		const pending = store.saveDraft();
-		store.setConfigurationPath('content.greeting', '<p>Newer local</p>');
-		save.resolve({ version: 3, draft_revision: { ...detail.draft_revision!, configuration: { content: { greeting: '<p>Saved</p>' } } } });
-		await pending;
-		expect(store.draft.content?.greeting).toBe('<p>Newer local</p>');
-		expect(store.isDirty).toBe(true);
-		expect(store.detail?.version).toBe(3);
-	});
-
-	it('serializes positive logo ids and omits untouched block inheritance', async () => {
-		const store = await selectDraft();
-		store.draft = { brand: { logoAssetId: 42 } };
-		store.refreshDirty();
-		api.saveDraft.mockResolvedValue({ version: 3, draft_revision: { ...detail.draft_revision!, configuration: { brand: { logoAssetId: 42 } } } });
-		await store.saveDraft();
-		expect(api.saveDraft).toHaveBeenCalledWith('email', 'order-confirmation', {
-			version: 2,
-			configuration: { brand: { logoAssetId: 42 } },
-		});
-	});
-
-	it('does not apply a stale mutation error after dispose', async () => {
-		const store = await selectDraft();
-		const save = deferred<never>();
-		api.saveDraft.mockReturnValue(save.promise);
-		store.setConfigurationPath('content.greeting', '<p>Local</p>');
-		const pending = store.saveDraft();
+		await store.refreshPreview();
+		expect(revokeObjectURL).toHaveBeenCalledWith('blob:first');
 		store.dispose();
-		save.reject({ statusCode: 409, metadata: { current_version: 5 } });
-		await pending;
-		expect(store.conflict).toBeNull();
-		expect(store.error).toBeNull();
+		expect(revokeObjectURL).toHaveBeenCalledWith('blob:second');
 	});
 
-	it('uses the published revision configuration as its next baseline', async () => {
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
-		store.detail!.fields.push({ path: 'brand.primaryColor', label: 'Primary colour', kind: 'color', max_length: 20, allow_blank: false, allowed_tokens: [] });
-		api.publish.mockResolvedValue({ version: 3, latest_published_revision: { ...detail.draft_revision!, status: 'published', configuration: { content: { greeting: '<p>Published</p>' }, brand: { primaryColor: '#123456' } } } });
-		await store.publish();
-		expect(store.draft).toEqual({ content: { greeting: '<p>Published</p>' }, brand: { primaryColor: '#123456' } });
-		expect(store.isDirty).toBe(false);
-		store.setConfigurationPath('content.greeting', '<p>Changed</p>');
-		expect(store.configurationForRequest()).toEqual({ content: { greeting: '<p>Changed</p>' }, brand: { primaryColor: '#123456' } });
+	it('keeps the previous PDF when a replacement is invalid', async () => {
+		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:first') });
+		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
+		api.get.mockResolvedValue({ ...structuredClone(baseDetail), channel: 'pdf' });
+		api.previewPdf.mockResolvedValueOnce(new Blob(['first'])).mockResolvedValueOnce({ not: 'a blob' });
+		const store = useDocumentTemplateStore();
+		await store.openTemplate('pdf', 'order-confirmation');
+
+		await store.refreshPreview();
+
+		expect(store.preview).toMatchObject({ channel: 'pdf', objectUrl: 'blob:first' });
+		expect(store.previewStale).toBe(true);
+		expect(store.error).toBe('Invalid PDF preview response');
 	});
 
-	it('updates the active revision after an immediately eligible publish', async () => {
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
-		store.detail!.active_revision = structuredClone(existingPublished);
-		const publishedDraft = revision({
-			id: 'published-now',
-			revision_no: 2,
-			status: 'published',
-			start_date: null,
-			end_date: null,
-			published_at: '2026-07-31T12:00:00.000Z',
-		});
-		api.publish.mockResolvedValue({ version: 3, latest_published_revision: publishedDraft });
+	it('does not create a PDF URL when revocation is unavailable', async () => {
+		const createObjectURL = vi.fn(() => 'blob:leaked');
+		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: undefined });
+		api.get.mockResolvedValue({ ...structuredClone(baseDetail), channel: 'pdf' });
+		api.previewPdf.mockResolvedValue(new Blob(['pdf']));
+		const store = useDocumentTemplateStore();
 
-		await store.publish();
+		await store.openTemplate('pdf', 'order-confirmation');
 
-		expect(store.detail?.active_revision).toEqual(publishedDraft);
+		expect(createObjectURL).not.toHaveBeenCalled();
+		expect(store.preview).toBeNull();
+		expect(store.error).toBe('PDF previews are unavailable in this environment');
 	});
 
-	it('fails closed without a publish request while a draft is dirty', async () => {
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
-		store.setConfigurationPath('content.greeting', '<p>Unsaved</p>');
-		await store.publish();
-		expect(api.publish).not.toHaveBeenCalled();
-		expect(store.error).toBe('Save draft before publishing');
-	});
-
-	it('prepares an immutable publication intent for the exact saved draft', async () => {
+	it('prepares an immutable publication intent and converts local dates to UTC', async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-07-31T00:00:00.000Z'));
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
+		const store = await openEmail();
+		grantAdministration();
 		const startDate = new Date('2026-08-01T08:00:00+08:00');
 		const endDate = new Date('2026-08-07T08:00:00+08:00');
 
@@ -472,412 +460,117 @@ describe('useDocumentTemplateStore', () => {
 		[{ startDate: new Date('invalid'), endDate: null }, 'Schedule date is invalid'],
 		[{ startDate: new Date('2026-08-02T00:00:00.000Z'), endDate: new Date('2026-08-01T00:00:00.000Z') }, 'Schedule start must be before its end'],
 		[{ startDate: null, endDate: new Date('2026-07-30T00:00:00.000Z') }, 'Schedule end must be in the future'],
-	] as const)('rejects an invalid publication window through semantic error state', async (window, message) => {
+	] as const)('rejects invalid publication windows through semantic errors', async (window, message) => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-07-31T00:00:00.000Z'));
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
+		const store = await openEmail();
+		grantAdministration();
 
 		expect(store.preparePublish(window)).toEqual({ status: 'rejected' });
 		expect(store.error).toBe(message);
 	});
 
-	it('rejects a publication confirmation after its saved revision becomes stale', async () => {
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
-		const preparation = store.preparePublish({ startDate: null, endDate: null });
-		expect(preparation.status).toBe('ready');
-		api.get.mockResolvedValue({
-			...structuredClone(detail),
-			draft_revision: revision({ id: 'draft-newer', revision_no: 3, status: 'draft' }),
-		});
-		await store.loadDetail('email', 'order-confirmation');
-
-		const outcome = preparation.status === 'ready' ? await store.confirmPublish(preparation.intent) : 'failed';
-
-		expect(outcome).toBe('stale');
-		expect(api.publish).not.toHaveBeenCalled();
-	});
-
-	it('revalidates publication time immediately before confirmation', async () => {
+	it('rejects dirty, stale, and expired publication confirmation without transport', async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-07-31T00:00:00.000Z'));
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
-		const preparation = store.preparePublish({ startDate: null, endDate: new Date('2026-08-01T00:00:00.000Z') });
-		expect(preparation.status).toBe('ready');
-		vi.setSystemTime(new Date('2026-08-02T00:00:00.000Z'));
+		const store = await openEmail();
+		grantAdministration();
+		store.setConfigurationPath('content.greeting', '<p>Dirty</p>');
+		expect(store.preparePublish({ startDate: null, endDate: null })).toEqual({ status: 'rejected' });
+		expect(store.error).toBe('Save draft before publishing');
 
-		const outcome = preparation.status === 'ready' ? await store.confirmPublish(preparation.intent) : 'failed';
+		api.get.mockResolvedValue(structuredClone(baseDetail));
+		await store.openTemplate('email', 'order-confirmation');
+		const prepared = store.preparePublish({ startDate: null, endDate: new Date('2026-08-01T00:00:00.000Z') });
+		expect(prepared.status).toBe('ready');
+		vi.setSystemTime(new Date('2026-08-02T00:00:00.000Z'));
+		const outcome = prepared.status === 'ready' ? await store.confirmPublish(prepared.intent) : 'stale';
 
 		expect(outcome).toBe('failed');
-		expect(store.error).toBe('Schedule end must be in the future');
 		expect(api.publish).not.toHaveBeenCalled();
 	});
 
-	it('loads authoritative history and ignores stale pre-save history', async () => {
-		const store = await selectDraft();
-		seedRevisionHistory(store);
-		const staleHistory = deferred<{ revisions: DocumentTemplateRevision[] }>();
-		const nextDraft = revision({ id: 'draft-2', revision_no: 3, status: 'draft', configuration: { content: { greeting: '<p>Saved</p>' } } });
-		const authoritativeHistory = [
-			nextDraft,
-			revision({ id: 'draft-1', revision_no: 2, status: 'archived', updated_at: '2026-07-31T03:00:00.000Z' }),
-			structuredClone(existingPublished),
-			structuredClone(existingArchived),
-		];
-		api.listRevisions.mockReturnValueOnce(staleHistory.promise).mockResolvedValueOnce({ revisions: authoritativeHistory });
-		const historyRequest = store.loadRevisions();
-		api.saveDraft.mockResolvedValue({ version: 3, draft_revision: nextDraft });
-		store.setConfigurationPath('content.greeting', '<p>Saved</p>');
-
-		await store.saveDraft();
-		staleHistory.resolve({ revisions: [revision({ id: 'stale-draft', status: 'draft' })] });
-		await historyRequest;
-
-		expectSingleDraftHistory(store, 'draft-2');
-		expect(store.revisions).toEqual(authoritativeHistory);
-		expect(store.detail?.draft_revision).toEqual(nextDraft);
-		expect(store.isDirty).toBe(false);
-	});
-
-	it('loads authoritative history and ignores stale pre-reset history', async () => {
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
-		seedRevisionHistory(store);
-		const staleHistory = deferred<{ revisions: DocumentTemplateRevision[] }>();
-		const nextDraft = revision({ id: 'draft-reset', revision_no: 3, status: 'draft', configuration: { content: { greeting: '<p>Reset</p>' } } });
-		const authoritativeHistory = [
-			nextDraft,
-			revision({ id: 'draft-1', revision_no: 2, status: 'archived', updated_at: '2026-07-31T03:00:00.000Z' }),
-			structuredClone(existingPublished),
-			structuredClone(existingArchived),
-		];
-		api.listRevisions.mockReturnValueOnce(staleHistory.promise).mockResolvedValueOnce({ revisions: authoritativeHistory });
-		const historyRequest = store.loadRevisions();
-		api.reset.mockResolvedValue({ version: 3, draft_revision: nextDraft });
-
-		await store.reset();
-		staleHistory.resolve({ revisions: [revision({ id: 'stale-draft', status: 'draft' })] });
-		await historyRequest;
-
-		expectSingleDraftHistory(store, 'draft-reset');
-		expect(store.revisions).toEqual(authoritativeHistory);
-		expect(store.draft).toEqual(nextDraft.configuration);
-		expect(store.isDirty).toBe(false);
-	});
-
-	it('loads authoritative history and ignores stale pre-restore history', async () => {
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
-		seedRevisionHistory(store);
-		const staleHistory = deferred<{ revisions: DocumentTemplateRevision[] }>();
-		const nextDraft = revision({ id: 'draft-restore', revision_no: 3, status: 'draft', configuration: { content: { greeting: '<p>Restored</p>' } } });
-		const authoritativeHistory = [
-			nextDraft,
-			revision({ id: 'draft-1', revision_no: 2, status: 'archived', updated_at: '2026-07-31T03:00:00.000Z' }),
-			structuredClone(existingPublished),
-			structuredClone(existingArchived),
-		];
-		api.listRevisions.mockReturnValueOnce(staleHistory.promise).mockResolvedValueOnce({ revisions: authoritativeHistory });
-		const historyRequest = store.loadRevisions();
-		api.restore.mockResolvedValue({ version: 3, draft_revision: nextDraft });
-
-		await store.restore(1);
-		staleHistory.resolve({ revisions: [revision({ id: 'stale-draft', status: 'draft' })] });
-		await historyRequest;
-
-		expectSingleDraftHistory(store, 'draft-restore');
-		expect(store.revisions).toEqual(authoritativeHistory);
-		expect(store.draft).toEqual(nextDraft.configuration);
-		expect(store.isDirty).toBe(false);
-	});
-
-	it.each(['save', 'reset', 'restore'] as const)('refreshes authoritative revision metadata after %s', async mutationName => {
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
-		const staleDraft = revision({ id: 'draft-1', status: 'draft', updated_at: '2026-07-31T01:00:00.000Z' });
-		store.revisions = [staleDraft, structuredClone(existingPublished), structuredClone(existingArchived)];
-		const nextDraft = revision({ id: `draft-${mutationName}`, revision_no: 3, status: 'draft', updated_at: '2026-07-31T02:00:00.000Z' });
-		const authoritativeArchived = revision({
-			...staleDraft,
-			status: 'archived',
-			updated_at: '2026-07-31T03:00:00.000Z',
-		});
-		const authoritativeHistory = [nextDraft, authoritativeArchived, structuredClone(existingPublished), structuredClone(existingArchived)];
-		const history = deferred<{ revisions: DocumentTemplateRevision[] }>();
-		api.listRevisions.mockReturnValue(history.promise);
-		api.saveDraft.mockResolvedValue({ version: 3, draft_revision: nextDraft });
-		api.reset.mockResolvedValue({ version: 3, draft_revision: nextDraft });
-		api.restore.mockResolvedValue({ version: 3, draft_revision: nextDraft });
-		if (mutationName === 'save') store.setConfigurationPath('content.greeting', '<p>Saved</p>');
-
-		const pending = mutationName === 'save' ? store.saveDraft() : mutationName === 'reset' ? store.reset() : store.restore(1);
-		await vi.waitFor(() => expect(api.listRevisions).toHaveBeenCalledTimes(1));
-		expect(store.revisions.filter(candidate => candidate.status === 'draft')).toEqual([nextDraft]);
-		expect(store.revisions.some(candidate => candidate.id === 'draft-1')).toBe(false);
-		history.resolve({ revisions: authoritativeHistory });
-		await pending;
-
-		expect(store.revisions).toEqual(authoritativeHistory);
-		expect(store.revisions[1]?.updated_at).toBe('2026-07-31T03:00:00.000Z');
-	});
-
-	it('ignores an older authoritative history refresh after a newer save', async () => {
-		const store = await selectDraft();
-		const firstHistory = deferred<{ revisions: DocumentTemplateRevision[] }>();
-		const firstDraft = revision({ id: 'draft-first', revision_no: 3, status: 'draft' });
-		const secondDraft = revision({ id: 'draft-second', revision_no: 4, status: 'draft' });
-		const secondHistory = [secondDraft, structuredClone(existingPublished), structuredClone(existingArchived)];
-		api.saveDraft.mockResolvedValueOnce({ version: 3, draft_revision: firstDraft });
-		api.saveDraft.mockResolvedValueOnce({ version: 4, draft_revision: secondDraft });
-		api.listRevisions.mockReturnValueOnce(firstHistory.promise).mockResolvedValueOnce({ revisions: secondHistory });
-		store.setConfigurationPath('content.greeting', '<p>First</p>');
-		const firstSave = store.saveDraft();
-		await vi.waitFor(() => expect(api.listRevisions).toHaveBeenCalledTimes(1));
-		store.setConfigurationPath('content.greeting', '<p>Second</p>');
-
-		await store.saveDraft();
-		firstHistory.resolve({ revisions: [firstDraft] });
-		await firstSave;
-
-		expect(store.revisions).toEqual(secondHistory);
-		expect(store.detail?.version).toBe(4);
-	});
-
-	it('converts the consumed draft to published and ignores stale history after publish', async () => {
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
-		seedRevisionHistory(store);
-		const staleHistory = deferred<{ revisions: DocumentTemplateRevision[] }>();
-		api.listRevisions.mockReturnValue(staleHistory.promise);
-		const historyRequest = store.loadRevisions();
-		const publishedDraft = revision({
-			id: 'published-draft',
-			revision_no: 2,
+	it('publishes the exact saved revision and adopts its authoritative configuration', async () => {
+		const store = await openEmail();
+		grantAdministration();
+		const published = revision({
+			id: 'published-now',
 			status: 'published',
-			start_date: '2026-08-01T00:00:00.000Z',
-			end_date: '2026-09-01T00:00:00.000Z',
-			published_at: '2026-07-31T12:00:00.000Z',
+			configuration: { content: { greeting: '<p>Published</p>' }, brand: { primaryColor: '#123456' } },
 		});
-		api.publish.mockResolvedValue({ version: 3, latest_published_revision: publishedDraft });
+		api.publish.mockResolvedValue({ version: 3, latest_published_revision: published });
 
-		await store.publish();
-		staleHistory.resolve({ revisions: [revision({ id: 'stale-draft', status: 'draft' })] });
-		await historyRequest;
+		expect(await publishDraft(store)).toBe('completed');
 
-		expect(store.revisions).toEqual([publishedDraft, existingPublished, existingArchived]);
-		expect(store.revisions.some(candidate => candidate.status === 'draft')).toBe(false);
+		expect(api.publish).toHaveBeenCalledWith('email', 'order-confirmation', {
+			version: 2,
+			revision_no: 2,
+			start_date: null,
+			end_date: null,
+		});
 		expect(store.detail?.draft_revision).toBeNull();
-		expect(store.detail?.latest_published_revision).toEqual(publishedDraft);
+		expect(store.detail?.active_revision).toEqual(published);
+		expect(store.draft).toEqual(published.configuration);
+		expect(store.isDirty).toBe(false);
 	});
 
-	it('keeps loading until detail then summaries settle and isolates the summary error', async () => {
-		const detailRequest = deferred<DocumentTemplateDetail>();
-		const summariesRequest = deferred<never>();
-		api.get.mockReturnValue(detailRequest.promise);
-		api.list.mockReturnValue(summariesRequest.promise);
-		const store = useDocumentTemplateStore();
-		const pendingDetail = store.loadDetail('email', 'order-confirmation');
-		const pendingSummaries = store.loadSummaries();
-		store.error = 'Current action failure';
+	it('rejects reset confirmation after the authoritative version changes', async () => {
+		const store = await openEmail();
+		grantAdministration();
+		const intent = store.prepareReset()!;
+		api.get.mockResolvedValue({ ...structuredClone(baseDetail), version: 3 });
+		await store.openTemplate('email', 'order-confirmation');
 
-		expect(store.loading).toBe(true);
-		detailRequest.resolve(structuredClone(detail));
-		await pendingDetail;
-		expect(store.loading).toBe(true);
-		summariesRequest.reject({ response: { data: { message: 'Summary service unavailable' } } });
-		await expect(pendingSummaries).rejects.toBeTruthy();
-
-		expect(store.loading).toBe(false);
-		expect(store.summaryError).toBe('Summary service unavailable');
-		expect(store.detailError).toBeNull();
-		expect(store.error).toBe('Current action failure');
-	});
-
-	it('keeps loading until summaries then detail settle and isolates the detail error', async () => {
-		const detailRequest = deferred<never>();
-		const summariesRequest = deferred<{ document_templates: [] }>();
-		api.get.mockReturnValue(detailRequest.promise);
-		api.list.mockReturnValue(summariesRequest.promise);
-		const store = useDocumentTemplateStore();
-		const pendingDetail = store.loadDetail('email', 'order-confirmation');
-		const pendingSummaries = store.loadSummaries();
-		store.error = 'Current action failure';
-
-		summariesRequest.resolve({ document_templates: [] });
-		await pendingSummaries;
-		expect(store.loading).toBe(true);
-		detailRequest.reject({ error: { message: 'Detail service unavailable' } });
-		await pendingDetail;
-
-		expect(store.loading).toBe(false);
-		expect(store.detailError).toBe('Detail service unavailable');
-		expect(store.summaryError).toBeNull();
-		expect(store.error).toBe('Current action failure');
-	});
-
-	it('dispose clears both load flags and invalidates their pending results', async () => {
-		const detailRequest = deferred<DocumentTemplateDetail>();
-		const summariesRequest = deferred<{ document_templates: [] }>();
-		api.get.mockReturnValue(detailRequest.promise);
-		api.list.mockReturnValue(summariesRequest.promise);
-		const store = useDocumentTemplateStore();
-		const pendingDetail = store.loadDetail('email', 'order-confirmation');
-		const pendingSummaries = store.loadSummaries();
-
-		store.dispose();
-		expect(store.loadingDetail).toBe(false);
-		expect(store.loadingSummaries).toBe(false);
-		expect(store.loading).toBe(false);
-		detailRequest.resolve({ ...structuredClone(detail), display_name: 'Stale detail' });
-		summariesRequest.resolve({ document_templates: [] });
-		await Promise.all([pendingDetail, pendingSummaries]);
-
-		expect(store.detail).toBeNull();
-		expect(store.detailError).toBeNull();
-		expect(store.summaryError).toBeNull();
-	});
-
-	it('preserves a field edit made while reset is pending', async () => {
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
-		store.detail!.fields.push({ path: 'content.footer', label: 'Footer', kind: 'rich-text', max_length: 500, allow_blank: true, allowed_tokens: [] });
-		store.setConfigurationPath('content.footer', '<p>Before reset</p>');
-		const request = deferred<DocumentTemplateMutationResp>();
-		api.reset.mockReturnValue(request.promise);
-		const pending = store.reset();
-		store.setConfigurationPath('content.greeting', '<p>Newer local</p>');
-		const serverDraft = revision({
-			id: 'draft-reset',
-			revision_no: 3,
-			configuration: { content: { greeting: '<p>Reset baseline</p>', footer: '<p>Reset footer</p>' } },
-		});
-		request.resolve({ version: 3, draft_revision: serverDraft });
-
-		await pending;
-
-		expect(store.baseline).toEqual(serverDraft.configuration);
-		expect(store.draft.content?.greeting).toBe('<p>Newer local</p>');
-		expect(store.draft.content?.footer).toBe('<p>Reset footer</p>');
-		expect(store.detail?.version).toBe(3);
-		expect(store.isDirty).toBe(true);
-	});
-
-	it('rejects reset confirmation after the authoritative draft changes', async () => {
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
-		const intent = store.prepareReset();
-		expect(intent).not.toBeNull();
-		api.get.mockResolvedValue({
-			...structuredClone(detail),
-			version: 3,
-			draft_revision: revision({ id: 'draft-newer', revision_no: 3, status: 'draft' }),
-		});
-		await store.loadDetail('email', 'order-confirmation');
-
-		const outcome = intent ? await store.confirmReset(intent) : 'failed';
-
-		expect(outcome).toBe('stale');
+		expect(await store.confirmReset(intent)).toBe('stale');
 		expect(api.reset).not.toHaveBeenCalled();
 	});
 
-	it('completes reset with authoritative revisions and a refreshed preview', async () => {
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
-		const intent = store.prepareReset();
-		const resetDraft = revision({ id: 'draft-reset-complete', revision_no: 3, status: 'draft', configuration: {} });
+	it('completes reset with authoritative history and refreshed preview', async () => {
+		const store = await openEmail();
+		grantAdministration();
+		const resetDraft = revision({ id: 'draft-reset', revision_no: 3, configuration: {} });
 		api.reset.mockResolvedValue({ version: 3, draft_revision: resetDraft });
-		api.listRevisions.mockResolvedValue({ revisions: [resetDraft, existingPublished] });
-		api.previewEmail.mockResolvedValue({ html: '<p>Reset preview</p>', subject: 'Reset', revision_id: resetDraft.id, revision_no: 3 });
+		api.listRevisions.mockResolvedValue({ revisions: [resetDraft, publishedRevision] });
+		api.previewEmail.mockResolvedValue({ html: '<p>Reset</p>', subject: 'Reset', revision_id: resetDraft.id, revision_no: 3 });
 
-		const outcome = intent ? await store.confirmReset(intent) : 'failed';
+		const outcome = await store.confirmReset(store.prepareReset()!);
 
 		expect(outcome).toBe('completed');
-		expect(store.detail?.draft_revision).toEqual(resetDraft);
-		expect(store.revisions).toEqual([resetDraft, existingPublished]);
+		expect(store.revisions).toEqual([resetDraft, publishedRevision]);
+		expect(store.draft).toEqual({});
 		expect(store.isDirty).toBe(false);
-		expect(api.previewEmail).toHaveBeenCalledWith('email', 'order-confirmation', { configuration: {} });
-		expect(store.preview).toMatchObject({ channel: 'email', html: '<p>Reset preview</p>', subject: 'Reset' });
+		expect(store.preview).toMatchObject({ channel: 'email', html: '<p>Reset</p>' });
 	});
 
-	it('does not restore untouched fields when reset removes their entire section', async () => {
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
-		store.detail!.fields.push({ path: 'content.footer', label: 'Footer', kind: 'rich-text', max_length: 500, allow_blank: true, allowed_tokens: [] });
-		store.setConfigurationPath('content.footer', '<p>Before reset</p>');
-		const request = deferred<DocumentTemplateMutationResp>();
-		api.reset.mockReturnValue(request.promise);
-		const pending = store.reset();
-		store.setConfigurationPath('content.greeting', '<p>Newer local</p>');
-		const serverDraft = revision({ id: 'draft-reset', revision_no: 3, configuration: {} });
-		request.resolve({ version: 3, draft_revision: serverDraft });
+	it('isolates catalog and detail loading failures while preserving semantic messages', async () => {
+		const catalog = deferred<never>();
+		const detail = deferred<never>();
+		api.list.mockReturnValue(catalog.promise);
+		api.get.mockReturnValue(detail.promise);
+		const store = useDocumentTemplateStore();
+		const loadingCatalog = store.loadCatalog();
+		const opening = store.openTemplate('email', 'order-confirmation');
+		expect(store.loading).toBe(true);
 
-		await pending;
+		detail.reject({ response: { data: { message: 'Detail unavailable' } } });
+		await opening;
+		expect(store.loading).toBe(true);
+		catalog.reject({ response: { data: { message: 'Catalog unavailable' } } });
+		await expect(loadingCatalog).rejects.toBeTruthy();
 
-		expect(store.baseline).toEqual({});
-		expect(store.draft).toEqual({ content: { greeting: '<p>Newer local</p>' } });
-		expect(store.isDirty).toBe(true);
+		expect(store.loading).toBe(false);
+		expect(store.detailError).toBe('Detail unavailable');
+		expect(store.summaryError).toBe('Catalog unavailable');
 	});
 
-	it('preserves a block edit made while restore is pending', async () => {
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
-		store.detail!.blocks.push({ id: 'footer', label: 'Footer', required: false, default_enabled: true });
-		store.setBlockEnabled('footer', true);
-		const request = deferred<DocumentTemplateMutationResp>();
-		api.restore.mockReturnValue(request.promise);
-		const pending = store.restore(1);
-		store.setBlockEnabled('footer', false);
-		const serverDraft = revision({
-			id: 'draft-restore',
-			revision_no: 3,
-			configuration: {
-				blocks: [
-					{ id: 'order-items', enabled: true, props: {} },
-					{ id: 'footer', enabled: true, props: {} },
-					{ id: 'server-added', enabled: true, props: {} },
-				],
-			},
-		});
-		request.resolve({ version: 3, draft_revision: serverDraft });
-
-		await pending;
-
-		expect(store.baseline).toEqual(serverDraft.configuration);
-		expect(store.draft.blocks?.find(block => block.id === 'footer')?.enabled).toBe(false);
-		expect(store.draft.blocks?.find(block => block.id === 'server-added')?.enabled).toBe(true);
-		expect(store.detail?.draft_revision).toEqual(serverDraft);
-		expect(store.isDirty).toBe(true);
-	});
-
-	it.each([
-		['reset', (store: ReturnType<typeof useDocumentTemplateStore>) => store.reset()],
-		['restore', (store: ReturnType<typeof useDocumentTemplateStore>) => store.restore(1)],
-	] as const)('replaces a clean draft after %s succeeds', async (_name, mutate) => {
-		const store = await selectDraft();
-		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
-		const serverDraft = revision({ id: 'draft-next', revision_no: 3, configuration: { content: { greeting: '<p>Server baseline</p>' } } });
-		const response = { version: 3, draft_revision: serverDraft };
-		api.reset.mockResolvedValue(response);
-		api.restore.mockResolvedValue(response);
-
-		await mutate(store);
-
-		expect(store.draft).toEqual(serverDraft.configuration);
-		expect(store.baseline).toEqual(serverDraft.configuration);
-		expect(store.isDirty).toBe(false);
-	});
-
-	it('extracts action messages and safe field errors from nested API envelopes', async () => {
-		const store = await selectDraft();
+	it('extracts safe action and field errors without stringifying unknown objects', async () => {
+		const store = await openEmail();
 		store.setConfigurationPath('content.greeting', '<p>Changed</p>');
 		api.saveDraft.mockRejectedValue({
-			metadata: { request_id: 'transport-1' },
 			response: {
 				data: {
 					message: 'Nested validation failed',
-					metadata: { field_errors: { 'content.greeting': 'Greeting is invalid', ignored: { nested: true } } },
+					metadata: { field_errors: { 'content.greeting': 'Greeting is invalid', 'ignored': { nested: true } } },
 				},
 			},
 		});
@@ -886,164 +579,17 @@ describe('useDocumentTemplateStore', () => {
 
 		expect(store.error).toBe('Nested validation failed');
 		expect(store.fieldErrors).toEqual({ 'content.greeting': 'Greeting is invalid' });
-	});
-
-	it('uses readable plain-object messages and never stringifies unknown objects', async () => {
-		const store = await selectDraft();
-		api.testSend.mockRejectedValueOnce({ message: 'Plain API failure' });
-		await store.testSend();
-		expect(store.error).toBe('Plain API failure');
-
-		api.testSend.mockRejectedValueOnce({ unexpected: { value: true } });
-		await store.testSend();
+		api.testSend.mockRejectedValue({ unexpected: { value: true } });
+		await store.sendTest();
 		expect(store.error).toBe('Failed to send test document template');
-		expect(store.error).not.toBe('[object Object]');
 	});
 
-	it('handles invalid dates and distinguishes sparse arrays from length and undefined changes', () => {
-		const store = useDocumentTemplateStore();
-		const invalidDate = new Date(Number.NaN) as unknown as string;
-		store.baseline = { content: { greeting: invalidDate } };
-		store.draft = { content: { greeting: invalidDate } };
-		expect(() => store.refreshDirty()).not.toThrow();
-		expect(store.isDirty).toBe(false);
+	it('never exposes administration actions to staff', async () => {
+		const store = await openEmail();
 
-		store.baseline = { blocks: [] };
-		store.draft = { blocks: new Array(1) } as DocumentTemplateConfiguration;
-		store.refreshDirty();
-		expect(store.isDirty).toBe(true);
-
-		store.baseline = { blocks: new Array(1) } as DocumentTemplateConfiguration;
-		store.draft = { blocks: [undefined] } as unknown as DocumentTemplateConfiguration;
-		store.refreshDirty();
-		expect(store.isDirty).toBe(true);
-	});
-
-	it('keeps the previous PDF when a replacement response is invalid', async () => {
-		const createObjectURL = vi.fn(() => 'blob:preview-1');
-		const revokeObjectURL = vi.fn();
-		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
-		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
-		api.get.mockResolvedValue({ ...detail, channel: 'pdf' });
-		api.previewPdf.mockResolvedValueOnce(new Blob(['first']));
-		api.previewPdf.mockResolvedValueOnce({ not: 'a blob' });
-		const store = useDocumentTemplateStore();
-		await store.loadDetail('pdf', 'order-confirmation');
-		await store.previewDraft();
-
-		await store.previewDraft();
-
-		expect(store.preview).toMatchObject({ channel: 'pdf', objectUrl: 'blob:preview-1' });
-		expect(store.previewStale).toBe(true);
-		expect(revokeObjectURL).not.toHaveBeenCalled();
-		expect(store.error).toBe('Invalid PDF preview response');
-	});
-
-	it('keeps the previous PDF when its replacement request rejects', async () => {
-		const revokeObjectURL = vi.fn();
-		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:preview-1') });
-		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
-		api.get.mockResolvedValue({ ...detail, channel: 'pdf' });
-		api.previewPdf.mockResolvedValueOnce(new Blob(['first']));
-		api.previewPdf.mockRejectedValueOnce(new Error('Replacement failed'));
-		const store = useDocumentTemplateStore();
-		await store.loadDetail('pdf', 'order-confirmation');
-		await store.previewDraft();
-
-		await store.previewDraft();
-
-		expect(store.preview).toMatchObject({ channel: 'pdf', objectUrl: 'blob:preview-1' });
-		expect(store.previewStale).toBe(true);
-		expect(revokeObjectURL).not.toHaveBeenCalled();
-		expect(store.error).toBe('Replacement failed');
-	});
-
-	it('accepts a real PDF Blob when the global Blob constructor is unavailable', async () => {
-		const pdf = new Blob(['pdf']);
-		Object.defineProperty(globalThis, 'Blob', { configurable: true, value: undefined });
-		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:preview') });
-		api.get.mockResolvedValue({ ...detail, channel: 'pdf' });
-		api.previewPdf.mockResolvedValue(pdf);
-		const store = useDocumentTemplateStore();
-		await store.loadDetail('pdf', 'order-confirmation');
-
-		await store.previewDraft();
-
-		expect(store.preview).toMatchObject({ channel: 'pdf', blob: pdf, objectUrl: 'blob:preview' });
-	});
-
-	it('rejects a non-Blob PDF response when the global Blob constructor is unavailable', async () => {
-		Object.defineProperty(globalThis, 'Blob', { configurable: true, value: undefined });
-		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:preview') });
-		api.get.mockResolvedValue({ ...detail, channel: 'pdf' });
-		api.previewPdf.mockResolvedValue({ not: 'a blob' });
-		const store = useDocumentTemplateStore();
-		await store.loadDetail('pdf', 'order-confirmation');
-
-		await store.previewDraft();
-
-		expect(store.preview).toBeNull();
-		expect(store.error).toBe('Invalid PDF preview response');
-	});
-
-	it('rejects a duck-typed Blob spoof when the global Blob constructor is unavailable', async () => {
-		Object.defineProperty(globalThis, 'Blob', { configurable: true, value: undefined });
-		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:preview') });
-		api.get.mockResolvedValue({ ...detail, channel: 'pdf' });
-		api.previewPdf.mockResolvedValue({
-			size: 3,
-			type: 'application/pdf',
-			arrayBuffer: vi.fn(),
-			slice: vi.fn(),
-			stream: vi.fn(),
-			text: vi.fn(),
-			[Symbol.toStringTag]: 'Blob',
-		});
-		const store = useDocumentTemplateStore();
-		await store.loadDetail('pdf', 'order-confirmation');
-
-		await store.previewDraft();
-
-		expect(store.preview).toBeNull();
-		expect(store.error).toBe('Invalid PDF preview response');
-	});
-
-	it('keeps the prior PDF when a later refresh cannot create object URLs', async () => {
-		const revokeObjectURL = vi.fn();
-		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:first') });
-		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
-		api.get.mockResolvedValue({ ...detail, channel: 'pdf' });
-		api.previewPdf.mockResolvedValue(new Blob(['pdf']));
-		const store = useDocumentTemplateStore();
-		await store.loadDetail('pdf', 'order-confirmation');
-		await store.previewDraft();
-		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: undefined });
-
-		await store.previewDraft();
-
-		expect(store.preview).toMatchObject({ channel: 'pdf', objectUrl: 'blob:first' });
-		expect(store.previewStale).toBe(true);
-		expect(revokeObjectURL).not.toHaveBeenCalled();
-		expect(store.error).toBe('PDF previews are unavailable in this environment');
-		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: undefined });
-		expect(() => store.clearPreview()).not.toThrow();
-	});
-
-	it('never creates PDF object URLs when the runtime cannot revoke them', async () => {
-		const createObjectURL = vi.fn(() => 'blob:leaked');
-		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
-		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: undefined });
-		api.get.mockResolvedValue({ ...detail, channel: 'pdf' });
-		api.previewPdf.mockResolvedValue(new Blob(['pdf']));
-		const store = useDocumentTemplateStore();
-		await store.loadDetail('pdf', 'order-confirmation');
-
-		await store.previewDraft();
-		store.clearPreview();
-		await store.previewDraft();
-
-		expect(createObjectURL).not.toHaveBeenCalled();
-		expect(store.preview).toBeNull();
-		expect(store.error).toBe('PDF previews are unavailable in this environment');
+		expect(store.canEdit).toBe(true);
+		expect(store.canPublish).toBe(false);
+		expect(store.preparePublish({ startDate: null, endDate: null })).toEqual({ status: 'rejected' });
+		expect(store.prepareReset()).toBeNull();
 	});
 });

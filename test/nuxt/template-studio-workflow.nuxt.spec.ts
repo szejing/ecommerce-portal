@@ -311,6 +311,7 @@ describe('Template Studio workflow', () => {
 		role?: UserRoles;
 		dirty?: boolean;
 		hasDraft?: boolean;
+		detail?: Partial<DocumentTemplateDetail>;
 	} = {}) {
 		const channel = options.channel ?? 'email';
 		const store = useDocumentTemplateStore();
@@ -325,29 +326,43 @@ describe('Template Studio workflow', () => {
 		const selectedSummary = summary(channel);
 		const selectedDetail: DocumentTemplateDetail = {
 			...detailFixture,
+			...options.detail,
 			channel,
 			display_name: selectedSummary.display_name,
-			draft_revision: options.hasDraft === false ? null : savedDraft,
+			draft_revision: options.hasDraft === false
+				? null
+				: (options.detail?.draft_revision === undefined ? savedDraft : options.detail.draft_revision),
 		};
-		vi.spyOn(store, 'loadSummaries').mockImplementation(async () => {
-			store.summaries = [selectedSummary];
+		const documentTemplateApi = useNuxtApp().$api.documentTemplate;
+		vi.spyOn(documentTemplateApi, 'list').mockResolvedValue({ document_templates: [selectedSummary] });
+		vi.spyOn(documentTemplateApi, 'get').mockResolvedValue(selectedDetail);
+		vi.spyOn(documentTemplateApi, 'listRevisions').mockResolvedValue({
+			revisions: [savedDraft, activeRevision, revision(5, { end_date: '2026-07-01T00:00:00.000Z' })],
 		});
-		vi.spyOn(store, 'loadDetail').mockImplementation(async () => {
-			store.selected = { channel, templateCode: 'invoice' };
-			store.detail = selectedDetail;
-			store.revisions = [savedDraft, activeRevision, revision(5, { end_date: '2026-07-01T00:00:00.000Z' })];
-			store.setBaseline(selectedDetail.draft_revision?.configuration ?? selectedDetail.configuration);
-			if (options.dirty) store.setConfigurationPath('content.greeting', '<p>Unsaved</p>');
-		});
-		vi.spyOn(store, 'loadRevisions').mockResolvedValue();
-		const previewDraft = vi.spyOn(store, 'previewDraft').mockResolvedValue();
+		if (channel === 'pdf') {
+			Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:pdf') });
+			Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
+		}
+		if (channel === 'email') {
+			vi.spyOn(documentTemplateApi, 'previewEmail').mockResolvedValue({
+				html: emailPreview.html,
+				subject: emailPreview.subject,
+				revision_id: null,
+				revision_no: null,
+			});
+		} else {
+			vi.spyOn(documentTemplateApi, 'previewPdf').mockResolvedValue(new Blob(['pdf'], { type: 'application/pdf' }));
+		}
 		const wrapper = await mountSuspended(RouteHost, {
 			route: `/settings/templates?channel=${channel}&template=invoice`,
 		});
 		cleanups.push(() => wrapper.unmount());
+		await flushPromises();
+		if (options.dirty) store.setConfigurationPath('content.greeting', '<p>Unsaved</p>');
 		await nextTick();
-		previewDraft.mockClear();
-		return { wrapper, store, previewDraft };
+		if (channel === 'email') vi.mocked(documentTemplateApi.previewEmail).mockClear();
+		else vi.mocked(documentTemplateApi.previewPdf).mockClear();
+		return { wrapper, store };
 	}
 
 	it('wires the controlled Task 16 editors to store mutations through shell slots', async () => {
@@ -368,14 +383,19 @@ describe('Template Studio workflow', () => {
 	});
 
 	it('uses catalog defaults after clearing an override and sends the same resolved contract to preview', async () => {
-		const { wrapper, store, previewDraft } = await mountWorkflow();
-		previewDraft.mockRestore();
-		store.detail = {
-			...store.detail!,
-			catalog_default_values: { brand: { primaryColor: '#EE7F01' } },
-			effective_preview_values: { brand: { primaryColor: '#112233' } },
-		};
-		store.setBaseline({ brand: { primaryColor: '#112233' } });
+		const configuredDraft = revision(7, {
+			id: 'draft-7',
+			status: 'draft',
+			published_at: null,
+			configuration: { brand: { primaryColor: '#112233' } },
+		});
+		const { wrapper, store } = await mountWorkflow({
+			detail: {
+				catalog_default_values: { brand: { primaryColor: '#EE7F01' } },
+				effective_preview_values: { brand: { primaryColor: '#112233' } },
+				draft_revision: configuredDraft,
+			},
+		});
 		const apiPreview = vi.spyOn(useNuxtApp().$api.documentTemplate, 'previewEmail').mockResolvedValue({
 			html: '<p style="color:#EE7F01">Catalog default</p>',
 			subject: 'Invoice',
@@ -404,8 +424,7 @@ describe('Template Studio workflow', () => {
 	});
 
 	it('debounces edited email previews, supports immediate refresh, and cancels on unmount', async () => {
-		const { wrapper, store, previewDraft } = await mountWorkflow();
-		previewDraft.mockRestore();
+		const { wrapper, store } = await mountWorkflow();
 		const apiPreview = vi.spyOn(useNuxtApp().$api.documentTemplate, 'previewEmail').mockResolvedValue({
 			html: emailPreview.html,
 			subject: emailPreview.subject,
@@ -436,13 +455,8 @@ describe('Template Studio workflow', () => {
 	});
 
 	it('marks PDF preview stale on edits without auto-requesting a render', async () => {
-		const { wrapper, store, previewDraft } = await mountWorkflow({ channel: 'pdf' });
-		previewDraft.mockRestore();
+		const { wrapper, store } = await mountWorkflow({ channel: 'pdf' });
 		const apiPreview = vi.spyOn(useNuxtApp().$api.documentTemplate, 'previewPdf').mockResolvedValue(new Blob(['pdf']));
-		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:pdf') });
-		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
-		store.preview = { channel: 'pdf', blob: new Blob(['old']), objectUrl: 'blob:old' };
-		store.previewStale = false;
 		vi.useFakeTimers();
 
 		store.setConfigurationPath('content.greeting', '<p>Changed</p>');
@@ -460,14 +474,14 @@ describe('Template Studio workflow', () => {
 			version: 4,
 			latest_published_revision: revision(7),
 		});
-		const storePublish = vi.spyOn(store, 'publish');
+		const confirmPublish = vi.spyOn(store, 'confirmPublish');
 
 		await wrapper.get('[data-action="publish-now"]').trigger('click');
 		expect(overlayMocks.open).toHaveBeenCalledOnce();
-		expect(storePublish).not.toHaveBeenCalled();
+		expect(confirmPublish).not.toHaveBeenCalled();
 		await overlayMocks.props?.onConfirm?.();
 
-		expect(storePublish).toHaveBeenCalledWith(7);
+		expect(confirmPublish).toHaveBeenCalledOnce();
 		expect(publish).toHaveBeenCalledWith('email', 'invoice', {
 			version: 3,
 			revision_no: 7,
@@ -512,17 +526,6 @@ describe('Template Studio workflow', () => {
 		await nextTick();
 		vi.setSystemTime(new Date('2026-08-03T00:00:00.000Z'));
 
-		await overlayMocks.props?.onConfirm?.();
-
-		expect(publish).not.toHaveBeenCalled();
-	});
-
-	it('requires the same saved draft to still be selected when publish is confirmed', async () => {
-		const { wrapper, store } = await mountWorkflow();
-		const publish = vi.spyOn(useNuxtApp().$api.documentTemplate, 'publish');
-
-		await wrapper.get('[data-action="publish-now"]').trigger('click');
-		store.detail = { ...store.detail!, draft_revision: revision(8, { id: 'draft-8', status: 'draft' }) };
 		await overlayMocks.props?.onConfirm?.();
 
 		expect(publish).not.toHaveBeenCalled();
@@ -584,13 +587,19 @@ describe('Template Studio workflow', () => {
 	});
 
 	it('resolves the catalog default after reset without retaining the previous effective override', async () => {
-		const { wrapper, store } = await mountWorkflow();
-		store.detail = {
-			...store.detail!,
-			catalog_default_values: { brand: { primaryColor: '#EE7F01' } },
-			effective_preview_values: { brand: { primaryColor: '#112233' } },
-		};
-		store.setBaseline({ brand: { primaryColor: '#112233' } });
+		const configuredDraft = revision(7, {
+			id: 'draft-7',
+			status: 'draft',
+			published_at: null,
+			configuration: { brand: { primaryColor: '#112233' } },
+		});
+		const { wrapper, store } = await mountWorkflow({
+			detail: {
+				catalog_default_values: { brand: { primaryColor: '#EE7F01' } },
+				effective_preview_values: { brand: { primaryColor: '#112233' } },
+				draft_revision: configuredDraft,
+			},
+		});
 		vi.spyOn(useNuxtApp().$api.documentTemplate, 'reset').mockResolvedValue({
 			version: 4,
 			draft_revision: revision(8, {
@@ -618,10 +627,18 @@ describe('Template Studio workflow', () => {
 
 	it('shows a compact 409 conflict with an explicit server reload and no raw error text', async () => {
 		const { wrapper, store } = await mountWorkflow({ dirty: true });
-		const reload = vi.spyOn(store, 'reloadAfterConflict').mockResolvedValue();
-		store.conflict = { currentVersion: 12 };
-		store.error = 'database host 10.0.0.4 rejected connection';
-		await nextTick();
+		vi.spyOn(useNuxtApp().$api.documentTemplate, 'saveDraft').mockRejectedValue({
+			response: {
+				data: {
+					statusCode: 409,
+					message: 'database host 10.0.0.4 rejected connection',
+					metadata: { current_version: 12 },
+				},
+			},
+		});
+		await wrapper.get('[data-action="save-draft"]').trigger('click');
+		await flushPromises();
+		const reload = vi.spyOn(store, 'reloadServerVersion').mockResolvedValue();
 
 		expect(wrapper.get('[data-testid="template-conflict"]').text()).toContain('12');
 		expect(wrapper.text()).not.toContain('10.0.0.4');

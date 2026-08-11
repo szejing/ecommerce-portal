@@ -3,12 +3,13 @@ import { setActivePinia } from 'pinia';
 import { defineComponent, h, nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime';
-import { KEY } from 'yeppi-common';
+import { KEY, UserRoles } from 'yeppi-common';
 import { NuxtPage } from '#components';
 import TemplateNavigation from '~/components/Z/TemplateStudio/TemplateNavigation.vue';
 import TemplateEditor from '~/components/Z/TemplateStudio/TemplateEditor.vue';
+import { useAuthStore } from '~/stores/Auth/Auth';
 import { useDocumentTemplateStore } from '~/stores/DocumentTemplate/DocumentTemplate';
-import type { DocumentTemplateChannel, DocumentTemplateSummary } from '~/utils/types/document-template';
+import type { DocumentTemplateChannel, DocumentTemplateDetail, DocumentTemplateSummary } from '~/utils/types/document-template';
 
 const overlayMocks = vi.hoisted(() => ({
 	open: vi.fn(),
@@ -83,6 +84,29 @@ const catalogSummaries: DocumentTemplateSummary[] = [
 	summary('admin-order-alert', 'Admin order alert', 'email', false, 'merchant'),
 ];
 
+function detail(channel: DocumentTemplateChannel, templateCode: string): DocumentTemplateDetail {
+	return {
+		template_code: templateCode,
+		channel,
+		display_name: `${templateCode} ${channel}`,
+		category: 'customer',
+		editable: true,
+		version: 1,
+		catalog_schema_version: 1,
+		catalog_system_template_version: 1,
+		fields: [{ path: 'content.greeting', label: 'Greeting', kind: 'rich-text', max_length: 400, allow_blank: false, allowed_tokens: [] }],
+		blocks: [],
+		allowed_tokens: [],
+		configuration: { content: { greeting: '<p>Hello</p>' } },
+		inherited_values: {},
+		catalog_default_values: {},
+		effective_preview_values: { content: { greeting: '<p>Hello</p>' } },
+		draft_revision: null,
+		latest_published_revision: null,
+		active_revision: null,
+	};
+}
+
 const rejectedQueryCases = [
 	{
 		label: 'invalid',
@@ -97,7 +121,11 @@ const rejectedQueryCases = [
 function deferred<T>() {
 	let resolve!: (value: T) => void;
 	let reject!: (reason?: unknown) => void;
-	return { promise: new Promise<T>((resolvePromise, rejectPromise) => { resolve = resolvePromise; reject = rejectPromise; }), resolve, reject };
+	const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+		resolve = resolvePromise;
+		reject = rejectPromise;
+	});
+	return { promise, resolve, reject };
 }
 
 const RouteHost = defineComponent({
@@ -184,6 +212,15 @@ describe('TemplateStudioPage', () => {
 		setActivePinia(useNuxtApp().$pinia as Pinia);
 		vi.restoreAllMocks();
 		useDocumentTemplateStore(useNuxtApp().$pinia as Pinia).$reset();
+		useAuthStore(useNuxtApp().$pinia as Pinia).$reset();
+		useAuthStore(useNuxtApp().$pinia as Pinia).user = {
+			id: 'admin-1',
+			role: UserRoles.MERCHANT_ADMIN,
+			email_address: 'admin@example.test',
+			name: 'Jane Admin',
+			dial_code: '+60',
+			phone_no: '123456789',
+		};
 		useCookie(KEY.ACCESS_TOKEN).value = 'test-access-token';
 		useCookie(KEY.X_MERCHANT_ID).value = 'M00001';
 		overlayMocks.open.mockReset();
@@ -200,17 +237,26 @@ describe('TemplateStudioPage', () => {
 
 	async function mountPage(route = '/settings/templates') {
 		const store = useDocumentTemplateStore(useNuxtApp().$pinia as Pinia);
-		const loadSummaries = vi.spyOn(store, 'loadSummaries').mockImplementation(async () => {
-			store.summaries = catalogSummaries;
-		});
-		const loadDetail = vi.spyOn(store, 'loadDetail').mockImplementation(async (channel, templateCode) => {
-			store.selected = { channel, templateCode };
-		});
+		const documentTemplateApi = useNuxtApp().$api.documentTemplate;
+		vi.spyOn(documentTemplateApi, 'list').mockResolvedValue({ document_templates: catalogSummaries });
+		vi.spyOn(documentTemplateApi, 'get').mockImplementation(async (channel, templateCode) => detail(channel, templateCode));
+		vi.spyOn(documentTemplateApi, 'listRevisions').mockResolvedValue({ revisions: [] });
+		vi.spyOn(documentTemplateApi, 'previewEmail').mockResolvedValue({ html: '<p>Preview</p>', subject: 'Preview', revision_id: null, revision_no: null });
+		vi.spyOn(documentTemplateApi, 'previewPdf').mockResolvedValue(new Blob(['pdf'], { type: 'application/pdf' }));
+		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:pdf') });
+		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
+		const loadSummaries = vi.spyOn(store, 'loadCatalog');
+		const loadDetail = vi.spyOn(store, 'openTemplate');
 		const wrapper = await mountSuspended(RouteHost, { route });
+		await vi.waitFor(() => expect(store.selected).not.toBeNull());
 		pageCleanups.push(() => wrapper.unmount());
 		const router = useRouter();
 
 		return { wrapper, store, loadSummaries, loadDetail, router };
+	}
+
+	function makeDirty(store: ReturnType<typeof useDocumentTemplateStore>): void {
+		store.setConfigurationPath('content.greeting', '<p>Unsaved</p>');
 	}
 
 	it('loads the first editable template and keeps fallback selection in the URL', async () => {
@@ -235,14 +281,20 @@ describe('TemplateStudioPage', () => {
 
 	it('replays only the latest query after the initial detail request settles', async () => {
 		const store = useDocumentTemplateStore(useNuxtApp().$pinia as Pinia);
-		const initialDetail = deferred<void>();
-		vi.spyOn(store, 'loadSummaries').mockImplementation(async () => {
-			store.summaries = catalogSummaries;
-		});
-		const loadDetail = vi.spyOn(store, 'loadDetail').mockImplementation(async (channel, templateCode) => {
-			store.selected = { channel, templateCode };
-			if (channel === 'email' && templateCode === 'order-confirmation') await initialDetail.promise;
-		});
+		const initialDetail = deferred<DocumentTemplateDetail>();
+		const documentTemplateApi = useNuxtApp().$api.documentTemplate;
+		vi.spyOn(documentTemplateApi, 'list').mockResolvedValue({ document_templates: catalogSummaries });
+		vi.spyOn(documentTemplateApi, 'get').mockImplementation(async (channel, templateCode) => (
+			channel === 'email' && templateCode === 'order-confirmation'
+				? initialDetail.promise
+				: detail(channel, templateCode)
+		));
+		vi.spyOn(documentTemplateApi, 'listRevisions').mockResolvedValue({ revisions: [] });
+		vi.spyOn(documentTemplateApi, 'previewEmail').mockResolvedValue({ html: '<p>Preview</p>', subject: 'Preview', revision_id: null, revision_no: null });
+		vi.spyOn(documentTemplateApi, 'previewPdf').mockResolvedValue(new Blob(['pdf'], { type: 'application/pdf' }));
+		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:pdf') });
+		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
+		const loadDetail = vi.spyOn(store, 'openTemplate');
 		const mountPromise = mountSuspended(RouteHost, {
 			route: '/settings/templates?channel=email&template=order-confirmation',
 		});
@@ -254,7 +306,7 @@ describe('TemplateStudioPage', () => {
 		expect(router.currentRoute.value.query).toMatchObject({ channel: 'pdf', template: 'receipt' });
 		expect(loadDetail).toHaveBeenCalledOnce();
 
-		initialDetail.resolve();
+		initialDetail.resolve(detail('email', 'order-confirmation'));
 		const wrapper = await mountPromise;
 		pageCleanups.push(() => wrapper.unmount());
 		await vi.waitFor(() => expect(loadDetail).toHaveBeenCalledTimes(2));
@@ -298,7 +350,7 @@ describe('TemplateStudioPage', () => {
 	it('blocks route navigation when explicit unsaved edits exist', async () => {
 		const { store, router } = await mountPage();
 		const dispose = vi.spyOn(store, 'dispose');
-		store.isDirty = true;
+		makeDirty(store);
 		await nextTick();
 
 		await router.push('/settings');
@@ -313,7 +365,7 @@ describe('TemplateStudioPage', () => {
 
 	it('keeps the current URL and detail when a dirty navigation selection stays', async () => {
 		const { wrapper, store, loadDetail, router } = await mountPage();
-		store.isDirty = true;
+		makeDirty(store);
 		await nextTick();
 
 		wrapper.getComponent(TemplateNavigation).vm.$emit('select', catalogSummaries[3]);
@@ -329,7 +381,7 @@ describe('TemplateStudioPage', () => {
 
 	it('loads a dirty navigation selection only after confirmation', async () => {
 		const { wrapper, store, loadDetail, router } = await mountPage();
-		store.isDirty = true;
+		makeDirty(store);
 		await nextTick();
 
 		wrapper.getComponent(TemplateNavigation).vm.$emit('select', catalogSummaries[3]);
@@ -342,7 +394,7 @@ describe('TemplateStudioPage', () => {
 
 	it('blocks browser query navigation while dirty and preserves the current selection on stay', async () => {
 		const { store, loadDetail, router } = await mountPage();
-		store.isDirty = true;
+		makeDirty(store);
 		await nextTick();
 
 		await router.push({ path: '/settings/templates', query: { channel: 'pdf', template: 'invoice' } });
@@ -359,7 +411,7 @@ describe('TemplateStudioPage', () => {
 	for (const { label, query } of rejectedQueryCases) {
 		it(`keeps the current canonical URL and detail when a dirty ${label} query stays`, async () => {
 			const { store, loadDetail, router } = await mountPage('/settings/templates?channel=pdf&template=invoice');
-			store.isDirty = true;
+			makeDirty(store);
 			await nextTick();
 
 			await router.push({ path: '/settings/templates', query });
@@ -376,7 +428,7 @@ describe('TemplateStudioPage', () => {
 
 		it(`canonicalizes a dirty ${label} query after one leave confirmation`, async () => {
 			const { store, loadDetail, router } = await mountPage('/settings/templates?channel=pdf&template=invoice');
-			store.isDirty = true;
+			makeDirty(store);
 			await nextTick();
 
 			await router.push({ path: '/settings/templates', query });
@@ -395,10 +447,13 @@ describe('TemplateStudioPage', () => {
 
 	it('does not resume initial selection after leaving while summaries are pending', async () => {
 		const store = useDocumentTemplateStore(useNuxtApp().$pinia as Pinia);
-		store.summaries = catalogSummaries;
-		const summariesRequest = deferred<void>();
-		const loadSummaries = vi.spyOn(store, 'loadSummaries').mockReturnValue(summariesRequest.promise);
-		const loadDetail = vi.spyOn(store, 'loadDetail').mockResolvedValue();
+		const documentTemplateApi = useNuxtApp().$api.documentTemplate;
+		const list = vi.spyOn(documentTemplateApi, 'list').mockResolvedValue({ document_templates: catalogSummaries });
+		await store.loadCatalog();
+		const summariesRequest = deferred<{ document_templates: DocumentTemplateSummary[] }>();
+		list.mockReturnValue(summariesRequest.promise);
+		const loadSummaries = vi.spyOn(store, 'loadCatalog');
+		const loadDetail = vi.spyOn(store, 'openTemplate');
 		const dispose = vi.spyOn(store, 'dispose');
 		const mountPromise = mountSuspended(RouteHost, {
 			route: '/settings/templates?channel=pdf&template=not-in-the-catalog',
@@ -412,7 +467,7 @@ describe('TemplateStudioPage', () => {
 
 		const leavePromise = router.push('/settings');
 		await vi.waitFor(() => expect(dispose).toHaveBeenCalledOnce());
-		summariesRequest.resolve();
+		summariesRequest.resolve({ document_templates: catalogSummaries });
 		await leavePromise;
 		const wrapper = await mountPromise;
 		pageCleanups.push(() => wrapper.unmount());
@@ -447,16 +502,21 @@ describe('TemplateStudioPage', () => {
 		await useNuxtApp().$i18n.setLocale('ms');
 		try {
 			const { wrapper, store } = await mountPage();
-			store.summaryError = 'Failed to load document templates';
-			store.detailError = 'Failed to load document template';
+			const documentTemplateApi = useNuxtApp().$api.documentTemplate;
+			vi.mocked(documentTemplateApi.list).mockRejectedValueOnce({});
+			vi.mocked(documentTemplateApi.get).mockRejectedValueOnce({});
+			await expect(store.loadCatalog()).rejects.toBeDefined();
+			await store.openTemplate('email', 'order-confirmation');
 			await nextTick();
 
 			expect(wrapper.text()).toContain('Templat dokumen tidak dapat dimuatkan. Sila cuba lagi.');
 			expect(wrapper.text()).toContain('Templat dokumen ini tidak dapat dimuatkan. Sila cuba lagi.');
 			expect(wrapper.text()).not.toContain('Failed to load document template');
 
-			store.summaryError = 'Summary service unavailable';
-			store.detailError = 'Detail service unavailable';
+			vi.mocked(documentTemplateApi.list).mockRejectedValueOnce({ message: 'Summary service unavailable' });
+			vi.mocked(documentTemplateApi.get).mockRejectedValueOnce({ message: 'Detail service unavailable' });
+			await expect(store.loadCatalog()).rejects.toBeDefined();
+			await store.openTemplate('email', 'order-confirmation');
 			await nextTick();
 
 			expect(wrapper.text()).toContain('Summary service unavailable');

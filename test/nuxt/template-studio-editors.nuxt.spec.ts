@@ -371,15 +371,19 @@ describe('Template Studio controlled content editor', () => {
 });
 
 describe('Template Studio restricted rich text editor', () => {
-	it('uses the essential toolbar and formats without image or video controls', async () => {
+	it('uses only the explicitly allowed toolbar and formats', async () => {
 		const wrapper = await mountSuspended(RichTextEditor, {
 			props: { modelValue: '<p>Hello</p>' },
 		});
 
 		const quill = wrapper.getComponent({ name: 'QuillEditor' });
-		expect(quill.props('toolbar')).toBe('essential');
+		expect(quill.props('toolbar')).toEqual([
+			['bold', 'italic', 'underline'],
+			[{ list: 'ordered' }, { list: 'bullet' }],
+			['link'],
+		]);
 		expect(quill.props('options')).toMatchObject({
-			formats: expect.arrayContaining(['bold', 'italic', 'underline', 'link', 'list', 'header']),
+			formats: ['bold', 'italic', 'underline', 'list', 'link', 'templateToken'],
 		});
 		expect(quill.props('options').formats).not.toContain('image');
 		expect(quill.props('options').formats).not.toContain('video');
