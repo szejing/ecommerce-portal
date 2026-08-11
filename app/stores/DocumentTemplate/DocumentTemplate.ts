@@ -16,6 +16,17 @@ import type { PublishDocumentTemplateResp } from '~/repository/modules/document-
 
 export type EmailPreview = { channel: 'email'; html: string; subject: string; revisionId: string | null; revisionNo: number | null };
 export type PdfPreview = { channel: 'pdf'; blob: Blob; objectUrl: string };
+export type TemplateActivationWindow = { startDate: Date | null; endDate: Date | null };
+export type TemplatePublishIntent = TemplateActivationWindow & {
+	channel: DocumentTemplateChannel;
+	templateCode: string;
+	revisionId: string;
+	revisionNo: number;
+};
+export type TemplatePublishPreparation =
+	| { status: 'ready'; intent: TemplatePublishIntent; scheduled: boolean }
+	| { status: 'rejected' };
+export type TemplateMutationOutcome = 'completed' | 'stale' | 'failed';
 type TemplateSelection = { channel: DocumentTemplateChannel; templateCode: string };
 type TemplateSchedule = { startDate: Date | null; endDate: Date | null; timezone: string };
 type UnknownRecord = Record<string, unknown>;
@@ -234,6 +245,17 @@ function isRevisionEligibleNow(revision: DocumentTemplateRevision, now = Date.no
 	const end = revision.end_date ? new Date(revision.end_date).getTime() : null;
 	return (start === null || (!Number.isNaN(start) && start <= now))
 		&& (end === null || (!Number.isNaN(end) && now < end));
+}
+
+function activationError(window: TemplateActivationWindow, now = Date.now()): string | undefined {
+	if ((window.startDate && Number.isNaN(window.startDate.getTime())) || (window.endDate && Number.isNaN(window.endDate.getTime()))) {
+		return 'Schedule date is invalid';
+	}
+	if (window.startDate && window.endDate && window.endDate.getTime() <= window.startDate.getTime()) {
+		return 'Schedule start must be before its end';
+	}
+	if (window.endDate && window.endDate.getTime() <= now) return 'Schedule end must be in the future';
+	return undefined;
 }
 
 function pathParts(path: string): [keyof DocumentTemplateConfiguration, string] | null {
@@ -733,18 +755,68 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			}
 		},
 
-		async publish(revisionNo?: number) {
+		preparePublish(window: TemplateActivationWindow): TemplatePublishPreparation {
 			const selection = this.selected;
-			if (!selection || !this.detail || !this.canPublish) return;
+			const draftRevision = this.detail?.draft_revision;
+			if (!selection || !draftRevision || !this.canPublish) return { status: 'rejected' };
 			if (this.isDirty) {
 				this.error = 'Save draft before publishing';
-				return;
+				return { status: 'rejected' };
+			}
+			const activation = {
+				startDate: window.startDate ? new Date(window.startDate) : null,
+				endDate: window.endDate ? new Date(window.endDate) : null,
+			};
+			const validationError = activationError(activation);
+			if (validationError) {
+				this.error = validationError;
+				return { status: 'rejected' };
+			}
+			return {
+				status: 'ready',
+				scheduled: activation.startDate !== null || activation.endDate !== null,
+				intent: {
+					...selection,
+					revisionId: draftRevision.id,
+					revisionNo: draftRevision.revision_no,
+					...activation,
+				},
+			};
+		},
+
+		async confirmPublish(intent: TemplatePublishIntent): Promise<TemplateMutationOutcome> {
+			const validationError = activationError(intent);
+			if (validationError) {
+				this.error = validationError;
+				return 'failed';
+			}
+			const currentDraft = this.detail?.draft_revision;
+			if (
+				!isSameSelection(this.selected, intent)
+				|| this.isDirty
+				|| currentDraft?.id !== intent.revisionId
+				|| currentDraft.revision_no !== intent.revisionNo
+			) return 'stale';
+			this.schedule = {
+				...this.schedule,
+				startDate: intent.startDate ? new Date(intent.startDate) : null,
+				endDate: intent.endDate ? new Date(intent.endDate) : null,
+			};
+			return await this.publish(intent.revisionNo);
+		},
+
+		async publish(revisionNo?: number): Promise<TemplateMutationOutcome> {
+			const selection = this.selected;
+			if (!selection || !this.detail || !this.canPublish) return 'stale';
+			if (this.isDirty) {
+				this.error = 'Save draft before publishing';
+				return 'failed';
 			}
 			const targetRevisionNo = revisionNo ?? this.detail.draft_revision?.revision_no;
-			if (targetRevisionNo === undefined) return;
+			if (targetRevisionNo === undefined) return 'stale';
 			if (!this.scheduleIsValid) {
 				this.error = 'Schedule start must be before its end';
-				return;
+				return 'failed';
 			}
 			const request = ++this.publishGeneration;
 			const mutation = ++this.mutationGeneration;
@@ -779,11 +851,15 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 					this.refreshDirty();
 					this.applyPublishedRevision(response.latest_published_revision, targetRevisionNo);
 					this.conflict = null;
+					return 'completed';
 				}
+				return 'stale';
 			} catch (error) {
 				if (request === this.publishGeneration && mutation === this.mutationGeneration && epoch === this.selectionEpoch && isSameSelection(this.selected, selection)) {
 					if (!this.readConflict(error)) this.error = getApiErrorMessage(error, 'Failed to publish document template');
+					return 'failed';
 				}
+				return 'stale';
 			} finally {
 				if (request === this.publishGeneration && epoch === this.selectionEpoch) this.publishing = false;
 			}

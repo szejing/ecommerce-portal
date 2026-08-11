@@ -326,58 +326,15 @@ function selectionMatches(channel: string, templateCode: string): boolean {
 	return isActive && selected.value?.channel === channel && selected.value.templateCode === templateCode;
 }
 
-type ActivationDates = { startDate: Date | null; endDate: Date | null };
-
-function activationError(window: ActivationDates, now = Date.now()): string | undefined {
-	if ((window.startDate && Number.isNaN(window.startDate.getTime())) || (window.endDate && Number.isNaN(window.endDate.getTime()))) {
-		return 'Schedule date is invalid';
-	}
-	if (window.startDate && window.endDate && window.endDate.getTime() <= window.startDate.getTime()) {
-		return 'Schedule start must be before its end';
-	}
-	if (window.endDate && window.endDate.getTime() <= now) return 'Schedule end must be in the future';
-	return undefined;
-}
-
 function requestPublish(window: { startDate: Date | null; endDate: Date | null }): void {
-	const selection = selected.value;
-	const draftRevision = detail.value?.draft_revision;
-	if (!selection || !draftRevision || publishDisabled.value) return;
-	const activation = {
-		startDate: window.startDate ? new Date(window.startDate) : null,
-		endDate: window.endDate ? new Date(window.endDate) : null,
-	};
-	const validationError = activationError(activation);
-	if (validationError) {
-		templateStore.error = validationError;
-		return;
-	}
-	const target = { ...selection, revisionId: draftRevision.id, revisionNo: draftRevision.revision_no };
-	const scheduled = activation.startDate !== null || activation.endDate !== null;
+	const preparation = templateStore.preparePublish(window);
+	if (preparation.status === 'rejected') return;
 	openConfirmation(
-		t(scheduled ? 'components.templateStudio.scheduleConfirmTitle' : 'components.templateStudio.publishConfirmTitle'),
-		t(scheduled ? 'components.templateStudio.scheduleConfirmMessage' : 'components.templateStudio.publishConfirmMessage', { number: target.revisionNo }),
-		async () => {
-			const currentDraft = detail.value?.draft_revision;
-			if (
-				!selectionMatches(target.channel, target.templateCode) ||
-				isDirty.value ||
-				currentDraft?.id !== target.revisionId ||
-				currentDraft.revision_no !== target.revisionNo
-			)
-				return;
-			const confirmationError = activationError(activation);
-			if (confirmationError) {
-				templateStore.error = confirmationError;
-				return;
-			}
-			templateStore.schedule = {
-				...templateStore.schedule,
-				startDate: activation.startDate ? new Date(activation.startDate) : null,
-				endDate: activation.endDate ? new Date(activation.endDate) : null,
-			};
-			await templateStore.publish(target.revisionNo);
-		},
+		t(preparation.scheduled ? 'components.templateStudio.scheduleConfirmTitle' : 'components.templateStudio.publishConfirmTitle'),
+		t(preparation.scheduled ? 'components.templateStudio.scheduleConfirmMessage' : 'components.templateStudio.publishConfirmMessage', {
+			number: preparation.intent.revisionNo,
+		}),
+		async () => { await templateStore.confirmPublish(preparation.intent); },
 	);
 }
 

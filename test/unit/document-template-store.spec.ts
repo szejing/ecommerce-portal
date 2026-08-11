@@ -390,6 +390,79 @@ describe('useDocumentTemplateStore', () => {
 		expect(store.error).toBe('Save draft before publishing');
 	});
 
+	it('prepares an immutable publication intent for the exact saved draft', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-07-31T00:00:00.000Z'));
+		const store = await selectDraft();
+		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
+		const startDate = new Date('2026-08-01T08:00:00+08:00');
+		const endDate = new Date('2026-08-07T08:00:00+08:00');
+
+		const preparation = store.preparePublish({ startDate, endDate });
+		startDate.setUTCFullYear(2030);
+		endDate.setUTCFullYear(2030);
+
+		expect(preparation).toEqual({
+			status: 'ready',
+			scheduled: true,
+			intent: {
+				channel: 'email',
+				templateCode: 'order-confirmation',
+				revisionId: 'draft-1',
+				revisionNo: 2,
+				startDate: new Date('2026-08-01T00:00:00.000Z'),
+				endDate: new Date('2026-08-07T00:00:00.000Z'),
+			},
+		});
+	});
+
+	it.each([
+		[{ startDate: new Date('invalid'), endDate: null }, 'Schedule date is invalid'],
+		[{ startDate: new Date('2026-08-02T00:00:00.000Z'), endDate: new Date('2026-08-01T00:00:00.000Z') }, 'Schedule start must be before its end'],
+		[{ startDate: null, endDate: new Date('2026-07-30T00:00:00.000Z') }, 'Schedule end must be in the future'],
+	] as const)('rejects an invalid publication window through semantic error state', async (window, message) => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-07-31T00:00:00.000Z'));
+		const store = await selectDraft();
+		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
+
+		expect(store.preparePublish(window)).toEqual({ status: 'rejected' });
+		expect(store.error).toBe(message);
+	});
+
+	it('rejects a publication confirmation after its saved revision becomes stale', async () => {
+		const store = await selectDraft();
+		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
+		const preparation = store.preparePublish({ startDate: null, endDate: null });
+		expect(preparation.status).toBe('ready');
+		api.get.mockResolvedValue({
+			...structuredClone(detail),
+			draft_revision: revision({ id: 'draft-newer', revision_no: 3, status: 'draft' }),
+		});
+		await store.loadDetail('email', 'order-confirmation');
+
+		const outcome = preparation.status === 'ready' ? await store.confirmPublish(preparation.intent) : 'failed';
+
+		expect(outcome).toBe('stale');
+		expect(api.publish).not.toHaveBeenCalled();
+	});
+
+	it('revalidates publication time immediately before confirmation', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-07-31T00:00:00.000Z'));
+		const store = await selectDraft();
+		useAuthStore().user!.role = UserRoles.MERCHANT_ADMIN;
+		const preparation = store.preparePublish({ startDate: null, endDate: new Date('2026-08-01T00:00:00.000Z') });
+		expect(preparation.status).toBe('ready');
+		vi.setSystemTime(new Date('2026-08-02T00:00:00.000Z'));
+
+		const outcome = preparation.status === 'ready' ? await store.confirmPublish(preparation.intent) : 'failed';
+
+		expect(outcome).toBe('failed');
+		expect(store.error).toBe('Schedule end must be in the future');
+		expect(api.publish).not.toHaveBeenCalled();
+	});
+
 	it('loads authoritative history and ignores stale pre-save history', async () => {
 		const store = await selectDraft();
 		seedRevisionHistory(store);
