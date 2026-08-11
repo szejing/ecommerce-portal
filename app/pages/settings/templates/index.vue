@@ -153,7 +153,7 @@
 <script setup lang="ts">
 import { ZModalConfirmation, ZModalLeavePageConfirmation } from '#components';
 import { GROUP_CODE, MERCHANT } from 'yeppi-common';
-import { EMAIL_PREVIEW_DEBOUNCE_MS, useDocumentTemplateStore } from '~/stores/DocumentTemplate/DocumentTemplate';
+import { useDocumentTemplateStore } from '~/stores/DocumentTemplate/DocumentTemplate';
 import { useMerchantInfoStore } from '~/stores/MerchantInfo/MerchantInfo';
 import type { DocumentTemplateSummary } from '~/utils/types/document-template';
 
@@ -403,7 +403,7 @@ async function testSend(): Promise<void> {
 }
 
 async function refreshPreview(): Promise<void> {
-	if (isActive) await templateStore.previewDraft();
+	if (isActive) await templateStore.refreshPreview();
 }
 
 async function reloadServerVersion(): Promise<void> {
@@ -457,19 +457,6 @@ watch(
 		}
 		void syncSelectionFromRoute();
 	},
-);
-
-watch(
-	() => templateStore.draft,
-	() => {
-		if (!isActive || !templateStore.detail || !templateStore.selected || !templateStore.isDirty) return;
-		if (templateStore.selected.channel === 'pdf') {
-			templateStore.markPreviewStale();
-			return;
-		}
-		void templateStore.previewDraft({ debounceMs: EMAIL_PREVIEW_DEBOUNCE_MS });
-	},
-	{ deep: true },
 );
 
 const initialSelectionOperation = selectionOperation;

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { UserRoles } from 'yeppi-common';
 import { useAuthStore } from '../../app/stores/Auth/Auth';
-import { useDocumentTemplateStore } from '../../app/stores/DocumentTemplate/DocumentTemplate';
+import { EMAIL_PREVIEW_DEBOUNCE_MS, useDocumentTemplateStore } from '../../app/stores/DocumentTemplate/DocumentTemplate';
 import type {
 	DocumentTemplateConfiguration,
 	DocumentTemplateDetail,
@@ -253,6 +253,47 @@ describe('useDocumentTemplateStore', () => {
 			revisionNo: null,
 		});
 		expect(store.previewStale).toBe(false);
+	});
+
+	it('coalesces email edits into one preview of the latest draft', async () => {
+		const store = await selectDraft();
+		api.previewEmail.mockResolvedValue({ html: '<p>Initial</p>', subject: 'Initial', revision_id: null, revision_no: null });
+		await store.previewDraft();
+		api.previewEmail.mockClear();
+		vi.useFakeTimers();
+
+		store.setConfigurationPath('content.greeting', '<p>First</p>');
+		store.setConfigurationPath('content.greeting', '<p>Latest</p>');
+		await vi.advanceTimersByTimeAsync(EMAIL_PREVIEW_DEBOUNCE_MS - 1);
+		expect(api.previewEmail).not.toHaveBeenCalled();
+
+		await vi.advanceTimersByTimeAsync(1);
+
+		expect(api.previewEmail).toHaveBeenCalledOnce();
+		expect(api.previewEmail).toHaveBeenCalledWith('email', 'order-confirmation', {
+			configuration: {
+				content: { greeting: '<p>Latest</p>' },
+				blocks: [{ id: 'order-items', enabled: true, props: {} }],
+			},
+		});
+	});
+
+	it('keeps a PDF preview and marks it outdated after an edit', async () => {
+		const createObjectURL = vi.fn(() => 'blob:preview-pdf');
+		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
+		api.get.mockResolvedValue({ ...detail, channel: 'pdf' });
+		api.previewPdf.mockResolvedValue(new Blob(['pdf']));
+		const store = useDocumentTemplateStore();
+		await store.loadDetail('pdf', 'order-confirmation');
+		await store.previewDraft();
+		api.previewPdf.mockClear();
+
+		store.setConfigurationPath('content.greeting', '<p>Changed</p>');
+
+		expect(store.preview?.channel).toBe('pdf');
+		expect(store.previewStale).toBe(true);
+		expect(api.previewPdf).not.toHaveBeenCalled();
 	});
 
 	it('clears state immediately and ignores an ABA stale detail response', async () => {

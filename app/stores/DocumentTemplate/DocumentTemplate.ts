@@ -20,6 +20,13 @@ type TemplateSelection = { channel: DocumentTemplateChannel; templateCode: strin
 type TemplateSchedule = { startDate: Date | null; endDate: Date | null; timezone: string };
 type UnknownRecord = Record<string, unknown>;
 type TemplateBlock = NonNullable<DocumentTemplateConfiguration['blocks']>[number];
+type PreviewSchedulingStore = {
+	selected: TemplateSelection | null;
+	detail: DocumentTemplateDetail | null;
+	isDirty: boolean;
+	markPreviewStale: () => void;
+	previewDraft: (options?: { debounceMs?: number; force?: boolean }) => Promise<void>;
+};
 
 const emptyConfiguration = (): DocumentTemplateConfiguration => ({});
 const nativeBlobSlice = typeof Blob !== 'undefined' ? Blob.prototype.slice : null;
@@ -233,6 +240,15 @@ function pathParts(path: string): [keyof DocumentTemplateConfiguration, string] 
 	const [section, key, ...rest] = path.split('.');
 	if (rest.length || !section || !key || !['brand', 'merchantInfo', 'content'].includes(section)) return null;
 	return [section as keyof DocumentTemplateConfiguration, key];
+}
+
+function schedulePreviewAfterEdit(store: PreviewSchedulingStore): void {
+	if (!store.selected || !store.detail || !store.isDirty) return;
+	if (store.selected.channel === 'pdf') {
+		store.markPreviewStale();
+		return;
+	}
+	void store.previewDraft({ debounceMs: EMAIL_PREVIEW_DEBOUNCE_MS });
 }
 
 export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
@@ -479,6 +495,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			}
 			this.editGeneration += 1;
 			this.refreshDirty();
+			schedulePreviewAfterEdit(this);
 		},
 
 		getFieldResolution(path: string, defaultValue = '') {
@@ -506,6 +523,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			this.draft = nextDraft;
 			this.editGeneration += 1;
 			this.refreshDirty();
+			schedulePreviewAfterEdit(this);
 		},
 
 		setBlockEnabled(id: string, enabled: boolean) {
@@ -523,6 +541,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			};
 			this.editGeneration += 1;
 			this.refreshDirty();
+			schedulePreviewAfterEdit(this);
 		},
 
 		configurationForRequest(): DocumentTemplateConfiguration {
@@ -691,6 +710,10 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', {
 			} finally {
 				if (request === this.previewGeneration) this.previewing = false;
 			}
+		},
+
+		async refreshPreview() {
+			await this.previewDraft({ force: true });
 		},
 
 		async testSend() {
