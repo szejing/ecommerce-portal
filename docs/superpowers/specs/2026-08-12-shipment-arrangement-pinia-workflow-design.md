@@ -1,7 +1,7 @@
 # Shipment Arrangement Pinia Workflow Design
 
 **Date:** 2026-08-12
-**Status:** Approved in conversation; awaiting written-spec review
+**Status:** Approved
 **Scope:** `wemotoo-portal` only
 **References:** [`CONTEXT.md`](../../../CONTEXT.md), [`ADR-0001`](../../adr/0001-keep-portal-workflows-in-pinia.md), [`Portal Architecture Improvement Roadmap`](./2026-08-11-portal-architecture-improvement-roadmap-design.md)
 
@@ -208,7 +208,7 @@ Export uses the current filters without pagination. Pinia owns query constructio
 
 The existing fulfillment repository method shape remains the internal transport seam. Production resolves it lazily from `useNuxtApp().$api.fulfillment`. Focused workflow tests provide an in-memory object with the same methods; no generic transport abstraction is introduced.
 
-Active shipping methods continue to come from `useShippingMethodStore().fetchActiveShippingMethodOptions()`. Shipment Arrangement coordinates that action but does not copy or mutate Shipping Method listing filters.
+Active shipping methods continue to come from `useShippingMethodStore().fetchActiveShippingMethodOptions()`. That action gains an optional notification policy whose default preserves existing caller behaviour; Shipment Arrangement suppresses the nested notification, stores the option failure, and lets its Vue caller present it. Shipment Arrangement does not copy or mutate Shipping Method listing filters.
 
 Merchant id continues to come from the existing `X_MERCHANT_ID` cookie when constructing the apply request. Backend contracts remain unchanged.
 
