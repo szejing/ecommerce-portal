@@ -124,9 +124,13 @@
 
 			<ShipmentArrangementImportPreviewModal
 				v-model="previewOpen"
+				:preview="store.preview"
+				:eligible-count="store.eligibleCount"
+				:apply-result="store.applyResult"
 				:applying="store.applying"
 				:error="store.applyFailure?.kind === 'request_failed' ? store.applyFailure.message : undefined"
 				@apply="applyPreview"
+				@dismiss="store.dismissImport"
 			/>
 		</div>
 	</ZPagePanel>

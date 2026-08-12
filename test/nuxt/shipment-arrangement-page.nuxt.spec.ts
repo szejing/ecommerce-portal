@@ -100,21 +100,63 @@ describe('ShipmentArrangementPage', () => {
 		wrapper.unmount();
 	});
 
-	it('previews a selected workbook and opens the preview', async () => {
+	it('passes preview state to the modal and dismisses import state from modal intent', async () => {
 		const store = useShipmentArrangementStore();
-		const previewWorkbook = vi.spyOn(store, 'previewWorkbook').mockResolvedValue({
-			status: 'completed',
-			preview: { total: 0, valid: 0, warnings: 0, errors: 0, rows: [] },
-		});
+		const preview = {
+			total: 2,
+			valid: 1,
+			warnings: 1,
+			errors: 0,
+			rows: [
+				{
+					fulfillment_id: '11111111-1111-4111-8111-111111111111',
+					source_updated_at: '2026-07-18T01:00:00.000Z',
+					order_no: 'WM-100',
+					batch_no: 1,
+					ordered_at: '2026-07-17T01:00:00.000Z',
+					recipient: 'Alice',
+					destination: 'Selangor',
+					shipping_method: 'Standard',
+					row_number: 2,
+					courier: 'J&T',
+					tracking_no: 'JT-1',
+					status: 'valid' as const,
+					messages: [],
+				},
+				{
+					fulfillment_id: '22222222-2222-4222-8222-222222222222',
+					source_updated_at: '2026-07-18T01:00:00.000Z',
+					order_no: 'WM-101',
+					batch_no: 2,
+					ordered_at: '2026-07-17T01:00:00.000Z',
+					recipient: 'Bob',
+					destination: 'Kuala Lumpur',
+					shipping_method: 'Standard',
+					row_number: 3,
+					courier: 'J&T',
+					tracking_no: 'JT-2',
+					status: 'warning' as const,
+					messages: ['Courier name will be saved as entered'],
+				},
+			],
+		};
+		const previewWorkbook = vi.spyOn(useNuxtApp().$api.fulfillment, 'previewShipmentArrangement').mockResolvedValue(preview);
+		const dismissImport = vi.spyOn(store, 'dismissImport');
 		const wrapper = await mountPage();
 		const file = new File(['xlsx'], 'shipments.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 		const input = wrapper.get('input[type="file"]');
 		Object.defineProperty(input.element, 'files', { value: [file], configurable: true });
 
 		await input.trigger('change');
+		await flushPromises();
 
 		expect(previewWorkbook).toHaveBeenCalledWith(file);
-		expect(wrapper.findComponent({ name: 'ShipmentArrangementImportPreviewModal' }).props('modelValue')).toBe(true);
+		const modal = wrapper.findComponent({ name: 'ShipmentArrangementImportPreviewModal' });
+		expect(modal.props('modelValue')).toBe(true);
+		expect(modal.props('preview')).toEqual(preview);
+		expect(modal.props('eligibleCount')).toBe(2);
+		modal.vm.$emit('dismiss');
+		expect(dismissImport).toHaveBeenCalledTimes(1);
 		wrapper.unmount();
 	});
 
