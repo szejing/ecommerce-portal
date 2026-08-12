@@ -11,26 +11,55 @@ import type {
 	ShipmentArrangementQuery,
 } from '~/utils/types/shipment-arrangement';
 
+export const SHIPMENT_ARRANGEMENT_FILTER_DEBOUNCE_MS = 300;
+
+export type ShipmentArrangementRefreshOutcome =
+	| { status: 'completed' }
+	| { status: 'stale' }
+	| { status: 'failed'; failure: { kind: 'request_failed'; message: string } };
+
 export const useShipmentArrangementStore = defineStore('shipment-arrangement', () => {
+	const searchState = ref('');
+	const shippingMethodIdState = ref<number>();
+	const dateRangeState = ref<Range>({ start: undefined, end: undefined });
+	const pageState = ref(1);
+	const pageSizeState = ref(15);
+	const rowsState = ref<ShipmentArrangementListRow[]>([]);
+	const totalState = ref(0);
+	const loadingState = ref(false);
+	const listFailureState = ref<{ kind: 'request_failed'; message: string }>();
+	let listGeneration = 0;
+	let filterTimer: ReturnType<typeof setTimeout> | null = null;
+
 	const filters = reactive({
-		search: '',
-		shippingMethodId: undefined as number | undefined,
-		dateRange: { start: undefined, end: undefined } as Range,
+		get search(): string {
+			return searchState.value;
+		},
+		set search(value: string) {
+			searchState.value = value;
+		},
+		get shippingMethodId(): number | undefined {
+			return shippingMethodIdState.value;
+		},
+		set shippingMethodId(value: number | undefined) {
+			shippingMethodIdState.value = value;
+		},
+		get dateRange(): Range {
+			return dateRangeState.value;
+		},
+		set dateRange(value: Range) {
+			dateRangeState.value = value;
+		},
 	});
-	const page = ref(1);
-	const pageSize = ref(15);
-	const rows = ref<ShipmentArrangementListRow[]>([]);
-	const total = ref(0);
 	const preview = ref<ShipmentArrangementPreviewResponse>();
 	const applyResult = ref<ShipmentArrangementApplyResponse>();
-	const loading = ref(false);
 
 	const toQuery = (paginate: boolean): ShipmentArrangementQuery => ({
-		...(paginate ? { $top: pageSize.value, $skip: (page.value - 1) * pageSize.value } : {}),
-		...(filters.search.trim() ? { $search: filters.search.trim() } : {}),
-		...(filters.shippingMethodId ? { shipping_method_id: filters.shippingMethodId } : {}),
-		...(filters.dateRange.start ? { start_date: `${filters.dateRange.start.getFullYear()}-${String(filters.dateRange.start.getMonth() + 1).padStart(2, '0')}-${String(filters.dateRange.start.getDate()).padStart(2, '0')}` } : {}),
-		...(filters.dateRange.end ? { end_date: `${filters.dateRange.end.getFullYear()}-${String(filters.dateRange.end.getMonth() + 1).padStart(2, '0')}-${String(filters.dateRange.end.getDate()).padStart(2, '0')}` } : {}),
+		...(paginate ? { $top: pageSizeState.value, $skip: (pageState.value - 1) * pageSizeState.value } : {}),
+		...(searchState.value.trim() ? { $search: searchState.value.trim() } : {}),
+		...(shippingMethodIdState.value ? { shipping_method_id: shippingMethodIdState.value } : {}),
+		...(dateRangeState.value.start ? { start_date: `${dateRangeState.value.start.getFullYear()}-${String(dateRangeState.value.start.getMonth() + 1).padStart(2, '0')}-${String(dateRangeState.value.start.getDate()).padStart(2, '0')}` } : {}),
+		...(dateRangeState.value.end ? { end_date: `${dateRangeState.value.end.getFullYear()}-${String(dateRangeState.value.end.getMonth() + 1).padStart(2, '0')}-${String(dateRangeState.value.end.getDate()).padStart(2, '0')}` } : {}),
 	});
 
 	const toApplyRow = (row: ShipmentArrangementPreviewRow): ShipmentArrangementApplyRow => ({
@@ -42,15 +71,101 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		tracking_no: row.tracking_no,
 	});
 
-	async function fetchPending(): Promise<void> {
-		loading.value = true;
+	function cancelFilterRefresh(): void {
+		if (filterTimer) clearTimeout(filterTimer);
+		filterTimer = null;
+	}
+
+	async function requestPending(generation: number): Promise<ShipmentArrangementRefreshOutcome> {
+		loadingState.value = true;
+		listFailureState.value = undefined;
 		try {
 			const response = await useNuxtApp().$api.fulfillment.getShipmentArrangement(toQuery(true));
-			rows.value = response.data;
-			total.value = response.total;
+			if (generation !== listGeneration) return { status: 'stale' };
+			rowsState.value = response.data;
+			totalState.value = response.total;
+			return { status: 'completed' };
+		} catch (error) {
+			if (generation !== listGeneration) return { status: 'stale' };
+			const failure = { kind: 'request_failed' as const, message: error instanceof Error ? error.message : String(error) };
+			listFailureState.value = failure;
+			return { status: 'failed', failure };
 		} finally {
-			loading.value = false;
+			if (generation === listGeneration) loadingState.value = false;
 		}
+	}
+
+	function scheduleFilterRefresh(): void {
+		cancelFilterRefresh();
+		pageState.value = 1;
+		const generation = ++listGeneration;
+		filterTimer = setTimeout(() => {
+			filterTimer = null;
+			void requestPending(generation);
+		}, SHIPMENT_ARRANGEMENT_FILTER_DEBOUNCE_MS);
+	}
+
+	function setSearch(search: string): void {
+		searchState.value = search;
+		scheduleFilterRefresh();
+	}
+
+	function setShippingMethod(shippingMethodId: number | undefined): void {
+		shippingMethodIdState.value = shippingMethodId;
+		scheduleFilterRefresh();
+	}
+
+	function setDateRange(dateRange: Range): void {
+		dateRangeState.value = dateRange;
+		scheduleFilterRefresh();
+	}
+
+	async function refreshPending(): Promise<ShipmentArrangementRefreshOutcome> {
+		cancelFilterRefresh();
+		return requestPending(++listGeneration);
+	}
+
+	async function setPage(page: number): Promise<ShipmentArrangementRefreshOutcome> {
+		pageState.value = page;
+		return refreshPending();
+	}
+
+	async function setPageSize(pageSize: number): Promise<ShipmentArrangementRefreshOutcome> {
+		pageSizeState.value = pageSize;
+		pageState.value = 1;
+		return refreshPending();
+	}
+
+	async function clearFilters(): Promise<ShipmentArrangementRefreshOutcome> {
+		searchState.value = '';
+		shippingMethodIdState.value = undefined;
+		dateRangeState.value = { start: undefined, end: undefined };
+		pageState.value = 1;
+		return refreshPending();
+	}
+
+	function dispose(): void {
+		cancelFilterRefresh();
+		listGeneration++;
+		loadingState.value = false;
+	}
+
+	function $reset(): void {
+		dispose();
+		searchState.value = '';
+		shippingMethodIdState.value = undefined;
+		dateRangeState.value = { start: undefined, end: undefined };
+		pageState.value = 1;
+		pageSizeState.value = 15;
+		rowsState.value = [];
+		totalState.value = 0;
+		preview.value = undefined;
+		applyResult.value = undefined;
+		listFailureState.value = undefined;
+	}
+
+	async function fetchPending(): Promise<void> {
+		await refreshPending();
 	}
 
 	async function exportPending(): Promise<void> {
@@ -77,9 +192,9 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 			rows: eligible,
 		});
 		await fetchPending();
-		const lastPage = Math.max(1, Math.ceil(total.value / pageSize.value));
-		if (page.value > lastPage) {
-			page.value = lastPage;
+		const lastPage = Math.max(1, Math.ceil(totalState.value / pageSizeState.value));
+		if (pageState.value > lastPage) {
+			pageState.value = lastPage;
 			await fetchPending();
 		}
 	}
@@ -91,14 +206,23 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 
 	return {
 		filters,
-		page,
-		pageSize,
-		rows,
-		total,
+		page: pageState,
+		pageSize: pageSizeState,
+		rows: rowsState,
+		total: totalState,
 		preview,
 		applyResult,
-		loading,
+		loading: loadingState,
 		fetchPending,
+		refreshPending,
+		setPage,
+		setPageSize,
+		setSearch,
+		setShippingMethod,
+		setDateRange,
+		clearFilters,
+		dispose,
+		$reset,
 		exportPending,
 		previewFile,
 		applyPreview,

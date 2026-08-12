@@ -1,19 +1,30 @@
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { KEY } from 'yeppi-common';
 import type {
 	ShipmentArrangementApplyError,
+	ShipmentArrangementListResponse,
 	ShipmentArrangementPreviewResponse,
 } from '../../app/utils/types/shipment-arrangement';
 import { useShipmentArrangementStore } from '../../app/stores/ShipmentArrangement/ShipmentArrangement';
 
-const getShipmentArrangement = mock();
-const downloadShipmentArrangement = mock();
-const previewShipmentArrangement = mock();
-const applyShipmentArrangement = mock();
-const createObjectURL = mock(() => 'blob:shipment-arrangement');
-const revokeObjectURL = mock();
-const click = mock();
+const getShipmentArrangement = vi.fn();
+const downloadShipmentArrangement = vi.fn();
+const previewShipmentArrangement = vi.fn();
+const applyShipmentArrangement = vi.fn();
+const createObjectURL = vi.fn(() => 'blob:shipment-arrangement');
+const revokeObjectURL = vi.fn();
+const click = vi.fn();
+
+function deferred<T>() {
+	let resolve!: (value: T) => void;
+	let reject!: (reason?: unknown) => void;
+	const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+		resolve = resolvePromise;
+		reject = rejectPromise;
+	});
+	return { promise, resolve, reject };
+}
 
 const previewResponse: ShipmentArrangementPreviewResponse = {
 	total: 3,
@@ -77,6 +88,8 @@ const applyError: ShipmentArrangementApplyError = {
 };
 
 describe('useShipmentArrangementStore', () => {
+	afterEach(() => vi.useRealTimers());
+
 	beforeEach(() => {
 		setActivePinia(createPinia());
 		getShipmentArrangement.mockReset();
@@ -224,6 +237,107 @@ describe('useShipmentArrangementStore', () => {
 				process.env.TZ = previousTimeZone;
 			}
 		}
+	});
+
+	it('debounces filter intent for 300 ms and refreshes page one once', async () => {
+		vi.useFakeTimers();
+		const store = useShipmentArrangementStore();
+		await store.setPage(3);
+		getShipmentArrangement.mockClear();
+		store.setSearch(' WM-100 ');
+		store.setShippingMethod(7);
+		await vi.advanceTimersByTimeAsync(299);
+		expect(getShipmentArrangement).not.toHaveBeenCalled();
+		await vi.advanceTimersByTimeAsync(1);
+		await vi.runAllTicks();
+		expect(store.page).toBe(1);
+		expect(getShipmentArrangement).toHaveBeenCalledTimes(1);
+	});
+
+	it('clearFilters cancels debounce and refreshes exactly once', async () => {
+		vi.useFakeTimers();
+		const store = useShipmentArrangementStore();
+		store.setSearch('WM-100');
+		await store.clearFilters();
+		await vi.advanceTimersByTimeAsync(300);
+		expect(store.filters.search).toBe('');
+		expect(store.page).toBe(1);
+		expect(getShipmentArrangement).toHaveBeenCalledTimes(1);
+	});
+
+	it('sets page size on page one and refreshes immediately', async () => {
+		const store = useShipmentArrangementStore();
+		await store.setPage(3);
+		getShipmentArrangement.mockClear();
+
+		await store.setPageSize(25);
+
+		expect({ page: store.page, pageSize: store.pageSize }).toEqual({ page: 1, pageSize: 25 });
+		expect(getShipmentArrangement).toHaveBeenCalledTimes(1);
+		expect(getShipmentArrangement).toHaveBeenCalledWith({ $top: 25, $skip: 0 });
+	});
+
+	it('debounces date-range intent and refreshes the first page', async () => {
+		vi.useFakeTimers();
+		const store = useShipmentArrangementStore();
+		await store.setPage(2);
+		getShipmentArrangement.mockClear();
+
+		store.setDateRange({ start: new Date(2026, 6, 1), end: new Date(2026, 6, 18) });
+		await vi.advanceTimersByTimeAsync(300);
+		await vi.runAllTicks();
+
+		expect(store.page).toBe(1);
+		expect(getShipmentArrangement).toHaveBeenCalledWith({
+			$top: 15,
+			$skip: 0,
+			start_date: '2026-07-01',
+			end_date: '2026-07-18',
+		});
+	});
+
+	it('allows only the newest list request to replace rows', async () => {
+		const first = deferred<ShipmentArrangementListResponse>();
+		const second = deferred<ShipmentArrangementListResponse>();
+		getShipmentArrangement.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+		const store = useShipmentArrangementStore();
+		const oldRequest = store.refreshPending();
+		const newRequest = store.setPage(2);
+		second.resolve({ data: [previewResponse.rows[1]!], total: 2 });
+		await newRequest;
+		first.resolve({ data: [previewResponse.rows[0]!], total: 1 });
+		expect(await oldRequest).toEqual({ status: 'stale' });
+		expect(store.rows.map(row => row.order_no)).toEqual(['WM-101']);
+	});
+
+	it('dispose invalidates pending work without clearing context', async () => {
+		vi.useFakeTimers();
+		const pending = deferred<ShipmentArrangementListResponse>();
+		getShipmentArrangement.mockReturnValueOnce(pending.promise);
+		const store = useShipmentArrangementStore();
+		store.setSearch('WM-100');
+		await vi.advanceTimersByTimeAsync(300);
+		store.dispose();
+		pending.resolve({ data: [previewResponse.rows[0]!], total: 1 });
+		await vi.runAllTicks();
+		expect(store.filters.search).toBe('WM-100');
+		expect(store.rows).toEqual([]);
+		expect(store.loading).toBe(false);
+	});
+
+	it('$reset cancels work and restores initial workflow state', async () => {
+		vi.useFakeTimers();
+		const store = useShipmentArrangementStore();
+		store.setSearch('WM-100');
+		store.$reset();
+		await vi.advanceTimersByTimeAsync(300);
+		expect(getShipmentArrangement).not.toHaveBeenCalled();
+		expect(store.filters).toEqual({ search: '', shippingMethodId: undefined, dateRange: { start: undefined, end: undefined } });
+		expect({ page: store.page, pageSize: store.pageSize, rows: store.rows, total: store.total }).toEqual({
+			page: 1, pageSize: 15, rows: [], total: 0,
+		});
+		expect(store.preview).toBeUndefined();
+		expect(store.applyResult).toBeUndefined();
 	});
 
 	it('resets preview and apply result together', async () => {
