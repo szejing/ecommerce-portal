@@ -12,15 +12,15 @@
 			/>
 
 			<UAlert
-				v-if="pageError"
+				v-if="store.listFailure"
 				color="error"
 				variant="soft"
 				icon="i-lucide-circle-alert"
 				:title="t('shipmentArrangement.states.loadErrorTitle')"
-				:description="pageError"
+				:description="store.listFailure.message"
 			>
 				<template #actions>
-					<UButton data-testid="refresh-pending" color="error" variant="outline" size="sm" :label="t('common.refresh')" @click="refreshPending" />
+					<UButton data-testid="refresh-pending" color="error" variant="outline" size="sm" :label="t('common.refresh')" @click="store.refreshPending" />
 				</template>
 			</UAlert>
 			<UAlert
@@ -36,22 +36,23 @@
 				<div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(16rem,1.4fr)_minmax(12rem,0.8fr)_auto_auto] xl:items-end">
 					<label class="min-w-0 space-y-1.5 text-sm font-medium text-default">
 						<span>{{ t('shipmentArrangement.filters.searchLabel') }}</span>
-						<UInput v-model="store.filters.search" icon="i-lucide-search" :placeholder="t('shipmentArrangement.filters.search')" />
+						<UInput :model-value="store.filters.search" icon="i-lucide-search" :placeholder="t('shipmentArrangement.filters.search')" @update:model-value="store.setSearch" />
 					</label>
 					<label class="min-w-0 space-y-1.5 text-sm font-medium text-default">
 						<span>{{ t('shipmentArrangement.filters.shippingMethodLabel') }}</span>
 						<USelectMenu
-							v-model="store.filters.shippingMethodId"
+							:model-value="store.filters.shippingMethodId"
 							data-testid="shipping-method-filter"
 							class="w-full"
 							:items="shippingMethodOptions"
 							value-key="value"
 							:placeholder="t('shipmentArrangement.filters.shippingMethod')"
+							@update:model-value="store.setShippingMethod"
 						/>
 					</label>
 					<div class="min-w-0 space-y-1.5 text-sm font-medium text-default">
 						<span>{{ t('shipmentArrangement.filters.orderDate') }}</span>
-						<ZDateRange v-model="store.filters.dateRange" hide-presets />
+						<ZDateRange :model-value="store.filters.dateRange" hide-presets @update:model-value="store.setDateRange" />
 					</div>
 					<div class="flex flex-col gap-2 sm:flex-row xl:justify-end">
 						<UButton
@@ -62,7 +63,7 @@
 							icon="i-lucide-eraser"
 							:label="t('shipmentArrangement.actions.clearFilters')"
 							:aria-label="t('shipmentArrangement.actions.clearFilters')"
-							@click="clearFilters"
+							@click="store.clearFilters"
 						/>
 					</div>
 				</div>
@@ -76,13 +77,13 @@
 						<p class="text-sm text-muted">{{ t('shipmentArrangement.table.pendingCount', { count: store.total }) }}</p>
 					</div>
 					<ZTableToolbar
-						v-model="store.pageSize"
+						:model-value="store.pageSize"
 						v-model:selected-column-keys="selectedColumnKeys"
 						class="w-full sm:w-auto"
 						:page-size-options="options_page_size"
 						:export-enabled="false"
 						:column-options="columnOptions"
-						@update:model-value="updatePageSize"
+						@update:model-value="store.setPageSize"
 					/>
 				</div>
 
@@ -104,20 +105,20 @@
 						variant="outline"
 						icon="i-lucide-refresh-cw"
 						:label="t('common.refresh')"
-						@click="refreshPending"
+						@click="store.refreshPending"
 					/>
 				</div>
 
 				<div v-else class="max-w-full overflow-x-auto">
-					<UTable :data="store.rows" :columns="visibleColumns" class="min-w-[64rem]" />
+					<UTable :data="[...store.rows]" :columns="visibleColumns" class="min-w-[64rem]" />
 				</div>
 
 				<div
 					v-if="!store.loading && store.rows.length > 0"
 					class="flex flex-col gap-3 border-t border-default px-4 py-3 text-sm text-muted sm:flex-row sm:items-center sm:justify-between"
 				>
-					<span>{{ t('shipmentArrangement.table.showing', { from: firstVisibleRow, to: lastVisibleRow, total: store.total }) }}</span>
-					<UPagination v-model:page="store.page" :items-per-page="store.pageSize" :total="store.total" show-first show-last size="sm" />
+					<span>{{ t('shipmentArrangement.table.showing', { from: store.firstVisibleRow, to: store.lastVisibleRow, total: store.total }) }}</span>
+					<UPagination :page="store.page" :items-per-page="store.pageSize" :total="store.total" show-first show-last size="sm" @update:page="store.setPage" />
 				</div>
 			</section>
 
@@ -136,7 +137,6 @@ import { options_page_size } from '~/utils/options';
 import { getShipmentArrangementColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
-import type { ShippingMethodOption } from '~/utils/types/order-fulfillment-shipping';
 
 const SHIPMENT_ARRANGEMENT_COLUMN_LABELS = {
 	order_no: 'shipmentArrangement.table.order',
@@ -148,52 +148,23 @@ const SHIPMENT_ARRANGEMENT_COLUMN_LABELS = {
 } as const;
 
 const store = useShipmentArrangementStore();
-const shippingStore = useShippingMethodStore();
 const { t } = useI18n();
 const fileInput = ref<HTMLInputElement>();
 const previewOpen = ref(false);
-const pageError = ref<string>();
-const activeShippingMethods = ref<ShippingMethodOption[]>([]);
-const resettingFilters = ref(false);
-let filterRefreshGeneration = 0;
 
 const columns = computed(() => getShipmentArrangementColumns(t));
 const columnOptions = computed(() => columnOptionsFromLabelMap(t, SHIPMENT_ARRANGEMENT_COLUMN_LABELS));
 const { selectedColumnKeys, visibleColumns } = useTableColumnVisibility(columns, columnOptions);
 const shippingMethodOptions = computed(() => [
 	{ label: t('shipmentArrangement.filters.shippingMethod'), value: undefined },
-	...activeShippingMethods.value.map((method) => ({ label: method.description, value: method.id })),
+	...store.activeShippingMethods.map((method) => ({ label: method.description, value: method.id })),
 ]);
 const importFailureDescription = computed(() =>
 	store.importFailure?.kind === 'unsupported_workbook'
 		? t('shipmentArrangement.states.invalidFile')
 		: store.importFailure?.message,
 );
-const firstVisibleRow = computed(() => (store.total === 0 ? 0 : (store.page - 1) * store.pageSize + 1));
-const lastVisibleRow = computed(() => Math.min(store.page * store.pageSize, store.total));
-
 useHead({ title: () => t('shipmentArrangement.title') });
-
-const refreshPending = async (): Promise<void> => {
-	pageError.value = undefined;
-	try {
-		await store.fetchPending();
-	} catch (error) {
-		pageError.value = error instanceof Error ? error.message : String(error);
-	}
-};
-
-const clearFilters = async (): Promise<void> => {
-	filterRefreshGeneration += 1;
-	resettingFilters.value = true;
-	store.filters.search = '';
-	store.filters.shippingMethodId = undefined;
-	store.filters.dateRange = { start: undefined, end: undefined };
-	store.page = 1;
-	await nextTick();
-	resettingFilters.value = false;
-	await refreshPending();
-};
 
 const exportPending = async (): Promise<void> => {
 	const outcome = await store.exportPending();
@@ -228,44 +199,10 @@ const applyPreview = async (): Promise<void> => {
 	}
 };
 
-const updatePageSize = async (size: number): Promise<void> => {
-	store.pageSize = size;
-	if (store.page !== 1) {
-		store.page = 1;
-		return;
-	}
-	await refreshPending();
-};
-
-watch(
-	() => store.page,
-	() => {
-		if (!resettingFilters.value && !store.applying) void refreshPending();
-	},
-);
-
-const refreshForFilterChange = useDebounceFn((generation: number) => {
-	if (generation !== filterRefreshGeneration) return;
-	if (store.page !== 1) {
-		store.page = 1;
-		return;
-	}
-	void refreshPending();
-}, 300);
-
-watch(
-	() => [store.filters.search, store.filters.shippingMethodId, store.filters.dateRange.start, store.filters.dateRange.end],
-	() => {
-		if (!resettingFilters.value) void refreshForFilterChange(filterRefreshGeneration);
-	},
-);
-
 onMounted(async () => {
-	await Promise.all([
-		refreshPending(),
-		shippingStore.fetchActiveShippingMethodOptions().then((methods) => {
-			activeShippingMethods.value = methods;
-		}),
-	]);
+	await store.initialize();
+	if (store.optionsFailure) failedNotification(store.optionsFailure.message);
 });
+
+onBeforeUnmount(() => store.dispose());
 </script>

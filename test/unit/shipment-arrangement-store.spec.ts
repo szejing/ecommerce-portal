@@ -213,7 +213,7 @@ describe('useShipmentArrangementStore', () => {
 		const store = useShipmentArrangementStore();
 		const file = new File(['xlsx'], 'shipments.xlsx');
 
-		await store.previewFile(file);
+		await store.previewWorkbook(file);
 		await store.applyPreview();
 
 		expect(previewShipmentArrangement).toHaveBeenCalledWith(file);
@@ -242,13 +242,14 @@ describe('useShipmentArrangementStore', () => {
 			rows: [previewResponse.rows[0]!],
 		});
 		applyShipmentArrangement.mockResolvedValue({ total: 1, updated: 1, failed: 0, errors: [] });
+		const store = useShipmentArrangementStore();
+		await store.setPageSize(2);
+		await store.setPage(3);
+		getShipmentArrangement.mockClear();
 		getShipmentArrangement
 			.mockResolvedValueOnce({ data: [], total: 4 })
 			.mockResolvedValueOnce({ data: previewResponse.rows.slice(0, 2), total: 4 });
-		const store = useShipmentArrangementStore();
-		store.page = 3;
-		store.pageSize = 2;
-		await store.previewFile(new File(['xlsx'], 'shipments.xlsx'));
+		await store.previewWorkbook(new File(['xlsx'], 'shipments.xlsx'));
 
 		await store.applyPreview();
 
@@ -265,8 +266,9 @@ describe('useShipmentArrangementStore', () => {
 		const store = useShipmentArrangementStore();
 
 		expect(store.filters.dateRange).toEqual({ start: undefined, end: undefined });
-		store.filters.search = ' WM-100 ';
+		store.setSearch(' WM-100 ');
 		await store.exportPending();
+		store.dispose();
 
 		expect(downloadShipmentArrangement).toHaveBeenCalledWith({ $search: 'WM-100' });
 		expect(createObjectURL).toHaveBeenCalledWith(blob);
@@ -288,17 +290,18 @@ describe('useShipmentArrangementStore', () => {
 	});
 
 	it('fetches the current page with shipping method and date filters', async () => {
+		vi.useFakeTimers();
 		getShipmentArrangement.mockResolvedValue({ data: previewResponse.rows.slice(0, 1), total: 1 });
 		const store = useShipmentArrangementStore();
-		store.page = 3;
-		store.pageSize = 25;
-		store.filters.shippingMethodId = 7;
-		store.filters.dateRange = {
+		await store.setPageSize(25);
+		store.setShippingMethod(7);
+		store.setDateRange({
 			start: new Date('2026-07-01T12:00:00.000Z'),
 			end: new Date('2026-07-18T12:00:00.000Z'),
-		};
+		});
+		getShipmentArrangement.mockClear();
 
-		await store.fetchPending();
+		await store.setPage(3);
 
 		expect(getShipmentArrangement).toHaveBeenCalledWith({
 			$top: 25,
@@ -357,12 +360,12 @@ describe('useShipmentArrangementStore', () => {
 		process.env.TZ = 'Asia/Kuala_Lumpur';
 		try {
 			const store = useShipmentArrangementStore();
-			store.filters.dateRange = {
+			store.setDateRange({
 				start: new Date(2026, 6, 18, 0, 0, 0),
 				end: new Date(2026, 6, 18, 0, 0, 0),
-			};
+			});
 
-			await store.fetchPending();
+			await store.refreshPending();
 
 			expect(getShipmentArrangement).toHaveBeenCalledWith({
 				$top: 15,
@@ -480,15 +483,15 @@ describe('useShipmentArrangementStore', () => {
 		expect(store.applyResult).toBeUndefined();
 	});
 
-	it('resets preview and apply result together', async () => {
-		previewShipmentArrangement.mockResolvedValue(previewResponse);
+	it('does not treat mutations of returned filter snapshots as workflow intent', async () => {
+		vi.useFakeTimers();
 		const store = useShipmentArrangementStore();
-		await store.previewFile(new File(['xlsx'], 'shipments.xlsx'));
-		store.applyResult = { total: 0, updated: 0, failed: 0, errors: [] };
+		const snapshot = store.filters as { search: string };
+		snapshot.search = 'direct mutation';
+		store.setShippingMethod(7);
+		await vi.advanceTimersByTimeAsync(300);
+		await vi.runAllTicks();
 
-		store.resetPreview();
-
-		expect(store.preview).toBeUndefined();
-		expect(store.applyResult).toBeUndefined();
+		expect(getShipmentArrangement).toHaveBeenCalledWith({ $top: 15, $skip: 0, shipping_method_id: 7 });
 	});
 });

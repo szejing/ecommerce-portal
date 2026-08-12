@@ -5,6 +5,18 @@ import ShipmentArrangementPage from '~/pages/orders/shipment-arrangement.vue';
 import { useShipmentArrangementStore } from '~/stores/ShipmentArrangement/ShipmentArrangement';
 import { useShippingMethodStore } from '~/stores/ShippingMethod/ShippingMethod';
 import { useAppUiStore } from '~/stores/AppUi/AppUi';
+import type { ShipmentArrangementListRow } from '~/utils/types/shipment-arrangement';
+
+const pendingRow: ShipmentArrangementListRow = {
+	fulfillment_id: '11111111-1111-4111-8111-111111111111',
+	source_updated_at: '2026-07-18T01:00:00.000Z',
+	order_no: 'WM-100',
+	batch_no: 1,
+	ordered_at: '2026-07-17T01:00:00.000Z',
+	recipient: 'Alice',
+	destination: 'Selangor',
+	shipping_method: 'Standard',
+};
 
 const mountPage = () =>
 	mountSuspended(ShipmentArrangementPage, {
@@ -15,46 +27,90 @@ const mountPage = () =>
 		},
 	});
 
-const mockShippingOptions = (options: Awaited<ReturnType<ReturnType<typeof useShippingMethodStore>['fetchActiveShippingMethodOptions']>> = []) => {
-	const shippingStore = useShippingMethodStore();
-	return {
-		getShippingMethods: vi.spyOn(shippingStore, 'getShippingMethods').mockResolvedValue(),
-		fetchActiveShippingMethodOptions: vi.spyOn(shippingStore, 'fetchActiveShippingMethodOptions').mockResolvedValue(options),
-	};
-};
+const mockPendingResponse = (rows: ShipmentArrangementListRow[] = [], total = rows.length) =>
+	vi.spyOn(useNuxtApp().$api.fulfillment, 'getShipmentArrangement').mockResolvedValue({ data: rows, total });
 
 describe('ShipmentArrangementPage', () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
-		const store = useShipmentArrangementStore();
-		store.filters.search = '';
-		store.filters.shippingMethodId = undefined;
-		store.filters.dateRange = { start: undefined, end: undefined };
-		store.page = 1;
-		store.pageSize = 15;
-		store.rows = [];
-		store.total = 0;
-		store.loading = false;
-		store.resetPreview();
+		useShipmentArrangementStore().$reset();
 		useShippingMethodStore().$reset();
 		useAppUiStore().$reset();
+		mockPendingResponse();
+		vi.spyOn(useShippingMethodStore(), 'fetchActiveShippingMethodOptions').mockResolvedValue([]);
 	});
 
-	it('lists pending batches without a default date filter and previews a selected xlsx file', async () => {
+	it('initializes once and sends filter intent to Pinia', async () => {
 		const store = useShipmentArrangementStore();
-		const fetchPending = vi.spyOn(store, 'fetchPending').mockResolvedValue();
-		const previewWorkbook = vi.spyOn(store, 'previewWorkbook').mockResolvedValue({ status: 'completed', preview: { total: 0, valid: 0, warnings: 0, errors: 0, rows: [] } });
-		mockShippingOptions();
-
+		const initialize = vi.spyOn(store, 'initialize').mockResolvedValue();
+		const setSearch = vi.spyOn(store, 'setSearch');
 		const wrapper = await mountPage();
 
-		expect(fetchPending).toHaveBeenCalledTimes(1);
-		expect(store.filters.dateRange).toEqual({ start: undefined, end: undefined });
-		expect(wrapper.get('input[type="file"]').attributes('accept')).toBe('.xlsx,.numbers');
+		expect(initialize).toHaveBeenCalledTimes(1);
+		await wrapper.get('input[placeholder="Search order, batch or recipient"]').setValue('WM-100');
+		expect(setSearch).toHaveBeenCalledWith('WM-100');
+		wrapper.unmount();
+	});
 
+	it('sends workflow control intent to Pinia', async () => {
+		mockPendingResponse([pendingRow]);
+		const store = useShipmentArrangementStore();
+		const setShippingMethod = vi.spyOn(store, 'setShippingMethod');
+		const setDateRange = vi.spyOn(store, 'setDateRange');
+		const setPage = vi.spyOn(store, 'setPage').mockResolvedValue({ status: 'completed' });
+		const setPageSize = vi.spyOn(store, 'setPageSize').mockResolvedValue({ status: 'completed' });
+		const clearFilters = vi.spyOn(store, 'clearFilters').mockResolvedValue({ status: 'completed' });
+		const exportPending = vi.spyOn(store, 'exportPending').mockResolvedValue({ status: 'completed' });
+		const dateRange = { start: new Date('2026-07-01'), end: new Date('2026-07-18') };
+		const wrapper = await mountPage();
+
+		wrapper.findComponent({ name: 'USelectMenu' }).vm.$emit('update:modelValue', 7);
+		expect(setShippingMethod).toHaveBeenCalledWith(7);
+		wrapper.findComponent({ name: 'ZDateRange' }).vm.$emit('update:modelValue', dateRange);
+		expect(setDateRange).toHaveBeenCalledWith(dateRange);
+		wrapper.findComponent({ name: 'UPagination' }).vm.$emit('update:page', 2);
+		expect(setPage).toHaveBeenCalledWith(2);
+		wrapper.findComponent({ name: 'ZTableToolbar' }).vm.$emit('update:modelValue', 25);
+		expect(setPageSize).toHaveBeenCalledWith(25);
+		await wrapper.get('[data-testid="clear-filters"]').trigger('click');
+		expect(clearFilters).toHaveBeenCalledTimes(1);
+		await wrapper.get('[data-testid="workflow-export"]').trigger('click');
+		expect(exportPending).toHaveBeenCalledTimes(1);
+		wrapper.unmount();
+	});
+
+	it('sends refresh intent from the empty state to Pinia', async () => {
+		const store = useShipmentArrangementStore();
+		const refreshPending = vi.spyOn(store, 'refreshPending').mockResolvedValue({ status: 'completed' });
+		const wrapper = await mountPage();
+
+		await wrapper.get('[data-testid="refresh-pending"]').trigger('click');
+
+		expect(refreshPending).toHaveBeenCalledTimes(1);
+		wrapper.unmount();
+	});
+
+	it('keeps the table usable and presents option-load failure', async () => {
+		vi.spyOn(useShippingMethodStore(), 'fetchActiveShippingMethodOptions').mockRejectedValue(new Error('Options unavailable'));
+		const wrapper = await mountPage();
+		await flushPromises();
+
+		expect(wrapper.find('[data-testid="pending-empty"]').exists()).toBe(true);
+		expect(useAppUiStore().toastNotification).toMatchObject({ color: 'error', description: 'Options unavailable' });
+		wrapper.unmount();
+	});
+
+	it('previews a selected workbook and opens the preview', async () => {
+		const store = useShipmentArrangementStore();
+		const previewWorkbook = vi.spyOn(store, 'previewWorkbook').mockResolvedValue({
+			status: 'completed',
+			preview: { total: 0, valid: 0, warnings: 0, errors: 0, rows: [] },
+		});
+		const wrapper = await mountPage();
 		const file = new File(['xlsx'], 'shipments.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 		const input = wrapper.get('input[type="file"]');
 		Object.defineProperty(input.element, 'files', { value: [file], configurable: true });
+
 		await input.trigger('change');
 
 		expect(previewWorkbook).toHaveBeenCalledWith(file);
@@ -62,164 +118,33 @@ describe('ShipmentArrangementPage', () => {
 		wrapper.unmount();
 	});
 
-	it('previews a selected Numbers workbook', async () => {
+	it('presents workbook and export failures', async () => {
+		mockPendingResponse([pendingRow]);
 		const store = useShipmentArrangementStore();
-		vi.spyOn(store, 'fetchPending').mockResolvedValue();
-		const previewWorkbook = vi.spyOn(store, 'previewWorkbook').mockResolvedValue({ status: 'completed', preview: { total: 0, valid: 0, warnings: 0, errors: 0, rows: [] } });
-		mockShippingOptions();
-
+		vi.spyOn(store, 'previewWorkbook').mockResolvedValue({
+			status: 'failed',
+			failure: { kind: 'request_failed', message: 'Workbook parsing failed' },
+		});
+		const exportPending = vi.spyOn(store, 'exportPending')
+			.mockResolvedValueOnce({ status: 'completed' })
+			.mockResolvedValueOnce({ status: 'failed', failure: { kind: 'request_failed', message: 'Export blocked' } });
 		const wrapper = await mountPage();
 		const file = new File(['numbers'], 'shipments.numbers', { type: 'application/vnd.apple.numbers' });
 		const input = wrapper.get('input[type="file"]');
 		Object.defineProperty(input.element, 'files', { value: [file], configurable: true });
+
 		await input.trigger('change');
-
-		expect(previewWorkbook).toHaveBeenCalledWith(file);
-		expect(wrapper.findComponent({ name: 'ShipmentArrangementImportPreviewModal' }).props('modelValue')).toBe(true);
-		wrapper.unmount();
-	});
-
-	it('exports pending batches and provides loading, empty, and refresh states', async () => {
-		const store = useShipmentArrangementStore();
-		const fetchPending = vi.spyOn(store, 'fetchPending').mockResolvedValue();
-		const exportPending = vi.spyOn(store, 'exportPending')
-			.mockResolvedValueOnce({ status: 'completed' })
-			.mockResolvedValueOnce({ status: 'failed', failure: { kind: 'request_failed', message: 'Export blocked' } });
-		mockShippingOptions();
-
-		const wrapper = await mountPage();
-
-		store.total = 1;
-		await wrapper.vm.$nextTick();
+		expect(useAppUiStore().toastNotification).toMatchObject({ color: 'error', description: 'Workbook parsing failed' });
 		await wrapper.get('[data-testid="workflow-export"]').trigger('click');
-		expect(exportPending).toHaveBeenCalledTimes(1);
 		expect(useAppUiStore().toastNotification).toMatchObject({ color: 'success', description: 'Pending shipment batches exported' });
 		await wrapper.get('[data-testid="workflow-export"]').trigger('click');
 		expect(useAppUiStore().toastNotification).toMatchObject({ color: 'error', description: 'Export blocked' });
-
-		store.loading = true;
-		await wrapper.vm.$nextTick();
-		expect(wrapper.find('[data-testid="pending-loading"]').exists()).toBe(true);
-
-		store.loading = false;
-		store.rows = [];
-		await wrapper.vm.$nextTick();
-		expect(wrapper.find('[data-testid="pending-empty"]').exists()).toBe(true);
-		expect(wrapper.find('[data-testid="refresh-pending"]').exists()).toBe(true);
-		fetchPending.mockClear();
-		await wrapper.get('[data-testid="refresh-pending"]').trigger('click');
-		expect(fetchPending).toHaveBeenCalledTimes(1);
+		expect(exportPending).toHaveBeenCalledTimes(2);
 		wrapper.unmount();
 	});
 
-	it('debounces filters, resets pagination, and fetches only once', async () => {
+	it('applies the preview and presents partial counts', async () => {
 		const store = useShipmentArrangementStore();
-		store.page = 2;
-		const fetchPending = vi.spyOn(store, 'fetchPending').mockResolvedValue();
-		mockShippingOptions();
-
-		const wrapper = await mountPage();
-		fetchPending.mockClear();
-		store.filters.search = 'WM-100';
-		await new Promise((resolve) => setTimeout(resolve, 350));
-
-		expect(store.page).toBe(1);
-		expect(fetchPending).toHaveBeenCalledTimes(1);
-		wrapper.unmount();
-	});
-
-	it('clears every filter, resets pagination, and refetches all pending batches', async () => {
-		const store = useShipmentArrangementStore();
-		store.filters.search = 'WM-100';
-		store.filters.shippingMethodId = 7;
-		store.filters.dateRange = { start: new Date('2026-07-01'), end: new Date('2026-07-18') };
-		store.page = 3;
-		const fetchPending = vi.spyOn(store, 'fetchPending').mockResolvedValue();
-		mockShippingOptions();
-		const wrapper = await mountPage();
-		fetchPending.mockClear();
-
-		await wrapper.get('[data-testid="clear-filters"]').trigger('click');
-		await flushPromises();
-
-		expect(store.filters.search).toBe('');
-		expect(store.filters.shippingMethodId).toBeUndefined();
-		expect(store.filters.dateRange).toEqual({ start: undefined, end: undefined });
-		expect(store.page).toBe(1);
-		expect(fetchPending).toHaveBeenCalledTimes(1);
-		wrapper.unmount();
-	});
-
-	it('cancels a pending filter debounce when filters are cleared', async () => {
-		const store = useShipmentArrangementStore();
-		const fetchPending = vi.spyOn(store, 'fetchPending').mockResolvedValue();
-		mockShippingOptions();
-		const wrapper = await mountPage();
-		fetchPending.mockClear();
-		vi.useFakeTimers();
-
-		try {
-			store.filters.search = 'WM-100';
-			await wrapper.vm.$nextTick();
-			await wrapper.get('[data-testid="clear-filters"]').trigger('click');
-			await flushPromises();
-			await vi.advanceTimersByTimeAsync(350);
-
-			expect(fetchPending).toHaveBeenCalledTimes(1);
-		} finally {
-			vi.useRealTimers();
-			wrapper.unmount();
-		}
-	});
-
-	it('loads active shipping method options independently from stale settings listing filters', async () => {
-		const store = useShipmentArrangementStore();
-		vi.spyOn(store, 'fetchPending').mockResolvedValue();
-		const shippingStore = useShippingMethodStore();
-		shippingStore.filter = { query: 'same day', status: 'inactive', current_page: 5, page_size: 15 };
-		shippingStore.methods = [{ id: 99, description: 'Stale listing method', priority: 99, is_active: false }];
-		const options = [{ id: 2, description: 'Express', priority: 2, is_active: true }];
-		const shippingSpies = mockShippingOptions(options);
-
-		const wrapper = await mountPage();
-
-		expect(shippingSpies.fetchActiveShippingMethodOptions).toHaveBeenCalledTimes(1);
-		expect(shippingSpies.getShippingMethods).not.toHaveBeenCalled();
-		expect(shippingStore.filter).toEqual({ query: 'same day', status: 'inactive', current_page: 5, page_size: 15 });
-		expect(shippingStore.methods.map((method) => method.id)).toEqual([99]);
-		expect(wrapper.findComponent({ name: 'USelectMenu' }).props('items')).toEqual([
-			{ label: 'All shipping methods', value: undefined },
-			{ label: 'Express', value: 2 },
-		]);
-		wrapper.unmount();
-	});
-
-	it('previews and notifies workbook failures', async () => {
-		const store = useShipmentArrangementStore();
-		vi.spyOn(store, 'fetchPending').mockResolvedValue();
-		const failure = { kind: 'request_failed' as const, message: 'Workbook parsing failed' };
-		vi.spyOn(store, 'previewWorkbook').mockImplementation(async () => {
-			store.importFailure = failure;
-			return { status: 'failed', failure };
-		});
-		mockShippingOptions();
-		const wrapper = await mountPage();
-		const file = new File(['xlsx'], 'shipments.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-		const input = wrapper.get('input[type="file"]');
-		Object.defineProperty(input.element, 'files', { value: [file], configurable: true });
-
-		await input.trigger('change');
-		await flushPromises();
-
-		expect(wrapper.text()).toContain('Workbook parsing failed');
-		expect(useAppUiStore().toastNotification).toMatchObject({ color: 'error', description: 'Workbook parsing failed' });
-		wrapper.unmount();
-	});
-
-	it('wires partial apply results to the preview and failure notification', async () => {
-		const store = useShipmentArrangementStore();
-		vi.spyOn(store, 'fetchPending').mockResolvedValue();
-		store.preview = { total: 1, valid: 1, warnings: 0, errors: 0, rows: [] };
 		const applyPreview = vi.spyOn(store, 'applyPreview').mockResolvedValue({
 			status: 'completed',
 			result: {
@@ -229,7 +154,6 @@ describe('ShipmentArrangementPage', () => {
 				errors: [{ fulfillment_id: 'f-2', order_no: 'WM-102', batch_no: 2, message: 'Shipment changed after export' }],
 			},
 		});
-		mockShippingOptions();
 		const wrapper = await mountPage();
 
 		wrapper.findComponent({ name: 'ShipmentArrangementImportPreviewModal' }).vm.$emit('apply');
@@ -240,26 +164,13 @@ describe('ShipmentArrangementPage', () => {
 		wrapper.unmount();
 	});
 
-	it('does not refetch from the page watcher when apply owns a clamped-page refresh', async () => {
+	it('disposes the workflow when leaving the page', async () => {
 		const store = useShipmentArrangementStore();
-		const fetchPending = vi.spyOn(store, 'fetchPending').mockResolvedValue();
-		store.preview = { total: 1, valid: 1, warnings: 0, errors: 0, rows: [] };
-		store.page = 3;
-		vi.spyOn(store, 'applyPreview').mockImplementation(async () => {
-			store.page = 2;
-			await nextTick();
-			const result = { total: 1, updated: 1, failed: 0, errors: [] };
-			store.applyResult = result;
-			return { status: 'completed', result };
-		});
-		mockShippingOptions();
+		const dispose = vi.spyOn(store, 'dispose');
 		const wrapper = await mountPage();
-		fetchPending.mockClear();
 
-		wrapper.findComponent({ name: 'ShipmentArrangementImportPreviewModal' }).vm.$emit('apply');
-		await flushPromises();
-
-		expect(fetchPending).not.toHaveBeenCalled();
 		wrapper.unmount();
+
+		expect(dispose).toHaveBeenCalledTimes(1);
 	});
 });

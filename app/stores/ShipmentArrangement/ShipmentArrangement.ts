@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { reactive, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { KEY } from 'yeppi-common';
 import { useShippingMethodStore } from '../ShippingMethod/ShippingMethod';
 import type { Range } from '~/utils/interface/range';
@@ -61,28 +61,16 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 	let listGeneration = 0;
 	let filterTimer: ReturnType<typeof setTimeout> | null = null;
 
-	const filters = reactive({
-		get search(): string {
-			return searchState.value;
-		},
-		set search(value: string) {
-			searchState.value = value;
-		},
-		get shippingMethodId(): number | undefined {
-			return shippingMethodIdState.value;
-		},
-		set shippingMethodId(value: number | undefined) {
-			shippingMethodIdState.value = value;
-		},
-		get dateRange(): Range {
-			return dateRangeState.value;
-		},
-		set dateRange(value: Range) {
-			dateRangeState.value = value;
-		},
-	});
-	const preview = ref<ShipmentArrangementPreviewResponse>();
-	const applyResult = ref<ShipmentArrangementApplyResponse>();
+	const filters = computed(() => ({
+		search: searchState.value,
+		shippingMethodId: shippingMethodIdState.value,
+		dateRange: { ...dateRangeState.value },
+	}));
+	const firstVisibleRow = computed(() => (totalState.value === 0 ? 0 : (pageState.value - 1) * pageSizeState.value + 1));
+	const lastVisibleRow = computed(() => Math.min(pageState.value * pageSizeState.value, totalState.value));
+	const previewState = ref<ShipmentArrangementPreviewResponse>();
+	const eligibleCount = computed(() => (previewState.value?.valid ?? 0) + (previewState.value?.warnings ?? 0));
+	const applyResultState = ref<ShipmentArrangementApplyResponse>();
 	const importingState = ref(false);
 	const importFailureState = ref<{ kind: 'unsupported_workbook' } | RequestFailure>();
 	const applyingState = ref(false);
@@ -214,17 +202,13 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		optionsFailureState.value = undefined;
 		exportingState.value = false;
 		exportFailureState.value = undefined;
-		preview.value = undefined;
-		applyResult.value = undefined;
+		previewState.value = undefined;
+		applyResultState.value = undefined;
 		importingState.value = false;
 		importFailureState.value = undefined;
 		applyingState.value = false;
 		applyFailureState.value = undefined;
 		listFailureState.value = undefined;
-	}
-
-	async function fetchPending(): Promise<void> {
-		await refreshPending();
 	}
 
 	async function exportPending(): Promise<ShipmentArrangementExportOutcome> {
@@ -259,7 +243,7 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		importingState.value = true;
 		try {
 			const response = await useNuxtApp().$api.fulfillment.previewShipmentArrangement(file);
-			preview.value = response;
+			previewState.value = response;
 			return { status: 'completed', preview: response };
 		} catch (error) {
 			const failure = { kind: 'request_failed' as const, message: error instanceof Error ? error.message : String(error) };
@@ -270,18 +254,14 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		}
 	}
 
-	async function previewFile(file: File): Promise<void> {
-		await previewWorkbook(file);
-	}
-
 	async function applyPreview(): Promise<ShipmentArrangementApplyOutcome> {
 		applyFailureState.value = undefined;
-		if (!preview.value) {
+		if (!previewState.value) {
 			const failure = { kind: 'missing_preview' as const };
 			applyFailureState.value = failure;
 			return { status: 'rejected', failure };
 		}
-		const eligible = preview.value.rows.filter((row) => row.status !== 'error').map(toApplyRow);
+		const eligible = previewState.value.rows.filter((row) => row.status !== 'error').map(toApplyRow);
 		if (eligible.length === 0) {
 			const failure = { kind: 'no_eligible_rows' as const };
 			applyFailureState.value = failure;
@@ -294,7 +274,7 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 				merchant_id: String(merchantId ?? ''),
 				rows: eligible,
 			});
-			applyResult.value = result;
+			applyResultState.value = result;
 			await refreshPending();
 			const lastPage = Math.max(1, Math.ceil(totalState.value / pageSizeState.value));
 			if (pageState.value > lastPage) {
@@ -312,36 +292,33 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 	}
 
 	function dismissImport(): void {
-		preview.value = undefined;
-		applyResult.value = undefined;
+		previewState.value = undefined;
+		applyResultState.value = undefined;
 		importFailureState.value = undefined;
 		applyFailureState.value = undefined;
 	}
 
-	function resetPreview(): void {
-		dismissImport();
-	}
-
 	return {
 		filters,
-		page: pageState,
-		pageSize: pageSizeState,
-		rows: rowsState,
-		total: totalState,
-		activeShippingMethods: activeShippingMethodsState,
-		optionsLoading: optionsLoadingState,
-		optionsFailure: optionsFailureState,
-		listFailure: listFailureState,
-		exporting: exportingState,
-		exportFailure: exportFailureState,
-		preview,
-		applyResult,
-		importing: importingState,
-		importFailure: importFailureState,
-		applying: applyingState,
-		applyFailure: applyFailureState,
-		loading: loadingState,
-		fetchPending,
+		page: computed(() => pageState.value),
+		pageSize: computed(() => pageSizeState.value),
+		rows: computed<readonly ShipmentArrangementListRow[]>(() => rowsState.value),
+		total: computed(() => totalState.value),
+		firstVisibleRow,
+		lastVisibleRow,
+		activeShippingMethods: computed<readonly ShippingMethodOption[]>(() => activeShippingMethodsState.value),
+		preview: computed(() => previewState.value),
+		eligibleCount,
+		applyResult: computed(() => applyResultState.value),
+		loading: computed(() => loadingState.value),
+		exporting: computed(() => exportingState.value),
+		importing: computed(() => importingState.value),
+		applying: computed(() => applyingState.value),
+		optionsFailure: computed(() => optionsFailureState.value),
+		listFailure: computed(() => listFailureState.value),
+		exportFailure: computed(() => exportFailureState.value),
+		importFailure: computed(() => importFailureState.value),
+		applyFailure: computed(() => applyFailureState.value),
 		refreshPending,
 		initialize,
 		setPage,
@@ -354,9 +331,7 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		$reset,
 		exportPending,
 		previewWorkbook,
-		previewFile,
 		applyPreview,
 		dismissImport,
-		resetPreview,
 	};
 });
