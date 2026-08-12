@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia';
 import { reactive, ref } from 'vue';
 import { KEY } from 'yeppi-common';
+import { useShippingMethodStore } from '../ShippingMethod/ShippingMethod';
 import type { Range } from '~/utils/interface/range';
+import type { ShippingMethodOption } from '~/utils/types/order-fulfillment-shipping';
 import type {
 	ShipmentArrangementApplyResponse,
 	ShipmentArrangementApplyRow,
@@ -27,6 +29,9 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 	const rowsState = ref<ShipmentArrangementListRow[]>([]);
 	const totalState = ref(0);
 	const loadingState = ref(false);
+	const activeShippingMethodsState = ref<ShippingMethodOption[]>([]);
+	const optionsLoadingState = ref(false);
+	const optionsFailureState = ref<{ kind: 'request_failed'; message: string }>();
 	const listFailureState = ref<{ kind: 'request_failed'; message: string }>();
 	let listGeneration = 0;
 	let filterTimer: ReturnType<typeof setTimeout> | null = null;
@@ -125,6 +130,22 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		return requestPending(++listGeneration);
 	}
 
+	async function loadActiveShippingMethods(): Promise<void> {
+		optionsLoadingState.value = true;
+		optionsFailureState.value = undefined;
+		try {
+			activeShippingMethodsState.value = await useShippingMethodStore().fetchActiveShippingMethodOptions({ notifyOnError: false });
+		} catch (error) {
+			optionsFailureState.value = { kind: 'request_failed', message: error instanceof Error ? error.message : String(error) };
+		} finally {
+			optionsLoadingState.value = false;
+		}
+	}
+
+	async function initialize(): Promise<void> {
+		await Promise.all([refreshPending(), loadActiveShippingMethods()]);
+	}
+
 	async function setPage(page: number): Promise<ShipmentArrangementRefreshOutcome> {
 		pageState.value = page;
 		return refreshPending();
@@ -159,6 +180,9 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		pageSizeState.value = 15;
 		rowsState.value = [];
 		totalState.value = 0;
+		activeShippingMethodsState.value = [];
+		optionsLoadingState.value = false;
+		optionsFailureState.value = undefined;
 		preview.value = undefined;
 		applyResult.value = undefined;
 		listFailureState.value = undefined;
@@ -210,11 +234,15 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		pageSize: pageSizeState,
 		rows: rowsState,
 		total: totalState,
+		activeShippingMethods: activeShippingMethodsState,
+		optionsLoading: optionsLoadingState,
+		optionsFailure: optionsFailureState,
 		preview,
 		applyResult,
 		loading: loadingState,
 		fetchPending,
 		refreshPending,
+		initialize,
 		setPage,
 		setPageSize,
 		setSearch,

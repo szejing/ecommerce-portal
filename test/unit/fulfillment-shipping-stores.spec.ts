@@ -246,6 +246,15 @@ describe('fulfillment/shipping stores', () => {
 		expect(store.filter).toEqual({ query: 'stale search', status: 'inactive', current_page: 4, page_size: 15 });
 	});
 
+	it('can return an active-option failure without nested notification', async () => {
+		apiMock.shippingMethod.getMany.mockRejectedValue(new Error('Options unavailable'));
+		const store = useShippingMethodStore();
+
+		await expect(store.fetchActiveShippingMethodOptions({ notifyOnError: false })).rejects.toThrow('Options unavailable');
+
+		expect(failedNotification).not.toHaveBeenCalled();
+	});
+
 	it('resolves active fulfillment methods for the address without reusing listing state', async () => {
 		apiMock.shippingMethod.resolveMethods.mockResolvedValue({
 			shipping_methods: [

@@ -104,7 +104,7 @@ export const useShippingMethodStore = defineStore('shippingMethodStore', {
 			}
 		},
 
-		async fetchActiveShippingMethodOptions(): Promise<ShippingMethodOption[]> {
+		async fetchActiveShippingMethodOptions(options: { notifyOnError?: boolean } = {}): Promise<ShippingMethodOption[]> {
 			const { $api } = useNuxtApp();
 
 			try {
@@ -117,7 +117,7 @@ export const useShippingMethodStore = defineStore('shippingMethodStore', {
 				return (resp.data ?? resp.value ?? []).filter((method) => method.is_active);
 			} catch (err: unknown | ErrorResponse) {
 				const message = (err as ErrorResponse).message ?? 'Failed to load shipping methods';
-				failedNotification(message);
+				if (options.notifyOnError !== false) failedNotification(message);
 				throw err;
 			}
 		},

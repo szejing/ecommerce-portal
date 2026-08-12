@@ -6,7 +6,13 @@ import type {
 	ShipmentArrangementListResponse,
 	ShipmentArrangementPreviewResponse,
 } from '../../app/utils/types/shipment-arrangement';
+import { useShippingMethodStore } from '../../app/stores/ShippingMethod/ShippingMethod';
 import { useShipmentArrangementStore } from '../../app/stores/ShipmentArrangement/ShipmentArrangement';
+
+vi.mock('../../app/stores/AppUi/AppUi', () => ({
+	successNotification: vi.fn(),
+	failedNotification: vi.fn(),
+}));
 
 const getShipmentArrangement = vi.fn();
 const downloadShipmentArrangement = vi.fn();
@@ -210,6 +216,46 @@ describe('useShipmentArrangementStore', () => {
 		expect(store.rows).toHaveLength(1);
 		expect(store.total).toBe(1);
 		expect(store.loading).toBe(false);
+	});
+
+	it('initializes rows and active options through one action', async () => {
+		getShipmentArrangement.mockResolvedValue({ data: [previewResponse.rows[0]!], total: 1 });
+		const fetchOptions = vi.spyOn(useShippingMethodStore(), 'fetchActiveShippingMethodOptions').mockResolvedValue([
+			{ id: 2, description: 'Express', priority: 2, is_active: true },
+		]);
+		const store = useShipmentArrangementStore();
+
+		await store.initialize();
+
+		expect(store.rows).toHaveLength(1);
+		expect(store.activeShippingMethods.map(method => method.id)).toEqual([2]);
+		expect(fetchOptions).toHaveBeenCalledWith({ notifyOnError: false });
+	});
+
+	it('keeps list success when active options fail', async () => {
+		getShipmentArrangement.mockResolvedValue({ data: [previewResponse.rows[0]!], total: 1 });
+		vi.spyOn(useShippingMethodStore(), 'fetchActiveShippingMethodOptions').mockRejectedValue(new Error('Options unavailable'));
+		const store = useShipmentArrangementStore();
+
+		await store.initialize();
+
+		expect(store.rows).toHaveLength(1);
+		expect(store.activeShippingMethods).toEqual([]);
+		expect(store.optionsFailure).toEqual({ kind: 'request_failed', message: 'Options unavailable' });
+	});
+
+	it('preserves filters when initialization re-enters', async () => {
+		vi.useFakeTimers();
+		vi.spyOn(useShippingMethodStore(), 'fetchActiveShippingMethodOptions').mockResolvedValue([]);
+		const store = useShipmentArrangementStore();
+		store.setSearch('WM-100');
+		await vi.advanceTimersByTimeAsync(300);
+		await vi.runAllTicks();
+		getShipmentArrangement.mockClear();
+
+		await store.initialize();
+
+		expect(getShipmentArrangement).toHaveBeenCalledWith(expect.objectContaining({ $search: 'WM-100' }));
 	});
 
 	it('formats local-midnight dates as their local calendar day', async () => {
