@@ -278,7 +278,9 @@ describe('useShipmentArrangementStore', () => {
 
 	it('always revokes an export object URL', async () => {
 		downloadShipmentArrangement.mockResolvedValue(new Blob(['xlsx']));
-		click.mockImplementationOnce(() => { throw new Error('Download blocked'); });
+		click.mockImplementationOnce(() => {
+			throw new Error('Download blocked');
+		});
 		const store = useShipmentArrangementStore();
 		const outcome = await store.exportPending();
 		expect(outcome).toEqual({

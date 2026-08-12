@@ -77,8 +77,8 @@
 						<p class="text-sm text-muted">{{ t('shipmentArrangement.table.pendingCount', { count: store.total }) }}</p>
 					</div>
 					<ZTableToolbar
-						:model-value="store.pageSize"
 						v-model:selected-column-keys="selectedColumnKeys"
+						:model-value="store.pageSize"
 						class="w-full sm:w-auto"
 						:page-size-options="options_page_size"
 						:export-enabled="false"
