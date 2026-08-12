@@ -5,8 +5,8 @@
 
 			<ShipmentArrangementWorkflowGuide
 				:pending-count="store.total"
-				:exporting="exporting"
-				:importing="importing"
+				:exporting="store.exporting"
+				:importing="store.importing"
 				@export="exportPending"
 				@import="openFilePicker"
 			/>
@@ -24,12 +24,12 @@
 				</template>
 			</UAlert>
 			<UAlert
-				v-if="uploadError"
+				v-if="store.importFailure"
 				color="error"
 				variant="soft"
 				icon="i-lucide-file-warning"
 				:title="t('shipmentArrangement.states.uploadErrorTitle')"
-				:description="uploadError"
+				:description="importFailureDescription"
 			/>
 
 			<section class="rounded-lg border border-default bg-default p-4" :aria-label="t('shipmentArrangement.filters.title')">
@@ -121,7 +121,12 @@
 				</div>
 			</section>
 
-			<ShipmentArrangementImportPreviewModal v-model="previewOpen" :applying="applying" :error="applyError" @apply="applyPreview" />
+			<ShipmentArrangementImportPreviewModal
+				v-model="previewOpen"
+				:applying="store.applying"
+				:error="store.applyFailure?.kind === 'request_failed' ? store.applyFailure.message : undefined"
+				@apply="applyPreview"
+			/>
 		</div>
 	</ZPagePanel>
 </template>
@@ -147,12 +152,7 @@ const shippingStore = useShippingMethodStore();
 const { t } = useI18n();
 const fileInput = ref<HTMLInputElement>();
 const previewOpen = ref(false);
-const exporting = ref(false);
-const importing = ref(false);
-const applying = ref(false);
 const pageError = ref<string>();
-const uploadError = ref<string>();
-const applyError = ref<string>();
 const activeShippingMethods = ref<ShippingMethodOption[]>([]);
 const resettingFilters = ref(false);
 let filterRefreshGeneration = 0;
@@ -164,6 +164,11 @@ const shippingMethodOptions = computed(() => [
 	{ label: t('shipmentArrangement.filters.shippingMethod'), value: undefined },
 	...activeShippingMethods.value.map((method) => ({ label: method.description, value: method.id })),
 ]);
+const importFailureDescription = computed(() =>
+	store.importFailure?.kind === 'unsupported_workbook'
+		? t('shipmentArrangement.states.invalidFile')
+		: store.importFailure?.message,
+);
 const firstVisibleRow = computed(() => (store.total === 0 ? 0 : (store.page - 1) * store.pageSize + 1));
 const lastVisibleRow = computed(() => Math.min(store.page * store.pageSize, store.total));
 
@@ -191,15 +196,9 @@ const clearFilters = async (): Promise<void> => {
 };
 
 const exportPending = async (): Promise<void> => {
-	exporting.value = true;
-	try {
-		await store.exportPending();
-		successNotification(t('shipmentArrangement.notifications.exported'));
-	} catch (error) {
-		failedNotification(error instanceof Error ? error.message : String(error));
-	} finally {
-		exporting.value = false;
-	}
+	const outcome = await store.exportPending();
+	if (outcome.status === 'completed') successNotification(t('shipmentArrangement.notifications.exported'));
+	else failedNotification(outcome.failure.message);
 };
 
 const openFilePicker = (): void => {
@@ -212,43 +211,20 @@ const onFileSelected = async (event: Event): Promise<void> => {
 	input.value = '';
 	if (!file) return;
 
-	uploadError.value = undefined;
-	applyError.value = undefined;
-	const lowerName = file.name.toLowerCase();
-	if (!lowerName.endsWith('.xlsx') && !lowerName.endsWith('.numbers')) {
-		uploadError.value = t('shipmentArrangement.states.invalidFile');
-		failedNotification(uploadError.value);
-		return;
-	}
-
-	importing.value = true;
-	try {
-		store.resetPreview();
-		await store.previewFile(file);
-		previewOpen.value = true;
-	} catch (error) {
-		uploadError.value = error instanceof Error ? error.message : String(error);
-		failedNotification(uploadError.value);
-	} finally {
-		importing.value = false;
-	}
+	const outcome = await store.previewWorkbook(file);
+	if (outcome.status === 'completed') previewOpen.value = true;
+	else if (outcome.failure.kind === 'unsupported_workbook') failedNotification(t('shipmentArrangement.states.invalidFile'));
+	else failedNotification(outcome.failure.message);
 };
 
 const applyPreview = async (): Promise<void> => {
-	applying.value = true;
-	applyError.value = undefined;
-	try {
-		await store.applyPreview();
-		if ((store.applyResult?.failed ?? 0) > 0) {
-			failedNotification(t('shipmentArrangement.notifications.partial', { updated: store.applyResult?.updated ?? 0, failed: store.applyResult?.failed ?? 0 }));
-		} else {
-			successNotification(t('shipmentArrangement.notifications.applied', { count: store.applyResult?.updated ?? 0 }));
-		}
-	} catch (error) {
-		applyError.value = error instanceof Error ? error.message : String(error);
-		failedNotification(applyError.value);
-	} finally {
-		applying.value = false;
+	const outcome = await store.applyPreview();
+	if (outcome.status === 'failed') {
+		failedNotification(outcome.failure.message);
+	} else if (outcome.status === 'completed' && outcome.result.failed > 0) {
+		failedNotification(t('shipmentArrangement.notifications.partial', { updated: outcome.result.updated, failed: outcome.result.failed }));
+	} else if (outcome.status === 'completed') {
+		successNotification(t('shipmentArrangement.notifications.applied', { count: outcome.result.updated }));
 	}
 };
 
@@ -264,7 +240,7 @@ const updatePageSize = async (size: number): Promise<void> => {
 watch(
 	() => store.page,
 	() => {
-		if (!resettingFilters.value && !applying.value) void refreshPending();
+		if (!resettingFilters.value && !store.applying) void refreshPending();
 	},
 );
 

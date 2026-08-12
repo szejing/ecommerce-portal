@@ -43,7 +43,7 @@ describe('ShipmentArrangementPage', () => {
 	it('lists pending batches without a default date filter and previews a selected xlsx file', async () => {
 		const store = useShipmentArrangementStore();
 		const fetchPending = vi.spyOn(store, 'fetchPending').mockResolvedValue();
-		const previewFile = vi.spyOn(store, 'previewFile').mockResolvedValue();
+		const previewWorkbook = vi.spyOn(store, 'previewWorkbook').mockResolvedValue({ status: 'completed', preview: { total: 0, valid: 0, warnings: 0, errors: 0, rows: [] } });
 		mockShippingOptions();
 
 		const wrapper = await mountPage();
@@ -57,7 +57,7 @@ describe('ShipmentArrangementPage', () => {
 		Object.defineProperty(input.element, 'files', { value: [file], configurable: true });
 		await input.trigger('change');
 
-		expect(previewFile).toHaveBeenCalledWith(file);
+		expect(previewWorkbook).toHaveBeenCalledWith(file);
 		expect(wrapper.findComponent({ name: 'ShipmentArrangementImportPreviewModal' }).props('modelValue')).toBe(true);
 		wrapper.unmount();
 	});
@@ -65,7 +65,7 @@ describe('ShipmentArrangementPage', () => {
 	it('previews a selected Numbers workbook', async () => {
 		const store = useShipmentArrangementStore();
 		vi.spyOn(store, 'fetchPending').mockResolvedValue();
-		const previewFile = vi.spyOn(store, 'previewFile').mockResolvedValue();
+		const previewWorkbook = vi.spyOn(store, 'previewWorkbook').mockResolvedValue({ status: 'completed', preview: { total: 0, valid: 0, warnings: 0, errors: 0, rows: [] } });
 		mockShippingOptions();
 
 		const wrapper = await mountPage();
@@ -74,7 +74,7 @@ describe('ShipmentArrangementPage', () => {
 		Object.defineProperty(input.element, 'files', { value: [file], configurable: true });
 		await input.trigger('change');
 
-		expect(previewFile).toHaveBeenCalledWith(file);
+		expect(previewWorkbook).toHaveBeenCalledWith(file);
 		expect(wrapper.findComponent({ name: 'ShipmentArrangementImportPreviewModal' }).props('modelValue')).toBe(true);
 		wrapper.unmount();
 	});
@@ -82,15 +82,20 @@ describe('ShipmentArrangementPage', () => {
 	it('exports pending batches and provides loading, empty, and refresh states', async () => {
 		const store = useShipmentArrangementStore();
 		const fetchPending = vi.spyOn(store, 'fetchPending').mockResolvedValue();
-		const exportPending = vi.spyOn(store, 'exportPending').mockResolvedValue();
+		const exportPending = vi.spyOn(store, 'exportPending')
+			.mockResolvedValueOnce({ status: 'completed' })
+			.mockResolvedValueOnce({ status: 'failed', failure: { kind: 'request_failed', message: 'Export blocked' } });
 		mockShippingOptions();
 
 		const wrapper = await mountPage();
 
 		store.total = 1;
 		await wrapper.vm.$nextTick();
-		await wrapper.get('[data-testid="export-pending"]').trigger('click');
+		await wrapper.get('[data-testid="workflow-export"]').trigger('click');
 		expect(exportPending).toHaveBeenCalledTimes(1);
+		expect(useAppUiStore().toastNotification).toMatchObject({ color: 'success', description: 'Pending shipment batches exported' });
+		await wrapper.get('[data-testid="workflow-export"]').trigger('click');
+		expect(useAppUiStore().toastNotification).toMatchObject({ color: 'error', description: 'Export blocked' });
 
 		store.loading = true;
 		await wrapper.vm.$nextTick();
@@ -189,10 +194,14 @@ describe('ShipmentArrangementPage', () => {
 		wrapper.unmount();
 	});
 
-	it('shows and notifies workbook preview failures', async () => {
+	it('previews and notifies workbook failures', async () => {
 		const store = useShipmentArrangementStore();
 		vi.spyOn(store, 'fetchPending').mockResolvedValue();
-		vi.spyOn(store, 'previewFile').mockRejectedValue(new Error('Workbook parsing failed'));
+		const failure = { kind: 'request_failed' as const, message: 'Workbook parsing failed' };
+		vi.spyOn(store, 'previewWorkbook').mockImplementation(async () => {
+			store.importFailure = failure;
+			return { status: 'failed', failure };
+		});
 		mockShippingOptions();
 		const wrapper = await mountPage();
 		const file = new File(['xlsx'], 'shipments.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -211,13 +220,14 @@ describe('ShipmentArrangementPage', () => {
 		const store = useShipmentArrangementStore();
 		vi.spyOn(store, 'fetchPending').mockResolvedValue();
 		store.preview = { total: 1, valid: 1, warnings: 0, errors: 0, rows: [] };
-		const applyPreview = vi.spyOn(store, 'applyPreview').mockImplementation(async () => {
-			store.applyResult = {
+		const applyPreview = vi.spyOn(store, 'applyPreview').mockResolvedValue({
+			status: 'completed',
+			result: {
 				total: 2,
 				updated: 1,
 				failed: 1,
 				errors: [{ fulfillment_id: 'f-2', order_no: 'WM-102', batch_no: 2, message: 'Shipment changed after export' }],
-			};
+			},
 		});
 		mockShippingOptions();
 		const wrapper = await mountPage();
@@ -226,7 +236,6 @@ describe('ShipmentArrangementPage', () => {
 		await flushPromises();
 
 		expect(applyPreview).toHaveBeenCalledTimes(1);
-		expect(store.applyResult).toMatchObject({ updated: 1, failed: 1 });
 		expect(useAppUiStore().toastNotification).toMatchObject({ color: 'error', description: '1 shipments updated; 1 failed' });
 		wrapper.unmount();
 	});
@@ -239,7 +248,9 @@ describe('ShipmentArrangementPage', () => {
 		vi.spyOn(store, 'applyPreview').mockImplementation(async () => {
 			store.page = 2;
 			await nextTick();
-			store.applyResult = { total: 1, updated: 1, failed: 0, errors: [] };
+			const result = { total: 1, updated: 1, failed: 0, errors: [] };
+			store.applyResult = result;
+			return { status: 'completed', result };
 		});
 		mockShippingOptions();
 		const wrapper = await mountPage();

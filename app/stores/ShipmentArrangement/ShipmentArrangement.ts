@@ -15,10 +15,33 @@ import type {
 
 export const SHIPMENT_ARRANGEMENT_FILTER_DEBOUNCE_MS = 300;
 
+export type ShipmentArrangementFailure =
+	| { kind: 'unsupported_workbook' }
+	| { kind: 'missing_preview' }
+	| { kind: 'no_eligible_rows' }
+	| { kind: 'request_failed'; message: string };
+
+type RequestFailure = Extract<ShipmentArrangementFailure, { kind: 'request_failed' }>;
+type ApplyRejection = Extract<ShipmentArrangementFailure, { kind: 'missing_preview' | 'no_eligible_rows' }>;
+
 export type ShipmentArrangementRefreshOutcome =
 	| { status: 'completed' }
 	| { status: 'stale' }
-	| { status: 'failed'; failure: { kind: 'request_failed'; message: string } };
+	| { status: 'failed'; failure: RequestFailure };
+
+export type ShipmentArrangementPreviewOutcome =
+	| { status: 'completed'; preview: ShipmentArrangementPreviewResponse }
+	| { status: 'rejected'; failure: { kind: 'unsupported_workbook' } }
+	| { status: 'failed'; failure: RequestFailure };
+
+export type ShipmentArrangementApplyOutcome =
+	| { status: 'completed'; result: ShipmentArrangementApplyResponse }
+	| { status: 'rejected'; failure: ApplyRejection }
+	| { status: 'failed'; failure: RequestFailure };
+
+export type ShipmentArrangementExportOutcome =
+	| { status: 'completed' }
+	| { status: 'failed'; failure: RequestFailure };
 
 export const useShipmentArrangementStore = defineStore('shipment-arrangement', () => {
 	const searchState = ref('');
@@ -33,6 +56,8 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 	const optionsLoadingState = ref(false);
 	const optionsFailureState = ref<{ kind: 'request_failed'; message: string }>();
 	const listFailureState = ref<{ kind: 'request_failed'; message: string }>();
+	const exportingState = ref(false);
+	const exportFailureState = ref<RequestFailure>();
 	let listGeneration = 0;
 	let filterTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -58,6 +83,10 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 	});
 	const preview = ref<ShipmentArrangementPreviewResponse>();
 	const applyResult = ref<ShipmentArrangementApplyResponse>();
+	const importingState = ref(false);
+	const importFailureState = ref<{ kind: 'unsupported_workbook' } | RequestFailure>();
+	const applyingState = ref(false);
+	const applyFailureState = ref<RequestFailure | ApplyRejection>();
 
 	const toQuery = (paginate: boolean): ShipmentArrangementQuery => ({
 		...(paginate ? { $top: pageSizeState.value, $skip: (pageState.value - 1) * pageSizeState.value } : {}),
@@ -183,8 +212,14 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		activeShippingMethodsState.value = [];
 		optionsLoadingState.value = false;
 		optionsFailureState.value = undefined;
+		exportingState.value = false;
+		exportFailureState.value = undefined;
 		preview.value = undefined;
 		applyResult.value = undefined;
+		importingState.value = false;
+		importFailureState.value = undefined;
+		applyingState.value = false;
+		applyFailureState.value = undefined;
 		listFailureState.value = undefined;
 	}
 
@@ -192,40 +227,99 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		await refreshPending();
 	}
 
-	async function exportPending(): Promise<void> {
-		const blob = await useNuxtApp().$api.fulfillment.downloadShipmentArrangement(toQuery(false));
-		const url = URL.createObjectURL(blob);
-		const anchor = document.createElement('a');
-		anchor.href = url;
-		anchor.download = `shipment-arrangement-${new Date().toISOString().slice(0, 10)}.xlsx`;
-		anchor.click();
-		URL.revokeObjectURL(url);
-	}
-
-	async function previewFile(file: File): Promise<void> {
-		preview.value = await useNuxtApp().$api.fulfillment.previewShipmentArrangement(file);
-		applyResult.value = undefined;
-	}
-
-	async function applyPreview(): Promise<void> {
-		if (!preview.value) return;
-		const eligible = preview.value.rows.filter((row) => row.status !== 'error').map(toApplyRow);
-		const merchantId = useCookie(KEY.X_MERCHANT_ID).value;
-		applyResult.value = await useNuxtApp().$api.fulfillment.applyShipmentArrangement({
-			merchant_id: String(merchantId ?? ''),
-			rows: eligible,
-		});
-		await fetchPending();
-		const lastPage = Math.max(1, Math.ceil(totalState.value / pageSizeState.value));
-		if (pageState.value > lastPage) {
-			pageState.value = lastPage;
-			await fetchPending();
+	async function exportPending(): Promise<ShipmentArrangementExportOutcome> {
+		exportingState.value = true;
+		exportFailureState.value = undefined;
+		let objectUrl: string | undefined;
+		try {
+			const blob = await useNuxtApp().$api.fulfillment.downloadShipmentArrangement(toQuery(false));
+			objectUrl = URL.createObjectURL(blob);
+			const anchor = document.createElement('a');
+			anchor.href = objectUrl;
+			anchor.download = `shipment-arrangement-${new Date().toISOString().slice(0, 10)}.xlsx`;
+			anchor.click();
+			return { status: 'completed' };
+		} catch (error) {
+			const failure = { kind: 'request_failed' as const, message: error instanceof Error ? error.message : String(error) };
+			exportFailureState.value = failure;
+			return { status: 'failed', failure };
+		} finally {
+			if (objectUrl) URL.revokeObjectURL(objectUrl);
+			exportingState.value = false;
 		}
 	}
 
-	function resetPreview(): void {
+	async function previewWorkbook(file: File): Promise<ShipmentArrangementPreviewOutcome> {
+		dismissImport();
+		if (!/\.(xlsx|numbers)$/i.test(file.name)) {
+			const failure = { kind: 'unsupported_workbook' as const };
+			importFailureState.value = failure;
+			return { status: 'rejected', failure };
+		}
+		importingState.value = true;
+		try {
+			const response = await useNuxtApp().$api.fulfillment.previewShipmentArrangement(file);
+			preview.value = response;
+			return { status: 'completed', preview: response };
+		} catch (error) {
+			const failure = { kind: 'request_failed' as const, message: error instanceof Error ? error.message : String(error) };
+			importFailureState.value = failure;
+			return { status: 'failed', failure };
+		} finally {
+			importingState.value = false;
+		}
+	}
+
+	async function previewFile(file: File): Promise<void> {
+		await previewWorkbook(file);
+	}
+
+	async function applyPreview(): Promise<ShipmentArrangementApplyOutcome> {
+		applyFailureState.value = undefined;
+		if (!preview.value) {
+			const failure = { kind: 'missing_preview' as const };
+			applyFailureState.value = failure;
+			return { status: 'rejected', failure };
+		}
+		const eligible = preview.value.rows.filter((row) => row.status !== 'error').map(toApplyRow);
+		if (eligible.length === 0) {
+			const failure = { kind: 'no_eligible_rows' as const };
+			applyFailureState.value = failure;
+			return { status: 'rejected', failure };
+		}
+		const merchantId = useCookie(KEY.X_MERCHANT_ID).value;
+		applyingState.value = true;
+		try {
+			const result = await useNuxtApp().$api.fulfillment.applyShipmentArrangement({
+				merchant_id: String(merchantId ?? ''),
+				rows: eligible,
+			});
+			applyResult.value = result;
+			await refreshPending();
+			const lastPage = Math.max(1, Math.ceil(totalState.value / pageSizeState.value));
+			if (pageState.value > lastPage) {
+				pageState.value = lastPage;
+				await refreshPending();
+			}
+			return { status: 'completed', result };
+		} catch (error) {
+			const failure = { kind: 'request_failed' as const, message: error instanceof Error ? error.message : String(error) };
+			applyFailureState.value = failure;
+			return { status: 'failed', failure };
+		} finally {
+			applyingState.value = false;
+		}
+	}
+
+	function dismissImport(): void {
 		preview.value = undefined;
 		applyResult.value = undefined;
+		importFailureState.value = undefined;
+		applyFailureState.value = undefined;
+	}
+
+	function resetPreview(): void {
+		dismissImport();
 	}
 
 	return {
@@ -237,8 +331,15 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		activeShippingMethods: activeShippingMethodsState,
 		optionsLoading: optionsLoadingState,
 		optionsFailure: optionsFailureState,
+		listFailure: listFailureState,
+		exporting: exportingState,
+		exportFailure: exportFailureState,
 		preview,
 		applyResult,
+		importing: importingState,
+		importFailure: importFailureState,
+		applying: applyingState,
+		applyFailure: applyFailureState,
 		loading: loadingState,
 		fetchPending,
 		refreshPending,
@@ -252,8 +353,10 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		dispose,
 		$reset,
 		exportPending,
+		previewWorkbook,
 		previewFile,
 		applyPreview,
+		dismissImport,
 		resetPreview,
 	};
 });

@@ -126,6 +126,87 @@ describe('useShipmentArrangementStore', () => {
 		};
 	});
 
+	it('rejects unsupported workbooks before transport and accepts uppercase XLSX', async () => {
+		const store = useShipmentArrangementStore();
+		expect(await store.previewWorkbook(new File(['csv'], 'shipments.csv'))).toEqual({
+			status: 'rejected', failure: { kind: 'unsupported_workbook' },
+		});
+		expect(previewShipmentArrangement).not.toHaveBeenCalled();
+		previewShipmentArrangement.mockResolvedValue(previewResponse);
+		expect(await store.previewWorkbook(new File(['xlsx'], 'SHIPMENTS.XLSX'))).toEqual({
+			status: 'completed', preview: previewResponse,
+		});
+	});
+
+	it('dismissImport clears the complete workbook session', async () => {
+		previewShipmentArrangement.mockResolvedValue(previewResponse);
+		applyShipmentArrangement.mockResolvedValue({ total: 2, updated: 2, failed: 0, errors: [] });
+		const store = useShipmentArrangementStore();
+		await store.previewWorkbook(new File(['xlsx'], 'shipments.xlsx'));
+		await store.applyPreview();
+		store.dismissImport();
+		expect(store.preview).toBeUndefined();
+		expect(store.applyResult).toBeUndefined();
+		expect(store.importFailure).toBeUndefined();
+		expect(store.applyFailure).toBeUndefined();
+	});
+
+	it('rejects apply without a preview or eligible rows', async () => {
+		const store = useShipmentArrangementStore();
+		expect(await store.applyPreview()).toEqual({ status: 'rejected', failure: { kind: 'missing_preview' } });
+		previewShipmentArrangement.mockResolvedValue({
+			...previewResponse,
+			valid: 0,
+			warnings: 0,
+			errors: 1,
+			rows: [previewResponse.rows[2]!],
+		});
+		await store.previewWorkbook(new File(['xlsx'], 'shipments.xlsx'));
+		expect(await store.applyPreview()).toEqual({ status: 'rejected', failure: { kind: 'no_eligible_rows' } });
+	});
+
+	it('stores partial apply results and clamps the refreshed page', async () => {
+		previewShipmentArrangement.mockResolvedValue(previewResponse);
+		const partialApplyResponse = { total: 2, updated: 1, failed: 1, errors: [applyError] };
+		applyShipmentArrangement.mockResolvedValue(partialApplyResponse);
+		const store = useShipmentArrangementStore();
+		await store.setPageSize(2);
+		await store.setPage(3);
+		getShipmentArrangement.mockClear();
+		getShipmentArrangement
+			.mockResolvedValueOnce({ data: [], total: 4 })
+			.mockResolvedValueOnce({ data: previewResponse.rows.slice(0, 2), total: 4 });
+		await store.previewWorkbook(new File(['xlsx'], 'shipments.xlsx'));
+		const outcome = await store.applyPreview();
+		expect(outcome).toEqual({ status: 'completed', result: partialApplyResponse });
+		expect(store.page).toBe(2);
+		expect(getShipmentArrangement).toHaveBeenCalledTimes(2);
+		expect(applyShipmentArrangement.mock.calls[0]?.[0].rows).toEqual(
+			previewResponse.rows.filter(row => row.status !== 'error').map(row => ({
+				fulfillment_id: row.fulfillment_id,
+				source_updated_at: row.source_updated_at,
+				order_no: row.order_no,
+				batch_no: row.batch_no,
+				courier: row.courier,
+				tracking_no: row.tracking_no,
+			})),
+		);
+	});
+
+	it('keeps a completed apply result when the post-apply list refresh fails', async () => {
+		previewShipmentArrangement.mockResolvedValue(previewResponse);
+		const result = { total: 2, updated: 2, failed: 0, errors: [] };
+		applyShipmentArrangement.mockResolvedValue(result);
+		getShipmentArrangement.mockRejectedValue(new Error('List refresh failed'));
+		const store = useShipmentArrangementStore();
+		await store.previewWorkbook(new File(['xlsx'], 'shipments.xlsx'));
+
+		expect(await store.applyPreview()).toEqual({ status: 'completed', result });
+		expect(store.applyResult).toEqual(result);
+		expect(store.listFailure).toEqual({ kind: 'request_failed', message: 'List refresh failed' });
+		expect(store.applyFailure).toBeUndefined();
+	});
+
 	it('previews multipart files and applies only valid/warning rows', async () => {
 		previewShipmentArrangement.mockResolvedValue(previewResponse);
 		applyShipmentArrangement.mockResolvedValue({ total: 2, updated: 1, failed: 1, errors: [applyError] });
@@ -191,6 +272,19 @@ describe('useShipmentArrangementStore', () => {
 		expect(createObjectURL).toHaveBeenCalledWith(blob);
 		expect(click).toHaveBeenCalledTimes(1);
 		expect(revokeObjectURL).toHaveBeenCalledWith('blob:shipment-arrangement');
+	});
+
+	it('always revokes an export object URL', async () => {
+		downloadShipmentArrangement.mockResolvedValue(new Blob(['xlsx']));
+		click.mockImplementationOnce(() => { throw new Error('Download blocked'); });
+		const store = useShipmentArrangementStore();
+		const outcome = await store.exportPending();
+		expect(outcome).toEqual({
+			status: 'failed',
+			failure: { kind: 'request_failed', message: 'Download blocked' },
+		});
+		expect(revokeObjectURL).toHaveBeenCalledWith('blob:shipment-arrangement');
+		expect(store.exporting).toBe(false);
 	});
 
 	it('fetches the current page with shipping method and date filters', async () => {
