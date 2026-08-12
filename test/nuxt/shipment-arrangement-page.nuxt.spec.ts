@@ -3,6 +3,7 @@ import { mountSuspended } from '@nuxt/test-utils/runtime';
 import { flushPromises } from '@vue/test-utils';
 import ShipmentArrangementPage from '~/pages/orders/shipment-arrangement.vue';
 import { useShipmentArrangementStore } from '~/stores/ShipmentArrangement/ShipmentArrangement';
+import type { ShipmentArrangementFilters } from '~/stores/ShipmentArrangement/ShipmentArrangement';
 import { useShippingMethodStore } from '~/stores/ShippingMethod/ShippingMethod';
 import { useAppUiStore } from '~/stores/AppUi/AppUi';
 import type { ShipmentArrangementListRow } from '~/utils/types/shipment-arrangement';
@@ -57,11 +58,14 @@ describe('ShipmentArrangementPage', () => {
 		const store = useShipmentArrangementStore();
 		const setShippingMethod = vi.spyOn(store, 'setShippingMethod');
 		const setDateRange = vi.spyOn(store, 'setDateRange');
-		const setPage = vi.spyOn(store, 'setPage').mockResolvedValue({ status: 'completed' });
-		const setPageSize = vi.spyOn(store, 'setPageSize').mockResolvedValue({ status: 'completed' });
-		const clearFilters = vi.spyOn(store, 'clearFilters').mockResolvedValue({ status: 'completed' });
+		const setPage = vi.spyOn(store, 'setPage').mockResolvedValue();
+		const setPageSize = vi.spyOn(store, 'setPageSize').mockResolvedValue();
+		const clearFilters = vi.spyOn(store, 'clearFilters').mockResolvedValue();
 		const exportPending = vi.spyOn(store, 'exportPending').mockResolvedValue({ status: 'completed' });
-		const dateRange = { start: new Date('2026-07-01'), end: new Date('2026-07-18') };
+		const dateRange: ShipmentArrangementFilters['dateRange'] = {
+			start: new Date('2026-07-01'),
+			end: new Date('2026-07-18'),
+		};
 		const wrapper = await mountPage();
 
 		wrapper.findComponent({ name: 'USelectMenu' }).vm.$emit('update:modelValue', 7);
@@ -203,6 +207,21 @@ describe('ShipmentArrangementPage', () => {
 
 		expect(applyPreview).toHaveBeenCalledTimes(1);
 		expect(useAppUiStore().toastNotification).toMatchObject({ color: 'error', description: '1 shipments updated; 1 failed' });
+		wrapper.unmount();
+	});
+
+	it.each([
+		[{ kind: 'missing_preview' } as const, 'Workbook could not be previewed'],
+		[{ kind: 'no_eligible_rows' } as const, 'Shipment updates could not be applied'],
+	])('presents the rejected apply outcome for %s', async (failure, description) => {
+		const store = useShipmentArrangementStore();
+		vi.spyOn(store, 'applyPreview').mockResolvedValue({ status: 'rejected', failure });
+		const wrapper = await mountPage();
+
+		wrapper.findComponent({ name: 'ShipmentArrangementImportPreviewModal' }).vm.$emit('apply');
+		await flushPromises();
+
+		expect(useAppUiStore().toastNotification).toMatchObject({ color: 'error', description });
 		wrapper.unmount();
 	});
 

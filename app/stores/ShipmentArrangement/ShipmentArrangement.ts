@@ -21,6 +21,12 @@ export type ShipmentArrangementFailure =
 	| { kind: 'no_eligible_rows' }
 	| { kind: 'request_failed'; message: string };
 
+export type ShipmentArrangementFilters = {
+	search: string;
+	shippingMethodId: number | undefined;
+	dateRange: Range;
+};
+
 type RequestFailure = Extract<ShipmentArrangementFailure, { kind: 'request_failed' }>;
 type ApplyRejection = Extract<ShipmentArrangementFailure, { kind: 'missing_preview' | 'no_eligible_rows' }>;
 
@@ -59,9 +65,10 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 	const exportingState = ref(false);
 	const exportFailureState = ref<RequestFailure>();
 	let listGeneration = 0;
+	let workbookGeneration = 0;
 	let filterTimer: ReturnType<typeof setTimeout> | null = null;
 
-	const filters = computed(() => ({
+	const filters = computed<ShipmentArrangementFilters>(() => ({
 		search: searchState.value,
 		shippingMethodId: shippingMethodIdState.value,
 		dateRange: { ...dateRangeState.value },
@@ -98,32 +105,37 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		filterTimer = null;
 	}
 
-	async function requestPending(generation: number): Promise<ShipmentArrangementRefreshOutcome> {
+	async function requestPending(
+		listRequestGeneration: number,
+		workbookRequestGeneration?: number,
+	): Promise<ShipmentArrangementRefreshOutcome> {
+		const isCurrent = () => listRequestGeneration === listGeneration
+			&& (workbookRequestGeneration === undefined || workbookRequestGeneration === workbookGeneration);
 		loadingState.value = true;
 		listFailureState.value = undefined;
 		try {
 			const response = await useNuxtApp().$api.fulfillment.getShipmentArrangement(toQuery(true));
-			if (generation !== listGeneration) return { status: 'stale' };
+			if (!isCurrent()) return { status: 'stale' };
 			rowsState.value = response.data;
 			totalState.value = response.total;
 			return { status: 'completed' };
 		} catch (error) {
-			if (generation !== listGeneration) return { status: 'stale' };
+			if (!isCurrent()) return { status: 'stale' };
 			const failure = { kind: 'request_failed' as const, message: error instanceof Error ? error.message : String(error) };
 			listFailureState.value = failure;
 			return { status: 'failed', failure };
 		} finally {
-			if (generation === listGeneration) loadingState.value = false;
+			if (listRequestGeneration === listGeneration) loadingState.value = false;
 		}
 	}
 
 	function scheduleFilterRefresh(): void {
 		cancelFilterRefresh();
 		pageState.value = 1;
-		const generation = ++listGeneration;
+		const listRequestGeneration = ++listGeneration;
 		filterTimer = setTimeout(() => {
 			filterTimer = null;
-			void requestPending(generation);
+			void requestPending(listRequestGeneration);
 		}, SHIPMENT_ARRANGEMENT_FILTER_DEBOUNCE_MS);
 	}
 
@@ -147,6 +159,11 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		return requestPending(++listGeneration);
 	}
 
+	async function refreshPendingForWorkbook(workbookSessionGeneration: number): Promise<ShipmentArrangementRefreshOutcome> {
+		cancelFilterRefresh();
+		return requestPending(++listGeneration, workbookSessionGeneration);
+	}
+
 	async function loadActiveShippingMethods(): Promise<void> {
 		optionsLoadingState.value = true;
 		optionsFailureState.value = undefined;
@@ -163,23 +180,23 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		await Promise.all([refreshPending(), loadActiveShippingMethods()]);
 	}
 
-	async function setPage(page: number): Promise<ShipmentArrangementRefreshOutcome> {
+	async function setPage(page: number): Promise<void> {
 		pageState.value = page;
-		return refreshPending();
+		await refreshPending();
 	}
 
-	async function setPageSize(pageSize: number): Promise<ShipmentArrangementRefreshOutcome> {
+	async function setPageSize(pageSize: number): Promise<void> {
 		pageSizeState.value = pageSize;
 		pageState.value = 1;
-		return refreshPending();
+		await refreshPending();
 	}
 
-	async function clearFilters(): Promise<ShipmentArrangementRefreshOutcome> {
+	async function clearFilters(): Promise<void> {
 		searchState.value = '';
 		shippingMethodIdState.value = undefined;
 		dateRangeState.value = { start: undefined, end: undefined };
 		pageState.value = 1;
-		return refreshPending();
+		await refreshPending();
 	}
 
 	function dispose(): void {
@@ -190,6 +207,7 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 
 	function $reset(): void {
 		dispose();
+		workbookGeneration++;
 		searchState.value = '';
 		shippingMethodIdState.value = undefined;
 		dateRangeState.value = { start: undefined, end: undefined };
@@ -235,6 +253,7 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 
 	async function previewWorkbook(file: File): Promise<ShipmentArrangementPreviewOutcome> {
 		dismissImport();
+		const workbookSessionGeneration = workbookGeneration;
 		if (!/\.(xlsx|numbers)$/i.test(file.name)) {
 			const failure = { kind: 'unsupported_workbook' as const };
 			importFailureState.value = failure;
@@ -243,14 +262,14 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 		importingState.value = true;
 		try {
 			const response = await useNuxtApp().$api.fulfillment.previewShipmentArrangement(file);
-			previewState.value = response;
+			if (workbookSessionGeneration === workbookGeneration) previewState.value = response;
 			return { status: 'completed', preview: response };
 		} catch (error) {
 			const failure = { kind: 'request_failed' as const, message: error instanceof Error ? error.message : String(error) };
-			importFailureState.value = failure;
+			if (workbookSessionGeneration === workbookGeneration) importFailureState.value = failure;
 			return { status: 'failed', failure };
 		} finally {
-			importingState.value = false;
+			if (workbookSessionGeneration === workbookGeneration) importingState.value = false;
 		}
 	}
 
@@ -267,6 +286,7 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 			applyFailureState.value = failure;
 			return { status: 'rejected', failure };
 		}
+		const workbookSessionGeneration = workbookGeneration;
 		const merchantId = useCookie(KEY.X_MERCHANT_ID).value;
 		applyingState.value = true;
 		try {
@@ -274,28 +294,35 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 				merchant_id: String(merchantId ?? ''),
 				rows: eligible,
 			});
+			if (workbookSessionGeneration !== workbookGeneration) return { status: 'completed', result };
 			applyResultState.value = result;
-			await refreshPending();
+			const refreshOutcome = await refreshPendingForWorkbook(workbookSessionGeneration);
+			if (refreshOutcome.status !== 'completed' || workbookSessionGeneration !== workbookGeneration) {
+				return { status: 'completed', result };
+			}
 			const lastPage = Math.max(1, Math.ceil(totalState.value / pageSizeState.value));
 			if (pageState.value > lastPage) {
 				pageState.value = lastPage;
-				await refreshPending();
+				await refreshPendingForWorkbook(workbookSessionGeneration);
 			}
 			return { status: 'completed', result };
 		} catch (error) {
 			const failure = { kind: 'request_failed' as const, message: error instanceof Error ? error.message : String(error) };
-			applyFailureState.value = failure;
+			if (workbookSessionGeneration === workbookGeneration) applyFailureState.value = failure;
 			return { status: 'failed', failure };
 		} finally {
-			applyingState.value = false;
+			if (workbookSessionGeneration === workbookGeneration) applyingState.value = false;
 		}
 	}
 
 	function dismissImport(): void {
+		workbookGeneration++;
 		previewState.value = undefined;
 		applyResultState.value = undefined;
 		importFailureState.value = undefined;
 		applyFailureState.value = undefined;
+		importingState.value = false;
+		applyingState.value = false;
 	}
 
 	return {

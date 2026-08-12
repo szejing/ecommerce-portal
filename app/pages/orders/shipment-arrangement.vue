@@ -196,6 +196,10 @@ const applyPreview = async (): Promise<void> => {
 	const outcome = await store.applyPreview();
 	if (outcome.status === 'failed') {
 		failedNotification(outcome.failure.message);
+	} else if (outcome.status === 'rejected') {
+		failedNotification(t(outcome.failure.kind === 'missing_preview'
+			? 'shipmentArrangement.states.uploadErrorTitle'
+			: 'shipmentArrangement.preview.failedTitle'));
 	} else if (outcome.status === 'completed' && outcome.result.failed > 0) {
 		failedNotification(t('shipmentArrangement.notifications.partial', { updated: outcome.result.updated, failed: outcome.result.failed }));
 	} else if (outcome.status === 'completed') {

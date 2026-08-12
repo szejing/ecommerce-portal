@@ -151,6 +151,90 @@ describe('useShipmentArrangementStore', () => {
 		expect(store.applyFailure).toBeUndefined();
 	});
 
+	it('does not accept a failed apply after the workbook session is dismissed', async () => {
+		const pendingApply = deferred<never>();
+		previewShipmentArrangement.mockResolvedValue(previewResponse);
+		applyShipmentArrangement.mockReturnValueOnce(pendingApply.promise);
+		const store = useShipmentArrangementStore();
+		await store.previewWorkbook(new File(['xlsx'], 'shipments.xlsx'));
+
+		const apply = store.applyPreview();
+		store.dismissImport();
+		pendingApply.reject(new Error('Late apply failure'));
+
+		expect(await apply).toEqual({
+			status: 'failed',
+			failure: { kind: 'request_failed', message: 'Late apply failure' },
+		});
+		expect(store.preview).toBeUndefined();
+		expect(store.applyResult).toBeUndefined();
+		expect(store.applyFailure).toBeUndefined();
+		expect(store.applying).toBe(false);
+		expect(getShipmentArrangement).not.toHaveBeenCalled();
+	});
+
+	it('does not accept a preview response after the workbook session is dismissed', async () => {
+		const pendingPreview = deferred<ShipmentArrangementPreviewResponse>();
+		previewShipmentArrangement.mockReturnValueOnce(pendingPreview.promise);
+		const store = useShipmentArrangementStore();
+		const preview = store.previewWorkbook(new File(['xlsx'], 'shipments.xlsx'));
+
+		store.dismissImport();
+		pendingPreview.resolve(previewResponse);
+		await preview;
+
+		expect(store.preview).toBeUndefined();
+		expect(store.importFailure).toBeUndefined();
+		expect(store.importing).toBe(false);
+	});
+
+	it('does not let an older apply populate or refresh a newer workbook session', async () => {
+		const pendingApply = deferred<{ total: number; updated: number; failed: number; errors: [] }>();
+		const newerPreview = {
+			...previewResponse,
+			total: 1,
+			valid: 1,
+			warnings: 0,
+			errors: 0,
+			rows: [previewResponse.rows[1]!],
+		};
+		previewShipmentArrangement.mockResolvedValueOnce(previewResponse).mockResolvedValueOnce(newerPreview);
+		applyShipmentArrangement.mockReturnValueOnce(pendingApply.promise);
+		const store = useShipmentArrangementStore();
+		await store.previewWorkbook(new File(['old'], 'old.xlsx'));
+		const oldApply = store.applyPreview();
+
+		await store.previewWorkbook(new File(['new'], 'new.xlsx'));
+		pendingApply.resolve({ total: 2, updated: 2, failed: 0, errors: [] });
+		await oldApply;
+
+		expect(store.preview).toEqual(newerPreview);
+		expect(store.applyResult).toBeUndefined();
+		expect(store.applyFailure).toBeUndefined();
+		expect(store.applying).toBe(false);
+		expect(getShipmentArrangement).not.toHaveBeenCalled();
+	});
+
+	it('does not accept an apply-owned list refresh after dismissal', async () => {
+		const pendingRefresh = deferred<ShipmentArrangementListResponse>();
+		previewShipmentArrangement.mockResolvedValue(previewResponse);
+		applyShipmentArrangement.mockResolvedValue({ total: 2, updated: 2, failed: 0, errors: [] });
+		getShipmentArrangement.mockReturnValueOnce(pendingRefresh.promise);
+		const store = useShipmentArrangementStore();
+		await store.previewWorkbook(new File(['xlsx'], 'shipments.xlsx'));
+		const apply = store.applyPreview();
+		await vi.waitFor(() => expect(getShipmentArrangement).toHaveBeenCalledTimes(1));
+
+		store.dismissImport();
+		pendingRefresh.resolve({ data: [previewResponse.rows[0]!], total: 1 });
+		await apply;
+
+		expect(store.rows).toEqual([]);
+		expect(store.total).toBe(0);
+		expect(store.applyResult).toBeUndefined();
+		expect(getShipmentArrangement).toHaveBeenCalledTimes(1);
+	});
+
 	it('rejects apply without a preview or eligible rows', async () => {
 		const store = useShipmentArrangementStore();
 		expect(await store.applyPreview()).toEqual({ status: 'rejected', failure: { kind: 'missing_preview' } });
@@ -197,14 +281,18 @@ describe('useShipmentArrangementStore', () => {
 		previewShipmentArrangement.mockResolvedValue(previewResponse);
 		const result = { total: 2, updated: 2, failed: 0, errors: [] };
 		applyShipmentArrangement.mockResolvedValue(result);
-		getShipmentArrangement.mockRejectedValue(new Error('List refresh failed'));
 		const store = useShipmentArrangementStore();
+		await store.setPage(3);
 		await store.previewWorkbook(new File(['xlsx'], 'shipments.xlsx'));
+		getShipmentArrangement.mockClear();
+		getShipmentArrangement.mockRejectedValue(new Error('List refresh failed'));
 
 		expect(await store.applyPreview()).toEqual({ status: 'completed', result });
 		expect(store.applyResult).toEqual(result);
 		expect(store.listFailure).toEqual({ kind: 'request_failed', message: 'List refresh failed' });
 		expect(store.applyFailure).toBeUndefined();
+		expect(store.page).toBe(3);
+		expect(getShipmentArrangement).toHaveBeenCalledTimes(1);
 	});
 
 	it('previews multipart files and applies only valid/warning rows', async () => {
@@ -258,6 +346,34 @@ describe('useShipmentArrangementStore', () => {
 		expect(getShipmentArrangement).toHaveBeenNthCalledWith(2, { $top: 2, $skip: 2 });
 		expect(store.rows).toHaveLength(2);
 		expect(store.total).toBe(4);
+	});
+
+	it('does not let an apply refresh clamp over a newer page intent', async () => {
+		const applyRefresh = deferred<ShipmentArrangementListResponse>();
+		const newerPageRefresh = deferred<ShipmentArrangementListResponse>();
+		previewShipmentArrangement.mockResolvedValue(previewResponse);
+		applyShipmentArrangement.mockResolvedValue({ total: 2, updated: 2, failed: 0, errors: [] });
+		const store = useShipmentArrangementStore();
+		await store.setPageSize(2);
+		await store.setPage(3);
+		await store.previewWorkbook(new File(['xlsx'], 'shipments.xlsx'));
+		getShipmentArrangement.mockClear();
+		getShipmentArrangement
+			.mockReturnValueOnce(applyRefresh.promise)
+			.mockReturnValueOnce(newerPageRefresh.promise);
+
+		const apply = store.applyPreview();
+		await vi.waitFor(() => expect(getShipmentArrangement).toHaveBeenCalledTimes(1));
+		const newerPage = store.setPage(4);
+		newerPageRefresh.resolve({ data: [previewResponse.rows[1]!], total: 6 });
+		await newerPage;
+		applyRefresh.resolve({ data: [], total: 2 });
+		await apply;
+
+		expect(store.page).toBe(4);
+		expect(store.rows.map(row => row.order_no)).toEqual(['WM-101']);
+		expect(store.total).toBe(6);
+		expect(getShipmentArrangement).toHaveBeenCalledTimes(2);
 	});
 
 	it('keeps date filters empty by default and exports current filters without paging', async () => {
