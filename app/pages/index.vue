@@ -26,11 +26,11 @@ const dashboardRange = ref<Range>({
 
 async function onDashboardRangeChange(range: Range) {
 	await summOrderStore.getDashboardSummary(range);
-	await orderStore.getUrgentCustomerRequests(range);
+	await orderStore.loadUrgentCustomerRequests(range);
 }
 
 onMounted(() => {
 	summOrderStore.getDashboardSummary(dashboardRange.value);
-	orderStore.getUrgentCustomerRequests(dashboardRange.value);
+	orderStore.loadUrgentCustomerRequests(dashboardRange.value);
 });
 </script>

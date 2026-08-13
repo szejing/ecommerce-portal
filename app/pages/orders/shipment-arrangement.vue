@@ -154,7 +154,12 @@ const SHIPMENT_ARRANGEMENT_COLUMN_LABELS = {
 const store = useShipmentArrangementStore();
 const { t } = useI18n();
 const fileInput = ref<HTMLInputElement>();
-const previewOpen = ref(false);
+const previewOpen = computed({
+	get: () => store.preview != null,
+	set: (open: boolean) => {
+		if (!open) store.dismissImport();
+	},
+});
 
 const columns = computed(() => getShipmentArrangementColumns(t));
 const columnOptions = computed(() => columnOptionsFromLabelMap(t, SHIPMENT_ARRANGEMENT_COLUMN_LABELS));
@@ -187,7 +192,7 @@ const onFileSelected = async (event: Event): Promise<void> => {
 	if (!file) return;
 
 	const outcome = await store.previewWorkbook(file);
-	if (outcome.status === 'completed') previewOpen.value = true;
+	if (outcome.status === 'completed') return;
 	else if (outcome.failure.kind === 'unsupported_workbook') failedNotification(t('shipmentArrangement.states.invalidFile'));
 	else failedNotification(outcome.failure.message);
 };

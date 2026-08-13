@@ -37,6 +37,7 @@ import type { z } from 'zod';
 import type { ItemModel } from '~/utils/models/item.model';
 import type { Order } from '~/utils/types/order';
 import { UpdateOrderItemValidation } from '~/utils/schema';
+import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 
 const { t } = useI18n();
 const itemSchema = computed(() => UpdateOrderItemValidation(t));
@@ -66,15 +67,17 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 	try {
 		is_loading.value = true;
 
-		await orderStore.updateItems(
-			props.order.order_no,
-			props.order.customer.customer_no,
+		const outcome = await orderStore.updateItems(
 			JSON.parse(JSON.stringify(event.data)) as ItemModel,
 			props.order.items as ItemModel[],
 		);
-		emit('update', true);
-	} catch {
-		emit('update', false);
+		if (outcome.status === 'completed') {
+			successNotification(t('orderHistory.notifications.itemUpdated'));
+			emit('update', true);
+		} else {
+			if (outcome.status === 'failed') failedNotification(outcome.failure.message);
+			emit('update', false);
+		}
 	} finally {
 		is_loading.value = false;
 	}

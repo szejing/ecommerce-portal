@@ -26,6 +26,7 @@ import type { FormSubmitEvent } from '#ui/types';
 import type { z } from 'zod';
 import type { CustomerModel } from '~/utils/models/customer.model';
 import { UpdateOrderCustomerValidation } from '~/utils/schema';
+import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 
 const { t } = useI18n();
 const customerSchema = computed(() => UpdateOrderCustomerValidation(t));
@@ -54,10 +55,14 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 	try {
 		is_loading.value = true;
 
-		await orderStore.updateCustomer(props.orderNo, JSON.parse(JSON.stringify(event.data)));
-		emit('update', true);
-	} catch {
-		emit('update', false);
+		const outcome = await orderStore.updateCustomer(JSON.parse(JSON.stringify(event.data)));
+		if (outcome.status === 'completed') {
+			successNotification(t('orderHistory.notifications.customerUpdated'));
+			emit('update', true);
+		} else {
+			if (outcome.status === 'failed') failedNotification(outcome.failure.message);
+			emit('update', false);
+		}
 	} finally {
 		is_loading.value = false;
 	}

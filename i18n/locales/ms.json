@@ -148,6 +148,34 @@
 		"dark": "Gelap",
 		"logOut": "Log keluar"
 	},
+	"orderHistory": {
+		"notifications": {
+			"exported": "Pesanan berjaya dieksport",
+			"exportFailed": "Gagal mengeksport pesanan",
+			"paymentUpdated": "Maklumat pembayaran berjaya ditambah",
+			"customerUpdated": "Pelanggan berjaya dikemas kini",
+			"itemUpdated": "Item pesanan berjaya dikemas kini",
+			"emailResent": "E-mel berjaya dihantar semula"
+		}
+	},
+	"product": {
+		"notifications": {
+			"created": "{code} - Produk dicipta",
+			"draftSaved": "{code} - Draf disimpan"
+		}
+	},
+	"summOrder": {
+		"notifications": {
+			"exported": "Ringkasan pesanan berjaya dieksport",
+			"exportFailed": "Gagal mengeksport ringkasan pesanan"
+		}
+	},
+	"summSale": {
+		"notifications": {
+			"exported": "Ringkasan jualan berjaya dieksport",
+			"exportFailed": "Gagal mengeksport ringkasan jualan"
+		}
+	},
 	"shipmentArrangement": {
 		"title": "Pengurusan Penghantaran",
 		"subtitle": "Eksport kelompok belum dihantar, isi kurier dan nombor penjejakan, kemudian semak sebelum mengemas kini.",
@@ -448,25 +476,6 @@
 		"orderAnalyticsDesc": "Jejak dan analisa prestasi pesanan",
 		"salesAnalytics": "Analitik Jualan",
 		"salesAnalyticsDesc": "Pantau trend jualan dan data hasil",
-		"googleAnalytics": {
-			"title": "Google Analytics",
-			"description": "Hantar data perjalanan kedai anda ke hartanah Google Analytics 4 anda.",
-			"manage": "Urus Google Analytics",
-			"measurementId": "ID Pengukuran GA4",
-			"measurementIdHint": "Masukkan ID Pengukuran dalam format G-XXXXXXXXXX.",
-			"invalidMeasurementId": "Masukkan ID Pengukuran GA4 yang sah dalam format G-XXXXXXXXXX.",
-			"save": "Simpan",
-			"remove": "Buang",
-			"saved": "ID Pengukuran telah disimpan.",
-			"removed": "ID Pengukuran telah dibuang.",
-			"settingMissing": "Tetapan Google Analytics tidak tersedia. Sila hubungi sokongan.",
-			"setupTitle": "Sediakan Google Analytics",
-			"setupStepOne": "Buka aliran data web GA4 anda.",
-			"setupStepTwo": "Salin ID Pengukuran.",
-			"setupStepThree": "Tampalkannya ke dalam Wemotoo.",
-			"platformAnalyticsNote": "Wemotoo masih menerima analitik platform, manakala destinasi Google Analytics anda hanya menerima perjalanan kedai anda.",
-			"securityNote": "ID Pengukuran anda bukan kata laluan atau rahsia."
-		},
 		"orderSummaryDesc": "Gambaran keseluruhan pesanan dengan metrik dan trend utama",
 		"orderItemDesc": "Perincian item dalam pesanan",
 		"orderCustomerDesc": "Sejarah pesanan pelanggan dan analisa tingkah laku",

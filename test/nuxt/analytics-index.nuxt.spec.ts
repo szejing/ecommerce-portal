@@ -3,7 +3,7 @@ import { mountSuspended } from '@nuxt/test-utils/runtime';
 import AnalyticsIndexPage from '~/pages/analytics/index.vue';
 
 describe('AnalyticsIndexPage', () => {
-	it('links to the Google Analytics configuration page', async () => {
+	it('shows order and sales analytics without a Google Analytics settings card', async () => {
 		const wrapper = await mountSuspended(AnalyticsIndexPage, {
 			global: {
 				stubs: {
@@ -12,6 +12,10 @@ describe('AnalyticsIndexPage', () => {
 			},
 		});
 
-		expect(wrapper.html()).toContain('/analytics/google-analytics');
+		const html = wrapper.html();
+		expect(html).toContain('/analytics/orders/summary');
+		expect(html).toContain('/analytics/sales/summary');
+		expect(html).not.toContain('/analytics/google-analytics');
+		expect(html).not.toContain('Manage Google Analytics');
 	});
 });

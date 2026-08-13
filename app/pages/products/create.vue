@@ -48,6 +48,7 @@
 
 <script lang="ts" setup>
 import { ICONS } from '~/utils/icons';
+import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 
 const productStore = useProductStore();
 const { adding, new_product } = storeToRefs(productStore);
@@ -66,8 +67,12 @@ useLeavePageGuard(isDirty, {
 });
 
 const saveDraft = async () => {
-	new_product.value.is_active = false;
-	await productStore.createProduct();
+	const outcome = await productStore.saveNewDraft();
+	if (outcome.status === 'completed') {
+		successNotification(t('product.notifications.draftSaved', { code: outcome.product.code }));
+		return;
+	}
+	failedNotification(outcome.failure.message);
 };
 
 const onSubmit = () => {

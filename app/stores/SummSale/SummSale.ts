@@ -1,11 +1,43 @@
+import { defineStore } from 'pinia';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
-import { getFormattedDate, type ErrorResponse } from 'yeppi-common';
+import { getFormattedDate, OrderStatus, type ErrorResponse } from 'yeppi-common';
 import { initialEmptySaleSumm } from './models/sale-summ.model';
 import { initialEmptySaleSummItem } from './models/sale-summ-items.model';
 import { initialEmptySaleSummPayment } from './models/sale-summ-payments.model';
 import { initialEmptySaleSummCustomer } from './models/sale-summ-customer.model';
 import type { Range } from '~/utils/interface';
 import type { SummDaily_, SummCustomer_, SummProduct_, TotalSaleAmt_ } from '~/repository/modules/summ-sale/models/response/get-dashboard-summ.resp';
+import { sub } from 'date-fns';
+
+export type SummSaleFailure = { kind: 'request_failed'; message: string } | { kind: 'export_empty' };
+export type SummSaleRefreshOutcome =
+	| { status: 'completed' }
+	| { status: 'stale' }
+	| { status: 'failed'; failure: Extract<SummSaleFailure, { kind: 'request_failed' }> };
+export type SummSaleExportOutcome =
+	| { status: 'completed' }
+	| { status: 'failed'; failure: SummSaleFailure };
+
+const VALID_ORDER_STATUSES = new Set(Object.values(OrderStatus));
+
+const defaultSummDateRange = (): Range => ({
+	start: sub(new Date(), { days: 14 }),
+	end: new Date(),
+});
+
+const buildSummSaleBillFilter = (filter: { status?: OrderStatus; currency_code: string; date_range: Range }): string => {
+	const clauses: string[] = [];
+	if (filter.status) clauses.push(`status eq '${filter.status}'`);
+	if (filter.currency_code) clauses.push(`currency_code eq '${filter.currency_code}'`);
+	if (filter.date_range.end) {
+		clauses.push(
+			`(biz_date between '${getFormattedDate(filter.date_range.start!, 'yyyy-MM-dd')}' and '${getFormattedDate(filter.date_range.end, 'yyyy-MM-dd')}')`,
+		);
+	} else if (filter.date_range.start) {
+		clauses.push(`biz_date le '${getFormattedDate(filter.date_range.start, 'yyyy-MM-dd')}'`);
+	}
+	return clauses.join(' and ');
+};
 
 export const useSummSaleStore = defineStore('summSaleStore', {
 	state: () => ({
@@ -15,11 +47,22 @@ export const useSummSaleStore = defineStore('summSaleStore', {
 		top_purchased_customers: [] as SummCustomer_[],
 		top_purchased_products: [] as SummProduct_[],
 		total_sale_amt: [] as TotalSaleAmt_[],
-		sale_summ: initialEmptySaleSumm,
-		sale_summ_items: initialEmptySaleSummItem,
-		sale_summ_payments: initialEmptySaleSummPayment,
-		sale_summ_customer: initialEmptySaleSummCustomer,
+		sale_summ: structuredClone(initialEmptySaleSumm),
+		sale_summ_items: structuredClone(initialEmptySaleSummItem),
+		sale_summ_payments: structuredClone(initialEmptySaleSummPayment),
+		sale_summ_customer: structuredClone(initialEmptySaleSummCustomer),
+		listFailure: undefined as Extract<SummSaleFailure, { kind: 'request_failed' }> | undefined,
+		listingGeneration: 0 as number,
 	}),
+	getters: {
+		filters: (state) => ({
+			dateRange: { ...state.sale_summ.filter.date_range },
+			status: state.sale_summ.filter.status,
+			currencyCode: state.sale_summ.filter.currency_code,
+			page: state.sale_summ.current_page,
+			pageSize: state.sale_summ.page_size,
+		}),
+	},
 	actions: {
 		async getDashboardSummary(range?: Range) {
 			this.loading = true;
@@ -66,125 +109,119 @@ export const useSummSaleStore = defineStore('summSaleStore', {
 			}
 		},
 
-		async updateSaleSummPageSize(size: number) {
-			this.sale_summ.page_size = size;
-
-			if (this.sale_summ.page_size > this.sale_summ.total_data) {
-				this.sale_summ.current_page = 1;
-				return;
+		hydrateFromQuery(query: Record<string, unknown>) {
+			const start = typeof query.start_date === 'string' ? new Date(query.start_date) : undefined;
+			const end = typeof query.end_date === 'string' ? new Date(query.end_date) : undefined;
+			if (start && !Number.isNaN(start.getTime())) this.sale_summ.filter.date_range.start = start;
+			if (end && !Number.isNaN(end.getTime())) this.sale_summ.filter.date_range.end = end;
+			if (typeof query.status === 'string' && VALID_ORDER_STATUSES.has(query.status as OrderStatus)) {
+				this.sale_summ.filter.status = query.status as OrderStatus;
 			}
+		},
 
-			this.getSaleSummary();
+		async setDateRange(range: Range): Promise<SummSaleRefreshOutcome> {
+			this.sale_summ.filter.date_range = {
+				start: range.start ? new Date(range.start) : new Date(),
+				end: range.end ? new Date(range.end) : undefined,
+			};
+			this.sale_summ.current_page = 1;
+			return this.refreshListing();
+		},
+
+		async setStatus(status: OrderStatus | undefined): Promise<SummSaleRefreshOutcome> {
+			this.sale_summ.filter.status = status;
+			this.sale_summ.current_page = 1;
+			return this.refreshListing();
+		},
+
+		async setPage(page: number): Promise<SummSaleRefreshOutcome> {
+			this.sale_summ.current_page = page;
+			return this.refreshListing();
+		},
+
+		async setPageSize(size: number): Promise<SummSaleRefreshOutcome> {
+			this.sale_summ.page_size = size;
+			this.sale_summ.current_page = 1;
+			return this.refreshListing();
+		},
+
+		async clearFilters(): Promise<SummSaleRefreshOutcome> {
+			this.sale_summ.filter.date_range = defaultSummDateRange();
+			this.sale_summ.filter.status = undefined;
+			this.sale_summ.filter.currency_code = 'MYR';
+			this.sale_summ.current_page = 1;
+			return this.refreshListing();
+		},
+
+		async updateSaleSummPageSize(size: number) {
+			await this.setPageSize(size);
 		},
 
 		async updateSaleSummPage(page: number) {
-			this.sale_summ.current_page = page;
-
-			if (this.sale_summ.current_page < 0 || this.sale_summ.total_data === this.sale_summ.data.length) {
-				return;
-			}
-
-			this.getSaleSummary();
+			await this.setPage(page);
 		},
 
-		async getSaleSummary() {
+		async getSaleSummary(): Promise<SummSaleRefreshOutcome> {
+			return this.refreshListing();
+		},
+
+		async refreshListing(): Promise<SummSaleRefreshOutcome> {
+			const generation = ++this.listingGeneration;
 			this.sale_summ.loading = true;
+			this.listFailure = undefined;
 			const { $api } = useNuxtApp();
-
 			try {
-				let filter = '';
-
-				if (this.sale_summ.filter.status) {
-					filter = `status eq '${this.sale_summ.filter.status}'`;
-				}
-
-				if (this.sale_summ.filter.currency_code) {
-					const currencyFilter = `currency_code eq '${this.sale_summ.filter.currency_code}'`;
-					filter = filter ? `${filter} and ${currencyFilter}` : currencyFilter;
-				}
-
-				if (this.sale_summ.filter.date_range.end) {
-					const dateFilter = `(biz_date between '${getFormattedDate(this.sale_summ.filter.date_range.start!, 'yyyy-MM-dd')}' and '${
-						this.sale_summ.filter.date_range.end ? getFormattedDate(this.sale_summ.filter.date_range.end!, 'yyyy-MM-dd') : undefined
-					}')`;
-					filter = filter ? `${filter} and ${dateFilter}` : dateFilter;
-				} else {
-					const dateFilter = `biz_date le '${getFormattedDate(this.sale_summ.filter.date_range.start!, 'yyyy-MM-dd')}'`;
-					filter = filter ? `${filter} and ${dateFilter}` : dateFilter;
-				}
-
 				const { data, '@odata.count': total } = await $api.summSales.getSummSales({
-					$filter: filter,
+					$filter: buildSummSaleBillFilter(this.sale_summ.filter),
 					$orderby: 'biz_date desc,status asc',
 					$top: this.sale_summ.page_size,
 					$skip: (this.sale_summ.current_page - 1) * this.sale_summ.page_size,
 				});
-
+				if (generation !== this.listingGeneration) return { status: 'stale' };
 				if (data) {
 					this.sale_summ.data = data;
 					this.sale_summ.total_data = total ?? 0;
 				}
+				return { status: 'completed' };
 			} catch (err: unknown | ErrorResponse) {
-				const message = (err as ErrorResponse).message ?? 'Failed to load sales summary';
-				failedNotification(message);
+				if (generation !== this.listingGeneration) return { status: 'stale' };
+				const failure = { kind: 'request_failed' as const, message: (err as ErrorResponse).message ?? 'Failed to load sales summary' };
+				this.listFailure = failure;
+				return { status: 'failed', failure };
 			} finally {
-				this.sale_summ.loading = false;
+				if (generation === this.listingGeneration) this.sale_summ.loading = false;
 			}
 		},
 
-		async exportSalesSummary() {
+		async exportSalesSummary(): Promise<SummSaleExportOutcome> {
+			return this.exportSummary();
+		},
+
+		async exportSummary(): Promise<SummSaleExportOutcome> {
 			this.sale_summ.exporting = true;
 			const { $api } = useNuxtApp();
-
+			let objectUrl: string | undefined;
 			try {
-				let filter = '';
-
-				if (this.sale_summ.filter.status) {
-					filter = `status eq '${this.sale_summ.filter.status}'`;
-				}
-
-				if (this.sale_summ.filter.currency_code) {
-					const currencyFilter = `currency_code eq '${this.sale_summ.filter.currency_code}'`;
-					filter = filter ? `${filter} and ${currencyFilter}` : currencyFilter;
-				}
-
-				if (this.sale_summ.filter.date_range.end) {
-					const dateFilter = `(biz_date between '${getFormattedDate(this.sale_summ.filter.date_range.start!, 'yyyy-MM-dd')}' and '${
-						this.sale_summ.filter.date_range.end ? getFormattedDate(this.sale_summ.filter.date_range.end!, 'yyyy-MM-dd') : undefined
-					}')`;
-					filter = filter ? `${filter} and ${dateFilter}` : dateFilter;
-				} else {
-					const dateFilter = `biz_date le '${getFormattedDate(this.sale_summ.filter.date_range.start!, 'yyyy-MM-dd')}'`;
-					filter = filter ? `${filter} and ${dateFilter}` : dateFilter;
-				}
-
 				const blob = await $api.summSales.exportSalesSummary({
-					$filter: filter,
+					$filter: buildSummSaleBillFilter(this.sale_summ.filter),
 					$orderby: 'biz_date desc,status asc',
 					$top: this.sale_summ.page_size,
 					$skip: (this.sale_summ.current_page - 1) * this.sale_summ.page_size,
 				});
-
-				if (blob) {
-					const url = window.URL.createObjectURL(blob);
-					const link = document.createElement('a');
-					link.href = url;
-					link.download = `sales_summary_${getFormattedDate(new Date(), 'yyyyMMdd_HHmmss')}.csv`;
-					document.body.appendChild(link);
-					link.click();
-
-					document.body.removeChild(link);
-					window.URL.revokeObjectURL(url);
-
-					successNotification('Sales summary exported successfully');
-				} else {
-					failedNotification('Failed to export sales summary');
-				}
+				if (!blob) return { status: 'failed', failure: { kind: 'export_empty' } };
+				objectUrl = URL.createObjectURL(blob);
+				const link = document.createElement('a');
+				link.href = objectUrl;
+				link.download = `sales_summary_${getFormattedDate(new Date(), 'yyyyMMdd_HHmmss')}.csv`;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				return { status: 'completed' };
 			} catch (err: unknown | ErrorResponse) {
-				const message = (err as ErrorResponse).message ?? 'Failed to load sales summary';
-				failedNotification(message);
+				return { status: 'failed', failure: { kind: 'request_failed', message: (err as ErrorResponse).message ?? 'Failed to load sales summary' } };
 			} finally {
-				this.sale_summ.loading = false;
+				if (objectUrl) URL.revokeObjectURL(objectUrl);
+				this.sale_summ.exporting = false;
 			}
 		},
 

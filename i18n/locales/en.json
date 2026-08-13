@@ -148,6 +148,34 @@
 		"dark": "Dark",
 		"logOut": "Log out"
 	},
+	"orderHistory": {
+		"notifications": {
+			"exported": "Orders exported successfully",
+			"exportFailed": "Failed to export orders",
+			"paymentUpdated": "Payment info added successfully",
+			"customerUpdated": "Customer updated successfully",
+			"itemUpdated": "Order item updated successfully",
+			"emailResent": "Email resent successfully"
+		}
+	},
+	"product": {
+		"notifications": {
+			"created": "{code} - Product created",
+			"draftSaved": "{code} - Draft saved"
+		}
+	},
+	"summOrder": {
+		"notifications": {
+			"exported": "Order summary exported successfully",
+			"exportFailed": "Failed to export order summary"
+		}
+	},
+	"summSale": {
+		"notifications": {
+			"exported": "Sales summary exported successfully",
+			"exportFailed": "Failed to export sales summary"
+		}
+	},
 	"shipmentArrangement": {
 		"title": "Shipment Arrangement",
 		"subtitle": "Export pending batches, add courier details and tracking numbers, then review before updating.",
@@ -448,25 +476,6 @@
 		"orderAnalyticsDesc": "Track and analyze order performance",
 		"salesAnalytics": "Sales Analytics",
 		"salesAnalyticsDesc": "Monitor sales trends and revenue data",
-		"googleAnalytics": {
-			"title": "Google Analytics",
-			"description": "Send your storefront journey data to your Google Analytics 4 property.",
-			"manage": "Manage Google Analytics",
-			"measurementId": "GA4 Measurement ID",
-			"measurementIdHint": "Enter your Measurement ID in the format G-XXXXXXXXXX.",
-			"invalidMeasurementId": "Enter a valid GA4 Measurement ID in the format G-XXXXXXXXXX.",
-			"save": "Save",
-			"remove": "Remove",
-			"saved": "Measurement ID saved.",
-			"removed": "Measurement ID removed.",
-			"settingMissing": "The Google Analytics setting is unavailable. Please contact support.",
-			"setupTitle": "Set up Google Analytics",
-			"setupStepOne": "Open your GA4 web data stream.",
-			"setupStepTwo": "Copy the Measurement ID.",
-			"setupStepThree": "Paste it into Wemotoo.",
-			"platformAnalyticsNote": "Wemotoo still receives platform analytics, while your Google Analytics destination receives only your storefront journey.",
-			"securityNote": "Your Measurement ID is not a password or secret."
-		},
 		"orderSummaryDesc": "Overview of all orders with key metrics and trends",
 		"orderItemDesc": "Detailed breakdown of items in orders",
 		"orderCustomerDesc": "Customer order history and behavior analysis",

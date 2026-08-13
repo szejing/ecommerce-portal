@@ -6,14 +6,14 @@
 
 		<div class="space-y-6">
 			<ZTableToolbar
-				v-model="order_summ.page_size"
+				:model-value="order_summ.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
 				:page-size-options="options_page_size"
 				:export-enabled="true"
 				:exporting="order_summ.exporting"
 				:column-options="columnOptions"
-				@update:model-value="updatePageSize"
-				@export="orderSummStore.exportOrderSummary"
+				@update:model-value="orderSummStore.setPageSize"
+				@export="exportSummary"
 			/>
 
 			<UCard class="overflow-hidden" :ui="{ body: 'p-0 sm:p-0' }">
@@ -40,72 +40,48 @@
 			</UCard>
 
 			<div v-if="data.length > 0" class="section-pagination">
-				<UPagination v-model="current_page" :items-per-page="order_summ.page_size" :total="order_summ.total_data" @update:page="updatePage" />
+				<UPagination :page="current_page" :items-per-page="order_summ.page_size" :total="order_summ.total_data" @update:page="orderSummStore.setPage" />
 			</div>
 		</div>
 	</ZPagePanel>
 </template>
 
 <script lang="ts" setup>
-import { OrderStatus } from 'yeppi-common';
 import { options_page_size } from '~/utils/options';
 import { mapSummBillsToTableRows } from '~/utils/summ-bill-table-rows';
 import { getSummColumns, getSummColumnLabels } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import { ICONS } from '~/utils/icons';
+import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 
 const route = useRoute();
 const { t } = useI18n();
 useHead({ title: () => t('pages.orderSummaryTitle') });
 
 const orderSummStore = useSummOrderStore();
-const { order_summ } = storeToRefs(orderSummStore);
+const { order_summ, filters, listFailure } = storeToRefs(orderSummStore);
 const loading = computed(() => order_summ.value.loading);
 
-const VALID_ORDER_STATUSES = new Set(Object.values(OrderStatus));
-
-const applyQueryToFilter = () => {
-	const start = route.query.start_date;
-	const end = route.query.end_date;
-	const status = route.query.status;
-	if (typeof start === 'string' && start) {
-		const d = new Date(start);
-		if (!Number.isNaN(d.getTime())) {
-			orderSummStore.order_summ.filter.date_range.start = d;
-		}
-	}
-	if (typeof end === 'string' && end) {
-		const d = new Date(end);
-		if (!Number.isNaN(d.getTime())) {
-			orderSummStore.order_summ.filter.date_range.end = d;
-		}
-	}
-	if (typeof status === 'string' && VALID_ORDER_STATUSES.has(status as OrderStatus)) {
-		orderSummStore.order_summ.filter.status = status as OrderStatus;
-	}
-};
+watch(listFailure, (failure) => {
+	if (failure) failedNotification(failure.message);
+});
 
 onMounted(async () => {
-	applyQueryToFilter();
-	await orderSummStore.getOrderSummary();
+	orderSummStore.hydrateFromQuery(route.query);
+	await orderSummStore.refreshListing();
 });
 
 watch(
 	() => ({ start: route.query.start_date, end: route.query.end_date, status: route.query.status }),
 	() => {
-		applyQueryToFilter();
-		orderSummStore.getOrderSummary();
+		orderSummStore.hydrateFromQuery(route.query);
+		void orderSummStore.refreshListing();
 	},
 	{ deep: true },
 );
 
 const data = computed(() => order_summ.value.data);
-const current_page = computed({
-	get: () => order_summ.value.current_page,
-	set: (page: number) => {
-		order_summ.value.current_page = page;
-	},
-});
+const current_page = computed(() => order_summ.value.current_page);
 
 const orderSummColumns = computed(() => getSummColumns(t, 'total_orders'));
 const columnOptions = computed(() => columnOptionsFromLabelMap(t, getSummColumnLabels('total_orders')));
@@ -115,18 +91,15 @@ const { selectedColumnKeys, visibleColumns: visibleDailyColumns } = useTableColu
 
 const rows = computed(() =>
 	mapSummBillsToTableRows(data.value, {
-		// Status filter All (undefined) → keep one row per status for the day
-		groupByStatus: !order_summ.value.filter.status,
+		groupByStatus: !filters.value.status,
 	}),
 );
 
-const updatePage = async (page: number) => {
-	order_summ.value.current_page = page;
-	await orderSummStore.getOrderSummary();
-};
-
-const updatePageSize = async (size: number) => {
-	await orderSummStore.updateOrderSummPageSize(size);
+const exportSummary = async () => {
+	const outcome = await orderSummStore.exportSummary();
+	if (outcome.status === 'completed') successNotification(t('summOrder.notifications.exported'));
+	else if (outcome.failure.kind === 'export_empty') failedNotification(t('summOrder.notifications.exportFailed'));
+	else failedNotification(outcome.failure.message);
 };
 </script>
 

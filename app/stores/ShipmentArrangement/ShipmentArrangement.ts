@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import { KEY } from 'yeppi-common';
 import { useShippingMethodStore } from '../ShippingMethod/ShippingMethod';
 import type { Range } from '~/utils/interface/range';
 import type { ShippingMethodOption } from '~/utils/types/order-fulfillment-shipping';
@@ -287,13 +286,9 @@ export const useShipmentArrangementStore = defineStore('shipment-arrangement', (
 			return { status: 'rejected', failure };
 		}
 		const workbookSessionGeneration = workbookGeneration;
-		const merchantId = useCookie(KEY.X_MERCHANT_ID).value;
 		applyingState.value = true;
 		try {
-			const result = await useNuxtApp().$api.fulfillment.applyShipmentArrangement({
-				merchant_id: String(merchantId ?? ''),
-				rows: eligible,
-			});
+			const result = await useNuxtApp().$api.fulfillment.applyShipmentArrangement(eligible);
 			if (workbookSessionGeneration !== workbookGeneration) return { status: 'completed', result };
 			applyResultState.value = result;
 			const refreshOutcome = await refreshPendingForWorkbook(workbookSessionGeneration);

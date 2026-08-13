@@ -1,11 +1,43 @@
+import { defineStore } from 'pinia';
 import type { SummDaily, SummCustomer, SummProduct } from '~/utils/types/summ-orders';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
 import { initialEmptyOrderSumm } from './model/order-summ.model';
 import { initialEmptyOrderSummItem } from './model/order-summ-item.model';
-import { getFormattedDate, type ErrorResponse } from 'yeppi-common';
+import { getFormattedDate, OrderStatus, type ErrorResponse } from 'yeppi-common';
 import { initialEmptyOrderSummCustomer } from './model/order-summ-customer.model';
 import type { Range } from '~/utils/interface';
 import { buildSummOrderItemODataFilter } from '~/utils/summ-order-item-filter';
+import { sub } from 'date-fns';
+
+export type SummOrderFailure = { kind: 'request_failed'; message: string } | { kind: 'export_empty' };
+export type SummOrderRefreshOutcome =
+	| { status: 'completed' }
+	| { status: 'stale' }
+	| { status: 'failed'; failure: Extract<SummOrderFailure, { kind: 'request_failed' }> };
+export type SummOrderExportOutcome =
+	| { status: 'completed' }
+	| { status: 'failed'; failure: SummOrderFailure };
+
+const VALID_ORDER_STATUSES = new Set(Object.values(OrderStatus));
+
+const defaultSummDateRange = (): Range => ({
+	start: sub(new Date(), { days: 14 }),
+	end: new Date(),
+});
+
+const buildSummOrderBillFilter = (filter: { status?: OrderStatus; currency_code: string; date_range: Range }): string => {
+	const clauses: string[] = [];
+	if (filter.status) clauses.push(`status eq '${filter.status}'`);
+	if (filter.currency_code) clauses.push(`currency_code eq '${filter.currency_code}'`);
+	if (filter.date_range.end) {
+		clauses.push(
+			`(biz_date between '${getFormattedDate(filter.date_range.start!, 'yyyy-MM-dd')}' and '${getFormattedDate(filter.date_range.end, 'yyyy-MM-dd')}')`,
+		);
+	} else if (filter.date_range.start) {
+		clauses.push(`biz_date le '${getFormattedDate(filter.date_range.start, 'yyyy-MM-dd')}'`);
+	}
+	return clauses.join(' and ');
+};
 
 type TotalOrderAmt = {
 	currency_code: string;
@@ -26,10 +58,21 @@ export const useSummOrderStore = defineStore('summOrderStore', {
 		pending_payments: 0 as number,
 		pending_actions: 0 as number,
 		dashboard_date_range: null as Range | null,
-		order_summ: initialEmptyOrderSumm,
-		order_summ_item: initialEmptyOrderSummItem,
-		order_summ_customer: initialEmptyOrderSummCustomer,
+		order_summ: structuredClone(initialEmptyOrderSumm),
+		order_summ_item: structuredClone(initialEmptyOrderSummItem),
+		order_summ_customer: structuredClone(initialEmptyOrderSummCustomer),
+		listFailure: undefined as Extract<SummOrderFailure, { kind: 'request_failed' }> | undefined,
+		listingGeneration: 0 as number,
 	}),
+	getters: {
+		filters: (state) => ({
+			dateRange: { ...state.order_summ.filter.date_range },
+			status: state.order_summ.filter.status,
+			currencyCode: state.order_summ.filter.currency_code,
+			page: state.order_summ.current_page,
+			pageSize: state.order_summ.page_size,
+		}),
+	},
 	actions: {
 		async getDashboardSummary(range?: Range) {
 			this.loading = true;
@@ -71,124 +114,118 @@ export const useSummOrderStore = defineStore('summOrderStore', {
 			}
 		},
 
-		async updateOrderSummPageSize(size: number) {
-			this.order_summ.page_size = size;
-
-			if (this.order_summ.page_size > this.order_summ.total_data) {
-				this.order_summ.current_page = 1;
-				return;
+		hydrateFromQuery(query: Record<string, unknown>) {
+			const start = typeof query.start_date === 'string' ? new Date(query.start_date) : undefined;
+			const end = typeof query.end_date === 'string' ? new Date(query.end_date) : undefined;
+			if (start && !Number.isNaN(start.getTime())) this.order_summ.filter.date_range.start = start;
+			if (end && !Number.isNaN(end.getTime())) this.order_summ.filter.date_range.end = end;
+			if (typeof query.status === 'string' && VALID_ORDER_STATUSES.has(query.status as OrderStatus)) {
+				this.order_summ.filter.status = query.status as OrderStatus;
 			}
+		},
 
-			this.getOrderSummary();
+		async setDateRange(range: Range): Promise<SummOrderRefreshOutcome> {
+			this.order_summ.filter.date_range = {
+				start: range.start ? new Date(range.start) : new Date(),
+				end: range.end ? new Date(range.end) : undefined,
+			};
+			this.order_summ.current_page = 1;
+			return this.refreshListing();
+		},
+
+		async setStatus(status: OrderStatus | undefined): Promise<SummOrderRefreshOutcome> {
+			this.order_summ.filter.status = status;
+			this.order_summ.current_page = 1;
+			return this.refreshListing();
+		},
+
+		async setPage(page: number): Promise<SummOrderRefreshOutcome> {
+			this.order_summ.current_page = page;
+			return this.refreshListing();
+		},
+
+		async setPageSize(size: number): Promise<SummOrderRefreshOutcome> {
+			this.order_summ.page_size = size;
+			this.order_summ.current_page = 1;
+			return this.refreshListing();
+		},
+
+		async clearFilters(): Promise<SummOrderRefreshOutcome> {
+			this.order_summ.filter.date_range = defaultSummDateRange();
+			this.order_summ.filter.status = undefined;
+			this.order_summ.filter.currency_code = 'MYR';
+			this.order_summ.current_page = 1;
+			return this.refreshListing();
+		},
+
+		async updateOrderSummPageSize(size: number) {
+			await this.setPageSize(size);
 		},
 
 		async updateOrderSummPage(page: number) {
-			this.order_summ.current_page = page;
-
-			if (this.order_summ.current_page < 0 || this.order_summ.total_data === this.order_summ.data.length) {
-				return;
-			}
-
-			this.getOrderSummary();
+			await this.setPage(page);
 		},
 
-		async getOrderSummary() {
+		async getOrderSummary(): Promise<SummOrderRefreshOutcome> {
+			return this.refreshListing();
+		},
+
+		async refreshListing(): Promise<SummOrderRefreshOutcome> {
+			const generation = ++this.listingGeneration;
 			this.order_summ.loading = true;
+			this.listFailure = undefined;
 			const { $api } = useNuxtApp();
-
 			try {
-				let filter = '';
-
-				if (this.order_summ.filter.status) {
-					filter = `status eq '${this.order_summ.filter.status}'`;
-				}
-
-				if (this.order_summ.filter.currency_code) {
-					const currencyFilter = `currency_code eq '${this.order_summ.filter.currency_code}'`;
-					filter = filter ? `${filter} and ${currencyFilter}` : currencyFilter;
-				}
-
-				if (this.order_summ.filter.date_range.end) {
-					const dateFilter = `(biz_date between '${getFormattedDate(this.order_summ.filter.date_range.start!, 'yyyy-MM-dd')}' and '${
-						this.order_summ.filter.date_range.end ? getFormattedDate(this.order_summ.filter.date_range.end!, 'yyyy-MM-dd') : undefined
-					}')`;
-					filter = filter ? `${filter} and ${dateFilter}` : dateFilter;
-				} else {
-					const dateFilter = `biz_date le '${getFormattedDate(this.order_summ.filter.date_range.start!, 'yyyy-MM-dd')}'`;
-					filter = filter ? `${filter} and ${dateFilter}` : dateFilter;
-				}
-
 				const { data, '@odata.count': total } = await $api.summOrder.getSummOrders({
-					$filter: filter,
+					$filter: buildSummOrderBillFilter(this.order_summ.filter),
 					$orderby: 'biz_date desc,status asc',
 					$count: true,
 					$top: this.order_summ.page_size,
 					$skip: (this.order_summ.current_page - 1) * this.order_summ.page_size,
 				});
-
+				if (generation !== this.listingGeneration) return { status: 'stale' };
 				if (data) {
 					this.order_summ.data = data;
 					this.order_summ.total_data = total ?? 0;
 				}
+				return { status: 'completed' };
 			} catch (err: unknown | ErrorResponse) {
-				const message = (err as ErrorResponse).message ?? 'Failed to load order summary';
-				failedNotification(message);
+				if (generation !== this.listingGeneration) return { status: 'stale' };
+				const failure = { kind: 'request_failed' as const, message: (err as ErrorResponse).message ?? 'Failed to load order summary' };
+				this.listFailure = failure;
+				return { status: 'failed', failure };
 			} finally {
-				this.order_summ.loading = false;
+				if (generation === this.listingGeneration) this.order_summ.loading = false;
 			}
 		},
 
-		async exportOrderSummary() {
+		async exportOrderSummary(): Promise<SummOrderExportOutcome> {
+			return this.exportSummary();
+		},
+
+		async exportSummary(): Promise<SummOrderExportOutcome> {
 			this.order_summ.exporting = true;
 			const { $api } = useNuxtApp();
-
+			let objectUrl: string | undefined;
 			try {
-				let filter = '';
-
-				if (this.order_summ.filter.status) {
-					filter = `status eq '${this.order_summ.filter.status}'`;
-				}
-
-				if (this.order_summ.filter.currency_code) {
-					const currencyFilter = `currency_code eq '${this.order_summ.filter.currency_code}'`;
-					filter = filter ? `${filter} and ${currencyFilter}` : currencyFilter;
-				}
-
-				if (this.order_summ.filter.date_range.end) {
-					const dateFilter = `(biz_date between '${getFormattedDate(this.order_summ.filter.date_range.start!, 'yyyy-MM-dd')}' and '${
-						this.order_summ.filter.date_range.end ? getFormattedDate(this.order_summ.filter.date_range.end!, 'yyyy-MM-dd') : undefined
-					}')`;
-					filter = filter ? `${filter} and ${dateFilter}` : dateFilter;
-				} else {
-					const dateFilter = `biz_date le '${getFormattedDate(this.order_summ.filter.date_range.start!, 'yyyy-MM-dd')}'`;
-					filter = filter ? `${filter} and ${dateFilter}` : dateFilter;
-				}
-
 				const blob = await $api.summOrder.exportSummOrders({
-					$filter: filter,
+					$filter: buildSummOrderBillFilter(this.order_summ.filter),
 					$orderby: 'biz_date desc,status asc',
 				});
-
-				if (blob) {
-					const url = window.URL.createObjectURL(blob);
-					const link = document.createElement('a');
-					link.href = url;
-					link.download = `summ_orders_${getFormattedDate(new Date(), 'yyyyMMdd_HHmmss')}.csv`;
-					document.body.appendChild(link);
-					link.click();
-
-					document.body.removeChild(link);
-					window.URL.revokeObjectURL(url);
-
-					successNotification('Order summary exported successfully');
-				} else {
-					failedNotification('Failed to export order summary');
-				}
+				if (!blob) return { status: 'failed', failure: { kind: 'export_empty' } };
+				objectUrl = URL.createObjectURL(blob);
+				const link = document.createElement('a');
+				link.href = objectUrl;
+				link.download = `summ_orders_${getFormattedDate(new Date(), 'yyyyMMdd_HHmmss')}.csv`;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				return { status: 'completed' };
 			} catch (err: unknown | ErrorResponse) {
-				const message = (err as ErrorResponse).message ?? 'Failed to load order summary';
-				failedNotification(message);
+				return { status: 'failed', failure: { kind: 'request_failed', message: (err as ErrorResponse).message ?? 'Failed to load order summary' } };
 			} finally {
-				this.order_summ.loading = false;
+				if (objectUrl) URL.revokeObjectURL(objectUrl);
+				this.order_summ.exporting = false;
 			}
 		},
 

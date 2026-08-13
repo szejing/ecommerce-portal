@@ -6,6 +6,14 @@ import type { Range } from '~/utils/interface';
 import { addMonths, endOfMonth, startOfMonth } from 'date-fns';
 import type { Appointment } from '~/utils/types/appointment';
 
+export const APPOINTMENT_FILTER_DEBOUNCE_MS = 500;
+
+export type AppointmentFailure = { kind: 'request_failed'; message: string };
+export type AppointmentRefreshOutcome =
+	| { status: 'completed' }
+	| { status: 'stale' }
+	| { status: 'failed'; failure: AppointmentFailure };
+
 export type AppointmentView = 'listing' | 'daily' | 'weekly' | 'monthly';
 
 type AppointmentFilter = {
@@ -17,7 +25,7 @@ type AppointmentFilter = {
 	view: AppointmentView;
 };
 
-const initialEmptyAppointmentFilter: AppointmentFilter = (() => {
+const initialEmptyAppointmentFilter = (): AppointmentFilter => {
 	const now = new Date();
 	return {
 		query: '',
@@ -30,7 +38,17 @@ const initialEmptyAppointmentFilter: AppointmentFilter = (() => {
 		current_page: 1,
 		view: 'listing',
 	};
-})();
+};
+
+let appointmentFilterTimer: ReturnType<typeof setTimeout> | undefined;
+
+const appointmentStatusFilter = (status: AppointmentStatus | string): string => {
+	if (status === 'pending') return `status in ('${AppointmentStatus.PENDING}')`;
+	if (status === 'confirmed') return `status eq '${AppointmentStatus.CONFIRMED}'`;
+	if (status === 'completed') return `status eq '${AppointmentStatus.COMPLETED}'`;
+	if (status === 'cancelled') return `status in ('${AppointmentStatus.CANCELLED}', '${AppointmentStatus.VOIDED}')`;
+	return '';
+};
 
 export const useAppointmentStore = defineStore('appointmentStore', {
 	state: () => ({
@@ -40,67 +58,104 @@ export const useAppointmentStore = defineStore('appointmentStore', {
 		exporting: false as boolean,
 		appointments: [] as Appointment[],
 		errors: [] as string[],
-		filter: initialEmptyAppointmentFilter,
+		filter: initialEmptyAppointmentFilter(),
+		listFailure: undefined as AppointmentFailure | undefined,
+		listingGeneration: 0 as number,
 	}),
 	getters: {
 		isListingView: (state) => state.filter.view === 'listing',
 		isDailyView: (state) => state.filter.view === 'daily',
 		isWeeklyView: (state) => state.filter.view === 'weekly',
 		isMonthlyView: (state) => state.filter.view === 'monthly',
+		filters: (state) => ({
+			query: state.filter.query,
+			status: state.filter.status,
+			date_range: { ...state.filter.date_range },
+			page_size: state.filter.page_size,
+			current_page: state.filter.current_page,
+		}),
 	},
 	actions: {
-		async getAppointments() {
+		setSearch(search: string) {
+			this.filter.query = search;
+			this.filter.current_page = 1;
+			if (appointmentFilterTimer) clearTimeout(appointmentFilterTimer);
+			appointmentFilterTimer = setTimeout(() => {
+				appointmentFilterTimer = undefined;
+				void this.refreshListing();
+			}, APPOINTMENT_FILTER_DEBOUNCE_MS);
+		},
+
+		async setStatus(status: AppointmentStatus | string): Promise<AppointmentRefreshOutcome> {
+			this.filter.status = status;
+			this.filter.current_page = 1;
+			return this.refreshListing();
+		},
+
+		async setDateRange(range: Range): Promise<AppointmentRefreshOutcome> {
+			this.filter.date_range = { start: range.start, end: range.end };
+			this.filter.current_page = 1;
+			return this.refreshListing();
+		},
+
+		async setPage(page: number): Promise<AppointmentRefreshOutcome> {
+			this.filter.current_page = page;
+			return this.refreshListing();
+		},
+
+		async setPageSize(size: number): Promise<AppointmentRefreshOutcome> {
+			this.filter.page_size = size;
+			this.filter.current_page = 1;
+			return this.refreshListing();
+		},
+
+		async clearFilters(): Promise<AppointmentRefreshOutcome> {
+			if (appointmentFilterTimer) clearTimeout(appointmentFilterTimer);
+			appointmentFilterTimer = undefined;
+			const view = this.filter.view;
+			this.filter = initialEmptyAppointmentFilter();
+			this.filter.view = view;
+			return this.refreshListing();
+		},
+
+		async getAppointments(): Promise<AppointmentRefreshOutcome> {
+			return this.refreshListing();
+		},
+
+		async refreshListing(): Promise<AppointmentRefreshOutcome> {
+			const generation = ++this.listingGeneration;
 			this.loading = true;
+			this.listFailure = undefined;
 			const { $api } = useNuxtApp();
 			try {
-				let filter = '';
-
-				// For 'All' status, don't add any status filter - let all statuses through
-				if (this.filter.status === 'pending') {
-					filter = `status in ('${AppointmentStatus.PENDING}')`;
-				} else if (this.filter.status === 'confirmed') {
-					filter = `status eq '${AppointmentStatus.CONFIRMED}'`;
-				} else if (this.filter.status === 'completed') {
-					filter = `status eq '${AppointmentStatus.COMPLETED}'`;
-				} else if (this.filter.status === 'cancelled') {
-					filter = `status in ('${AppointmentStatus.CANCELLED}', '${AppointmentStatus.VOIDED}')`;
-				}
-
+				let filter = appointmentStatusFilter(this.filter.status);
 				let { start, end } = this.filter.date_range;
-
 				start = start ?? new Date();
 				end = end ?? new Date();
-
-				// Add date filter
 				const dateFilter = end
 					? `(start_date_time between '${getFormattedDate(start, 'yyyy-MM-dd')}' and '${getFormattedDate(end, 'yyyy-MM-dd')}')`
 					: `start_date_time le '${getFormattedDate(start, 'yyyy-MM-dd')}'`;
-
 				filter = filter ? `${filter} and ${dateFilter}` : dateFilter;
-
-				const queryParams = {
+				const queryParams: Record<string, unknown> = {
 					$top: this.filter.page_size,
 					$skip: (this.filter.current_page - 1) * this.filter.page_size,
 					$count: true,
 					$filter: filter,
 					$orderby: 'start_date_time desc',
-				} as const;
-
-				// Use backend $search support for text search
-				if (this.filter.query) {
-					(queryParams as any).$search = this.filter.query;
-				}
-
-				const { data, '@odata.count': _total } = await $api.appointment.getMany(queryParams);
-
-				if (data) {
-					this.appointments = data;
-				}
+				};
+				const search = this.filter.query.trim();
+				if (search) queryParams.$search = search;
+				const { data } = await $api.appointment.getMany(queryParams);
+				if (generation !== this.listingGeneration) return { status: 'stale' };
+				if (data) this.appointments = data;
+				return { status: 'completed' };
 			} catch (err: unknown | ErrorResponse) {
-				const message = (err as ErrorResponse).message ?? 'Failed to process appointment';
-				failedNotification(message);
+				if (generation !== this.listingGeneration) return { status: 'stale' };
+				const failure = { kind: 'request_failed' as const, message: (err as ErrorResponse).message ?? 'Failed to process appointment' };
+				this.listFailure = failure;
+				return { status: 'failed', failure };
 			} finally {
-				this.loading = false;
+				if (generation === this.listingGeneration) this.loading = false;
 			}
 		},
 
@@ -156,17 +211,7 @@ export const useAppointmentStore = defineStore('appointmentStore', {
 			this.loading = true;
 			const { $api } = useNuxtApp();
 			try {
-				let filter = '';
-				if (this.filter.status === 'pending') {
-					filter = `status in ('${AppointmentStatus.PENDING}')`;
-				} else if (this.filter.status === 'confirmed') {
-					filter = `status eq '${AppointmentStatus.CONFIRMED}'`;
-				} else if (this.filter.status === 'completed') {
-					filter = `status eq '${AppointmentStatus.COMPLETED}'`;
-				} else if (this.filter.status === 'cancelled') {
-					filter = `status in ('${AppointmentStatus.CANCELLED}', '${AppointmentStatus.VOIDED}')`;
-				}
-
+				let filter = appointmentStatusFilter(this.filter.status);
 				let { start, end } = this.filter.date_range;
 
 				start = start ?? new Date();

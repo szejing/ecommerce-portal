@@ -429,7 +429,7 @@ describe('useDocumentTemplateStore editing session', () => {
 
 		expect(store.preview).toMatchObject({ channel: 'pdf', objectUrl: 'blob:first' });
 		expect(store.previewStale).toBe(true);
-		expect(store.error).toBe('Invalid PDF preview response');
+		expect(store.error).toEqual({ code: 'preview_failed', transportMessage: 'Invalid PDF preview response' });
 	});
 
 	it('does not create a PDF URL when revocation is unavailable', async () => {
@@ -444,7 +444,7 @@ describe('useDocumentTemplateStore editing session', () => {
 
 		expect(createObjectURL).not.toHaveBeenCalled();
 		expect(store.preview).toBeNull();
-		expect(store.error).toBe('PDF previews are unavailable in this environment');
+		expect(store.error).toEqual({ code: 'preview_failed', transportMessage: 'PDF previews are unavailable in this environment' });
 	});
 
 	it('prepares an immutable publication intent and converts local dates to UTC', async () => {
@@ -499,17 +499,17 @@ describe('useDocumentTemplateStore editing session', () => {
 	});
 
 	it.each([
-		[{ startDate: new Date('invalid'), endDate: null }, 'Schedule date is invalid'],
-		[{ startDate: new Date('2026-08-02T00:00:00.000Z'), endDate: new Date('2026-08-01T00:00:00.000Z') }, 'Schedule start must be before its end'],
-		[{ startDate: null, endDate: new Date('2026-07-30T00:00:00.000Z') }, 'Schedule end must be in the future'],
-	] as const)('rejects invalid publication windows through semantic errors', async (window, message) => {
+		[{ startDate: new Date('invalid'), endDate: null }, 'schedule_invalid_date'],
+		[{ startDate: new Date('2026-08-02T00:00:00.000Z'), endDate: new Date('2026-08-01T00:00:00.000Z') }, 'schedule_end_after_start'],
+		[{ startDate: null, endDate: new Date('2026-07-30T00:00:00.000Z') }, 'schedule_end_future'],
+	] as const)('rejects invalid publication windows through semantic errors', async (window, code) => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-07-31T00:00:00.000Z'));
 		const store = await openEmail();
 		grantAdministration();
 
 		expect(store.preparePublish(window)).toEqual({ status: 'rejected' });
-		expect(store.error).toBe(message);
+		expect(store.error).toEqual({ code });
 	});
 
 	it('rejects dirty, stale, and expired publication confirmation without transport', async () => {
@@ -519,7 +519,7 @@ describe('useDocumentTemplateStore editing session', () => {
 		grantAdministration();
 		store.setConfigurationPath('content.greeting', '<p>Dirty</p>');
 		expect(store.preparePublish({ startDate: null, endDate: null })).toEqual({ status: 'rejected' });
-		expect(store.error).toBe('Save draft before publishing');
+		expect(store.error).toEqual({ code: 'save_before_publish' });
 
 		api.get.mockResolvedValue(structuredClone(baseDetail));
 		await store.openTemplate('email', 'order-confirmation');
@@ -601,8 +601,8 @@ describe('useDocumentTemplateStore editing session', () => {
 		await expect(loadingCatalog).rejects.toBeTruthy();
 
 		expect(store.loading).toBe(false);
-		expect(store.detailError).toBe('Detail unavailable');
-		expect(store.summaryError).toBe('Catalog unavailable');
+		expect(store.detailError).toEqual({ code: 'load_detail_failed', transportMessage: 'Detail unavailable' });
+		expect(store.summaryError).toEqual({ code: 'load_detail_failed', transportMessage: 'Catalog unavailable' });
 	});
 
 	it('extracts safe action and field errors without stringifying unknown objects', async () => {
@@ -619,11 +619,11 @@ describe('useDocumentTemplateStore editing session', () => {
 
 		await store.saveDraft();
 
-		expect(store.error).toBe('Nested validation failed');
+		expect(store.error).toEqual({ code: 'save_failed', transportMessage: 'Nested validation failed' });
 		expect(store.fieldErrors).toEqual({ 'content.greeting': 'Greeting is invalid' });
 		api.testSend.mockRejectedValue({ unexpected: { value: true } });
 		await store.sendTest();
-		expect(store.error).toBe('Failed to send test document template');
+		expect(store.error).toEqual({ code: 'test_send_failed' });
 	});
 
 	it('never exposes administration actions to staff', async () => {

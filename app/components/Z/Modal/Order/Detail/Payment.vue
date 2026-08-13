@@ -35,6 +35,7 @@ import type { PaymentModel } from '~/utils/models/index';
 import { getDefaultOrderPaymentAmt } from '~/utils/order-payment-amt';
 import type { OrderHistory } from '~/utils/types/order-history';
 import { UpdateOrderPaymentValidation } from '~/utils/schema';
+import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 
 const { t } = useI18n();
 const paymentSchema = computed(() => UpdateOrderPaymentValidation(t));
@@ -73,15 +74,17 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 	try {
 		is_loading.value = true;
 
-		await orderStore.updatePayments(
-			props.order.order_no,
-			props.order.customer.customer_no,
+		const outcome = await orderStore.updatePayments(
 			JSON.parse(JSON.stringify(event.data)) as PaymentModel,
 			props.order.payments as PaymentModel[],
 		);
-		emit('update', true);
-	} catch {
-		emit('update', false);
+		if (outcome.status === 'completed') {
+			successNotification(t('orderHistory.notifications.paymentUpdated'));
+			emit('update', true);
+		} else {
+			if (outcome.status === 'failed') failedNotification(outcome.failure.message);
+			emit('update', false);
+		}
 	} finally {
 		is_loading.value = false;
 	}

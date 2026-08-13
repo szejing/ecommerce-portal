@@ -22,13 +22,13 @@
 		<div class="space-y-6">
 			<!-- Table Controls -->
 			<ZTableToolbar
-				v-model="filter.page_size"
+				:model-value="filters.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
 				:page-size-options="options_page_size"
 				:export-enabled="true"
 				:exporting="exporting"
 				:column-options="columnOptions"
-				@update:model-value="updatePageSize"
+				@update:model-value="productStore.setPageSize"
 				@export="exportProducts"
 			/>
 
@@ -56,7 +56,7 @@
 			</UCard>
 
 			<div v-if="!initialize && products.length > 0" class="section-pagination">
-				<UPagination v-model="filter.current_page" :items-per-page="filter.page_size" :total="total_products" @update:page="updatePage" />
+				<UPagination :page="filters.current_page" :items-per-page="filters.page_size" :total="total_products" @update:page="productStore.setPage" />
 			</div>
 		</div>
 	</ZPagePanel>
@@ -77,6 +77,7 @@ import {
 } from '~/repository/modules/product/product';
 import { ICONS } from '~/utils/icons';
 import { productDetailPath } from '~/utils/product-route';
+import { failedNotification } from '~/stores/AppUi/AppUi';
 
 const { t } = useI18n();
 const productStore = useProductStore();
@@ -109,13 +110,17 @@ const productImportSources = computed(() => [
 	},
 ]);
 
-const { products, loading, filter, total_products, exporting, updating, importing, downloading_template } = storeToRefs(productStore);
+const { products, loading, filters, total_products, exporting, updating, importing, downloading_template, listFailure } = storeToRefs(productStore);
 const initialize = ref(true);
+
+watch(listFailure, (failure) => {
+	if (failure) failedNotification(failure.message);
+});
 
 onMounted(async () => {
 	initialize.value = true;
 	try {
-		await productStore.getProducts();
+		await productStore.refreshListing();
 	} finally {
 		initialize.value = false;
 	}
@@ -159,14 +164,6 @@ const selectProduct = async (e: Event, row: TableRow<Product>) => {
 	if (!product) return;
 
 	navigateTo(productDetailPath(product));
-};
-
-const updatePage = async (page: number) => {
-	await productStore.updatePage(page);
-};
-
-const updatePageSize = async (size: number) => {
-	await productStore.updatePageSize(size);
 };
 
 const exportProducts = async () => {

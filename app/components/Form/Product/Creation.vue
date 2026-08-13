@@ -97,7 +97,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ProductStatus } from 'yeppi-common';
 import type { CategoryInput, Category } from '~/utils/types/category';
 import type { PriceInput } from '~/utils/types/price';
 import type { ProductVariantInput } from '~/utils/types/product';
@@ -109,6 +108,7 @@ import { ICONS } from '~/utils/icons';
 import { ZModalConfirmation, ZModalLoading } from '#components';
 import type { FormErrorEvent } from '#ui/types';
 import type { ProductVariationInput } from '~/utils/types/product-variation';
+import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 
 const overlay = useOverlay();
 const formRef = ref();
@@ -496,16 +496,17 @@ const doCreateProduct = async () => {
 	new_product.value.category_codes = prodCategories.map((c) => c.code!);
 	new_product.value.tag_ids = prodTags.map((t) => t.id!);
 	new_product.value.brand_codes = prodBrands.map((b) => b.code!);
-	new_product.value.status = ProductStatus.PUBLISHED;
 	new_product.value.variations = prodVariations;
 	new_product.value.variants = prodVariants;
 	new_product.value.metadata = new_product.value.metadata ? JSON.parse(JSON.stringify(new_product.value.metadata)) : undefined;
 
-	const product = await productStore.createProduct();
-
-	if (product) {
+	const outcome = await productStore.publishNewProduct();
+	if (outcome.status === 'completed') {
+		successNotification(t('product.notifications.created', { code: outcome.product.code }));
 		useRouter().back();
+		return;
 	}
+	failedNotification(outcome.failure.message);
 };
 
 const onSubmit = async () => {

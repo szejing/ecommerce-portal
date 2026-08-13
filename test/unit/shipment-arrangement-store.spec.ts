@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
-import { KEY } from 'yeppi-common';
 import type {
 	ShipmentArrangementApplyError,
 	ShipmentArrangementListResponse,
@@ -115,9 +114,6 @@ describe('useShipmentArrangementStore', () => {
 					applyShipmentArrangement,
 				},
 			},
-		});
-		(globalThis as unknown as { useCookie: (key: string) => { value: string } }).useCookie = (key) => ({
-			value: key === KEY.X_MERCHANT_ID ? 'merchant-1' : '',
 		});
 		Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
 		Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
@@ -265,7 +261,7 @@ describe('useShipmentArrangementStore', () => {
 		expect(outcome).toEqual({ status: 'completed', result: partialApplyResponse });
 		expect(store.page).toBe(2);
 		expect(getShipmentArrangement).toHaveBeenCalledTimes(2);
-		expect(applyShipmentArrangement.mock.calls[0]?.[0].rows).toEqual(
+		expect(applyShipmentArrangement.mock.calls[0]?.[0]).toEqual(
 			previewResponse.rows.filter(row => row.status !== 'error').map(row => ({
 				fulfillment_id: row.fulfillment_id,
 				source_updated_at: row.source_updated_at,
@@ -305,9 +301,8 @@ describe('useShipmentArrangementStore', () => {
 		await store.applyPreview();
 
 		expect(previewShipmentArrangement).toHaveBeenCalledWith(file);
-		expect(applyShipmentArrangement).toHaveBeenCalledWith({
-			merchant_id: 'merchant-1',
-			rows: previewResponse.rows.filter((row) => row.status !== 'error').map((row) => ({
+		expect(applyShipmentArrangement).toHaveBeenCalledWith(
+			previewResponse.rows.filter((row) => row.status !== 'error').map((row) => ({
 				fulfillment_id: row.fulfillment_id,
 				source_updated_at: row.source_updated_at,
 				order_no: row.order_no,
@@ -315,7 +310,7 @@ describe('useShipmentArrangementStore', () => {
 				courier: row.courier,
 				tracking_no: row.tracking_no,
 			})),
-		});
+		);
 		expect(store.applyResult?.updated).toBe(1);
 		expect(getShipmentArrangement).toHaveBeenCalledWith({ $top: 15, $skip: 0 });
 	});

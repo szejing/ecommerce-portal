@@ -17,12 +17,13 @@ describe('order detail items section', () => {
 		expect(items).not.toContain('column="item"');
 	});
 
-	it('loops order discounts in the bill summary like taxes', () => {
+	it('loops visible header discounts in the bill summary like taxes', () => {
 		const items = readFileSync(resolve(process.cwd(), 'app/components/Z/Section/Order/Detail/Items.vue'), 'utf8');
 		const history = readFileSync(resolve(process.cwd(), 'app/utils/types/order-history.ts'), 'utf8');
 
 		expect(history).toMatch(/discounts:\s*OrderDiscountModel\[\]/);
-		expect(items).toContain('v-for="discount in order.discounts ?? []"');
+		expect(items).toContain('visibleOrderHeaderDiscounts');
+		expect(items).toContain('v-for="discount in header_discounts"');
 		expect(items).toContain('discount.disc_desc');
 		expect(items).toContain('v-if="discount.disc_code"');
 		expect(items).toContain('font-bold not-italic');

@@ -13,18 +13,17 @@
 					:get-color="getOrderStatusColor"
 					:placeholder="t('components.selectMenu.selectOrderStatus')"
 					class="w-full sm:w-72"
-					@update:model-value="onStatusesChange"
 				/>
 
 				<!-- Table Actions -->
 				<ZTableToolbar
-					v-model="filter.page_size"
+					:model-value="pageSize"
 					v-model:selected-column-keys="selectedColumnKeys"
 					:page-size-options="options_page_size"
 					:export-enabled="true"
 					:exporting="exporting"
 					:column-options="columnOptions"
-					@update:model-value="updatePageSize"
+					@update:model-value="orderStore.setPageSize"
 					@export="exportOrders"
 				/>
 			</div>
@@ -62,20 +61,20 @@
 					<div class="text-sm text-gray-700 dark:text-gray-300">
 						{{
 							t('pages.showingToOf', {
-								from: (current_page - 1) * filter.page_size + 1,
-								to: Math.min(current_page * filter.page_size, orderStore.total_orders),
-								total: orderStore.total_orders,
+								from: (page - 1) * pageSize + 1,
+								to: Math.min(page * pageSize, total),
+								total,
 							})
 						}}
 					</div>
 					<UPagination
-						v-model="current_page"
-						:total="orderStore.total_orders"
-						:page-size="filter.page_size"
+						:page="page"
+						:total="total"
+						:page-size="pageSize"
 						show-last
 						show-first
 						size="sm"
-						@update:page="updatePage"
+						@update:page="orderStore.setPage"
 					/>
 				</div>
 			</div>
@@ -84,10 +83,8 @@
 </template>
 
 <script lang="ts" setup>
-import { useStorage } from '@vueuse/core';
-import { OrderStatus, PaymentStatus } from 'yeppi-common';
+import { OrderStatus } from 'yeppi-common';
 import { getOrderStatusColor, getOrderStatusOptions, options_page_size } from '~/utils/options';
-import { ORDERS_SELECTED_STATUSES_STORAGE_KEY, resolveOrderStatusesFromStorage } from '~/utils/orders-selected-statuses-storage';
 import { getOrderColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import type { TableRow } from '@nuxt/ui';
@@ -96,6 +93,7 @@ import type { OrderExportOptions } from '~/utils/order-export';
 import type { OrderHistory } from '~/utils/types/order-history';
 import { ZModalLoading } from '#components';
 import ZModalOrderExport from '~/components/Z/Modal/Order/Export.vue';
+import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 
 const sorting = ref<SortingState>([]);
 
@@ -120,7 +118,7 @@ const { selectedColumnKeys, visibleColumns } = useTableColumnVisibility(order_co
 useHead({ title: () => t('pages.ordersTitle') });
 
 const orderStore = useOrderStore();
-const { orders, filter, loading, exporting } = storeToRefs(orderStore);
+const { orders, filters, loading, exporting, page, pageSize, total, listFailure } = storeToRefs(orderStore);
 const overlay = useOverlay();
 const loadingModal = overlay.create(ZModalLoading, {
 	props: { key: 'orders-export-loading' },
@@ -134,123 +132,48 @@ watch(exporting, (value) => {
 	}
 });
 
-const current_page = computed(() => filter.value.current_page);
-const storedStatuses = useStorage<OrderStatus[] | null>(ORDERS_SELECTED_STATUSES_STORAGE_KEY, null);
-
 watch(orders, () => {
 	sorting.value = [];
 });
 
-watch(
-	() => filter.value.statuses,
-	(statuses) => {
-		storedStatuses.value = statuses;
-	},
-	{ deep: true },
-);
+watch(listFailure, (failure) => {
+	if (failure) failedNotification(failure.message);
+});
 
 const statusItems = computed(() => getOrderStatusOptions(t).filter((option) => option.value !== 'All'));
 
 const selectedStatuses = computed({
 	get() {
-		return filter.value.statuses as string[];
+		return filters.value.statuses as string[];
 	},
 	set(value: string[]) {
-		filter.value.statuses = value as OrderStatus[];
+		orderStore.setStatuses(value as OrderStatus[]);
 	},
 });
-
-const VALID_ORDER_STATUSES = new Set(Object.values(OrderStatus));
-const VALID_PAYMENT_STATUSES = new Set(Object.values(PaymentStatus));
-
-const parseStatusQuery = (status: string | Array<string | null>): OrderStatus[] => {
-	const values = Array.isArray(status)
-		? status.filter((value): value is string => typeof value === 'string')
-		: status
-				.split(',')
-				.map((part) => part.trim())
-				.filter(Boolean);
-	return values.filter((value): value is OrderStatus => VALID_ORDER_STATUSES.has(value as OrderStatus));
-};
-
-const applyQueryToFilter = () => {
-	const start = route.query.start_date;
-	const end = route.query.end_date;
-	const status = route.query.status;
-	const paymentStatus = route.query.payment_status;
-	const paymentMethod = route.query.payment_method;
-
-	filter.value.payment_status = undefined;
-	filter.value.payment_method = undefined;
-	filter.value.statuses = resolveOrderStatusesFromStorage(storedStatuses.value);
-
-	if (typeof start === 'string' && start) {
-		const d = new Date(start);
-		if (!Number.isNaN(d.getTime())) {
-			filter.value.date_range.start = d;
-		}
-	}
-	if (typeof end === 'string' && end) {
-		const d = new Date(end);
-		if (!Number.isNaN(d.getTime())) {
-			filter.value.date_range.end = d;
-		}
-	}
-	if (typeof status === 'string' && status) {
-		const parsed = parseStatusQuery(status);
-		if (parsed.length) {
-			filter.value.statuses = parsed;
-		}
-	} else if (Array.isArray(status)) {
-		const parsed = parseStatusQuery(status);
-		if (parsed.length) {
-			filter.value.statuses = parsed;
-		}
-	}
-	if (typeof paymentStatus === 'string' && VALID_PAYMENT_STATUSES.has(paymentStatus as PaymentStatus)) {
-		filter.value.payment_status = paymentStatus as PaymentStatus;
-	}
-	if (typeof paymentMethod === 'string' && paymentMethod) {
-		filter.value.payment_method = paymentMethod;
-	}
-};
 
 const initialize = ref(true);
 
 onMounted(async () => {
-	applyQueryToFilter();
+	orderStore.hydrateFromQuery(route.query);
 	initialize.value = true;
 	try {
-		await orderStore.getOrders();
+		await orderStore.refreshListing();
 	} finally {
 		initialize.value = false;
 	}
 });
 
-const onStatusesChange = async () => {
-	filter.value.current_page = 1;
-	filter.value.payment_status = undefined;
-	filter.value.payment_method = undefined;
-	await orderStore.getOrders();
-};
-
-const updatePageSize = async (size: number) => {
-	filter.value.page_size = size;
-	filter.value.current_page = 1;
-	await orderStore.getOrders();
-};
-
-const updatePage = async (page: number) => {
-	filter.value.current_page = page;
-	await orderStore.getOrders();
-};
+onBeforeUnmount(() => orderStore.dispose());
 
 const exportOrders = () => {
 	const exportModal = overlay.create(ZModalOrderExport, {
 		props: {
 			onConfirm: async (options: OrderExportOptions) => {
 				exportModal.close();
-				await orderStore.exportOrders(options);
+				const outcome = await orderStore.exportOrders(options);
+				if (outcome.status === 'completed') successNotification(t('orderHistory.notifications.exported'));
+				else if (outcome.failure.kind === 'export_empty') failedNotification(t('orderHistory.notifications.exportFailed'));
+				else failedNotification(outcome.failure.message);
 			},
 			onCancel: () => {
 				exportModal.close();

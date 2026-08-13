@@ -1,11 +1,13 @@
 import HttpFactory from '~/repository/factory';
 import MerchantRoutes from '~/repository/routes.client';
+import { KEY } from 'yeppi-common';
 import type { FulfillmentActionReq } from './models/request/fulfillment-action.req';
 import type { UpdateFulfillmentReq } from './models/request/update-fulfillment.req';
 import type { FulfillmentResp } from './models/response/fulfillment.resp';
 import type {
 	ShipmentArrangementApplyRequest,
 	ShipmentArrangementApplyResponse,
+	ShipmentArrangementApplyRow,
 	ShipmentArrangementListResponse,
 	ShipmentArrangementPreviewResponse,
 	ShipmentArrangementQuery,
@@ -42,7 +44,9 @@ class FulfillmentModule extends HttpFactory {
 		});
 	}
 
-	async applyShipmentArrangement(body: ShipmentArrangementApplyRequest): Promise<ShipmentArrangementApplyResponse> {
+	async applyShipmentArrangement(rows: ShipmentArrangementApplyRow[]): Promise<ShipmentArrangementApplyResponse> {
+		const merchant_id = String(useCookie(KEY.X_MERCHANT_ID).value ?? '');
+		const body: ShipmentArrangementApplyRequest = { merchant_id, rows };
 		return await this.call<ShipmentArrangementApplyResponse>({
 			method: 'POST',
 			url: this.RESOURCE.Arrangement.Apply(),

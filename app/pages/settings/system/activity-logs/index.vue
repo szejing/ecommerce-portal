@@ -10,13 +10,13 @@
 					{{ t('pages.showingActivityLogs', { total: total_activity_logs }) }}
 				</p>
 				<ZTableToolbar
-					v-model="filter.page_size"
+					:model-value="filters.page_size"
 					v-model:selected-column-keys="selectedColumnKeys"
 					:page-size-options="options_page_size"
 					:export-enabled="false"
 					:exporting="exporting"
 					:column-options="columnOptions"
-					@update:model-value="activityLogStore.updatePageSize"
+					@update:model-value="activityLogStore.setPageSize"
 				/>
 			</div>
 
@@ -51,20 +51,20 @@
 					<div class="text-sm text-gray-700 dark:text-gray-300">
 						{{
 							t('pages.showingToOf', {
-								from: (filter.current_page - 1) * filter.page_size + 1,
-								to: Math.min(filter.current_page * filter.page_size, total_activity_logs),
+								from: (filters.current_page - 1) * filters.page_size + 1,
+								to: Math.min(filters.current_page * filters.page_size, total_activity_logs),
 								total: total_activity_logs,
 							})
 						}}
 					</div>
 					<UPagination
-						v-model="filter.current_page"
+						:page="filters.current_page"
 						:total="total_activity_logs"
-						:page-size="filter.page_size"
+						:page-size="filters.page_size"
 						show-last
 						show-first
 						size="sm"
-						@update:page="updatePage"
+						@update:page="activityLogStore.setPage"
 					/>
 				</div>
 			</div>
@@ -77,10 +77,11 @@ import { options_page_size } from '~/utils/options';
 import { ACTIVITY_LOG_COLUMN_LABELS, getActivityLogColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import { ICONS } from '~/utils/icons';
+import { failedNotification } from '~/stores/AppUi/AppUi';
 
 const { t } = useI18n();
 const activityLogStore = useActivityLogStore();
-const { activity_logs, total_activity_logs, filter, loading, exporting } = storeToRefs(activityLogStore);
+const { activity_logs, total_activity_logs, filters, loading, exporting, listFailure } = storeToRefs(activityLogStore);
 
 const activityLogColumns = computed(() => getActivityLogColumns(t));
 const columnOptions = computed(() => columnOptionsFromLabelMap(t, ACTIVITY_LOG_COLUMN_LABELS));
@@ -89,16 +90,16 @@ const initialize = ref(true);
 
 useHead({ title: () => t('pages.activityLogsTitle') });
 
+watch(listFailure, (failure) => {
+	if (failure) failedNotification(failure.message);
+});
+
 onMounted(async () => {
 	initialize.value = true;
 	try {
-		await activityLogStore.getActivityLogs();
+		await activityLogStore.refreshListing();
 	} finally {
 		initialize.value = false;
 	}
 });
-
-const updatePage = async (page: number) => {
-	await activityLogStore.updatePage(page);
-};
 </script>

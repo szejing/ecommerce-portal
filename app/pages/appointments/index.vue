@@ -41,7 +41,7 @@
 										<div class="text-center">
 											<p class="font-medium text-gray-900 dark:text-white">{{ t('pages.noAppointmentsFound') }}</p>
 											<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-												{{ filter.query ? t('pages.tryAdjustingFilters') : t('pages.scheduleFirstAppointment') }}
+												{{ filters.query ? t('pages.tryAdjustingFilters') : t('pages.scheduleFirstAppointment') }}
 											</p>
 										</div>
 									</div>
@@ -225,10 +225,14 @@ import { failedNotification } from '~/stores/AppUi/AppUi';
 
 const overlay = useOverlay();
 const appointmentStore = useAppointmentStore();
-const { appointments, filter } = storeToRefs(appointmentStore);
+const { appointments, filter, filters, listFailure } = storeToRefs(appointmentStore);
 const selectedAppointment = ref<Appointment | null>(null);
 const route = useRoute();
 const router = useRouter();
+
+watch(listFailure, (failure) => {
+	if (failure) failedNotification(failure.message);
+});
 
 // Calendar view state
 const today = new Date();
@@ -313,14 +317,11 @@ const monthDate = computed(() => new Date(calendarPlaceholder.value.year, calend
 
 const selectTab = async (index: number) => {
 	selectedTab.value = index;
-	filter.value.current_page = 1;
-	filter.value.status = appointmentTabs.value[index]?.value as AppointmentStatus | string;
-	await search();
+	await appointmentStore.setStatus(appointmentTabs.value[index]?.value as AppointmentStatus | string);
 };
 
-// Emit events to parent
 const search = async () => {
-	await appointmentStore.getAppointments();
+	await appointmentStore.refreshListing();
 };
 
 const onDailyCalendarDateSelect = async (value: DateValue | DateValue[] | { start?: DateValue; end?: DateValue } | null | undefined) => {
@@ -330,22 +331,19 @@ const onDailyCalendarDateSelect = async (value: DateValue | DateValue[] | { star
 	const d = new Date(dateValue.year, dateValue.month - 1, dateValue.day);
 	calendarFocusDate.value = d;
 	if (dateInLoadedRange(d)) return;
-	filter.value.date_range = fourMonthForwardRange(d);
-	await appointmentStore.getAppointments();
+	await appointmentStore.setDateRange(fourMonthForwardRange(d));
 };
 
 const goPrevDay = async () => {
 	calendarFocusDate.value = sub(calendarFocusDate.value, { days: 1 });
 	if (dateInLoadedRange(calendarFocusDate.value)) return;
-	filter.value.date_range = fourMonthForwardRange(calendarFocusDate.value);
-	await appointmentStore.getAppointments();
+	await appointmentStore.setDateRange(fourMonthForwardRange(calendarFocusDate.value));
 };
 
 const goNextDay = async () => {
 	calendarFocusDate.value = add(calendarFocusDate.value, { days: 1 });
 	if (dateInLoadedRange(calendarFocusDate.value)) return;
-	filter.value.date_range = fourMonthForwardRange(calendarFocusDate.value);
-	await appointmentStore.getAppointments();
+	await appointmentStore.setDateRange(fourMonthForwardRange(calendarFocusDate.value));
 };
 
 const goPrevWeek = async () => {
@@ -353,8 +351,7 @@ const goPrevWeek = async () => {
 	const ws = weekStartDate.value;
 	const we = endOfWeek(calendarFocusDate.value, { weekStartsOn: 1 });
 	if (weekFullyInLoadedRange(ws, we)) return;
-	filter.value.date_range = fourMonthForwardRange(ws);
-	await appointmentStore.getAppointments();
+	await appointmentStore.setDateRange(fourMonthForwardRange(ws));
 };
 
 const goNextWeek = async () => {
@@ -362,24 +359,21 @@ const goNextWeek = async () => {
 	const ws = weekStartDate.value;
 	const we = endOfWeek(calendarFocusDate.value, { weekStartsOn: 1 });
 	if (weekFullyInLoadedRange(ws, we)) return;
-	filter.value.date_range = fourMonthForwardRange(ws);
-	await appointmentStore.getAppointments();
+	await appointmentStore.setDateRange(fourMonthForwardRange(ws));
 };
 
 const goPrevMonth = async () => {
 	const prev = sub(monthDate.value, { months: 1 });
 	calendarPlaceholder.value = new CalendarDate(prev.getFullYear(), prev.getMonth() + 1, 1);
 	const anchor = new Date(prev.getFullYear(), prev.getMonth(), 1);
-	filter.value.date_range = fourMonthForwardRange(anchor);
-	await appointmentStore.getAppointments();
+	await appointmentStore.setDateRange(fourMonthForwardRange(anchor));
 };
 
 const goNextMonth = async () => {
 	const next = add(monthDate.value, { months: 1 });
 	calendarPlaceholder.value = new CalendarDate(next.getFullYear(), next.getMonth() + 1, 1);
 	const anchor = new Date(next.getFullYear(), next.getMonth(), 1);
-	filter.value.date_range = fourMonthForwardRange(anchor);
-	await appointmentStore.getAppointments();
+	await appointmentStore.setDateRange(fourMonthForwardRange(anchor));
 };
 
 const goToTodayMonth = async () => {
@@ -387,14 +381,15 @@ const goToTodayMonth = async () => {
 	calendarPlaceholder.value = new CalendarDate(now.getFullYear(), now.getMonth() + 1, 1);
 	if (appointmentStore.isWeeklyView) {
 		calendarFocusDate.value = now;
-		filter.value.date_range = fourMonthForwardRange(startOfWeek(now, { weekStartsOn: 1 }));
-	} else if (appointmentStore.isDailyView) {
-		calendarFocusDate.value = now;
-		filter.value.date_range = fourMonthForwardRange(now);
-	} else {
-		filter.value.date_range = fourMonthForwardRange(new Date(now.getFullYear(), now.getMonth(), 1));
+		await appointmentStore.setDateRange(fourMonthForwardRange(startOfWeek(now, { weekStartsOn: 1 })));
+		return;
 	}
-	await appointmentStore.getAppointments();
+	if (appointmentStore.isDailyView) {
+		calendarFocusDate.value = now;
+		await appointmentStore.setDateRange(fourMonthForwardRange(now));
+		return;
+	}
+	await appointmentStore.setDateRange(fourMonthForwardRange(new Date(now.getFullYear(), now.getMonth(), 1)));
 };
 
 const selectDayInCalendarFromDate = (date: Date) => {
@@ -490,7 +485,7 @@ const openAppointmentFromQuery = async () => {
 			const start = new Date(found.start_date_time);
 			if (!Number.isNaN(start.getTime())) {
 				filter.value.date_range = fourMonthForwardRange(start);
-				await appointmentStore.getAppointments();
+				await appointmentStore.refreshListing();
 				found = appointments.value.find((appointment) => appointment.code === code) ?? found;
 			}
 			if (found && !appointments.value.some((appointment) => appointment.code === found?.code)) {
@@ -509,7 +504,7 @@ const openAppointmentFromQuery = async () => {
 
 onMounted(async () => {
 	applyDashboardDateQueryToFilter();
-	await appointmentStore.getAppointments();
+	await appointmentStore.refreshListing();
 	await openAppointmentFromQuery();
 });
 

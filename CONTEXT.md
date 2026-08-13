@@ -21,5 +21,5 @@ The merchant workflow for exporting pending delivery fulfillments and importing 
 _Avoid_: Shipment import, courier upload
 
 **Order History**:
-The merchant-facing collection of orders and converted sales used for listing and export.
-_Avoid_: Orders list, sales list
+The merchant-facing collection of orders and converted sales, and the loaded record for one of those entries.
+_Avoid_: Orders list, sales list, bill detail

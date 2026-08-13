@@ -8,15 +8,15 @@ describe('order detail fulfillment owner', () => {
 
 		expect(source).toContain("type.value === 'sale' ? 'sale' : 'order'");
 		expect(source.match(/type\.value === 'order'/g) ?? []).toHaveLength(0);
-		expect(source.match(/ownerType\.value === 'order'/g) ?? []).toHaveLength(3);
-		expect(source).toContain('new_status, ownerType.value)');
+		expect(source).toContain('orderStore.open(order_no_param.value, ownerType.value)');
+		expect(source).toContain('orderStore.updateStatus(new_status)');
 	});
 
 	it('passes fulfillment context and the resolved action through the global resend control', () => {
 		const source = readFileSync(resolve(process.cwd(), 'app/pages/orders/[order_no].vue'), 'utf8');
 
 		expect(source).toContain('fulfillments: current.fulfillments,');
-		expect(source.match(/resendCurrentStatusEmail\(record\.value\.order_no, resend_email_action\.value\)/g) ?? []).toHaveLength(2);
+		expect(source).toContain('orderStore.resendCurrentStatusEmail(resend_email_action.value)');
 	});
 
 	it('shows the customer email section only when the current status has a resend action', () => {

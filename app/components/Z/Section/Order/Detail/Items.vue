@@ -107,7 +107,7 @@
 				</div>
 			</div>
 			<div
-				v-for="discount in order.discounts ?? []"
+				v-for="discount in header_discounts"
 				:key="`${discount.disc_line}-${discount.disc_code}`"
 				class="grid grid-cols-[2fr_1fr_1fr_1fr] items-center"
 			>
@@ -143,6 +143,7 @@ import type { OrderHistory } from '~/utils/types/order-history';
 import { getOrderDetailItemColumns } from '~/utils/table-columns';
 import { getFulfillmentMethodDescriptions, sumFulfillmentShippingFees } from '~/utils/fulfillment';
 import { formatAppointmentDateRange } from '~/utils/utils';
+import { visibleOrderHeaderDiscounts } from '~/utils/order-header-discounts';
 
 const props = defineProps<{
 	order: OrderHistory;
@@ -157,6 +158,7 @@ const overlay = useOverlay();
 
 const items = computed(() => props.order.items ?? []);
 const currency_code = computed(() => props.order.currency?.code);
+const header_discounts = computed(() => visibleOrderHeaderDiscounts(props.order.discounts));
 
 const shipping_fee_method_hint = computed(() => {
 	return getFulfillmentMethodDescriptions(props.order.fulfillments ?? []).join(', ');

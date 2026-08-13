@@ -1,33 +1,23 @@
 <template>
 	<div class="w-full">
-		<!-- Compact Filter Grid -->
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3 items-center">
-			<!-- Date Range Filter -->
 			<div class="flex flex-col col-span-full gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.dateRange') }}</label>
-				<ZDateRange v-model="filter.date_range" @update:model-value="handleDateRangeChange" />
+				<ZDateRange :model-value="filters.dateRange" @update:model-value="saleSummStore.setDateRange" />
 			</div>
 
-			<!-- Sale Status Filter -->
 			<div class="flex flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.orderStatus') }}</label>
-				<ZSelectMenuOrderStatus v-model:status="filter.status" @update:model-value="handleStatusChange" />
+				<ZSelectMenuOrderStatus :status="filters.status" @update:status="saleSummStore.setStatus" />
 			</div>
 
-			<!-- Currency Filter -->
-			<!-- <div class="flex flex-col gap-1.5">
-				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.currency') }}</label>
-				<ZSelectMenuCurrency v-model:currency-code="filter.currency_code" @update:model-value="handleCurrencyChange" />
-			</div> -->
-
-			<!-- Actions -->
 			<div class="flex flex-col gap-1.5 col-span-full">
 				<div class="flex gap-2">
-					<UButton variant="outline" color="neutral" :disabled="is_loading" @click="clearFilters">
+					<UButton variant="outline" color="neutral" :disabled="is_loading" @click="saleSummStore.clearFilters">
 						<UIcon name="i-heroicons-arrow-path" class="w-4 h-4" />
 						{{ t('components.filter.clear') }}
 					</UButton>
-					<UButton color="primary" :disabled="is_loading" :loading="is_loading" @click="search">
+					<UButton color="primary" :disabled="is_loading" :loading="is_loading" @click="saleSummStore.refreshListing">
 						<UIcon :name="ICONS.SEARCH_ROUNDED" class="w-4 h-4" />
 						{{ t('components.filter.search') }}
 					</UButton>
@@ -35,26 +25,20 @@
 			</div>
 		</div>
 
-		<!-- Active Filters Display -->
 		<div v-if="hasActiveFilters" class="flex flex-wrap gap-2 items-center">
 			<span class="text-xs text-gray-600 dark:text-gray-400">{{ t('components.filter.activeFilters') }}</span>
-			<UBadge v-if="filter.date_range.start || filter.date_range.end" color="primary" variant="subtle" size="sm" @click="clearFilter('date')">
+			<UBadge v-if="filters.dateRange.start || filters.dateRange.end" color="primary" variant="subtle" size="sm" @click="clearFilter('date')">
 				{{ t('components.filter.date') }}:
-				{{
-					formatDateRange({
-						start: filter.date_range.start,
-						end: filter.date_range.end,
-					})
-				}}
+				{{ formatDateRange(filters.dateRange) }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
-			<UBadge v-if="filter.status" color="success" variant="subtle" size="sm" @click="clearFilter('status')">
+			<UBadge v-if="filters.status" color="success" variant="subtle" size="sm" @click="saleSummStore.setStatus(undefined)">
 				{{ t('components.filter.status') }}:
-				{{ capitalizeFirstLetter(filter.status) }}
+				{{ capitalizeFirstLetter(filters.status) }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
-			<UBadge v-if="filter.currency_code && filter.currency_code !== 'MYR'" color="warning" variant="subtle" size="sm" @click="clearFilter('currency')">
-				{{ t('components.filter.currency') }}: {{ filter.currency_code }}
+			<UBadge v-if="filters.currencyCode && filters.currencyCode !== 'MYR'" color="warning" variant="subtle" size="sm">
+				{{ t('components.filter.currency') }}: {{ filters.currencyCode }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
 		</div>
@@ -63,22 +47,18 @@
 
 <script lang="ts" setup>
 import type { Range } from '~/utils/interface';
-import { format } from 'date-fns';
-import { OrderStatus } from 'yeppi-common';
+import { format, sub } from 'date-fns';
 import { ICONS } from '~/utils/icons';
 
 const { t } = useI18n();
 
 const saleSummStore = useSummSaleStore();
-const { sale_summ } = storeToRefs(saleSummStore);
-const filter = computed(() => sale_summ.value.filter);
+const { filters, sale_summ } = storeToRefs(saleSummStore);
 
 const is_loading = computed(() => sale_summ.value.loading);
 
 const hasActiveFilters = computed(() => {
-	return (
-		filter.value.date_range.start || filter.value.date_range.end || filter.value.status || (filter.value.currency_code && filter.value.currency_code !== 'MYR')
-	);
+	return filters.value.dateRange.start || filters.value.dateRange.end || filters.value.status || (filters.value.currencyCode && filters.value.currencyCode !== 'MYR');
 });
 
 const formatDateRange = (range: Range) => {
@@ -91,43 +71,10 @@ const formatDateRange = (range: Range) => {
 	return startDate || endDate;
 };
 
-const search = async () => {
-	await saleSummStore.getSaleSummary();
-};
-
-const handleDateRangeChange = async (newValue: Range) => {
-	filter.value.date_range.start = newValue.start ? new Date(newValue.start) : new Date();
-	filter.value.date_range.end = newValue.end ? new Date(newValue.end) : undefined;
-	await search();
-};
-
-const handleStatusChange = async () => {
-	await search();
-};
-
-const handleCurrencyChange = async () => {
-	await search();
-};
-
-const clearFilters = async () => {
-	filter.value.date_range.start = new Date();
-	filter.value.date_range.end = undefined;
-	filter.value.status = OrderStatus.COMPLETED;
-	filter.value.currency_code = 'MYR';
-	sale_summ.value.current_page = 1;
-	await search();
-};
-
-const clearFilter = async (filterKey: string) => {
+const clearFilter = (filterKey: string) => {
 	if (filterKey === 'date') {
-		filter.value.date_range.start = new Date();
-		filter.value.date_range.end = undefined;
-	} else if (filterKey === 'status') {
-		filter.value.status = undefined;
-	} else if (filterKey === 'currency') {
-		filter.value.currency_code = 'MYR';
+		void saleSummStore.setDateRange({ start: sub(new Date(), { days: 14 }), end: new Date() });
 	}
-	await search();
 };
 </script>
 

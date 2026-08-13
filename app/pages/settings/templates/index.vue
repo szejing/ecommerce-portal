@@ -63,7 +63,7 @@
 						<USkeleton v-if="loadingDetail" class="h-80 w-full rounded-xl" />
 						<ZTemplateStudioTemplateEditor v-else v-model:active-tab="activeTab" :template-name="selectedSummary ? templateLabel(selectedSummary) : undefined">
 							<template #actions>
-								<UButton v-if="canEdit" data-action="save-draft" type="button" icon="i-lucide-save" :disabled="!isDirty" :loading="saving" @click="saveDraft">
+								<UButton v-if="canEdit" data-action="save-draft" type="button" icon="i-lucide-save" :disabled="!isDirty" :loading="saving" @click="templateStore.saveDraft">
 									{{ t('components.templateStudio.saveDraft') }}
 								</UButton>
 								<UButton
@@ -74,7 +74,7 @@
 									variant="outline"
 									icon="i-lucide-mail-check"
 									:loading="testing"
-									@click="testSend"
+									@click="templateStore.sendTest"
 								>
 									{{ t('components.templateStudio.sendTest') }}
 								</UButton>
@@ -134,7 +134,7 @@
 							:preview="preview"
 							:loading="previewing"
 							:stale="previewStale"
-							@refresh="refreshPreview"
+							@refresh="() => { if (isActive) void templateStore.refreshPreview(); }"
 						/>
 					</aside>
 				</div>
@@ -205,26 +205,29 @@ const storeThumbnailUrl = computed(() => {
 const selectedSummary = computed(() =>
 	summaries.value.find((template) => template.channel === selected.value?.channel && template.template_code === selected.value?.templateCode),
 );
-const summaryErrorDescription = computed(() =>
-	summaryError.value === 'Failed to load document templates' ? t('components.templateStudio.loadErrorDescription') : (summaryError.value ?? undefined),
-);
-const detailErrorDescription = computed(() =>
-	detailError.value === 'Failed to load document template' ? t('components.templateStudio.loadDetailErrorDescription') : (detailError.value ?? undefined),
-);
+const summaryErrorDescription = computed(() => {
+	if (!summaryError.value) return undefined;
+	return summaryError.value.transportMessage ?? t('components.templateStudio.loadErrorDescription');
+});
+const detailErrorDescription = computed(() => {
+	if (!detailError.value) return undefined;
+	return detailError.value.transportMessage ?? t('components.templateStudio.loadDetailErrorDescription');
+});
 const actionErrorKeys: Record<string, string> = {
-	'Failed to save document template': 'components.templateStudio.saveError',
-	'Failed to preview document template': 'components.templateStudio.previewError',
-	'Failed to send test document template': 'components.templateStudio.testSendError',
-	'Failed to publish document template': 'components.templateStudio.publishError',
-	'Failed to reset document template': 'components.templateStudio.resetError',
-	'Save draft before publishing': 'components.templateStudio.saveBeforePublishing',
-	'Schedule date is invalid': 'components.templateStudio.scheduleInvalidDate',
-	'Schedule start must be before its end': 'components.templateStudio.scheduleEndAfterStart',
-	'Schedule end must be in the future': 'components.templateStudio.scheduleEndFuture',
+	save_failed: 'components.templateStudio.saveError',
+	preview_failed: 'components.templateStudio.previewError',
+	test_send_failed: 'components.templateStudio.testSendError',
+	publish_failed: 'components.templateStudio.publishError',
+	reset_failed: 'components.templateStudio.resetError',
+	save_before_publish: 'components.templateStudio.saveBeforePublishing',
+	schedule_invalid_date: 'components.templateStudio.scheduleInvalidDate',
+	schedule_end_after_start: 'components.templateStudio.scheduleEndAfterStart',
+	schedule_end_future: 'components.templateStudio.scheduleEndFuture',
+	load_detail_failed: 'components.templateStudio.actionErrorDescription',
 };
 const actionErrorDescription = computed(() => {
 	if (!error.value || conflict.value) return undefined;
-	return t(actionErrorKeys[error.value] ?? 'components.templateStudio.actionErrorDescription');
+	return error.value.transportMessage ?? t(actionErrorKeys[error.value.code] ?? 'components.templateStudio.actionErrorDescription');
 });
 const publishDisabled = computed(() => isDirty.value || !detail.value?.draft_revision);
 const publishDisabledReason = computed(() => {
@@ -326,18 +329,6 @@ function requestReset(): void {
 	openConfirmation(t('components.templateStudio.resetConfirmTitle'), t('components.templateStudio.resetConfirmMessage'), async () => {
 		if (await templateStore.confirmReset(intent) === 'completed') activeTab.value = 'content';
 	});
-}
-
-async function saveDraft(): Promise<void> {
-	await templateStore.saveDraft();
-}
-
-async function testSend(): Promise<void> {
-	await templateStore.sendTest();
-}
-
-async function refreshPreview(): Promise<void> {
-	if (isActive) await templateStore.refreshPreview();
 }
 
 async function reloadServerVersion(): Promise<void> {

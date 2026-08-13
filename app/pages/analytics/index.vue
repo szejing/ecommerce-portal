@@ -51,17 +51,5 @@ const analyticsGroups = computed(() => [
 			{ label: t('pages.salesCustomer'), to: '/analytics/sales/customers' },
 		],
 	},
-	{
-		title: t('pages.googleAnalytics.title'),
-		description: t('pages.googleAnalytics.description'),
-		icon: ICONS.ANALYTICS,
-		color: 'orange' as const,
-		items: [
-			{
-				label: t('pages.googleAnalytics.manage'),
-				to: '/analytics/google-analytics',
-			},
-		],
-	},
 ]);
 </script>

@@ -20,7 +20,6 @@ const default_navigations = [
 				children: [
 					{ label: 'nav.orderAnalytics', to: '/analytics/orders' },
 					{ label: 'nav.salesAnalytics', to: '/analytics/sales' },
-					{ label: 'pages.googleAnalytics.manage', to: '/analytics/google-analytics' },
 				],
 			},
 			// Only shown if service-based (excluded via setExcludeRoutes when not)

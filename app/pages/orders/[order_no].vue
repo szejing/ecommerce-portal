@@ -43,9 +43,9 @@
 							color="primary"
 							:icon="ICONS.SYNC_ROUNDED"
 							variant="ghost"
-							:disabled="is_refreshing || refresh_cooldown > 0"
-							:loading="is_refreshing"
-							:class="{ 'spin-icon': is_refreshing }"
+							:disabled="refreshing || refreshCooldown > 0"
+							:loading="refreshing"
+							:class="{ 'spin-icon': refreshing }"
 							@click="refreshOrder"
 						>
 							{{ refresh_button_text }}
@@ -191,7 +191,7 @@
 <script lang="ts" setup>
 import { ZModalConfirmation, ZModalOrderDetailCustomer } from '#components';
 import { OrderResendEmailAction, OrderStatus, OrderType } from 'yeppi-common';
-import { successNotification } from '~/stores/AppUi/AppUi';
+import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 import { ICONS } from '~/utils/icons';
 import type { OrderHistory } from '~/utils/types/order-history';
 import { resolveOrderResendEmailAction } from '~/utils/resolve-order-resend-email-action';
@@ -200,14 +200,11 @@ import Activities from '~/components/ActivityLog/Activities.vue';
 import { useMediaQuery } from '@vueuse/core';
 
 const orderStore = useOrderStore();
-const saleStore = useSaleStore();
-const { updating, resending_email: order_resending_email } = storeToRefs(orderStore);
-const { resending_email: sale_resending_email } = storeToRefs(saleStore);
+const { current: order, notFound: order_not_found, sessionLoading, updating, resendingEmail, refreshing, refreshCooldown } = storeToRefs(orderStore);
 
-const loading = computed(() => orderStore.loading || saleStore.loading);
+const loading = computed(() => sessionLoading.value);
 
 const route = useRoute();
-const order_not_found = ref(false);
 const isLgUp = useMediaQuery('(min-width: 1024px)');
 const isOrderActionsOpen = ref(false);
 
@@ -219,8 +216,6 @@ watch(isLgUp, (lg) => {
 const order_no_param = computed(() => String(route.params.order_no ?? ''));
 const type = computed(() => String(route.query.type ?? ''));
 const ownerType = computed<'order' | 'sale'>(() => (type.value === 'sale' ? 'sale' : 'order'));
-
-const order = ref<OrderHistory | undefined>();
 
 const record = computed(() => order.value);
 
@@ -288,7 +283,7 @@ const resend_email_label = computed(() => {
 
 const can_resend_status_email = computed(() => !!record.value?.customer?.email_address && !!resend_email_action.value);
 
-const is_resending_email = computed(() => (ownerType.value === 'order' ? order_resending_email.value : sale_resending_email.value));
+const is_resending_email = computed(() => resendingEmail.value);
 
 const resend_email_description = computed(() => {
 	if (!record.value?.customer?.email_address) {
@@ -307,11 +302,6 @@ const resend_email_button_text = computed(() => {
 	}
 	return `Resend ${resend_email_label.value}`;
 });
-
-const REFRESH_COOLDOWN_SECONDS = 5;
-const refresh_cooldown = ref(0);
-const is_refreshing = ref(false);
-let cooldown_interval: NodeJS.Timeout | null = null;
 
 const isMobile = ref(false);
 
@@ -337,31 +327,15 @@ onMounted(() => {
 });
 
 onBeforeRouteLeave(() => {
-	order.value = undefined;
-	if (cooldown_interval) {
-		clearInterval(cooldown_interval);
-	}
+	orderStore.closeSession();
 });
 
 onBeforeUnmount(() => {
-	if (cooldown_interval) {
-		clearInterval(cooldown_interval);
-	}
 	window.removeEventListener('resize', checkMobile);
 });
 
 const getOrderDetails = async () => {
-	try {
-		if (ownerType.value === 'order') {
-			const data = await orderStore.getOrderByOrderNo(order_no_param.value);
-			order.value = data;
-		} else {
-			const data = await saleStore.getBillDetailByOrderNo(order_no_param.value);
-			order.value = data;
-		}
-	} catch {
-		order_not_found.value = true;
-	}
+	await orderStore.open(order_no_param.value, ownerType.value);
 };
 
 const onItemsRefresh = () => {
@@ -369,38 +343,9 @@ const onItemsRefresh = () => {
 };
 
 const refreshOrder = async () => {
-	if (is_refreshing.value || refresh_cooldown.value > 0) {
-		return;
-	}
-
-	if (!record.value?.order_no) return;
-
-	is_refreshing.value = true;
-
-	try {
-		await getOrderDetails();
-		successNotification(t('components.orderDetail.refreshSuccess'));
-
-		refresh_cooldown.value = REFRESH_COOLDOWN_SECONDS;
-
-		if (cooldown_interval) {
-			clearInterval(cooldown_interval);
-		}
-
-		cooldown_interval = setInterval(() => {
-			refresh_cooldown.value -= 1;
-			if (refresh_cooldown.value <= 0) {
-				if (cooldown_interval) {
-					clearInterval(cooldown_interval);
-					cooldown_interval = null;
-				}
-			}
-		}, 1000);
-	} catch (error) {
-		console.error('Failed to refresh:', error);
-	} finally {
-		is_refreshing.value = false;
-	}
+	const outcome = await orderStore.refreshCurrent();
+	if (outcome.status === 'completed') successNotification(t('components.orderDetail.refreshSuccess'));
+	else if (outcome.status === 'failed') failedNotification(outcome.failure.message);
 };
 
 const refresh_button_text = computed(() => {
@@ -408,8 +353,8 @@ const refresh_button_text = computed(() => {
 		return '';
 	}
 
-	if (refresh_cooldown.value > 0) {
-		return t('components.orderDetail.waitSeconds', { n: refresh_cooldown.value });
+	if (refreshCooldown.value > 0) {
+		return t('components.orderDetail.waitSeconds', { n: refreshCooldown.value });
 	}
 	return t('components.orderDetail.refresh');
 });
@@ -446,15 +391,9 @@ const handleResendCurrentStatusEmail = async () => {
 		return;
 	}
 
-	try {
-		if (ownerType.value === 'order') {
-			await orderStore.resendCurrentStatusEmail(record.value.order_no, resend_email_action.value);
-		} else {
-			await saleStore.resendCurrentStatusEmail(record.value.order_no, resend_email_action.value);
-		}
-	} catch {
-		// Store actions show the failure toast.
-	}
+	const outcome = await orderStore.resendCurrentStatusEmail(resend_email_action.value);
+	if (outcome.status === 'completed') successNotification(t('orderHistory.notifications.emailResent'));
+	else if (outcome.status === 'failed') failedNotification(outcome.failure.message);
 };
 
 const executeOrderStatusUpdate = async (new_status: OrderStatus) => {
@@ -462,17 +401,14 @@ const executeOrderStatusUpdate = async (new_status: OrderStatus) => {
 		throw new Error('Order not found');
 	}
 
-	try {
-		const shouldStay = await orderStore.updateStatus(order.value.order_no, order.value.customer.customer_no, new_status, ownerType.value);
-		if (shouldStay) {
-			await getOrderDetails();
-			successNotification(t('components.orderDetail.statusUpdateSuccess'));
-		} else {
-			useRouter().back();
-		}
-	} catch {
-		// Order store already toasts the API error message.
+	const outcome = await orderStore.updateStatus(new_status);
+	if (outcome.status === 'failed') {
+		failedNotification(outcome.failure.message);
+		return;
 	}
+	if (outcome.status === 'rejected') return;
+	if (outcome.stayOnPage) successNotification(t('components.orderDetail.statusUpdateSuccess'));
+	else useRouter().back();
 };
 
 const editCustomerDetail = async () => {

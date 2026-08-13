@@ -1,3 +1,4 @@
+import { defineStore } from 'pinia';
 import { defaultProductRelations, getFormattedDate, ProductStatus, removeDuplicateExpands, type ErrorResponse } from 'yeppi-common';
 import { options_page_size } from '~/utils/options';
 import type { Product } from '~/utils/types/product';
@@ -7,6 +8,19 @@ import { dir } from '~/utils/constants/dir';
 import type { BaseODataReq } from '~/repository/base/base.req';
 import type { ImageReq } from '~/repository/modules/image/models/request/image.req';
 import type { ProductImportResp, ProductImportTemplateType } from '~/repository/modules/product/product';
+
+export const PRODUCT_FILTER_DEBOUNCE_MS = 500;
+
+export type ProductFailure = { kind: 'request_failed'; message: string };
+export type ProductRefreshOutcome =
+	| { status: 'completed' }
+	| { status: 'stale' }
+	| { status: 'failed'; failure: ProductFailure };
+export type ProductMutationOutcome =
+	| { status: 'completed'; product: Product }
+	| { status: 'failed'; failure: ProductFailure };
+
+let productFilterTimer: ReturnType<typeof setTimeout> | undefined;
 
 type ProductFilter = {
 	query: string;
@@ -82,34 +96,96 @@ export const useProductStore = defineStore('productStore', {
 		products: [] as Product[],
 		total_products: 0 as number,
 		current_product: undefined as Product | undefined,
-		filter: initialEmptyProductFilter,
+		filter: structuredClone(initialEmptyProductFilter),
 		errors: [] as string[],
+		listFailure: undefined as ProductFailure | undefined,
+		listingGeneration: 0 as number,
 	}),
+
+	getters: {
+		filters: (state) => ({ ...state.filter }),
+	},
 
 	actions: {
 		resetNewProduct() {
 			this.new_product = structuredClone(initialEmptyProduct);
 		},
 
-		async updatePageSize(size: number) {
+		setSearch(search: string) {
+			this.filter.query = search;
+			this.filter.current_page = 1;
+			if (productFilterTimer) clearTimeout(productFilterTimer);
+			productFilterTimer = setTimeout(() => {
+				productFilterTimer = undefined;
+				void this.refreshListing();
+			}, PRODUCT_FILTER_DEBOUNCE_MS);
+		},
+
+		setStatus(status: ProductStatus | undefined) {
+			this.filter.status = status;
+			this.filter.current_page = 1;
+			void this.refreshListing();
+		},
+
+		async setPage(page: number): Promise<ProductRefreshOutcome> {
+			this.filter.current_page = page;
+			return this.refreshListing();
+		},
+
+		async setPageSize(size: number): Promise<ProductRefreshOutcome> {
 			this.filter.page_size = size;
+			this.filter.current_page = 1;
+			return this.refreshListing();
+		},
 
-			if (this.filter.page_size > this.products.length) {
-				this.filter.current_page = 1;
-				return;
+		async clearFilters(): Promise<ProductRefreshOutcome> {
+			if (productFilterTimer) clearTimeout(productFilterTimer);
+			productFilterTimer = undefined;
+			this.filter.query = '';
+			this.filter.status = undefined;
+			this.filter.current_page = 1;
+			return this.refreshListing();
+		},
+
+		async refreshListing(): Promise<ProductRefreshOutcome> {
+			const generation = ++this.listingGeneration;
+			this.loading = true;
+			this.listFailure = undefined;
+			const { $api } = useNuxtApp();
+			try {
+				const { query, status } = this.filter;
+				const queryParams: BaseODataReq = {
+					$top: this.filter.page_size,
+					$count: true,
+					$skip: (this.filter.current_page - 1) * this.filter.page_size,
+					$expand: removeDuplicateExpands(defaultProductRelations).join(','),
+					$orderby: 'updated_at desc',
+				};
+				if (status) queryParams.$filter = `status eq '${status}'`;
+				if (query.trim()) queryParams.$search = query.trim();
+				const resp = await $api.product.getMany(queryParams);
+				if (generation !== this.listingGeneration) return { status: 'stale' };
+				const items = resp.data ?? resp.value ?? [];
+				const total = resp['@odata.count'] ?? resp.count ?? 0;
+				this.products = Array.isArray(items) ? items : [];
+				this.total_products = typeof total === 'number' ? total : 0;
+				return { status: 'completed' };
+			} catch (err: unknown | ErrorResponse) {
+				if (generation !== this.listingGeneration) return { status: 'stale' };
+				const failure = { kind: 'request_failed' as const, message: (err as ErrorResponse).message ?? 'Failed to process product' };
+				this.listFailure = failure;
+				return { status: 'failed', failure };
+			} finally {
+				if (generation === this.listingGeneration) this.loading = false;
 			}
+		},
 
-			this.getProducts();
+		async updatePageSize(size: number) {
+			await this.setPageSize(size);
 		},
 
 		async updatePage(page: number) {
-			this.filter.current_page = page;
-
-			if (this.filter.current_page < 0 || this.products.length === this.total_products) {
-				return;
-			}
-
-			this.getProducts();
+			await this.setPage(page);
 		},
 
 		async getProduct(code: string): Promise<Product | undefined> {
@@ -142,55 +218,13 @@ export const useProductStore = defineStore('productStore', {
 			}
 		},
 
-		async getProducts(): Promise<void> {
-			this.loading = true;
-			const { $api } = useNuxtApp();
-			try {
-				const { query, status } = this.filter;
-
-				let filter = '';
-
-				// Add status filter if provided
-				if (status) {
-					filter = `status eq '${status}'`;
-				}
-
-				const queryParams: BaseODataReq = {
-					$top: this.filter.page_size,
-					$count: true,
-					$skip: (this.filter.current_page - 1) * this.filter.page_size,
-					$expand: removeDuplicateExpands(defaultProductRelations).join(','),
-					$orderby: 'updated_at desc',
-				};
-
-				if (filter) {
-					queryParams.$filter = filter;
-				}
-
-				// Use backend $search support for text search
-				if (query) {
-					queryParams.$search = query;
-				}
-
-				const resp = await $api.product.getMany(queryParams);
-				const items = resp.data ?? resp.value ?? [];
-				const total = resp['@odata.count'] ?? resp.count ?? 0;
-
-				this.products = Array.isArray(items) ? items : [];
-				this.total_products = typeof total === 'number' ? total : 0;
-			} catch (err: unknown | ErrorResponse) {
-				const message = (err as ErrorResponse).message ?? 'Failed to process product';
-				failedNotification(message);
-			} finally {
-				this.loading = false;
-			}
+		async getProducts(): Promise<ProductRefreshOutcome> {
+			return this.refreshListing();
 		},
 
-		async createProduct(): Promise<Product> {
+		async persistNewProduct(): Promise<ProductMutationOutcome> {
 			this.adding = true;
-
 			const { $api } = useNuxtApp();
-
 			try {
 				let images: ImageReq[] = [];
 				if (this.new_product.images) {
@@ -215,20 +249,31 @@ export const useProductStore = defineStore('productStore', {
 					images,
 					thumbnail,
 				});
-
-				if (data.product) {
-					successNotification(`${data.product.code} - Product Created !`);
-				}
-
 				this.resetNewProduct();
-				return data.product;
+				return { status: 'completed', product: data.product };
 			} catch (err: unknown | ErrorResponse) {
-				const message = (err as ErrorResponse).message ?? 'Failed to process product';
-				failedNotification(message);
-				throw new Error(message);
+				const failure = { kind: 'request_failed' as const, message: (err as ErrorResponse).message ?? 'Failed to process product' };
+				return { status: 'failed', failure };
 			} finally {
 				this.adding = false;
 			}
+		},
+
+		async saveNewDraft(): Promise<ProductMutationOutcome> {
+			this.new_product.status = ProductStatus.DRAFT;
+			this.new_product.is_active = false;
+			return this.persistNewProduct();
+		},
+
+		async publishNewProduct(): Promise<ProductMutationOutcome> {
+			this.new_product.status = ProductStatus.PUBLISHED;
+			this.new_product.is_active = true;
+			return this.persistNewProduct();
+		},
+
+		async createProduct(): Promise<Product | undefined> {
+			const outcome = await this.publishNewProduct();
+			if (outcome.status === 'completed') return outcome.product;
 		},
 
 		async updateStatus(product: Product, is_active: boolean) {

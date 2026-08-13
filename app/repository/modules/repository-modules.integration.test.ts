@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
-import { AllocationType, DiscountType } from 'yeppi-common';
+import { AllocationType, DiscountType, KEY } from 'yeppi-common';
 import MerchantRoutes from '~/repository/routes.client';
 import { ApiErrorModel } from '~/utils/types/api-error-model';
 import { loginPayload } from '../../../test/repository-model-fixtures';
@@ -154,24 +154,24 @@ describe('FulfillmentModule', () => {
 
 	it('posts eligible shipment arrangement rows for apply', async () => {
 		setMockFetch(async () => ({ total: 1, updated: 1, failed: 0, errors: [] }));
+		(globalThis as unknown as { useCookie: (key: string) => { value: string } }).useCookie = (key) => ({
+			value: key === KEY.X_MERCHANT_ID ? 'merchant-1' : '',
+		});
 		const mod = new FulfillmentModule();
-		const body = {
-			merchant_id: 'merchant-1',
-			rows: [{
-				fulfillment_id: '11111111-1111-4111-8111-111111111111',
-				source_updated_at: '2026-07-18T01:00:00.000Z',
-				order_no: 'WM-100',
-				batch_no: 1,
-				courier: 'Pos Laju',
-				tracking_no: 'PL-100',
-			}],
-		};
+		const rows = [{
+			fulfillment_id: '11111111-1111-4111-8111-111111111111',
+			source_updated_at: '2026-07-18T01:00:00.000Z',
+			order_no: 'WM-100',
+			batch_no: 1,
+			courier: 'Pos Laju',
+			tracking_no: 'PL-100',
+		}];
 
-		await mod.applyShipmentArrangement(body);
+		await mod.applyShipmentArrangement(rows);
 
 		expect(lastFetch().url).toBe(MerchantRoutes.Fulfillment.Arrangement.Apply());
 		expect(lastFetch().opts.method).toBe('POST');
-		expect(lastFetch().opts.body).toEqual(body);
+		expect(lastFetch().opts.body).toEqual({ merchant_id: 'merchant-1', rows });
 	});
 
 	it('keeps first-batch repair creation on the order number route', async () => {

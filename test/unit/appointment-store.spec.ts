@@ -1,58 +1,53 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { AppointmentStatus } from 'yeppi-common';
-import { useAppointmentStore } from '../../app/stores/Appointment/Appointment';
+import { APPOINTMENT_FILTER_DEBOUNCE_MS, useAppointmentStore } from '../../app/stores/Appointment/Appointment';
 import type { Appointment } from '../../app/utils/types/appointment';
 
-const { successNotification, failedNotification } = vi.hoisted(() => ({
-	successNotification: vi.fn(),
+const { failedNotification } = vi.hoisted(() => ({
 	failedNotification: vi.fn(),
 }));
 
 vi.mock('../../app/stores/AppUi/AppUi', () => ({
-	successNotification,
 	failedNotification,
+	successNotification: vi.fn(),
 }));
 
-describe('useAppointmentStore', () => {
-	const apiMock = {
-		appointment: {
-			getSingle: vi.fn(),
-		},
-	};
+const getMany = vi.fn();
 
-	const appointmentRow = (overrides: Partial<Appointment> = {}): Appointment => ({
-		code: 'APT-1001',
-		start_date_time: new Date('2026-07-24T10:00:00.000Z'),
-		end_date_time: new Date('2026-07-24T11:00:00.000Z'),
-		item_line: 1,
-		customer_name: 'Jane Customer',
-		customer_phone: '60123456789',
-		status: AppointmentStatus.CONFIRMED,
-		...overrides,
-	});
+describe('useAppointmentStore', () => {
+	afterEach(() => vi.useRealTimers());
 
 	beforeEach(() => {
 		setActivePinia(createPinia());
-		vi.clearAllMocks();
-		(globalThis as unknown as { useNuxtApp: () => unknown }).useNuxtApp = () => ({ $api: apiMock }) as unknown;
+		getMany.mockReset();
+		failedNotification.mockClear();
+		getMany.mockResolvedValue({ data: [{ code: 'A-1' } as Appointment], '@odata.count': 1 });
+		(globalThis as unknown as { useNuxtApp: () => unknown }).useNuxtApp = () => ({
+			$api: { appointment: { getMany } },
+		});
 	});
 
-	it('loads a single appointment by code', async () => {
-		const appointment = appointmentRow();
-		apiMock.appointment.getSingle.mockResolvedValue({ appointment });
-
+	it('debounces search and maps cancelled status to the cancelled/voided bucket internally', async () => {
+		vi.useFakeTimers();
 		const store = useAppointmentStore();
-		const result = await store.getAppointmentByCode('APT-1001');
-
-		expect(apiMock.appointment.getSingle).toHaveBeenCalledWith('APT-1001');
-		expect(result).toBe(appointment);
+		store.setStatus('cancelled');
+		await vi.runAllTicks();
+		getMany.mockClear();
+		store.setSearch('  alice  ');
+		await vi.advanceTimersByTimeAsync(APPOINTMENT_FILTER_DEBOUNCE_MS);
+		await vi.runAllTicks();
+		expect(getMany.mock.calls[0]?.[0].$search).toBe('alice');
+		expect(getMany.mock.calls[0]?.[0].$filter).toContain(`status in ('${AppointmentStatus.CANCELLED}', '${AppointmentStatus.VOIDED}')`);
+		expect(failedNotification).not.toHaveBeenCalled();
 	});
 
-	it('returns null when loading by code fails', async () => {
-		apiMock.appointment.getSingle.mockRejectedValue(new Error('not found'));
-
+	it('does not treat mutations of returned filter snapshots as workflow intent', async () => {
 		const store = useAppointmentStore();
-		await expect(store.getAppointmentByCode('missing')).resolves.toBeNull();
+		const snapshot = store.filters as { query: string };
+		snapshot.query = 'direct mutation';
+		await store.setStatus(AppointmentStatus.CONFIRMED);
+		expect(store.filters.query).toBe('');
+		expect(getMany.mock.calls.at(-1)?.[0].$filter).toContain(`status eq '${AppointmentStatus.CONFIRMED}'`);
 	});
 });

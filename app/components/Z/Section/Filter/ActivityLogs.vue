@@ -3,12 +3,17 @@
 		<div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
 			<div class="flex flex-col col-span-full gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.dateRange') }}</label>
-				<ZDateRange v-model="filter.date_range" @update:model-value="handleDateRangeChange" />
+				<ZDateRange :model-value="filters.date_range" @update:model-value="activityLogStore.setDateRange" />
 			</div>
 
 			<div class="flex flex-col col-span-2 gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.search') }}</label>
-				<UInput v-model="filter.query" :placeholder="t('components.filter.searchActivityLogs')" :icon="ICONS.SEARCH_ROUNDED" @input="debouncedSearch" />
+				<UInput
+					:model-value="filters.query"
+					:placeholder="t('components.filter.searchActivityLogs')"
+					:icon="ICONS.SEARCH_ROUNDED"
+					@update:model-value="activityLogStore.setSearch"
+				/>
 			</div>
 
 			<div class="flex flex-col gap-1.5">
@@ -69,11 +74,11 @@
 
 			<div class="flex flex-col gap-1.5 justify-end">
 				<div class="flex gap-2">
-					<UButton variant="outline" color="neutral" :disabled="is_loading" @click="clearFilters">
+					<UButton variant="outline" color="neutral" :disabled="is_loading" @click="activityLogStore.clearFilters">
 						<UIcon name="i-heroicons-arrow-path" class="w-4 h-4" />
 						{{ t('components.filter.clear') }}
 					</UButton>
-					<UButton color="primary" :disabled="is_loading" :loading="is_loading" @click="search">
+					<UButton color="primary" :disabled="is_loading" :loading="is_loading" @click="activityLogStore.refreshListing">
 						<UIcon :name="ICONS.SEARCH_ROUNDED" class="w-4 h-4" />
 						{{ t('components.filter.search') }}
 					</UButton>
@@ -84,27 +89,27 @@
 		<div v-if="hasActiveFilters" class="flex flex-wrap gap-2 items-center">
 			<span class="text-xs text-gray-600 dark:text-gray-400">{{ t('components.filter.activeFilters') }}</span>
 			<UBadge v-if="hasDateFilter" color="primary" variant="subtle" size="sm" @click="clearFilter('date')">
-				{{ t('components.filter.date') }}: {{ formatDateRange(filter.date_range) }}
+				{{ t('components.filter.date') }}: {{ formatDateRange(filters.date_range) }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
-			<UBadge v-if="filter.query" color="info" variant="subtle" size="sm" @click="clearFilter('query')">
-				{{ t('components.filter.search') }}: {{ filter.query }}
+			<UBadge v-if="filters.query" color="info" variant="subtle" size="sm" @click="activityLogStore.setSearch('')">
+				{{ t('components.filter.search') }}: {{ filters.query }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
-			<UBadge v-if="filter.action" color="warning" variant="subtle" size="sm" @click="clearFilter('action')">
-				{{ t('table.action') }}: {{ getActivityLogActionLabel(t, filter.action) }}
+			<UBadge v-if="filters.action" color="warning" variant="subtle" size="sm" @click="activityLogStore.setAction(undefined)">
+				{{ t('table.action') }}: {{ getActivityLogActionLabel(t, filters.action) }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
-			<UBadge v-if="filter.actor_type" color="neutral" variant="subtle" size="sm" @click="clearFilter('actor_type')">
-				{{ t('table.actor') }}: {{ getActivityLogActorTypeLabel(t, filter.actor_type) }}
+			<UBadge v-if="filters.actor_type" color="neutral" variant="subtle" size="sm" @click="activityLogStore.setActorType(undefined)">
+				{{ t('table.actor') }}: {{ getActivityLogActorTypeLabel(t, filters.actor_type) }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
-			<UBadge v-if="filter.source" color="neutral" variant="subtle" size="sm" @click="clearFilter('source')">
-				{{ t('table.source') }}: {{ getActivityLogSourceLabel(t, filter.source) }}
+			<UBadge v-if="filters.source" color="neutral" variant="subtle" size="sm" @click="activityLogStore.setSource(undefined)">
+				{{ t('table.source') }}: {{ getActivityLogSourceLabel(t, filters.source) }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
-			<UBadge v-if="filter.visibility" color="neutral" variant="subtle" size="sm" @click="clearFilter('visibility')">
-				{{ t('table.visibility') }}: {{ getActivityLogVisibilityLabel(t, filter.visibility) }}
+			<UBadge v-if="filters.visibility" color="neutral" variant="subtle" size="sm" @click="activityLogStore.setVisibility(undefined)">
+				{{ t('table.visibility') }}: {{ getActivityLogVisibilityLabel(t, filters.visibility) }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
 		</div>
@@ -130,24 +135,23 @@ import type { Range } from '~/utils/interface';
 
 const { t } = useI18n();
 const activityLogStore = useActivityLogStore();
-const { filter } = storeToRefs(activityLogStore);
+const { filters, loading } = storeToRefs(activityLogStore);
 
-const is_loading = computed(() => activityLogStore.loading);
-const searchTimeout = ref<ReturnType<typeof setTimeout> | null>(null);
+const is_loading = computed(() => loading.value);
 
 const actionItems = computed(() => getActivityLogActionOptions(t));
 const actorTypeItems = computed(() => getActivityLogActorTypeOptions(t));
 const sourceItems = computed(() => getActivityLogSourceOptions(t));
 const visibilityItems = computed(() => getActivityLogVisibilityOptions(t));
 
-const actionSelectValue = computed(() => filter.value.action ?? ACTIVITY_LOG_FILTER_ALL);
-const actorTypeSelectValue = computed(() => filter.value.actor_type ?? ACTIVITY_LOG_FILTER_ALL);
-const sourceSelectValue = computed(() => filter.value.source ?? ACTIVITY_LOG_FILTER_ALL);
-const visibilitySelectValue = computed(() => filter.value.visibility ?? ACTIVITY_LOG_FILTER_ALL);
+const actionSelectValue = computed(() => filters.value.action ?? ACTIVITY_LOG_FILTER_ALL);
+const actorTypeSelectValue = computed(() => filters.value.actor_type ?? ACTIVITY_LOG_FILTER_ALL);
+const sourceSelectValue = computed(() => filters.value.source ?? ACTIVITY_LOG_FILTER_ALL);
+const visibilitySelectValue = computed(() => filters.value.visibility ?? ACTIVITY_LOG_FILTER_ALL);
 
-const hasDateFilter = computed(() => filter.value.date_range && (filter.value.date_range.start || filter.value.date_range.end));
+const hasDateFilter = computed(() => filters.value.date_range && (filters.value.date_range.start || filters.value.date_range.end));
 const hasActiveFilters = computed(
-	() => filter.value.query || filter.value.action || filter.value.actor_type || filter.value.source || filter.value.visibility || hasDateFilter.value,
+	() => filters.value.query || filters.value.action || filters.value.actor_type || filters.value.source || filters.value.visibility || hasDateFilter.value,
 );
 
 const formatDateRange = (range: Range) => {
@@ -160,70 +164,23 @@ const formatDateRange = (range: Range) => {
 	return startDate || endDate;
 };
 
-const search = async () => {
-	filter.value.current_page = 1;
-	await activityLogStore.getActivityLogs();
+const onActionChange = (value: string) => {
+	void activityLogStore.setAction(value === ACTIVITY_LOG_FILTER_ALL ? undefined : (value as ActivityLogAction));
 };
 
-const debouncedSearch = () => {
-	if (searchTimeout.value) {
-		clearTimeout(searchTimeout.value);
-	}
-	searchTimeout.value = setTimeout(async () => {
-		await search();
-	}, 500);
+const onActorTypeChange = (value: string) => {
+	void activityLogStore.setActorType(value === ACTIVITY_LOG_FILTER_ALL ? undefined : (value as ActivityLogActorType));
 };
 
-const handleDateRangeChange = async (newValue: Range) => {
-	filter.value.date_range = newValue;
-	await search();
+const onSourceChange = (value: string) => {
+	void activityLogStore.setSource(value === ACTIVITY_LOG_FILTER_ALL ? undefined : (value as ActivityLogSource));
 };
 
-const onActionChange = async (value: string) => {
-	filter.value.action = value === ACTIVITY_LOG_FILTER_ALL ? undefined : (value as ActivityLogAction);
-	await search();
+const onVisibilityChange = (value: string) => {
+	void activityLogStore.setVisibility(value === ACTIVITY_LOG_FILTER_ALL ? undefined : (value as ActivityLogVisibility));
 };
 
-const onActorTypeChange = async (value: string) => {
-	filter.value.actor_type = value === ACTIVITY_LOG_FILTER_ALL ? undefined : (value as ActivityLogActorType);
-	await search();
+const clearFilter = (filterKey: string) => {
+	if (filterKey === 'date') void activityLogStore.setDateRange({});
 };
-
-const onSourceChange = async (value: string) => {
-	filter.value.source = value === ACTIVITY_LOG_FILTER_ALL ? undefined : (value as ActivityLogSource);
-	await search();
-};
-
-const onVisibilityChange = async (value: string) => {
-	filter.value.visibility = value === ACTIVITY_LOG_FILTER_ALL ? undefined : (value as ActivityLogVisibility);
-	await search();
-};
-
-const clearFilters = async () => {
-	activityLogStore.resetFilters();
-	await search();
-};
-
-const clearFilter = async (filterKey: string) => {
-	if (filterKey === 'date') {
-		filter.value.date_range = {};
-	} else if (filterKey === 'query') {
-		filter.value.query = '';
-	} else if (filterKey === 'action') {
-		filter.value.action = undefined;
-	} else if (filterKey === 'actor_type') {
-		filter.value.actor_type = undefined;
-	} else if (filterKey === 'source') {
-		filter.value.source = undefined;
-	} else if (filterKey === 'visibility') {
-		filter.value.visibility = undefined;
-	}
-	await search();
-};
-
-onUnmounted(() => {
-	if (searchTimeout.value) {
-		clearTimeout(searchTimeout.value);
-	}
-});
 </script>

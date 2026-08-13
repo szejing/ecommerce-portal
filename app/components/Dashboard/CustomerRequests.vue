@@ -86,7 +86,7 @@ type CustomerRequestItem = {
 };
 
 const orderStore = useOrderStore();
-const { urgent_customer_requests, urgent_customer_requests_loading } = storeToRefs(orderStore);
+const { urgentCustomerRequests: urgent_customer_requests, urgentCustomerRequestsLoading: urgent_customer_requests_loading } = storeToRefs(orderStore);
 const { t } = useI18n();
 
 const loading = computed(() => urgent_customer_requests_loading.value);

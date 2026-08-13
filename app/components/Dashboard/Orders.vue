@@ -41,12 +41,12 @@ const { t } = useI18n();
 const order_columns = computed(() => getOrderColumns(t));
 
 const orderStore = useOrderStore();
-const { orders, loading } = storeToRefs(orderStore);
+const { dashboardOrders: orders, dashboardLoading: loading } = storeToRefs(orderStore);
 
 const hideCompleted = useStorage(HIDE_COMPLETED_STORAGE_KEY, false);
 
 const fetchOrders = async () => {
-	await orderStore.getOrders(props.range, { excludeCompleted: hideCompleted.value });
+	await orderStore.loadDashboard({ range: props.range, hideCompleted: hideCompleted.value });
 };
 
 const onHideCompletedChange = async (value: boolean | 'indeterminate') => {

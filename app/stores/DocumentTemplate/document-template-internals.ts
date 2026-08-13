@@ -1,6 +1,20 @@
 import { toRaw } from 'vue';
 import type { DocumentTemplateConfiguration, DocumentTemplateRevision } from '~/utils/types/document-template';
 
+export type TemplateStudioErrorCode =
+	| 'save_failed'
+	| 'preview_failed'
+	| 'test_send_failed'
+	| 'publish_failed'
+	| 'reset_failed'
+	| 'save_before_publish'
+	| 'schedule_invalid_date'
+	| 'schedule_end_after_start'
+	| 'schedule_end_future'
+	| 'load_detail_failed';
+
+export type TemplateStudioError = { code: TemplateStudioErrorCode; transportMessage?: string };
+
 type UnknownRecord = Record<string, unknown>;
 type TemplateBlock = NonNullable<DocumentTemplateConfiguration['blocks']>[number];
 
@@ -218,13 +232,13 @@ export function pathParts(path: string): [keyof DocumentTemplateConfiguration, s
 	return [section as keyof DocumentTemplateConfiguration, key];
 }
 
-export function activationError(window: { startDate: Date | null; endDate: Date | null }, now = Date.now()): string | undefined {
+export function activationError(window: { startDate: Date | null; endDate: Date | null }, now = Date.now()): TemplateStudioErrorCode | undefined {
 	if ((window.startDate && Number.isNaN(window.startDate.getTime())) || (window.endDate && Number.isNaN(window.endDate.getTime()))) {
-		return 'Schedule date is invalid';
+		return 'schedule_invalid_date';
 	}
 	if (window.startDate && window.endDate && window.endDate.getTime() <= window.startDate.getTime()) {
-		return 'Schedule start must be before its end';
+		return 'schedule_end_after_start';
 	}
-	if (window.endDate && window.endDate.getTime() <= now) return 'Schedule end must be in the future';
+	if (window.endDate && window.endDate.getTime() <= now) return 'schedule_end_future';
 	return undefined;
 }

@@ -6,14 +6,14 @@
 
 		<div class="space-y-6">
 			<ZTableToolbar
-				v-model="sale_summ.page_size"
+				:model-value="sale_summ.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
 				:page-size-options="options_page_size"
 				:export-enabled="true"
 				:exporting="sale_summ.exporting"
 				:column-options="columnOptions"
-				@update:model-value="updatePageSize"
-				@export="salesSummStore.exportSalesSummary"
+				@update:model-value="salesSummStore.setPageSize"
+				@export="exportSummary"
 			/>
 
 			<UCard class="overflow-hidden" :ui="{ body: 'p-0 sm:p-0' }">
@@ -40,7 +40,7 @@
 			</UCard>
 
 			<div v-if="data.length > 0" class="section-pagination">
-				<UPagination v-model="current_page" :items-per-page="sale_summ.page_size" :total="sale_summ.total_data" @update:page="updatePage" />
+				<UPagination :page="current_page" :items-per-page="sale_summ.page_size" :total="sale_summ.total_data" @update:page="salesSummStore.setPage" />
 			</div>
 		</div>
 	</ZPagePanel>
@@ -52,53 +52,36 @@ import { mapSummBillsToTableRows } from '~/utils/summ-bill-table-rows';
 import { getSummColumns, getSummColumnLabels } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import { ICONS } from '~/utils/icons';
+import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 
 const route = useRoute();
 const { t } = useI18n();
 useHead({ title: () => t('pages.saleSummaryTitle') });
 
 const salesSummStore = useSummSaleStore();
+const { sale_summ, filters, listFailure } = storeToRefs(salesSummStore);
+const loading = computed(() => sale_summ.value.loading);
 
-function applyQueryToFilter() {
-	const start = route.query.start_date;
-	const end = route.query.end_date;
-	if (typeof start === 'string' && start) {
-		const d = new Date(start);
-		if (!Number.isNaN(d.getTime())) {
-			salesSummStore.sale_summ.filter.date_range.start = d;
-		}
-	}
-	if (typeof end === 'string' && end) {
-		const d = new Date(end);
-		if (!Number.isNaN(d.getTime())) {
-			salesSummStore.sale_summ.filter.date_range.end = d;
-		}
-	}
-}
+watch(listFailure, (failure) => {
+	if (failure) failedNotification(failure.message);
+});
 
 onMounted(async () => {
-	applyQueryToFilter();
-	await salesSummStore.getSaleSummary();
+	salesSummStore.hydrateFromQuery(route.query);
+	await salesSummStore.refreshListing();
 });
 
 watch(
-	() => route.query.start_date && route.query.end_date,
+	() => ({ start: route.query.start_date, end: route.query.end_date, status: route.query.status }),
 	() => {
-		applyQueryToFilter();
-		salesSummStore.getSaleSummary();
+		salesSummStore.hydrateFromQuery(route.query);
+		void salesSummStore.refreshListing();
 	},
+	{ deep: true },
 );
-const { sale_summ } = storeToRefs(salesSummStore);
-const loading = computed(() => sale_summ.value.loading);
 
 const data = computed(() => sale_summ.value.data);
-
-const current_page = computed({
-	get: () => sale_summ.value.current_page,
-	set: (page: number) => {
-		sale_summ.value.current_page = page;
-	},
-});
+const current_page = computed(() => sale_summ.value.current_page);
 
 const saleSummColumns = computed(() => getSummColumns(t, 'total_txns'));
 const columnOptions = computed(() => columnOptionsFromLabelMap(t, getSummColumnLabels('total_txns')));
@@ -108,23 +91,16 @@ const { selectedColumnKeys, visibleColumns: visibleDailyColumns } = useTableColu
 
 const rows = computed(() =>
 	mapSummBillsToTableRows(data.value, {
-		// Status filter All (undefined) → keep one row per status for the day
-		groupByStatus: !sale_summ.value.filter.status,
+		groupByStatus: !filters.value.status,
 	}),
 );
 
-const updatePage = async (page: number) => {
-	sale_summ.value.current_page = page;
-	await salesSummStore.getSaleSummary();
+const exportSummary = async () => {
+	const outcome = await salesSummStore.exportSummary();
+	if (outcome.status === 'completed') successNotification(t('summSale.notifications.exported'));
+	else if (outcome.failure.kind === 'export_empty') failedNotification(t('summSale.notifications.exportFailed'));
+	else failedNotification(outcome.failure.message);
 };
-
-const updatePageSize = async (size: number) => {
-	await salesSummStore.updateSaleSummPageSize(size);
-};
-
-// const exportSalesSummary = async () => {
-// 	await salesSummStore.exportSalesSummary();
-// };
 </script>
 
 <style scoped>

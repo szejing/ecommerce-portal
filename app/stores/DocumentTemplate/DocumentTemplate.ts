@@ -27,6 +27,8 @@ import {
 	mergePostDispatchEdits,
 	pathParts,
 	stableSerialize,
+	type TemplateStudioError,
+	type TemplateStudioErrorCode,
 } from './document-template-internals';
 
 export type EmailPreview = { channel: 'email'; html: string; subject: string; revisionId: string | null; revisionNo: number | null };
@@ -56,6 +58,9 @@ const emptyConfiguration = (): DocumentTemplateConfiguration => ({});
 const currentTimezone = (): string => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 /** Debounce for live email preview while typing. PDF previews stay refresh-only. */
+export type { TemplateStudioError, TemplateStudioErrorCode } from './document-template-internals';
+
+/** Debounce for live email preview while typing. PDF previews stay refresh-only. */
 export const EMAIL_PREVIEW_DEBOUNCE_MS = 800;
 
 export const useDocumentTemplateStore = defineStore('documentTemplateStore', () => {
@@ -78,9 +83,9 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 	const restoring = ref(false);
 	const conflict = ref<{ currentVersion: number } | null>(null);
 	const fieldErrors = ref<Record<string, string>>({});
-	const error = ref<string | null>(null);
-	const summaryError = ref<string | null>(null);
-	const detailError = ref<string | null>(null);
+	const error = ref<TemplateStudioError | null>(null);
+	const summaryError = ref<TemplateStudioError | null>(null);
+	const detailError = ref<TemplateStudioError | null>(null);
 	const schedule = ref<TemplateSchedule>({ startDate: null, endDate: null, timezone: currentTimezone() });
 
 	let generation = 0;
@@ -208,7 +213,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 			const response = await $api.documentTemplate.list();
 			if (request === summariesGeneration) summaries.value = clone(response.document_templates ?? []);
 		} catch (caught) {
-			if (request === summariesGeneration) summaryError.value = getApiErrorMessage(caught, 'Failed to load document templates');
+			if (request === summariesGeneration) summaryError.value = fail('load_detail_failed', caught, 'Failed to load document templates');
 			throw caught;
 		} finally {
 			if (request === summariesGeneration) loadingSummaries.value = false;
@@ -241,7 +246,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 			};
 			return true;
 		} catch (caught) {
-			if (request === generation && epoch === selectionEpoch) detailError.value = getApiErrorMessage(caught, 'Failed to load document template');
+			if (request === generation && epoch === selectionEpoch) detailError.value = fail('load_detail_failed', caught, 'Failed to load document template');
 			return false;
 		} finally {
 			if (request === generation && epoch === selectionEpoch) loadingDetail.value = false;
@@ -265,7 +270,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 			const response = await $api.documentTemplate.listRevisions(selection.channel, selection.templateCode);
 			if (request === revisionsGeneration && epoch === selectionEpoch && isSameSelection(selected.value, selection)) revisions.value = clone(response.revisions);
 		} catch (caught) {
-			if (request === revisionsGeneration && epoch === selectionEpoch) error.value = getApiErrorMessage(caught, 'Failed to load document template revisions');
+			if (request === revisionsGeneration && epoch === selectionEpoch) error.value = fail('load_detail_failed', caught, 'Failed to load document template revisions');
 		}
 	}
 
@@ -415,6 +420,12 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 			: {};
 	}
 
+	function fail(code: TemplateStudioErrorCode, caught?: unknown, fallback?: string): TemplateStudioError {
+		if (caught === undefined) return { code };
+		const transportMessage = getApiErrorMessage(caught, fallback ?? code);
+		return transportMessage && transportMessage !== fallback && transportMessage !== code ? { code, transportMessage } : { code };
+	}
+
 	function readConflict(caught: unknown): boolean {
 		const currentVersion = getApiErrorMetadataValue(caught, 'current_version');
 		if (getApiErrorStatus(caught) !== 409 || typeof currentVersion !== 'number') return false;
@@ -448,7 +459,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 		} catch (caught) {
 			if (request === saveGeneration && mutation === mutationGeneration && epoch === selectionEpoch && isSameSelection(selected.value, selection)) {
 				readFieldErrors(caught);
-				if (!readConflict(caught)) error.value = getApiErrorMessage(caught, 'Failed to save document template');
+				if (!readConflict(caught)) error.value = fail('save_failed', caught, 'Failed to save document template');
 			}
 		} finally {
 			if (request === saveGeneration && epoch === selectionEpoch) saving.value = false;
@@ -506,7 +517,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 		} catch (caught) {
 			if (request === previewGeneration && isSameSelection(selected.value, selection)) {
 				previewStale.value = Boolean(preview.value);
-				error.value = getApiErrorMessage(caught, 'Failed to preview document template');
+				error.value = fail('preview_failed', caught, 'Failed to preview document template');
 			}
 		} finally {
 			if (request === previewGeneration) previewing.value = false;
@@ -529,7 +540,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 			await $api.documentTemplate.testSend(selection.channel, selection.templateCode, { configuration: configurationForRequest() });
 		} catch (caught) {
 			if (request === testGeneration && epoch === selectionEpoch && isSameSelection(selected.value, selection)) {
-				error.value = getApiErrorMessage(caught, 'Failed to send test document template');
+				error.value = fail('test_send_failed', caught, 'Failed to send test document template');
 			}
 		} finally {
 			if (request === testGeneration && epoch === selectionEpoch) testing.value = false;
@@ -541,7 +552,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 		const draftRevision = detail.value?.draft_revision;
 		if (!selection || !draftRevision || !canPublish.value) return { status: 'rejected' };
 		if (isDirty.value) {
-			error.value = 'Save draft before publishing';
+			error.value = fail('save_before_publish');
 			return { status: 'rejected' };
 		}
 		const activation = {
@@ -550,7 +561,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 		};
 		const validationError = activationError(activation);
 		if (validationError) {
-			error.value = validationError;
+			error.value = fail(validationError);
 			return { status: 'rejected' };
 		}
 		const intent: TemplatePublishIntent = {
@@ -612,7 +623,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 			return 'completed';
 		} catch (caught) {
 			if (request === publishGeneration && mutation === mutationGeneration && epoch === selectionEpoch && isSameSelection(selected.value, selection)) {
-				if (!readConflict(caught)) error.value = getApiErrorMessage(caught, 'Failed to publish document template');
+				if (!readConflict(caught)) error.value = fail('publish_failed', caught, 'Failed to publish document template');
 				return 'failed';
 			}
 			return 'stale';
@@ -627,7 +638,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 		publishIntentSnapshots.delete(intent);
 		const validationError = activationError(preparedIntent);
 		if (validationError) {
-			error.value = validationError;
+			error.value = fail(validationError);
 			return 'failed';
 		}
 		const currentDraft = detail.value?.draft_revision;
@@ -676,7 +687,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 			return 'completed';
 		} catch (caught) {
 			if (mutation === mutationGeneration && epoch === selectionEpoch && isSameSelection(selected.value, selection)) {
-				if (!readConflict(caught)) error.value = getApiErrorMessage(caught, 'Failed to reset document template');
+				if (!readConflict(caught)) error.value = fail('reset_failed', caught, 'Failed to reset document template');
 				return 'failed';
 			}
 			return 'stale';
@@ -718,7 +729,7 @@ export const useDocumentTemplateStore = defineStore('documentTemplateStore', () 
 			}
 		} catch (caught) {
 			if (mutation === mutationGeneration && epoch === selectionEpoch && isSameSelection(selected.value, selection)) {
-				if (!readConflict(caught)) error.value = getApiErrorMessage(caught, 'Failed to restore document template revision');
+				if (!readConflict(caught)) error.value = fail('reset_failed', caught, 'Failed to restore document template revision');
 			}
 		} finally {
 			if (epoch === selectionEpoch && mutation === mutationGeneration) restoring.value = false;
