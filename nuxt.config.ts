@@ -41,7 +41,7 @@ export default defineNuxtConfig({
 
 	app: {
 		head: {
-			title: 'Wemotoo CRM', // default fallback; use $t('common.appName') in app
+			title: process.env.APP_PLATFORM === 'yeppi' ? 'Yeppi CRM' : 'Wemotoo CRM',
 			link: [
 				{ rel: 'stylesheet', href: 'https://fonts.googleapis.com/icon?family=Material+Icons' },
 				{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
@@ -80,9 +80,11 @@ export default defineNuxtConfig({
 		apiKey: process.env.API_KEY,
 		requestSignatureSecret: process.env.REQUEST_SIGNATURE_SECRET,
 		jwtSecret: process.env.JWT_SECRET,
+		appPlatform: process.env.APP_PLATFORM || 'wemotoo',
 		public: {
 			baseUrl: process.env.BASE_URL,
 			version: process.env.APP_VERSION,
+			appPlatform: process.env.APP_PLATFORM || 'wemotoo',
 		},
 	},
 

@@ -9,6 +9,7 @@
 		"clean": "rm -rf node_modules && rm -rf dist && rm -rf .nuxt && rm -rf bun.lock",
 		"rebuild": "bun run clean && bun install && bun update yeppi-common",
 		"start:local": "nuxt dev --dotenv .env.local",
+		"start:yeppi:local": "nuxt dev --dotenv .env.yeppi.local",
 		"start:dev": "nuxt dev --dotenv .env.dev",
 		"start:prod": "nuxt dev --dotenv .env.prod",
 		"generate": "NODE_OPTIONS=--max-old-space-size=8192 nuxt generate",

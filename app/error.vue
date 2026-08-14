@@ -8,7 +8,7 @@
 					aria-label="Home"
 					@click="goHome"
 				>
-					<img class="h-8 w-auto sm:h-9" src="/logo/logo.png" alt="Wemotoo CRM" />
+					<img class="h-8 w-auto sm:h-9" :src="logoSrc" :alt="logoAlt" />
 				</button>
 				<USelect :model-value="locale" :items="localeItems" size="sm" class="w-36" @update:model-value="switchLocale" />
 			</header>
@@ -59,6 +59,7 @@ import { LOCALE_STORAGE_KEY } from '~/utils/constants/i18n';
 
 const props = defineProps<{ error: NuxtError }>();
 const { t, locale, setLocale } = useI18n();
+const { logoSrc, logoAlt } = usePlatformShell();
 
 const statusCode = computed(() => props.error.status ?? 500);
 const isNotFound = computed(() => statusCode.value === 404);

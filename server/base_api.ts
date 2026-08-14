@@ -1,12 +1,20 @@
 import * as YeppiCommon from 'yeppi-common';
+import { resolvePortalAppPlatform } from '../app/utils/platform-shell';
 
 const { KEY, buildCanonicalString, hashBody, signRequest } = YeppiCommon;
 const commonPlatform = YeppiCommon as typeof YeppiCommon & {
-	APP_PLATFORM?: { WEMOTOO: string };
+	APP_PLATFORM?: { WEMOTOO: string; YEPPI: string };
 	X_PLATFORM_HEADER?: string;
 };
 const X_PLATFORM_HEADER = commonPlatform.X_PLATFORM_HEADER ?? 'x-platform';
-const APP_PLATFORM_WEMOTOO = commonPlatform.APP_PLATFORM?.WEMOTOO ?? 'wemotoo';
+
+function resolveRequestAppPlatform(event: any): string {
+	const config = useRuntimeConfig(event);
+	return resolvePortalAppPlatform(
+		(config.appPlatform as string | undefined) ??
+			(config.public?.appPlatform as string | undefined),
+	);
+}
 
 const API_PATH_PREFIX = '/api';
 
@@ -180,7 +188,7 @@ export const generateBasicHeaders = (event: any) => {
 		'Accept': 'application/json',
 		'Content-Type': 'application/json',
 		'x-api-key': config.apiKey,
-		[X_PLATFORM_HEADER]: APP_PLATFORM_WEMOTOO,
+		[X_PLATFORM_HEADER]: resolveRequestAppPlatform(event),
 	};
 
 	return headers;
@@ -196,7 +204,7 @@ export const generateHeaders = (event: any, includeAccessToken: boolean = true, 
 		'Accept': 'application/json',
 		'Content-Type': 'application/json',
 		'x-api-key': config.apiKey,
-		[X_PLATFORM_HEADER]: APP_PLATFORM_WEMOTOO,
+		[X_PLATFORM_HEADER]: resolveRequestAppPlatform(event),
 	};
 
 	if (merchant_id !== '') {
@@ -219,7 +227,7 @@ export const generateSignatureOnlyHeaders = (event: any, includeAccessToken: boo
 	const headers: Record<string, string> = {
 		'Accept': 'application/json',
 		'Content-Type': 'application/json',
-		[X_PLATFORM_HEADER]: APP_PLATFORM_WEMOTOO,
+		[X_PLATFORM_HEADER]: resolveRequestAppPlatform(event),
 	};
 
 	if (merchant_id !== '') {
@@ -249,7 +257,7 @@ export const generateImageHeaders = (event: any, pathSegment: string) => {
 		'Accept': 'application/json',
 		'x-api-key': config.apiKey,
 		'x-merchant-id': cookie_merchant_id,
-		[X_PLATFORM_HEADER]: APP_PLATFORM_WEMOTOO,
+		[X_PLATFORM_HEADER]: resolveRequestAppPlatform(event),
 		'Authorization': 'Bearer ' + cookie_access_token,
 	};
 

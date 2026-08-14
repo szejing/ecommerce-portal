@@ -48,3 +48,11 @@ describe('pathForSignature (signed upstream path)', () => {
 		expect(signedPath).toBe('/api/shipping-methods/id-1?defaultRelations=zones&defaultRelations=zones.shipping_zone');
 	});
 });
+
+describe('Platform Shell x-platform resolution (APP_PLATFORM)', () => {
+	it('maps yeppi env to yeppi platform for signed API headers', async () => {
+		const { resolvePortalAppPlatform } = await import('../../app/utils/platform-shell');
+		expect(resolvePortalAppPlatform('yeppi')).toBe('yeppi');
+		expect(resolvePortalAppPlatform('wemotoo')).toBe('wemotoo');
+	});
+});
