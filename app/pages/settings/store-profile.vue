@@ -77,6 +77,50 @@
 				/>
 			</div>
 
+			<div class="rounded-xl border border-default bg-elevated/40 p-4 space-y-3">
+				<div class="min-w-0 space-y-1">
+					<p class="text-sm font-semibold text-gray-900 dark:text-white">
+						{{ t('pages.storeProfilePage.storeThemeLabel') }}
+					</p>
+					<p class="text-sm text-gray-600 dark:text-gray-400">
+						{{ t('pages.storeProfilePage.storeThemeDesc') }}
+					</p>
+				</div>
+				<div class="flex flex-wrap items-center gap-3">
+					<UPopover>
+						<UButton color="neutral" variant="outline" :icon="ICONS.PALETTE">
+							<span
+								class="size-4 rounded-full border border-default"
+								:style="{ backgroundColor: themeColour || 'transparent' }"
+							/>
+							{{ themeColour || t('pages.storeProfilePage.storeThemeNone') }}
+						</UButton>
+						<template #content>
+							<UColorPicker
+								class="p-2"
+								format="hex"
+								:model-value="themeColour || '#FFFFFF'"
+								@update:model-value="onThemeColour"
+							/>
+						</template>
+					</UPopover>
+					<UInput
+						class="w-36 font-mono"
+						:model-value="themeColour"
+						placeholder="#C41E3A"
+						@update:model-value="onThemeColour"
+					/>
+					<UButton
+						v-if="themeColour"
+						color="neutral"
+						variant="ghost"
+						@click="onThemeColour('')"
+					>
+						{{ t('pages.storeProfilePage.storeThemeClear') }}
+					</UButton>
+				</div>
+			</div>
+
 			<div class="space-y-2">
 				<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('nav.storeProfile') }}</h2>
 				<p class="text-gray-600 dark:text-gray-400">{{ t('pages.storeProfileDesc') }}</p>
@@ -241,6 +285,10 @@ import { useDataStore } from '~/stores/Data/Data';
 import type { Country } from '~/utils/types/country';
 import { ICONS } from '~/utils/icons';
 import { accountTypeLabel } from '~/utils/options/account-type';
+import {
+	normalizeStoreThemePrimaryColour,
+	STORE_THEME_PRIMARY_COLOUR_SET_CODE,
+} from '~/utils/store-theme';
 
 definePageMeta({ ssr: false });
 
@@ -319,6 +367,21 @@ const setMerchantValue = (groupCode: string, setCode: string, value: string) => 
 		set_code: setCode,
 		set_value: value ?? '',
 	});
+};
+
+const themeColour = computed(
+	() => getMerchantValue(GROUP_CODE.INFO, STORE_THEME_PRIMARY_COLOUR_SET_CODE),
+);
+
+const onThemeColour = (value: string | undefined) => {
+	const raw = (value ?? '').trim();
+	if (!raw) {
+		setMerchantValue(GROUP_CODE.INFO, STORE_THEME_PRIMARY_COLOUR_SET_CODE, '');
+		return;
+	}
+	const normalised = normalizeStoreThemePrimaryColour(raw);
+	if (!normalised) return;
+	setMerchantValue(GROUP_CODE.INFO, STORE_THEME_PRIMARY_COLOUR_SET_CODE, normalised);
 };
 
 const addressCountry = computed((): Country | undefined => {

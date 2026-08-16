@@ -4,6 +4,7 @@ import { failedNotification, successNotification } from '../AppUi/AppUi';
 import type { Currency } from '~/utils/types/currency';
 import { dir } from '~/utils/constants/dir';
 import { GROUP_CODE, MERCHANT, type ErrorResponse } from 'yeppi-common';
+import { normalizeStoreThemePrimaryColour, STORE_THEME_PRIMARY_COLOUR_SET_CODE } from '~/utils/store-theme';
 
 const initial: MerchantInfo[] = [];
 
@@ -25,6 +26,18 @@ export const useMerchantInfoStore = defineStore('merchantInfoStore', {
 				(item) => item.group_code === GROUP_CODE.INFO && item.set_code === MERCHANT.HIDE_STORE,
 			);
 			return info?.getBoolean() ?? false;
+		},
+		storeThemePrimaryColour(state): string | null {
+			const updated = state.updatedInfo.find(
+				(item) => item.group_code === GROUP_CODE.INFO && item.set_code === STORE_THEME_PRIMARY_COLOUR_SET_CODE,
+			);
+			if (updated) {
+				return normalizeStoreThemePrimaryColour(updated.set_value);
+			}
+			const info = state.merchant.find(
+				(item) => item.group_code === GROUP_CODE.INFO && item.set_code === STORE_THEME_PRIMARY_COLOUR_SET_CODE,
+			);
+			return normalizeStoreThemePrimaryColour(info?.getString());
 		},
 	},
 	actions: {
