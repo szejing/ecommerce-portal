@@ -61,7 +61,7 @@ function getSignatureHeaders(event: any, method: string, pathForSignature: strin
  * Build canonical path+query as used for X-Signature (path no trailing slash, query keys sorted).
  * Must match Nest `request.originalUrl`: the CRM sends `/api/auth/login`, `/api/shipping-methods/...`, etc.
  * RouterMiddleware rewrites `req.url` to `/merchant/...` for routing, but `originalUrl` stays `/api/...`
- * (see yeppi-ecommerce-backend RouterMiddleware + SignatureGuard).
+ * (see ecommerce-backend RouterMiddleware + SignatureGuard).
  */
 export function pathForSignature(pathSegment: string, query?: Record<string, any>): string {
 	const trimmed = pathSegment.replace(/^\//, '').replace(/\/+$/, '');
@@ -72,7 +72,7 @@ export function pathForSignature(pathSegment: string, query?: Record<string, any
 
 /**
  * Raw body bytes used for X-Signature body hash (passed to hashBody).
- * Must match yeppi-ecommerce-backend SignatureGuard: DELETE uses empty hash, not JSON body.
+ * Must match ecommerce-backend SignatureGuard: DELETE uses empty hash, not JSON body.
  */
 export function rawBodyForSignature(method: string, body: unknown): string | undefined {
 	const m = (method || 'GET').toUpperCase();

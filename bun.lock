@@ -3,7 +3,7 @@
   "configVersion": 0,
   "workspaces": {
     "": {
-      "name": "wemotoo-portal",
+      "name": "ecommerce-portal",
       "dependencies": {
         "@nuxt/eslint": "^1.16.0",
         "@nuxt/image": "2.0.0",

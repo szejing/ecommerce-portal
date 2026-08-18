@@ -1,13 +1,13 @@
 import type { AllocationType, DiscountType, FilterCondition, FilterOperator } from 'yeppi-common';
 
-/** Matches yeppi-ecommerce-backend `CreateDiscountConditionDto` (flat filter fields). */
+/** Matches ecommerce-backend `CreateDiscountConditionDto` (flat filter fields). */
 export type CreateDiscountConditionReq = {
 	filter_operator?: FilterOperator;
 	filter_condition?: FilterCondition;
 	filter_value?: string;
 };
 
-/** Matches yeppi-ecommerce-backend `CreateDiscountDto`. */
+/** Matches ecommerce-backend `CreateDiscountDto`. */
 export type CreateDiscountReq = {
 	code?: string;
 	description?: string;

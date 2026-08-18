@@ -8,7 +8,7 @@ import { parseNominatimSearchFirstHit } from '#root/app/utils/address-geocode';
 
 const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org/search';
 /** Policy: identify the application; update contact if you publish a public URL. */
-const NOMINATIM_USER_AGENT = 'Wemotoo-Portal/1.0';
+const NOMINATIM_USER_AGENT = 'Ecommerce-Portal/1.0';
 
 export default defineEventHandler(async (event) => {
 	const token = getCookie(event, KEY.ACCESS_TOKEN);

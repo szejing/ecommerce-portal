@@ -1,5 +1,5 @@
 {
-	"name": "wemotoo-portal",
+	"name": "ecommerce-portal",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -24,8 +24,8 @@
 		"lint:fix": "eslint . --fix",
 		"docker:dev": "docker-compose -f docker-compose.dev.yml up --build",
 		"docker:prod": "docker-compose -f docker-compose.prod.yml up --build",
-		"docker:build:dev": "docker buildx build --platform linux/arm64 -t wemotoo:dev .",
-		"docker:build:prod": "docker buildx build --platform linux/amd64 -t wemotoo:prod ."
+		"docker:build:dev": "docker buildx build --platform linux/arm64 -t ecommerce-portal:dev .",
+		"docker:build:prod": "docker buildx build --platform linux/amd64 -t ecommerce-portal:prod ."
 	},
 	"dependencies": {
 		"@nuxt/eslint": "^1.16.0",

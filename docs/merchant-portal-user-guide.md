@@ -1,8 +1,8 @@
 # Wemotoo Merchant Portal User Guide
 
-This guide covers common merchant staff workflows in `wemotoo-portal`: signing in, creating products and service/appointment products, managing appointments, and updating order details.
+This guide covers common merchant staff workflows in `ecommerce-portal`: signing in, creating products and service/appointment products, managing appointments, and updating order details.
 
-> Note: `wemotoo-webapp` is the customer-facing storefront. Merchant operations such as products, appointments, and orders are handled in `wemotoo-portal`.
+> Note: `wemotoo-webapp` is the customer-facing storefront. Merchant operations such as products, appointments, and orders are handled in `ecommerce-portal`.
 
 ## Sign In
 

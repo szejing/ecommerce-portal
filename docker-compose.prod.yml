@@ -1,5 +1,5 @@
 services:
-  wemotoo-portal:
+  ecommerce-portal:
     build:
       context: .
       dockerfile: Dockerfile

@@ -4,26 +4,26 @@
 
 run npm link /Users/szejinggo/Documents/Projects/yeppi-common
 
-docker build -t registry.digitalocean.com/wemotoo/crm-portal:latest .
+docker build -t registry.digitalocean.com/heroestech/crm-portal:latest .
 
-docker pull registry.digitalocean.com/wemotoo/crm-portal:latest
+docker pull registry.digitalocean.com/heroestech/crm-portal:latest
 
 docker compose down
 docker compose up -d
 
 docker rmi
 
-docker-compose up --build wemotoo-portal
+docker-compose up --build ecommerce-portal
 
-docker run -d -p 3000:3000 --name wemotoo-portal registry.digitalocean.com/wemotoo/wemotoo-portal:latest
+docker run -d -p 3000:3000 --name ecommerce-portal registry.digitalocean.com/heroestech/ecommerce-portal:latest
 
 docker-compose build --no-cache
-docker push registry.digitalocean.com/wemotoo/wemotoo-portal:1.0.0 && docker push registry.digitalocean.com/wemotoo/wemotoo-ecommerce:1.0.0
+docker push registry.digitalocean.com/heroestech/ecommerce-portal:1.0.0 && docker push registry.digitalocean.com/heroestech/ecommerce-backend:1.0.0
 
-docker pull registry.digitalocean.com/wemotoo/wemotoo-portal:1.0.0
-docker pull registry.digitalocean.com/wemotoo/wemotoo-ecommerce:1.0.0
+docker pull registry.digitalocean.com/heroestech/ecommerce-portal:1.0.0
+docker pull registry.digitalocean.com/heroestech/ecommerce-backend:1.0.0
 
-docker pull registry.digitalocean.com/wemotoo/wemotoo-portal:1.0.0 && docker pull registry.digitalocean.com/wemotoo/wemotoo-ecommerce:1.0.0
+docker pull registry.digitalocean.com/heroestech/ecommerce-portal:1.0.0 && docker pull registry.digitalocean.com/heroestech/ecommerce-backend:1.0.0
 
 ## Deployment (local push → cloud pull)
 
@@ -55,8 +55,8 @@ VERSION=1.2.0 ./release-wemotoo
 
 This pushes:
 
-- `registry.digitalocean.com/wemotoo/wemotoo-ecommerce:<tag>`
-- `registry.digitalocean.com/wemotoo/wemotoo-portal:<tag>`
+- `registry.digitalocean.com/heroestech/ecommerce-backend:<tag>`
+- `registry.digitalocean.com/heroestech/ecommerce-portal:<tag>`
 - both also tagged as `:prod`
 
 Before build, `APP_VERSION` in `.env.prod` and `../.env.tags` are updated so the image bakes in the new version. Note the printed tag (e.g. `1.0.1`).
