@@ -35,13 +35,14 @@ describe('ZSettingTemplate', () => {
 			},
 		});
 
-		const row = wrapper.find('.flex.gap-2');
+		const row = wrapper.find('.px-4.py-3 > .flex.gap-2');
 		expect(row.classes()).toContain('flex-col');
 		expect(row.classes()).toContain('sm:flex-row');
 
 		const control = row.findAll('div').find((el) => el.classes().includes('w-full'));
 		expect(control).toBeTruthy();
 		expect(control!.classes()).toContain('sm:min-w-[50%]');
+		expect(wrapper.find('.setting-templs-title').exists()).toBe(true);
 	});
 
 	it('keeps boolean switches on the same row as the label', async () => {
@@ -58,7 +59,7 @@ describe('ZSettingTemplate', () => {
 			},
 		});
 
-		const row = wrapper.find('.flex.gap-2');
+		const row = wrapper.find('.px-4.py-3 > .flex.gap-2');
 		expect(row.classes()).toContain('flex-row');
 		expect(row.classes()).not.toContain('flex-col');
 		expect(wrapper.findComponent({ name: 'USwitch' }).exists()).toBe(true);
