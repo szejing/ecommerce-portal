@@ -85,11 +85,10 @@ export const useProductCategoryStore = defineStore('productCategoryStore', {
 			const { $api } = useNuxtApp();
 
 			try {
+				// Backend returns a built tree (roots + nested children) with thumbnail/images.
+				// Do not send OData nested $expand(...) — the API parser rejects parentheses.
 				const queryParams: BaseODataReq = {
 					$count: true,
-					$expand: 'thumbnail,images,parent_category,category_children($expand=category_children($expand=category_children($expand=category_children)))',
-					$filter: 'parent_category_code eq null',
-					$orderby: 'code asc',
 				};
 
 				if (this.filter.query) {

@@ -18,8 +18,8 @@
 							<UIcon :name="ICONS.CALENDAR" class="w-4 h-4 text-main" />
 							<p>{{ record?.order_date_time }}</p>
 						</div>
-						<div v-if="record?.inv_no" class="metadata-item">
-							<p class="text-base text-neutral-400 italic">{{ record?.inv_no }}</p>
+						<div v-if="display_invoice_no" class="metadata-item">
+							<p class="text-base text-neutral-400 italic">{{ display_invoice_no }}</p>
 						</div>
 						<div v-if="record?.ref_no" class="metadata-item">
 							<p>{{ t('components.orderDetail.refLabel') }}: {{ record?.ref_no }}</p>
@@ -218,6 +218,18 @@ const type = computed(() => String(route.query.type ?? ''));
 const ownerType = computed<'order' | 'sale'>(() => (type.value === 'sale' ? 'sale' : 'order'));
 
 const record = computed(() => order.value);
+
+/** Invoice Number is Sale-only; Order placeholder equals order_no and must not show. */
+const display_invoice_no = computed(() => {
+	const current = record.value;
+	if (!current?.inv_no || current.type !== 'sale') {
+		return undefined;
+	}
+	if (current.inv_no === current.order_no) {
+		return undefined;
+	}
+	return current.inv_no;
+});
 
 const activityLogEntries = computed(() => {
 	if (record.value?.activities?.length) {

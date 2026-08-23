@@ -166,7 +166,7 @@ export const useMerchantInfoStore = defineStore('merchantInfoStore', {
 			try {
 				const { data } = await $api.merchantInfo.getMany({
 					$count: true,
-					$top: 1000,
+					$top: 100,
 				});
 
 				if (data) {
