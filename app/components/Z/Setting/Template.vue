@@ -1,9 +1,22 @@
 <template>
 	<div v-for="template in templates" :key="template.set_code" class="py-3">
-		<div class="flex justify-between items-center">
-			<h6 class="setting-templs-title">{{ template.set_desc }}</h6>
+		<div
+			class="flex gap-2"
+			:class="
+				getInputType(template) === InputTypeEnum.BOOLEAN
+					? 'flex-row items-center justify-between'
+					: 'flex-col sm:flex-row sm:items-center sm:justify-between'
+			"
+		>
+			<h6 class="setting-templs-title min-w-0 flex-1">{{ template.set_desc }}</h6>
 
-			<div class="min-w-[50%] text-end">
+			<div
+				:class="
+					getInputType(template) === InputTypeEnum.BOOLEAN
+						? 'w-auto shrink-0'
+						: 'w-full sm:min-w-[50%] sm:w-auto sm:text-end'
+				"
+			>
 				<UInput
 					v-if="getInputType(template) === InputTypeEnum.TEXT"
 					type="text"
@@ -188,5 +201,6 @@ const handleFileChange = (template: SettingTempl, event: Event) => {
 	color: var(--color-neutral-400);
 	padding-left: 1rem;
 	padding-right: 1rem;
+	overflow-wrap: anywhere;
 }
 </style>
