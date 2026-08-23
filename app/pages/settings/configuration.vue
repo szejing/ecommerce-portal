@@ -7,19 +7,13 @@
 			</UButton>
 		</template>
 
-		<div class="space-y-6">
+		<div class="space-y-6 pb-16 md:pb-12">
 			<div class="space-y-2">
 				<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('nav.configuration') }}</h2>
 				<p class="text-gray-600 dark:text-gray-400">{{ t('pages.configurationPageDesc') }}</p>
 			</div>
 
-			<UTabs
-				v-if="tabItems.length && !updating"
-				v-model="activeTab"
-				:items="tabItems"
-				class="w-full pb-12"
-				:ui="tabsUi"
-			>
+			<UTabs v-if="tabItems.length && !updating" v-model="activeTab" :items="tabItems" class="w-full pb-12" :ui="tabsUi">
 				<template v-for="segment in segments" :key="segment.segment_code" #[segment.segment_code]>
 					<UCard>
 						<ZSettingSegment :segment="segment" />
