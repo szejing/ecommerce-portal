@@ -9,7 +9,7 @@
 			{{ importLabel }}
 		</UButton>
 		<input ref="fileInputRef" type="file" class="hidden" :accept="accept" @change="onFileChange" />
-		<UModal v-model:open="sourceModalOpen" :portal="false" :title="sourceModalTitle" :ui="{ content: 'w-full sm:max-w-lg' }">
+		<UModal v-model:open="sourceModalOpen" :title="sourceModalTitle" :ui="{ content: 'w-full sm:max-w-lg' }">
 			<template #body>
 				<div class="flex flex-row gap-2">
 					<UButton
@@ -30,7 +30,7 @@
 							<UIcon
 								v-else-if="source.icon"
 								:name="source.icon"
-								:class="['h-6 w-6 shrink-0', source.icon]"
+								class="h-6 w-6 shrink-0"
 							/>
 							<div class="flex min-w-0 flex-col items-start gap-1">
 								<span class="font-medium">{{ source.label }}</span>
