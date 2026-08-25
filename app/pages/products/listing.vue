@@ -102,16 +102,19 @@ const productImportSources = computed(() => [
 		label: t('import.ourTemplate'),
 		value: 'wemotoo',
 		description: t('import.ourTemplateDescription'),
+		logoSrc: '/logo/logo.png',
 	},
 	{
 		label: t('import.sitegiant'),
 		value: 'sitegiant',
 		description: t('import.sitegiantDescription'),
+		logoSrc: '/logo/sitegiant.png',
 	},
 	{
 		label: t('import.tiktok'),
 		value: 'tiktok',
 		description: t('import.tiktokDescription'),
+		icon: 'i-simple-icons-tiktok',
 	},
 ]);
 
