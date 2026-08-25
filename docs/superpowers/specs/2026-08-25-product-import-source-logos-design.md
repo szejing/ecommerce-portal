@@ -46,7 +46,7 @@ Precedence: if `logoSrc` is set, render the image; else if `icon` is set, render
 
 - Keep existing modal and outline `UButton`s.
 - Button content: horizontal row — optional ~24×24 mark on the left, label + description stacked on the right.
-- Images use `object-contain` and keep original colors (SiteGiant asset includes its black plate; do not recolor).
+- Images use `object-contain` on a transparent background and keep original colors (do not recolor).
 - No modal layout redesign; no new npm packages.
 
 ## Files

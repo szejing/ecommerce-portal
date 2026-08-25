@@ -24,8 +24,8 @@
 							<img
 								v-if="source.logoSrc"
 								:src="source.logoSrc"
-								:alt="source.label"
-								class="h-6 w-6 shrink-0 object-contain"
+								alt=""
+								class="h-6 w-auto max-w-16 shrink-0 object-contain"
 							/>
 							<UIcon
 								v-else-if="source.icon"
