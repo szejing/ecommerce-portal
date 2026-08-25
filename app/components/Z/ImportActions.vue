@@ -9,7 +9,7 @@
 			{{ importLabel }}
 		</UButton>
 		<input ref="fileInputRef" type="file" class="hidden" :accept="accept" @change="onFileChange" />
-		<UModal v-model:open="sourceModalOpen" :title="sourceModalTitle" :ui="{ content: 'w-full sm:max-w-lg' }">
+		<UModal v-model:open="sourceModalOpen" :portal="false" :title="sourceModalTitle" :ui="{ content: 'w-full sm:max-w-lg' }">
 			<template #body>
 				<div class="flex flex-row gap-2">
 					<UButton
@@ -20,9 +20,22 @@
 						class="min-w-0 flex-1 justify-start text-left"
 						@click="selectImportSource(source.value)"
 					>
-						<div class="flex min-w-0 flex-col items-start gap-1">
-							<span class="font-medium">{{ source.label }}</span>
-							<span v-if="source.description" class="text-xs text-gray-500 dark:text-gray-400">{{ source.description }}</span>
+						<div class="flex min-w-0 items-center gap-2">
+							<img
+								v-if="source.logoSrc"
+								:src="source.logoSrc"
+								:alt="source.label"
+								class="h-6 w-6 shrink-0 object-contain"
+							/>
+							<UIcon
+								v-else-if="source.icon"
+								:name="source.icon"
+								:class="['h-6 w-6 shrink-0', source.icon]"
+							/>
+							<div class="flex min-w-0 flex-col items-start gap-1">
+								<span class="font-medium">{{ source.label }}</span>
+								<span v-if="source.description" class="text-xs text-gray-500 dark:text-gray-400">{{ source.description }}</span>
+							</div>
 						</div>
 					</UButton>
 				</div>
@@ -48,6 +61,8 @@ const props = withDefaults(
 			label: string;
 			value: string;
 			description?: string;
+			logoSrc?: string;
+			icon?: string;
 		}>;
 		sourceModalTitle?: string;
 	}>(),

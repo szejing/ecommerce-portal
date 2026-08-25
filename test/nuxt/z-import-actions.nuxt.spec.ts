@@ -79,4 +79,29 @@ describe('ZImportActions', () => {
 
 		expect(onImport).toHaveBeenCalledWith(file, 'sitegiant');
 	});
+
+	it('renders logoSrc image and icon mark for import sources', async () => {
+		const wrapper = await mountSuspended(ZImportActions, {
+			props: {
+				accept: '.xlsx,.xls',
+				importSources: [
+					{ label: 'Our template', value: 'wemotoo', logoSrc: '/logo/logo.png' },
+					{ label: 'Sitegiant', value: 'sitegiant', logoSrc: '/logo/sitegiant.png' },
+					{ label: 'TikTok Shop', value: 'tiktok', icon: 'i-simple-icons-tiktok' },
+					{ label: 'Plain', value: 'plain' },
+				],
+			},
+		});
+
+		const buttons = wrapper.findAll('button');
+		await buttons[1]?.trigger('click');
+
+		const images = wrapper.findAll('img');
+		expect(images.some((img) => img.attributes('src') === '/logo/logo.png')).toBe(true);
+		expect(images.some((img) => img.attributes('src') === '/logo/sitegiant.png')).toBe(true);
+
+		const html = wrapper.html();
+		expect(html).toContain('i-simple-icons-tiktok');
+		expect(wrapper.findAll('button').find((button) => button.text().includes('Plain'))).toBeTruthy();
+	});
 });
