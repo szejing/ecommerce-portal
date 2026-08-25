@@ -1,8 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { mountSuspended } from '@nuxt/test-utils/runtime';
-import { InputType } from 'yeppi-common';
+import { GROUP_CODE, InputType, MERCHANT } from 'yeppi-common';
 import ZSettingTemplate from '~/components/Z/Setting/Template.vue';
 import type { SettingTempl } from '~/utils/types/setting-templ';
+import { useMerchantInfoStore } from '~/stores/MerchantInfo/MerchantInfo';
+import { useSettingStore } from '~/stores/Setting/Setting';
+import { MerchantInfo } from '~/utils/types/merchant-info';
 
 const baseTemplate = {
 	group_code: 'Email',
@@ -21,6 +24,14 @@ function makeTemplate(overrides: Partial<SettingTempl> & Pick<SettingTempl, 'set
 }
 
 describe('ZSettingTemplate', () => {
+	beforeEach(() => {
+		const settingStore = useSettingStore();
+		const merchantInfoStore = useMerchantInfoStore();
+		settingStore.settings = [];
+		settingStore.updatedSettings = [];
+		merchantInfoStore.merchant = [];
+	});
+
 	it('stacks non-boolean controls under the label on mobile', async () => {
 		const wrapper = await mountSuspended(ZSettingTemplate, {
 			props: {
@@ -35,7 +46,7 @@ describe('ZSettingTemplate', () => {
 			},
 		});
 
-		const row = wrapper.find('.px-4.py-3 > .flex.gap-2');
+		const row = wrapper.find('.py-3 > .flex.gap-2');
 		expect(row.classes()).toContain('flex-col');
 		expect(row.classes()).toContain('sm:flex-row');
 
@@ -59,9 +70,47 @@ describe('ZSettingTemplate', () => {
 			},
 		});
 
-		const row = wrapper.find('.px-4.py-3 > .flex.gap-2');
+		const row = wrapper.find('.py-3 > .flex.gap-2');
 		expect(row.classes()).toContain('flex-row');
 		expect(row.classes()).not.toContain('flex-col');
 		expect(wrapper.findComponent({ name: 'USwitch' }).exists()).toBe(true);
+	});
+
+	it('prefills an empty WhatsAppUrl text setting from Contact dial code and phone number once', async () => {
+		const settingStore = useSettingStore();
+		const merchantInfoStore = useMerchantInfoStore();
+		merchantInfoStore.merchant = [
+			new MerchantInfo({
+				group_code: GROUP_CODE.CONTACT,
+				set_code: MERCHANT.DIAL_CODE,
+				set_value: '+60',
+			}),
+			new MerchantInfo({
+				group_code: GROUP_CODE.CONTACT,
+				set_code: MERCHANT.PHONE_NO,
+				set_value: '12-345 6789',
+			}),
+		];
+
+		await mountSuspended(ZSettingTemplate, {
+			props: {
+				templates: [
+					makeTemplate({
+						group_code: GROUP_CODE.SOCIALMEDIA,
+						set_code: 'WhatsAppUrl',
+						set_desc: 'WhatsApp URL',
+						input_type: InputType.TEXT,
+						default_val: '',
+					}),
+				],
+			},
+		});
+
+		expect(settingStore.updatedSettings).toHaveLength(1);
+		expect(settingStore.updatedSettings[0]).toMatchObject({
+			group_code: GROUP_CODE.SOCIALMEDIA,
+			set_code: 'WhatsAppUrl',
+			set_value: 'https://wa.me/60123456789',
+		});
 	});
 });

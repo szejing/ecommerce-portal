@@ -186,6 +186,26 @@
 								@update:model-value="(v) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.NAME, v)"
 							/>
 						</UFormField>
+						<UFormField
+							class="sm:col-span-2"
+							:label="t('pages.storeProfilePage.shortDescription')"
+							:description="t('pages.storeProfilePage.shortDescriptionDesc')"
+						>
+							<UTextarea
+								:model-value="getMerchantValue(GROUP_CODE.INFO, MERCHANT.SHORT_DESC)"
+								:maxlength="280"
+								:rows="3"
+								autoresize
+								@update:model-value="(v) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.SHORT_DESC, String(v ?? ''))"
+							/>
+							<p class="mt-1 text-xs text-muted text-right">
+								{{
+									t('pages.storeProfilePage.shortDescriptionCounter', {
+										n: getMerchantValue(GROUP_CODE.INFO, MERCHANT.SHORT_DESC).length,
+									})
+								}}
+							</p>
+						</UFormField>
 						<UFormField :label="t('pages.storeProfilePage.companyEmail')">
 							<UInput
 								type="email"

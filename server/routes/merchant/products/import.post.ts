@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
 		assertAllowedProductImportFile(file);
 		const templateType = String(formData.get('template_type') || 'wemotoo');
 
-		if (!['wemotoo', 'sitegiant'].includes(templateType)) {
+		if (!['wemotoo', 'sitegiant', 'tiktok'].includes(templateType)) {
 			throw createError({
 				statusCode: 400,
 				statusMessage: 'Unsupported product import template type',

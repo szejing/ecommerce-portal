@@ -108,6 +108,11 @@ const productImportSources = computed(() => [
 		value: 'sitegiant',
 		description: t('import.sitegiantDescription'),
 	},
+	{
+		label: t('import.tiktok'),
+		value: 'tiktok',
+		description: t('import.tiktokDescription'),
+	},
 ]);
 
 const { products, loading, filters, total_products, exporting, updating, importing, downloading_template, listFailure } = storeToRefs(productStore);
@@ -171,7 +176,8 @@ const exportProducts = async () => {
 };
 
 const importProductFile = async (file: File, importSource?: string) => {
-	const templateType: ProductImportTemplateType = importSource === 'sitegiant' ? 'sitegiant' : 'wemotoo';
+	const templateType: ProductImportTemplateType =
+		importSource === 'sitegiant' || importSource === 'tiktok' ? importSource : 'wemotoo';
 	try {
 		await productStore.importProducts(file, templateType);
 	} catch {

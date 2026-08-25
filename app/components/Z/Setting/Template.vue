@@ -14,7 +14,7 @@
 					type="text"
 					:model-value="getTextSettingValue(template)"
 					:disabled="template.is_disabled"
-					:placeholder="template.default_val"
+					:placeholder="getTextSettingPlaceholder(template)"
 					@update:model-value="(value) => updateSettingValue(template, value)"
 				/>
 				<UInput
@@ -79,10 +79,11 @@
 
 <script lang="ts" setup>
 import type { SettingTempl } from '~/utils/types/setting-templ';
-import { InputType as InputTypeEnum } from 'yeppi-common';
+import { GROUP_CODE, InputType as InputTypeEnum, MERCHANT, SOCIALMEDIA } from 'yeppi-common';
 import { Setting } from '~/utils/types/setting';
 import { getOrderCompletionValidationItems } from '~/utils/options/order-completion-validation';
 import { getAdminReceiveEmailUpdateItems } from '~/utils/options/admin-receive-email-update';
+import { buildWhatsAppMeUrl } from '~/utils/whatsapp-me-url';
 
 const props = defineProps({
 	templates: {
@@ -94,7 +95,11 @@ const props = defineProps({
 const { templates } = toRefs(props);
 
 const settingsStore = useSettingStore();
+const merchantInfoStore = useMerchantInfoStore();
 const { settings, updatedSettings } = storeToRefs(settingsStore);
+
+const WHATSAPP_URL_PLACEHOLDER = 'https://wa.me/60xxxxxxxxx';
+const prefilledWhatsAppSetCodes = ref(new Set<string>());
 
 type SelectSettingItem = {
 	value: string | number;
@@ -102,6 +107,9 @@ type SelectSettingItem = {
 };
 
 const getInputType = (template: SettingTempl) => Number(template.input_type);
+
+const isWhatsAppUrlTemplate = (template: SettingTempl): boolean =>
+	template.group_code === GROUP_CODE.SOCIALMEDIA && template.set_code === SOCIALMEDIA.WHATSAPP_URL;
 
 const getRawSettingValue = (template: SettingTempl): string | undefined => {
 	const pending = updatedSettings.value.find((setting: Setting) => setting.set_code === template.set_code);
@@ -113,6 +121,21 @@ const getRawSettingValue = (template: SettingTempl): string | undefined => {
 };
 
 const getTextSettingValue = (template: SettingTempl): string => getRawSettingValue(template) ?? template.default_val ?? '';
+
+const getContactInfoValue = (setCode: string): string | null => merchantInfoStore.getMerchantInfo(GROUP_CODE.CONTACT, setCode)?.getString() ?? null;
+
+const getWhatsAppMeUrlCandidate = (): string | null => buildWhatsAppMeUrl(
+	getContactInfoValue(MERCHANT.DIAL_CODE),
+	getContactInfoValue(MERCHANT.PHONE_NO),
+);
+
+const getTextSettingPlaceholder = (template: SettingTempl): string | undefined => {
+	if (!isWhatsAppUrlTemplate(template)) {
+		return template.default_val;
+	}
+
+	return getWhatsAppMeUrlCandidate() ?? WHATSAPP_URL_PLACEHOLDER;
+};
 
 const getBooleanSettingValue = (template: SettingTempl): boolean => {
 	const value = getRawSettingValue(template);
@@ -183,6 +206,26 @@ const handleFileChange = (template: SettingTempl, event: Event) => {
 		updateSettingValue(template, file.name);
 	}
 };
+
+watchEffect(() => {
+	for (const template of templates.value) {
+		if (getInputType(template) !== InputTypeEnum.TEXT || !isWhatsAppUrlTemplate(template)) {
+			continue;
+		}
+
+		if (prefilledWhatsAppSetCodes.value.has(template.set_code) || getTextSettingValue(template).trim()) {
+			continue;
+		}
+
+		const candidate = getWhatsAppMeUrlCandidate();
+		if (!candidate) {
+			continue;
+		}
+
+		prefilledWhatsAppSetCodes.value.add(template.set_code);
+		updateSettingValue(template, candidate);
+	}
+});
 </script>
 
 <style scoped>
