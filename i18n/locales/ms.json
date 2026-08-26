@@ -1105,7 +1105,7 @@
 		"sitegiantDescription": "Gunakan eksport produk Sitegiant dengan varian.",
 		"tiktok": "TikTok Shop",
 		"tiktokDescription": "Gunakan buku kerja produk edit pukal TikTok Seller Center.",
-		"imagesAttached": "{{count}} imej produk dilampirkan.",
+		"imagesAttached": "{count} imej produk dilampirkan.",
 		"imageWarnings": "{count} amaran import imej produk",
 		"imageWarningDetail": "Baris {row} · {code}: {message}"
 	},
