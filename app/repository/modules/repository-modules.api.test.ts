@@ -487,6 +487,17 @@ describe('ProductModule', () => {
 		expect(fd.get('template_type')).toBe('sitegiant');
 	});
 
+	it('importProducts sends selected TikTok template type', async () => {
+		const file = new File(['product_id,product_name'], 'tiktok.xlsx', {
+			type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+		});
+
+		await mod.importProducts(file, 'tiktok');
+
+		const fd = lastFetch().opts.body as FormData;
+		expect(fd.get('template_type')).toBe('tiktok');
+	});
+
 	it('importProducts rejects unsupported file extensions before network call', async () => {
 		const file = new File(['bad'], 'products.txt', { type: 'text/plain' });
 

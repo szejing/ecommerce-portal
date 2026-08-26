@@ -17,12 +17,16 @@
 						:key="source.value"
 						color="neutral"
 						variant="outline"
-						class="min-w-0 flex-1 justify-start text-left"
+						class="min-w-0 flex-1 justify-start py-3 text-left"
 						@click="selectImportSource(source.value)"
 					>
-						<div class="flex min-w-0 flex-col items-start gap-1">
-							<span class="font-medium">{{ source.label }}</span>
-							<span v-if="source.description" class="text-xs text-gray-500 dark:text-gray-400">{{ source.description }}</span>
+						<div class="flex min-w-0 flex-col items-start gap-4">
+							<img v-if="source.logoSrc" :src="source.logoSrc" alt="" class="h-8 w-auto max-w-16 shrink-0 object-contain" />
+							<UIcon v-else-if="source.icon" :name="source.icon" class="h-8 w-8 shrink-0" />
+							<div class="flex min-w-0 flex-col items-start gap-0.5">
+								<span class="font-medium">{{ source.label }}</span>
+								<span v-if="source.description" class="text-xs text-gray-500 dark:text-gray-400">{{ source.description }}</span>
+							</div>
 						</div>
 					</UButton>
 				</div>
@@ -48,6 +52,8 @@ const props = withDefaults(
 			label: string;
 			value: string;
 			description?: string;
+			logoSrc?: string;
+			icon?: string;
 		}>;
 		sourceModalTitle?: string;
 	}>(),

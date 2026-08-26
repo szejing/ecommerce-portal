@@ -747,6 +747,9 @@
 			"merchantInformation": "Merchant information",
 			"thumbnail": "Thumbnail",
 			"thumbnailRecommendedSize": "Recommended: 1:1 ratio (e.g., 800x800px)",
+			"shortDescription": "Short description",
+			"shortDescriptionDesc": "Shown under your store name on the customer storefront. Max 280 characters.",
+			"shortDescriptionCounter": "{n} / 280",
 			"merchantThumbnailAlt": "Merchant thumbnail",
 			"companyEmail": "Company email",
 			"companyWebsite": "Company website",
@@ -1094,11 +1097,18 @@
 		"netAmount": "Net Amount"
 	},
 	"import": {
+		"summary": "Product import completed: {created} created, {updated} updated",
+		"summaryWithFailures": "Product import completed with {failed} failed row(s)",
 		"selectTemplate": "Choose import template",
 		"ourTemplate": "Our template",
 		"ourTemplateDescription": "Use the standard Wemotoo product template.",
 		"sitegiant": "Sitegiant",
-		"sitegiantDescription": "Use a Sitegiant product export with variants."
+		"sitegiantDescription": "Use a Sitegiant product export with variants.",
+		"tiktok": "TikTok Shop",
+		"tiktokDescription": "Use a TikTok Seller Center batch-edit product workbook.",
+		"imagesAttached": "Attached {count} product image(s).",
+		"imageWarnings": "{count} product image import warning(s)",
+		"imageWarningDetail": "Row {row} · {code}: {message}"
 	},
 	"modal": {
 		"leavePage": "Leave page?",

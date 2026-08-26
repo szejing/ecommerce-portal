@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime';
 import { ref } from 'vue';
 import ConfigurationPage from '~/pages/settings/configuration.vue';
@@ -30,6 +30,9 @@ const segments = ref([
 	},
 ]);
 
+const getMerchantInfos = vi.fn().mockResolvedValue(undefined);
+const merchant: unknown[] = [];
+
 mockNuxtImport('useOverlay', () => () => ({
 	create: () => ({
 		open: vi.fn(),
@@ -47,7 +50,17 @@ mockNuxtImport('useSettingStore', () => () => ({
 	addToUpdatedSettings: vi.fn(),
 }));
 
+mockNuxtImport('useMerchantInfoStore', () => () => ({
+	getMerchantInfos,
+	merchant,
+}));
+
 describe('SettingsConfigurationPage', () => {
+	beforeEach(() => {
+		getMerchantInfos.mockClear();
+		merchant.splice(0);
+	});
+
 	it('renders scrollable UTabs that keep full segment labels', async () => {
 		const wrapper = await mountSuspended(ConfigurationPage);
 
@@ -64,5 +77,11 @@ describe('SettingsConfigurationPage', () => {
 			'Sales Order Settings',
 			'External Integration',
 		]);
+	});
+
+	it('loads merchant infos when Configuration opens without cached Contact info', async () => {
+		await mountSuspended(ConfigurationPage);
+
+		expect(getMerchantInfos).toHaveBeenCalledTimes(1);
 	});
 });

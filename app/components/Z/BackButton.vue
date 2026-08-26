@@ -6,7 +6,7 @@
 		:label="labeled ? t('components.backButton.backToPreviousPage') : undefined"
 		:aria-label="t('components.backButton.backToPreviousPage')"
 		@click="goBack"
-		class="px-0"
+		class="px-2"
 	/>
 </template>
 

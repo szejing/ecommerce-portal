@@ -34,10 +34,17 @@ useHead({ title: () => t('pages.configurationTitle') });
 
 const overlay = useOverlay();
 const settingsStore = useSettingStore();
+const merchantInfoStore = useMerchantInfoStore();
 const loadingModal = overlay.create(ZModalLoading, { props: { key: 'loading' } });
 
 const { segments, updating } = storeToRefs(settingsStore);
 await settingsStore.getSettings();
+
+onMounted(() => {
+	if (merchantInfoStore.merchant.length === 0) {
+		void merchantInfoStore.getMerchantInfos();
+	}
+});
 
 watch(
 	() => updating.value,

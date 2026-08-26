@@ -13,7 +13,7 @@ const PRODUCT_IMPORT_ALLOWED_EXTENSIONS = ['.csv', '.xlsx'] as const;
 
 export const PRODUCT_IMPORT_ACCEPT = '.csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 export const PRODUCT_IMPORT_FORMAT_ERROR_MESSAGE = 'Unsupported product import file format. Allowed: CSV, XLSX';
-export type ProductImportTemplateType = 'wemotoo' | 'sitegiant';
+export type ProductImportTemplateType = 'wemotoo' | 'sitegiant' | 'tiktok';
 
 export type ProductImportResp = {
 	total: number;
@@ -21,6 +21,12 @@ export type ProductImportResp = {
 	updated: number;
 	failed: number;
 	errors: Array<{
+		row: number;
+		code?: string;
+		message: string;
+	}>;
+	images_attached: number;
+	image_warnings: Array<{
 		row: number;
 		code?: string;
 		message: string;

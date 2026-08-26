@@ -102,11 +102,19 @@ const productImportSources = computed(() => [
 		label: t('import.ourTemplate'),
 		value: 'wemotoo',
 		description: t('import.ourTemplateDescription'),
+		icon: ICONS.OUTLET,
 	},
 	{
 		label: t('import.sitegiant'),
 		value: 'sitegiant',
 		description: t('import.sitegiantDescription'),
+		logoSrc: '/logo/sitegiant.png',
+	},
+	{
+		label: t('import.tiktok'),
+		value: 'tiktok',
+		description: t('import.tiktokDescription'),
+		icon: 'i-simple-icons-tiktok',
 	},
 ]);
 
@@ -171,7 +179,7 @@ const exportProducts = async () => {
 };
 
 const importProductFile = async (file: File, importSource?: string) => {
-	const templateType: ProductImportTemplateType = importSource === 'sitegiant' ? 'sitegiant' : 'wemotoo';
+	const templateType: ProductImportTemplateType = importSource === 'sitegiant' || importSource === 'tiktok' ? importSource : 'wemotoo';
 	try {
 		await productStore.importProducts(file, templateType);
 	} catch {

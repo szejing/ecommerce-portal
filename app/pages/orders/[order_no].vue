@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="orders-detail" :title="t('pages.orderDetail')" back-to="/orders">
+	<ZPagePanel id="orders-detail" :title="t('pages.orderDetail')" back-to="/orders" class="pb-24 sm:pb-0">
 		<ZLoading v-if="loading" />
 		<div v-else-if="order_not_found" class="order-not-found">
 			<UIcon name="i-heroicons-magnifying-glass-circle" class="order-not-found-icon" />

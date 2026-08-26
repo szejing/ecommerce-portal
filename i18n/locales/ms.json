@@ -746,6 +746,9 @@
 			"merchantInformation": "Maklumat peniaga",
 			"thumbnail": "Imej kecil",
 			"thumbnailRecommendedSize": "Disyorkan: nisbah 1:1 (cth., 800x800px)",
+			"shortDescription": "Penerangan ringkas",
+			"shortDescriptionDesc": "Ditunjukkan di bawah nama kedai anda pada storefront pelanggan. Maksimum 280 aksara.",
+			"shortDescriptionCounter": "{n} / 280",
 			"merchantThumbnailAlt": "Imej kecil peniaga",
 			"companyEmail": "E-mel syarikat",
 			"companyWebsite": "Laman web syarikat",
@@ -1093,11 +1096,18 @@
 		"netAmount": "Jumlah Bersih"
 	},
 	"import": {
+		"summary": "Import produk selesai: {created} dicipta, {updated} dikemas kini",
+		"summaryWithFailures": "Import produk selesai dengan {failed} baris gagal",
 		"selectTemplate": "Pilih templat import",
 		"ourTemplate": "Templat kami",
 		"ourTemplateDescription": "Gunakan templat produk standard Wemotoo.",
 		"sitegiant": "Sitegiant",
-		"sitegiantDescription": "Gunakan eksport produk Sitegiant dengan varian."
+		"sitegiantDescription": "Gunakan eksport produk Sitegiant dengan varian.",
+		"tiktok": "TikTok Shop",
+		"tiktokDescription": "Gunakan buku kerja produk edit pukal TikTok Seller Center.",
+		"imagesAttached": "{count} imej produk dilampirkan.",
+		"imageWarnings": "{count} amaran import imej produk",
+		"imageWarningDetail": "Baris {row} · {code}: {message}"
 	},
 	"modal": {
 		"leavePage": "Tinggalkan halaman?",
