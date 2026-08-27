@@ -1,4 +1,11 @@
-import type { ShippingZonePostcodePattern } from './order-fulfillment-shipping';
+import type { FilterOperator, ShippingZoneConditionField } from 'yeppi-common';
+
+export type ShippingZoneCondition = {
+	id?: number;
+	filter_operator: FilterOperator;
+	field: ShippingZoneConditionField;
+	values: string[];
+};
 
 /** Mirrors `ShippingMethodBriefDto` in ecommerce-backend shipping-zone response DTO. */
 export type ShippingMethodBrief = {
@@ -19,12 +26,9 @@ export type ShippingMethodZoneWithMethod = {
 export type ShippingZone = {
 	code: string;
 	description?: string;
-	country_code: string;
-	state?: string;
-	postcode_patterns: ShippingZonePostcodePattern[];
 	rule: number;
-	is_default: boolean;
 	is_active: boolean;
+	conditions?: ShippingZoneCondition[];
 	methods?: ShippingMethodZoneWithMethod[];
 };
 

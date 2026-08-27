@@ -19,10 +19,9 @@ import type { FormSubmitEvent } from '#ui/types';
 import { formatCurrency } from 'yeppi-common';
 import type { z } from 'zod';
 import { UpdateShippingZoneValidation } from '~/utils/schema';
-import type { ShippingZonePostcodePattern } from '~/utils/types/order-fulfillment-shipping';
 import type { ShippingZone } from '~/utils/types/shipping-zone';
 import type { ShippingZoneFormFields } from '~/utils/types/form/shipping-zone-form';
-import { parseStatesFromApi, serializeStatesForApi } from '~/utils/data/malaysia-states';
+import { defaultShippingZoneConditions, formatConditionValues } from '~/utils/shipping-zone-conditions';
 
 const props = defineProps<{
 	zoneCode: string;
@@ -39,16 +38,6 @@ const shippingMethodStore = useShippingMethodStore();
 const formRef = ref<{ submit: () => void } | null>(null);
 
 const methodOptions = ref<{ label: string; value: string }[]>([]);
-
-const patternsToText = (patterns: ShippingZonePostcodePattern[] | undefined) => {
-	if (!patterns?.length) {
-		return '';
-	}
-	return patterns
-		.filter((p) => p.kind === 'exact')
-		.map((p) => p.value)
-		.join('\n');
-};
 
 const linkShippingMethodId = (l: NonNullable<ShippingZone['methods']>[number]) => {
 	const raw = l.shipping_method?.id ?? (l as { shipping_method_id?: number }).shipping_method_id;
@@ -78,9 +67,14 @@ const applyFromZone = (z: ShippingZone) => {
 	formState.description = z.description ?? '';
 	formState.rule = z.rule ?? 0;
 	formState.is_active = z.is_active;
-	formState.country_code = 'MY';
-	formState.state = parseStatesFromApi(z.state);
-	formState.postcodes_text = patternsToText(z.postcode_patterns);
+	formState.conditions = (z.conditions ?? []).map((c) => ({
+		filter_operator: c.filter_operator,
+		field: c.field,
+		values: [...(c.values ?? [])],
+	}));
+	if (!formState.conditions.length) {
+		formState.conditions = defaultShippingZoneConditions();
+	}
 	formState.shipping_method_ids = shippingMethodIdsFromLinks(z);
 	formState.method_pricing = pricingFromMethodLinks(z);
 };
@@ -90,20 +84,12 @@ const formState = reactive<ShippingZoneFormFields>({
 	description: '',
 	rule: 0,
 	is_active: true,
-	country_code: 'MY',
-	state: [],
-	postcodes_text: '',
+	conditions: defaultShippingZoneConditions(),
 	shipping_method_ids: [],
 	method_pricing: {},
 });
 
 const currencyCode = 'MYR';
-
-const countPostcodeLines = (text: string) =>
-	text
-		.split('\n')
-		.map((line) => line.trim())
-		.filter(Boolean).length;
 
 const methodsSummaryLabel = (ids: string[], options: { label: string; value: string }[]) => {
 	if (!ids.length) {
@@ -117,8 +103,10 @@ const methodsSummaryLabel = (ids: string[], options: { label: string; value: str
 };
 
 const reviewSummary = computed(() => {
-	const n = countPostcodeLines(formState.postcodes_text ?? '');
-	const postcodesSummaryLabel = t('components.shippingZoneForm.reviewPostcodesCount', { count: n });
+	const conditionsSummaryLabel =
+		formState.conditions.length === 0
+			? t('components.shippingZoneForm.noConditions')
+			: formState.conditions.map((c) => `${c.filter_operator} ${c.field}: ${formatConditionValues(c.values)}`).join(' · ');
 
 	const pricingLines =
 		formState.shipping_method_ids.length === 0
@@ -145,9 +133,7 @@ const reviewSummary = computed(() => {
 		description: formState.description.trim(),
 		rule: Number(formState.rule) || 0,
 		statusLabel: t(formState.is_active ? 'common.active' : 'common.inactive'),
-		countryLabel: formState.country_code.trim().toUpperCase(),
-		stateLabel: formState.state.length ? formState.state.join(', ') : '',
-		postcodesSummaryLabel,
+		conditionsSummaryLabel,
 		pricingSummaryLabel,
 		pricingLines,
 		methodsLabel: methodsSummaryLabel(formState.shipping_method_ids, methodOptions.value),
@@ -165,14 +151,6 @@ watch(
 	{ immediate: true },
 );
 
-const buildPostcodePatterns = (text: string): ShippingZonePostcodePattern[] => {
-	return text
-		.split('\n')
-		.map((line) => line.trim())
-		.filter(Boolean)
-		.map((value) => ({ kind: 'exact' as const, value }));
-};
-
 const submitForm = async (event: FormSubmitEvent<Schema>) => {
 	const data = event.data;
 	const methods = data.shipping_method_ids.map((id) => ({
@@ -184,16 +162,17 @@ const submitForm = async (event: FormSubmitEvent<Schema>) => {
 				: null,
 		order_cutoff_time: data.method_pricing[id]?.order_cutoff_time || null,
 	}));
-	const serializedState = serializeStatesForApi(data.state);
 
 	const payload = {
 		code: props.zoneCode.trim(),
 		description: data.description.trim() || undefined,
 		rule: data.rule ?? 0,
 		is_active: data.is_active,
-		country_code: 'MY',
-		state: serializedState === undefined ? null : serializedState,
-		postcode_patterns: buildPostcodePatterns(data.postcodes_text ?? ''),
+		conditions: data.conditions.map((c) => ({
+			filter_operator: c.filter_operator,
+			field: c.field,
+			values: c.values,
+		})),
 		methods,
 		shipping_method_ids: [...data.shipping_method_ids],
 	};
