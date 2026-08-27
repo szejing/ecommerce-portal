@@ -1553,7 +1553,15 @@
 			"noBatches": "Tiada kelompok pemenuhan ditemui",
 			"noBatchesHint": "Cipta kelompok pembaikan atau ambil sendiri pertama yang tiada untuk meneruskan pemenuhan.",
 			"createMissingBatch": "Cipta kelompok yang tiada",
-			"noSplitDeleteHint": "Pemadaman dan pemisahan kelompok belum tersedia. Pengesahan pelengkapan dikuatkuasakan oleh bahagian backend."
+			"noSplitDeleteHint": "Pemadaman dan pemisahan kelompok belum tersedia. Pengesahan pelengkapan dikuatkuasakan oleh bahagian backend.",
+			"bookCourier": "Tempah kurier",
+			"cancelCourierBooking": "Batal tempahan",
+			"printAwb": "Cetak AWB"
+		},
+		"settings": {
+			"connect": "Sambung",
+			"disconnect": "Putuskan",
+			"notConnected": "Belum disambungkan"
 		},
 		"shipment": {
 			"title": "Penghantaran",

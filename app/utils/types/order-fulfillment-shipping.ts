@@ -79,6 +79,16 @@ export type FulfillmentBatch = {
 	courier_id: number | null;
 	courier_name: string | null;
 	tracking_no: string | null;
+	booking_no?: string | null;
+	booking_provider?: string | null;
+	metadata?: {
+		tracking_url?: string | null;
+		awb_urls?: {
+			a4?: string | null;
+			a5?: string | null;
+			a6?: string | null;
+		};
+	} | null;
 	packed_at: string | Date | null;
 	shipped_at: string | Date | null;
 	delivered_at: string | Date | null;

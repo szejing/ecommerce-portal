@@ -1554,7 +1554,15 @@
 			"noBatches": "No fulfillment batch found",
 			"noBatchesHint": "Create the first missing repair or pickup batch to continue fulfillment.",
 			"createMissingBatch": "Create missing batch",
-			"noSplitDeleteHint": "Batch deletion and splitting are not available yet. Completion validation is enforced by the backend."
+			"noSplitDeleteHint": "Batch deletion and splitting are not available yet. Completion validation is enforced by the backend.",
+			"bookCourier": "Book courier",
+			"cancelCourierBooking": "Cancel booking",
+			"printAwb": "Print AWB"
+		},
+		"settings": {
+			"connect": "Connect",
+			"disconnect": "Disconnect",
+			"notConnected": "Not connected"
 		},
 		"shipment": {
 			"title": "Shipment",

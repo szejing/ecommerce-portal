@@ -113,4 +113,54 @@ describe('ZSettingTemplate', () => {
 			set_value: 'https://wa.me/60123456789',
 		});
 	});
+
+	it('renders Connect for OAUTH settings instead of a text field', async () => {
+		const wrapper = await mountSuspended(ZSettingTemplate, {
+			props: {
+				templates: [
+					makeTemplate({
+						group_code: 'EasyParcel',
+						set_code: 'Connection',
+						set_desc: 'EasyParcel Connection',
+						input_type: InputType.OAUTH,
+						data_source: 'EasyParcel',
+					}),
+				],
+			},
+		});
+
+		expect(wrapper.findComponent({ name: 'UInput' }).exists()).toBe(false);
+		expect(wrapper.get('[data-testid="oauth-connect"]').text()).toMatch(/connect/i);
+		expect(wrapper.find('[data-testid="oauth-disconnect"]').exists()).toBe(false);
+		expect(wrapper.get('[data-testid="oauth-connection-status"]').text().length).toBeGreaterThan(0);
+	});
+
+	it('shows Disconnect when an OAUTH connection identity is present', async () => {
+		const settingStore = useSettingStore();
+		settingStore.settings = [
+			{
+				group_code: 'EasyParcel',
+				set_code: 'Connection',
+				set_value: 'merchant@example.com',
+			} as never,
+		];
+
+		const wrapper = await mountSuspended(ZSettingTemplate, {
+			props: {
+				templates: [
+					makeTemplate({
+						group_code: 'EasyParcel',
+						set_code: 'Connection',
+						set_desc: 'EasyParcel Connection',
+						input_type: InputType.OAUTH,
+						data_source: 'EasyParcel',
+					}),
+				],
+			},
+		});
+
+		expect(wrapper.find('[data-testid="oauth-connect"]').exists()).toBe(false);
+		expect(wrapper.get('[data-testid="oauth-disconnect"]').exists()).toBe(true);
+		expect(wrapper.get('[data-testid="oauth-connection-status"]').text()).toContain('merchant@example.com');
+	});
 });

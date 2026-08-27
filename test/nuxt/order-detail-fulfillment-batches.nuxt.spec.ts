@@ -84,13 +84,13 @@ describe('FulfillmentBatchList', () => {
 		expect(wrapper.find('[data-testid="fulfillment-split"]').exists()).toBe(false);
 	});
 
-	it('hides batch count and status badges for one batch', async () => {
+	it('hides batch count and batch number for one batch', async () => {
 		const wrapper = await mountSuspended(FulfillmentBatchList, {
 			props: { order: order([batch('batch-1', 1)]), ownerType: 'order' },
 		});
 
 		expect(wrapper.find('[data-testid="fulfillment-batch-count"]').exists()).toBe(false);
 		expect(wrapper.find('[data-testid="fulfillment-batch-number"]').exists()).toBe(false);
-		expect(wrapper.find('[data-testid="fulfillment-status-badges"]').exists()).toBe(false);
+		expect(wrapper.find('[data-testid="fulfillment-status-badges"]').exists()).toBe(true);
 	});
 });
