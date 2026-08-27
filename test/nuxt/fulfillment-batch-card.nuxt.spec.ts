@@ -102,4 +102,29 @@ describe('FulfillmentBatchCard', () => {
 		expect(nextActions(failedWrapper)).toEqual([]);
 		expect(failedWrapper.find('[data-testid="fulfillment-update-status"]').exists()).toBe(false);
 	});
+
+	it('offers Courier Booking on a pending unbooked batch and locks edit when booked', async () => {
+		const bookable = await mountSuspended(FulfillmentBatchCard, {
+			props: { batch: batch({ tracking_no: null, shipment_status: 'pending' }), canBookCourier: true },
+		});
+		const booked = await mountSuspended(FulfillmentBatchCard, {
+			props: {
+				batch: batch({
+					booking_no: 'EP-SHIP-1',
+					booking_provider: 'easyparcel',
+					metadata: {
+						tracking_url: 'https://track.example/AWB-1',
+						awb_urls: { a4: 'https://easyparcel.example/awb/a4' },
+					},
+				}),
+				canBookCourier: true,
+			},
+		});
+
+		expect(bookable.find('[data-testid="fulfillment-book-courier"]').exists()).toBe(true);
+		expect(booked.find('[data-testid="fulfillment-book-courier"]').exists()).toBe(false);
+		expect(booked.get('[data-testid="fulfillment-edit"]').attributes('disabled')).toBeDefined();
+		expect(booked.get('[data-testid="fulfillment-tracking"]').html()).toContain('https://track.example/AWB-1');
+		expect(booked.get('[data-testid="fulfillment-awb-links"]').text()).toContain('A4');
+	});
 });

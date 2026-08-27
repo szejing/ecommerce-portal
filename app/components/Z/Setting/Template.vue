@@ -72,6 +72,30 @@
 					class="w-full"
 					@update:model-value="(value) => updateMultiSelectSettingValue(template, value)"
 				/>
+				<div v-if="getInputType(template) === InputTypeEnum.OAUTH" class="flex flex-col items-stretch gap-2 sm:items-end">
+					<p data-testid="oauth-connection-status" class="text-sm text-gray-600 dark:text-gray-300">
+						{{ isOauthConnected(template) ? getTextSettingValue(template) : t('components.settings.notConnected') }}
+					</p>
+					<UButton
+						v-if="!isOauthConnected(template)"
+						data-testid="oauth-connect"
+						color="primary"
+						:disabled="template.is_disabled"
+						@click="startOauthConnect(template)"
+					>
+						{{ t('components.settings.connect') }}
+					</UButton>
+					<UButton
+						v-else
+						data-testid="oauth-disconnect"
+						color="neutral"
+						variant="soft"
+						:disabled="template.is_disabled"
+						@click="updateSettingValue(template, '')"
+					>
+						{{ t('components.settings.disconnect') }}
+					</UButton>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -83,6 +107,7 @@ import { GROUP_CODE, InputType as InputTypeEnum, MERCHANT, SOCIALMEDIA } from 'y
 import { Setting } from '~/utils/types/setting';
 import { getOrderCompletionValidationItems } from '~/utils/options/order-completion-validation';
 import { getAdminReceiveEmailUpdateItems } from '~/utils/options/admin-receive-email-update';
+import { getCourierHandoverItems } from '~/utils/options/courier-handover';
 import { buildWhatsAppMeUrl } from '~/utils/whatsapp-me-url';
 
 const props = defineProps({
@@ -93,6 +118,7 @@ const props = defineProps({
 });
 
 const { templates } = toRefs(props);
+const { t } = useI18n();
 
 const settingsStore = useSettingStore();
 const merchantInfoStore = useMerchantInfoStore();
@@ -148,7 +174,22 @@ const getSelectItems = (template: SettingTempl) => {
 		return orderCompletionItems.map((item): SelectSettingItem => ({ ...item }));
 	}
 
+	const courierHandoverItems = getCourierHandoverItems(template.data_source);
+	if (courierHandoverItems.length) {
+		return courierHandoverItems.map((item): SelectSettingItem => ({ ...item }));
+	}
+
 	return getAdminReceiveEmailUpdateItems(template.data_source).map((item): SelectSettingItem => ({ ...item }));
+};
+
+const isOauthConnected = (template: SettingTempl): boolean => getTextSettingValue(template).trim().length > 0;
+
+const startOauthConnect = (template: SettingTempl) => {
+	if (template.is_disabled) {
+		return;
+	}
+
+	navigateTo('/merchant/easyparcel/oauth/start', { external: true });
 };
 
 const getMultiSelectSettingValue = (template: SettingTempl): string[] => {
