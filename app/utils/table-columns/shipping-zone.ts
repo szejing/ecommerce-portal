@@ -3,6 +3,7 @@ import { h } from 'vue';
 import type { TableColumn } from '@nuxt/ui';
 import { formatCurrency } from 'yeppi-common';
 import { parsePricingSummarySegments } from '~/utils/shipping-zone-pricing-summary';
+import { zoneRegionSummary } from '~/utils/shipping-zone-conditions';
 import { UBadge, USwitch } from '#components';
 import type { ShippingZone } from '../types/shipping-zone';
 import { headerCell, mutedCell } from './styles';
@@ -52,9 +53,8 @@ export function getShippingZoneColumns(t: TranslateFn): TableColumn<ShippingZone
 			header: () => headerCell(t('table.shippingZoneRegion')),
 			cell: ({ row }) => {
 				const z = row.original;
-				const state = z.state?.trim();
-				const country = z.country_code?.trim() ?? '';
-				if (!state && !country) {
+				const { country, details } = zoneRegionSummary(z.conditions);
+				if (!country && !details) {
 					return mutedCell();
 				}
 				const regionParts: ReturnType<typeof h>[] = [];
@@ -72,8 +72,8 @@ export function getShippingZoneColumns(t: TranslateFn): TableColumn<ShippingZone
 						),
 					);
 				}
-				if (state) {
-					regionParts.push(h('span', { class: 'text-sm font-medium text-default leading-snug min-w-0' }, state));
+				if (details) {
+					regionParts.push(h('span', { class: 'text-sm font-medium text-default leading-snug min-w-0' }, details));
 				}
 				return h('div', { class: 'flex items-start gap-2 min-w-0' }, regionParts);
 			},

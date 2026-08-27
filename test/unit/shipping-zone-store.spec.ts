@@ -33,11 +33,10 @@ describe('useShippingZoneStore', () => {
 		code: 'west-my',
 		description: 'West Malaysia',
 		rule: 0,
-		is_default: false,
 		is_active: true,
-		country_code: 'MY',
-		state: 'Selangor',
-		postcode_patterns: [{ kind: 'exact', value: '40000' }],
+		conditions: [
+			{ filter_operator: 'include', field: 'country', values: ['MY'] },
+		],
 		methods: [
 			{
 				shipping_method_id: 'sm_1',
@@ -68,11 +67,9 @@ describe('useShippingZoneStore', () => {
 		description: 'West Malaysia',
 		rule: 0,
 		is_active: true,
-		country_code: 'MY',
-		state: 'Selangor',
-		postcode_patterns: [{ kind: 'exact' as const, value: '40000' }],
-		methods: [{ shipping_method_id: 'sm_1', fee: 5, estimated_days: 2 }],
-		shipping_method_ids: ['sm_1'],
+		conditions: [{ filter_operator: 'include' as const, field: 'country' as const, values: ['MY'] }],
+		methods: [{ shipping_method_id: 1, fee: 5, estimated_days: 2 }],
+		shipping_method_ids: ['1'],
 	});
 
 	it('creates a zone and lists it', async () => {
@@ -81,6 +78,11 @@ describe('useShippingZoneStore', () => {
 
 		const store = useShippingZoneStore();
 		const row = await store.createShippingZone(samplePayload());
+		expect(apiMock.shippingZone.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				conditions: [{ filter_operator: 'include', field: 'country', values: ['MY'] }],
+			}),
+		);
 		expect(row?.code).toBe('west-my');
 		expect(row?.description).toBe('West Malaysia');
 		expect(store.allZones).toHaveLength(1);
@@ -95,7 +97,6 @@ describe('useShippingZoneStore', () => {
 				shipping_zone: zoneApiRow({
 					code: 'zone-a',
 					description: 'Zone A',
-					country_code: 'SG',
 				}),
 			})
 			.mockResolvedValueOnce({
@@ -108,7 +109,6 @@ describe('useShippingZoneStore', () => {
 						zoneApiRow({
 							code: 'zone-a',
 							description: 'Zone A',
-							country_code: 'SG',
 						}),
 					],
 					1,
@@ -117,17 +117,17 @@ describe('useShippingZoneStore', () => {
 			.mockResolvedValueOnce(
 				odataList(
 					[
-						zoneApiRow({ code: 'zone-a', description: 'Zone A', country_code: 'SG' }),
+						zoneApiRow({ code: 'zone-a', description: 'Zone A' }),
 						zoneApiRow({ code: 'zone-b', description: 'Zone B' }),
 					],
 					2,
 				),
 			)
-			.mockResolvedValueOnce(odataList([zoneApiRow({ code: 'zone-a', description: 'Zone A', country_code: 'SG' })], 1));
+			.mockResolvedValueOnce(odataList([zoneApiRow({ code: 'zone-a', description: 'Zone A' })], 1));
 
 		const store = useShippingZoneStore();
-		await store.createShippingZone({ ...samplePayload(), code: 'zone-a', description: 'Zone A', country_code: 'SG' });
-		await store.createShippingZone({ ...samplePayload(), code: 'zone-b', description: 'Zone B', country_code: 'MY' });
+		await store.createShippingZone({ ...samplePayload(), code: 'zone-a', description: 'Zone A' });
+		await store.createShippingZone({ ...samplePayload(), code: 'zone-b', description: 'Zone B' });
 		store.filter.query = 'Zone A';
 		store.filter.page_size = 1;
 		store.filter.current_page = 1;

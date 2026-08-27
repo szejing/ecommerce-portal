@@ -7,6 +7,7 @@ import type { ShippingZone } from '~/utils/types/shipping-zone';
 import type { ShippingZoneCreateStorePayload } from '~/repository/modules/shipping-zone/models/request/create-shipping-zone.req';
 import type { UpdateShippingZoneReq, ShippingZoneUpdateStorePayload } from '~/repository/modules/shipping-zone/models/request/update-shipping-zone.req';
 import type { ShippingZoneFormFields } from '~/utils/types/form/shipping-zone-form';
+import { defaultShippingZoneConditions } from '~/utils/shipping-zone-conditions';
 
 type ShippingZoneFilter = {
 	query: string;
@@ -27,9 +28,7 @@ const initialEmptyNewShippingZone: ShippingZoneFormFields = {
 	description: '',
 	rule: 0,
 	is_active: true,
-	country_code: 'MY',
-	state: [],
-	postcodes_text: '',
+	conditions: defaultShippingZoneConditions(),
 	shipping_method_ids: [],
 	method_pricing: {},
 };

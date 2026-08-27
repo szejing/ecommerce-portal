@@ -1,9 +1,6 @@
-/** When false, shipping zone forms hide country + postcode (Malaysia-only state picker). */
-export const SHIPPING_ZONE_SHOW_COUNTRY_AND_POSTCODE_FIELDS = false;
-
 export type MalaysiaStateOption = { label: string; value: string };
 
-/** 13 states + 3 federal territories (English labels, stored as `state` on the zone). */
+/** 13 states + 3 federal territories (English labels, stored as condition values). */
 export const MALAYSIA_STATE_OPTIONS: MalaysiaStateOption[] = [
 	{ label: 'Johor', value: 'Johor' },
 	{ label: 'Kedah', value: 'Kedah' },

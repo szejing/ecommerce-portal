@@ -51,57 +51,83 @@
 					</UFormField>
 				</div>
 
-				<!-- <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-					<UFormField name="rule" :label="t('pages.shippingZoneRule')">
-						<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ t('components.shippingZoneForm.fieldHints.rule') }}</p>
-						<UInput v-model.number="state.rule" type="number" min="0" step="1" />
-					</UFormField>
-				</div> -->
+				<div class="space-y-3">
+					<div class="flex flex-wrap items-center justify-between gap-2">
+						<div>
+							<h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+								{{ t('components.shippingZoneForm.conditionsTitle') }}
+							</h3>
+							<p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+								{{ t('components.shippingZoneForm.fieldHints.conditions') }}
+							</p>
+						</div>
+						<UButton v-if="canAddCondition" color="primary" variant="soft" size="sm" icon="i-lucide-plus" @click="addCondition">
+							{{ t('components.shippingZoneForm.addCondition') }}
+						</UButton>
+					</div>
 
-				<div v-if="SHIPPING_ZONE_SHOW_COUNTRY_AND_POSTCODE_FIELDS" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-					<UFormField name="state" :label="t('pages.shippingZoneState')">
-						<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">
-							{{ t('components.shippingZoneForm.fieldHints.state') }}
+					<UAlert v-if="!includeCountryPresent" color="warning" variant="subtle" :title="t('components.shippingZoneForm.worldwideWarning')" />
+
+					<div v-if="!state.conditions.length" class="text-sm text-muted">
+						{{ t('components.shippingZoneForm.noConditions') }}
+					</div>
+
+					<div v-for="(cond, index) in state.conditions" :key="`${cond.filter_operator}-${cond.field}-${index}`" class="border border-default rounded-lg p-4 space-y-3">
+						<div class="flex items-center justify-between gap-2">
+							<span class="text-sm font-medium">{{ t('components.shippingZoneForm.conditionRow', { n: index + 1 }) }}</span>
+							<UButton color="error" variant="ghost" size="xs" icon="i-lucide-trash-2" :label="t('common.delete')" @click="removeCondition(index)" />
+						</div>
+						<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+							<UFormField :name="`conditions.${index}.filter_operator`" :label="t('components.shippingZoneForm.conditionOperator')">
+								<USelect v-model="cond.filter_operator" :items="operatorItems" value-key="value" class="w-full" />
+							</UFormField>
+							<UFormField :name="`conditions.${index}.field`" :label="t('components.shippingZoneForm.conditionField')">
+								<USelect v-model="cond.field" :items="fieldItems" value-key="value" class="w-full" @update:model-value="() => onFieldChange(cond)" />
+							</UFormField>
+							<UFormField :name="`conditions.${index}.values`" :label="t('components.shippingZoneForm.conditionValues')">
+								<ZSelectMenuState
+									v-if="cond.field === ShippingZoneConditionField.STATE"
+									v-model:state-names="cond.values"
+									multiple
+									:placeholder="t('components.shippingZoneForm.selectStates')"
+								>
+									<template #default="{ values, stateLabel, deselect, placeholder }">
+										<div v-if="values.length > 0" class="flex flex-wrap gap-1.5">
+											<UBadge v-for="st in values" :key="st" color="primary" variant="subtle" class="inline-flex max-w-[min(100%,12rem)] items-center gap-1">
+												<span class="min-w-0 truncate">{{ stateLabel(st) }}</span>
+												<UIcon
+													:name="ICONS.CROSS"
+													class="w-3.5 h-3.5 shrink-0 text-error-500 cursor-pointer"
+													@click.stop="deselect(st)"
+												/>
+											</UBadge>
+										</div>
+										<span v-else class="text-neutral-400 text-sm">{{ placeholder }}</span>
+									</template>
+								</ZSelectMenuState>
+								<UTextarea
+									v-else-if="cond.field === ShippingZoneConditionField.POSTCODE"
+									:model-value="cond.values.join('\n')"
+									:rows="3"
+									autoresize
+									:placeholder="t('components.shippingZoneForm.postcodePlaceholder')"
+									@update:model-value="(v) => (cond.values = splitPostcodeText(String(v ?? '')))"
+								/>
+								<UInput
+									v-else
+									:model-value="cond.values.join(', ')"
+									maxlength="64"
+									class="uppercase"
+									:placeholder="t('components.shippingZoneForm.countryPlaceholder')"
+									@update:model-value="(v) => (cond.values = splitCountryText(String(v ?? '')))"
+								/>
+							</UFormField>
+						</div>
+						<p v-if="cond.field === ShippingZoneConditionField.POSTCODE" class="text-xs text-neutral-500 dark:text-neutral-400">
+							{{ t('components.shippingZoneForm.fieldHints.postcodes') }}
 						</p>
-						<UInput v-model="stateTextSingleMode" />
-					</UFormField>
-					<UFormField name="country_code" :label="t('pages.shippingZoneCountry')">
-						<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">
-							{{ t('components.shippingZoneForm.fieldHints.country') }}
-						</p>
-						<UInput v-model="state.country_code" maxlength="2" class="uppercase" />
-					</UFormField>
+					</div>
 				</div>
-
-				<UFormField v-else name="state" :label="t('pages.shippingZoneState')">
-					<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">
-						{{ t('components.shippingZoneForm.fieldHints.state') }}
-					</p>
-					<ZSelectMenuState v-model:state-names="state.state" multiple :placeholder="t('components.shippingZoneForm.selectStates')">
-						<template #default="{ values, stateLabel, deselect, clearAll, placeholder }">
-							<div v-if="values.length > 0" class="flex flex-wrap items-center gap-2">
-								<div class="flex flex-wrap gap-1.5 min-w-0 flex-1">
-									<UBadge v-for="st in values" :key="st" color="primary" variant="subtle" class="inline-flex max-w-[min(100%,12rem)] items-center gap-1">
-										<span class="min-w-0 truncate">{{ stateLabel(st) }}</span>
-										<UIcon
-											:name="ICONS.CROSS"
-											class="w-3.5 h-3.5 shrink-0 text-error-500 dark:text-error-400 hover:text-error-600 dark:hover:text-error-300 cursor-pointer"
-											@click.stop="deselect(st)"
-										/>
-									</UBadge>
-								</div>
-							</div>
-							<span v-else class="text-neutral-400 text-sm">{{ placeholder }}</span>
-						</template>
-					</ZSelectMenuState>
-				</UFormField>
-
-				<UFormField v-if="SHIPPING_ZONE_SHOW_COUNTRY_AND_POSTCODE_FIELDS" name="postcodes_text" :label="t('pages.shippingZonePostcodes')">
-					<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">
-						{{ t('components.shippingZoneForm.fieldHints.postcodes') }}
-					</p>
-					<UTextarea v-model="state.postcodes_text" :rows="3" autoresize />
-				</UFormField>
 
 				<UFormField name="shipping_method_ids" :label="t('components.shippingZoneForm.supportedMethods')">
 					<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">
@@ -260,7 +286,13 @@
 
 <script lang="ts" setup>
 import { Time } from '@internationalized/date';
-import { SHIPPING_ZONE_SHOW_COUNTRY_AND_POSTCODE_FIELDS } from '~/utils/data/malaysia-states';
+import { FilterOperator, ShippingZoneConditionField } from 'yeppi-common';
+import {
+	hasIncludeCountry,
+	nextAvailableCondition,
+	splitPostcodeText,
+	type ShippingZoneConditionForm,
+} from '~/utils/shipping-zone-conditions';
 import { ICONS } from '~/utils/icons';
 import type { ShippingZoneFormFields } from '~/utils/types/form/shipping-zone-form';
 
@@ -358,14 +390,44 @@ watch(
 	{ deep: true },
 );
 
-/** When country/postcode fields are shown, `state` is a single free-text value in one slot. */
-const stateTextSingleMode = computed({
-	get() {
-		return props.state.state[0] ?? '';
-	},
-	set(v: string) {
-		const trimmed = v.trim();
-		props.state.state = trimmed ? [trimmed] : [];
-	},
-});
+const operatorItems = computed(() =>
+	Object.values(FilterOperator).map((v) => ({
+		label: t(`components.shippingZoneForm.operator.${v}`),
+		value: v,
+	})),
+);
+
+const fieldItems = computed(() =>
+	Object.values(ShippingZoneConditionField).map((v) => ({
+		label: t(`components.shippingZoneForm.field.${v}`),
+		value: v,
+	})),
+);
+
+const includeCountryPresent = computed(() => hasIncludeCountry(props.state.conditions));
+const canAddCondition = computed(() => nextAvailableCondition(props.state.conditions) != null);
+
+function addCondition() {
+	const next = nextAvailableCondition(props.state.conditions);
+	if (!next) {
+		return;
+	}
+	props.state.conditions.push(next);
+}
+
+function removeCondition(index: number) {
+	props.state.conditions.splice(index, 1);
+}
+
+function onFieldChange(cond: ShippingZoneConditionForm) {
+	cond.values = [];
+}
+
+function splitCountryText(text: string): string[] {
+	return text
+		.split(/[\s,]+/)
+		.map((v) => v.trim().toUpperCase())
+		.filter(Boolean)
+		.map((v) => v.slice(0, 2));
+}
 </script>

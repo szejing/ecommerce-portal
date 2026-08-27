@@ -74,12 +74,7 @@ export const createUpdateProductValidation = (t: TranslateFn) => {
 			const pt = variants[i]?.price_types?.[0];
 			const raw = pt?.orig_sell_price;
 			const price = typeof raw === 'string' ? Number.parseFloat(raw) : raw;
-			if (
-				pt == null ||
-				typeof price !== 'number' ||
-				Number.isNaN(price) ||
-				price < 0
-			) {
+			if (pt == null || typeof price !== 'number' || Number.isNaN(price) || price < 0) {
 				ctx.addIssue({
 					code: z.ZodIssueCode.custom,
 					message: t('validation.product.variantPriceRequired'),
@@ -122,7 +117,7 @@ const VariantLegacy = z.object({
 
 /** @deprecated Use createUpdateProductValidation(t) for i18n. */
 export const UpdateProductValidation = z.object({
-	code: z.string({ message: 'Code is required' }).min(1, 'Code is required').max(16, 'Max. 16 characters'),
+	code: z.string({ message: 'Code is required' }).min(1, 'Code is required'),
 	name: z.string({ message: 'Name is required' }).min(1, 'Name is required'),
 	short_desc: z.string({ message: 'Short description is required' }).min(1, 'Short description is required'),
 	long_desc: z.string().optional().nullable(),

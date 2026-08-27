@@ -1,12 +1,12 @@
+import type { FilterOperator, ShippingZoneConditionField } from 'yeppi-common';
+import type { ShippingZoneConditionForm } from '~/utils/shipping-zone-conditions';
+
 export type ShippingZoneFormFields = {
 	code: string;
 	description: string;
 	rule: number;
 	is_active: boolean;
-	country_code: string;
-	/** Malaysia mode: multiple ISO-style names; full mode: zero or one entry synced from text input. */
-	state: string[];
-	postcodes_text: string;
+	conditions: ShippingZoneConditionForm[];
 	shipping_method_ids: string[];
 	method_pricing: Record<
 		string,
@@ -17,3 +17,5 @@ export type ShippingZoneFormFields = {
 		}
 	>;
 };
+
+export type { ShippingZoneConditionForm, FilterOperator, ShippingZoneConditionField };

@@ -380,7 +380,7 @@ describe('ShippingZoneModule', () => {
 			merchant_id: 'm1',
 			code: 'west-my',
 			description: 'West',
-			country_code: 'MY',
+			conditions: [{ filter_operator: 'include' as const, field: 'country' as const, values: ['MY'] }],
 			methods: [{ shipping_method_id: 1, fee: 5, estimated_days: 2 }],
 		};
 		await mod.create(payload);

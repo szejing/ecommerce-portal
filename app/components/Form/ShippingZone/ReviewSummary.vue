@@ -37,17 +37,9 @@
 						<dt class="text-xs font-medium text-muted mb-1.5">{{ t('common.status') }}</dt>
 						<dd class="font-medium text-default leading-relaxed">{{ summary.statusLabel }}</dd>
 					</div>
-					<div v-if="SHIPPING_ZONE_SHOW_COUNTRY_AND_POSTCODE_FIELDS" class="py-3.5 first:pt-0 last:pb-0">
-						<dt class="text-xs font-medium text-muted mb-1.5">{{ t('pages.shippingZoneCountry') }}</dt>
-						<dd class="font-medium text-default leading-relaxed wrap-break-word">{{ summary.countryLabel || t('common.notSet') }}</dd>
-					</div>
 					<div class="py-3.5 first:pt-0 last:pb-0">
-						<dt class="text-xs font-medium text-muted mb-1.5">{{ t('pages.shippingZoneState') }}</dt>
-						<dd class="font-medium text-default leading-relaxed wrap-break-word">{{ summary.stateLabel || t('common.notSet') }}</dd>
-					</div>
-					<div v-if="SHIPPING_ZONE_SHOW_COUNTRY_AND_POSTCODE_FIELDS" class="py-3.5 first:pt-0 last:pb-0">
-						<dt class="text-xs font-medium text-muted mb-1.5">{{ t('components.shippingZoneForm.reviewPostcodesLabel') }}</dt>
-						<dd class="font-medium text-default leading-relaxed wrap-break-word">{{ summary.postcodesSummaryLabel }}</dd>
+						<dt class="text-xs font-medium text-muted mb-1.5">{{ t('components.shippingZoneForm.conditionsTitle') }}</dt>
+						<dd class="font-medium text-default leading-relaxed wrap-break-word">{{ summary.conditionsSummaryLabel || t('common.notSet') }}</dd>
 					</div>
 					<div class="py-3.5 first:pt-0 last:pb-0">
 						<dt class="text-xs font-medium text-muted mb-1.5">{{ t('components.shippingZoneForm.reviewPricingLabel') }}</dt>
@@ -69,7 +61,6 @@
 </template>
 
 <script lang="ts" setup>
-import { SHIPPING_ZONE_SHOW_COUNTRY_AND_POSTCODE_FIELDS } from '~/utils/data/malaysia-states';
 import { ICONS } from '~/utils/icons';
 
 const { t } = useI18n();
@@ -79,9 +70,7 @@ export interface ShippingZoneReviewSummary {
 	description: string;
 	rule: number;
 	statusLabel: string;
-	countryLabel: string;
-	stateLabel: string;
-	postcodesSummaryLabel: string;
+	conditionsSummaryLabel: string;
 	pricingSummaryLabel: string;
 	methodsLabel: string;
 	/** When set, each entry is shown on its own line (preferred over a single joined string). */

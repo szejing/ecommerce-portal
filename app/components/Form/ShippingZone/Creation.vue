@@ -19,8 +19,7 @@ import type { FormSubmitEvent } from '#ui/types';
 import { formatCurrency } from 'yeppi-common';
 import type { z } from 'zod';
 import { CreateShippingZoneValidation } from '~/utils/schema';
-import type { ShippingZonePostcodePattern } from '~/utils/types/order-fulfillment-shipping';
-import { serializeStatesForApi } from '~/utils/data/malaysia-states';
+import { formatConditionValues } from '~/utils/shipping-zone-conditions';
 
 const { t } = useI18n();
 const schema = computed(() => CreateShippingZoneValidation(t));
@@ -36,12 +35,6 @@ const methodOptions = ref<{ label: string; value: string }[]>([]);
 
 const currencyCode = 'MYR';
 
-const countPostcodeLines = (text: string) =>
-	text
-		.split('\n')
-		.map((line) => line.trim())
-		.filter(Boolean).length;
-
 const methodsSummaryLabel = (ids: string[], options: { label: string; value: string }[]) => {
 	if (!ids.length) {
 		return t('common.notSet');
@@ -55,8 +48,10 @@ const methodsSummaryLabel = (ids: string[], options: { label: string; value: str
 
 const reviewSummary = computed(() => {
 	const z = new_shipping_zone.value;
-	const n = countPostcodeLines(z.postcodes_text ?? '');
-	const postcodesSummaryLabel = t('components.shippingZoneForm.reviewPostcodesCount', { count: n });
+	const conditionsSummaryLabel =
+		z.conditions.length === 0
+			? t('components.shippingZoneForm.noConditions')
+			: z.conditions.map((c) => `${c.filter_operator} ${c.field}: ${formatConditionValues(c.values)}`).join(' · ');
 
 	const pricingLines =
 		z.shipping_method_ids.length === 0
@@ -81,23 +76,13 @@ const reviewSummary = computed(() => {
 		description: z.description.trim(),
 		rule: Number(z.rule) || 0,
 		statusLabel: t(z.is_active ? 'common.active' : 'common.inactive'),
-		countryLabel: z.country_code.trim().toUpperCase(),
-		stateLabel: z.state.length ? z.state.join(', ') : '',
-		postcodesSummaryLabel,
+		conditionsSummaryLabel,
 		pricingSummaryLabel,
 		pricingLines,
 		methodsLabel: methodsSummaryLabel(z.shipping_method_ids, methodOptions.value),
 		methodLabels,
 	};
 });
-
-const buildPostcodePatterns = (text: string): ShippingZonePostcodePattern[] => {
-	return text
-		.split('\n')
-		.map((line) => line.trim())
-		.filter(Boolean)
-		.map((value) => ({ kind: 'exact' as const, value }));
-};
 
 const submitForm = async (event: FormSubmitEvent<Schema>) => {
 	const data = event.data;
@@ -115,9 +100,11 @@ const submitForm = async (event: FormSubmitEvent<Schema>) => {
 		description: data.description.trim() || undefined,
 		rule: data.rule ?? 0,
 		is_active: data.is_active,
-		country_code: 'MY',
-		state: serializeStatesForApi(data.state),
-		postcode_patterns: buildPostcodePatterns(data.postcodes_text ?? ''),
+		conditions: data.conditions.map((c) => ({
+			filter_operator: c.filter_operator,
+			field: c.field,
+			values: c.values,
+		})),
 		methods,
 		shipping_method_ids: [...data.shipping_method_ids],
 	};

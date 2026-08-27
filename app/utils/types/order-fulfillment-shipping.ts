@@ -1,20 +1,14 @@
+import type { ShippingZoneCondition } from './shipping-zone';
+
 export type FulfillmentLifecycleStatusValue = 'pending' | 'processing' | 'packed' | 'fulfilled';
 
 export type ShipmentStatusValue = 'pending' | 'shipped' | 'in_transit' | 'delivered' | 'failed';
 
-export type ShippingZonePostcodePattern = {
-	kind: 'exact' | 'prefix' | 'regex';
-	value: string;
-};
-
 export type ShippingZoneRule = {
 	code: string;
 	description?: string | null;
-	country_code: string;
-	state?: string;
-	postcode_patterns: ShippingZonePostcodePattern[];
+	conditions?: ShippingZoneCondition[];
 	rule?: number;
-	is_default?: boolean;
 	fee: number;
 	estimated_days?: number | null;
 	order_cutoff_time?: string | null;
@@ -28,11 +22,8 @@ export type ShippingMethodZoneLink = {
 	shipping_zone?: {
 		code: string;
 		description?: string;
-		country_code: string;
-		state?: string;
-		postcode_patterns: ShippingZonePostcodePattern[];
+		conditions?: ShippingZoneCondition[];
 		rule: number;
-		is_default: boolean;
 	};
 };
 
@@ -55,9 +46,7 @@ export type ShippingZoneMutableFields = {
 	description?: string;
 	rule?: number;
 	is_active: boolean;
-	country_code: string;
-	state?: string;
-	postcode_patterns: ShippingZonePostcodePattern[];
+	conditions?: ShippingZoneCondition[];
 	/** Per-method pricing for this zone (API payload). */
 	methods: {
 		shipping_method_id: number;

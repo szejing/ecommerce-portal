@@ -79,14 +79,14 @@
 					<div class="flex flex-col w-full">
 						<div class="flex items-center gap-2 mb-2">
 							<h4 class="text-md font-medium">{{ t('components.productUpdate.additionalImages') }}</h4>
-							<UTooltip :text="t('pages.moreImagesTooltip')" :popper="{ placement: 'right' }">
+							<UTooltip :text="t('pages.moreImagesTooltip', { count: PRODUCT_GALLERY_MAX })" :popper="{ placement: 'right' }">
 								<UIcon :name="ICONS.HELP" class="text-neutral-400 w-4 h-4 cursor-help" />
 							</UTooltip>
 						</div>
-						<p class="text-xs text-neutral-500 mb-3">{{ t('components.productUpdate.max3Images') }}</p>
+						<p class="text-xs text-neutral-500 mb-3">{{ t('components.productUpdate.maxGalleryImages', { count: PRODUCT_GALLERY_MAX }) }}</p>
 						<ZDropzone
 							multiple
-							:max-images="3"
+							:max-images="PRODUCT_GALLERY_MAX"
 							class="max-w-full sm:max-w-62.5"
 							:existing-images="state.images ?? []"
 							@files-selected="emit('update:images', $event)"
@@ -100,7 +100,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { ProductStatus } from 'yeppi-common';
+import { PRODUCT_GALLERY_MAX, type ProductStatus } from 'yeppi-common';
 import type { Image } from '~/utils/types/image';
 import { ICONS } from '~/utils/icons';
 

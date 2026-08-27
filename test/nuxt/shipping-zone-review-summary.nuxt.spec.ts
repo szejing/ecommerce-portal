@@ -11,9 +11,7 @@ describe('FormShippingZoneReviewSummary', () => {
 					description: 'West',
 					rule: 0,
 					statusLabel: 'Active',
-					countryLabel: 'MY',
-					stateLabel: 'Selangor',
-					postcodesSummaryLabel: '2 postcode line(s)',
+					conditionsSummaryLabel: 'include country: MY · exclude state: Sabah, Sarawak',
 					pricingSummaryLabel: 'Standard: RM 5.00 (3 days)',
 					methodsLabel: 'Standard',
 				},
@@ -23,7 +21,8 @@ describe('FormShippingZoneReviewSummary', () => {
 
 		expect(wrapper.find('#section-shipping-zone-review').exists()).toBe(true);
 		expect(wrapper.text()).toContain('West');
-		expect(wrapper.text()).toContain('Selangor');
+		expect(wrapper.text()).toContain('include country: MY');
+		expect(wrapper.text()).toContain('Sabah, Sarawak');
 	});
 
 	it('renders pricing and methods as separate lines when arrays are provided', async () => {
@@ -34,9 +33,7 @@ describe('FormShippingZoneReviewSummary', () => {
 					description: 'Zone A',
 					rule: 1,
 					statusLabel: 'Active',
-					countryLabel: 'MY',
-					stateLabel: 'KL',
-					postcodesSummaryLabel: '1 postcode line(s)',
+					conditionsSummaryLabel: 'include country: MY',
 					pricingSummaryLabel: 'A: RM 1 · B: RM 2',
 					methodsLabel: 'A, B',
 					pricingLines: ['Pickup: RM 10.00', 'Standard: RM 5.00'],
