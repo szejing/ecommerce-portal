@@ -53,13 +53,20 @@
 							<span v-else class="text-neutral-400 text-sm">{{ placeholder }}</span>
 						</template>
 					</ZSelectMenuState>
-					<UTextarea
+					<UInputTags
 						v-else-if="cond.field === ShippingZoneConditionField.POSTCODE"
-						:model-value="cond.values.join('\n')"
-						:rows="3"
-						autoresize
+						:model-value="cond.values"
 						:placeholder="t('components.shippingZoneForm.postcodePlaceholder')"
-						@update:model-value="(v) => (cond.values = splitPostcodeText(String(v ?? '')))"
+						:delimiter="postcodeDelimiter"
+						:convert-value="normalizePostcodeTag"
+						add-on-blur
+						add-on-enter
+						add-on-tab
+						add-on-paste
+						:duplicate="false"
+						size="md"
+						class="w-full"
+						@update:model-value="(tags) => setPostcodeValues(cond, tags)"
 					/>
 					<ZSelectMenuCountry
 						v-else
@@ -138,5 +145,15 @@ function removeCondition(index: number) {
 
 function onFieldChange(cond: ShippingZoneConditionForm) {
 	cond.values = [];
+}
+
+const postcodeDelimiter = /[\n,]+/;
+
+function normalizePostcodeTag(value: string): string {
+	return value.trim().toUpperCase();
+}
+
+function setPostcodeValues(cond: ShippingZoneConditionForm, tags: Array<string | number>) {
+	cond.values = splitPostcodeText(tags.map((tag) => String(tag)).join(','));
 }
 </script>

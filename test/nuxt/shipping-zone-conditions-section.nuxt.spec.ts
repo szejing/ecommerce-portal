@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { reactive } from 'vue';
+import { reactive, nextTick } from 'vue';
 import { mountSuspended } from '@nuxt/test-utils/runtime';
 import { FilterOperator, ShippingZoneConditionField } from 'yeppi-common';
 import ZInputShippingZoneConditionsSection from '~/components/Z/Input/ShippingZone/ConditionsSection.vue';
@@ -53,6 +53,32 @@ describe('ZInputShippingZoneConditionsSection', () => {
 		});
 
 		expect(wrapper.text()).toContain('No include country');
+	});
+
+	it('uses input tags for postcode conditions', async () => {
+		const state = reactive(
+			baseState([
+				{
+					filter_operator: FilterOperator.INCLUDE,
+					field: ShippingZoneConditionField.POSTCODE,
+					values: ['09000'],
+				},
+			]),
+		);
+
+		const wrapper = await mountSuspended(ZInputShippingZoneConditionsSection, {
+			props: { state },
+			...mountOptions,
+		});
+
+		expect(wrapper.find('textarea').exists()).toBe(false);
+		const tags = wrapper.findComponent({ name: 'UInputTags' });
+		expect(tags.exists()).toBe(true);
+		expect(tags.props('modelValue')).toEqual(['09000']);
+
+		await tags.vm.$emit('update:modelValue', ['09000', '47*', '  47500  ']);
+		await nextTick();
+		expect(state.conditions[0]?.values).toEqual(['09000', '47*', '47500']);
 	});
 
 	it('uses the state select for state conditions', async () => {

@@ -1561,9 +1561,8 @@
 			"printAwb": "Print AWB"
 		},
 		"settings": {
-			"connect": "Connect",
-			"disconnect": "Disconnect",
-			"notConnected": "Not connected"
+			"connectNow": "Connect Now",
+			"connected": "Connected"
 		},
 		"shipment": {
 			"title": "Shipment",
@@ -1679,7 +1678,7 @@
 				"status": "Turn off to hide this zone at checkout.",
 				"country": "2-letter code (e.g. MY).",
 				"state": "States or regions included in this zone.",
-				"postcodes": "One postcode per line. Exact: 09000. Prefix: 47* matches 47500, 47600.",
+				"postcodes": "Press Enter or comma to add. Exact: 09000. Prefix: 47* matches 47500, 47600.",
 				"conditions": "Include the geography this zone covers, then exclude holes (e.g. Sabah). At most one row per operator and field.",
 				"feeOverride": "Fee for this method in this zone.",
 				"daysOverride": "Optional delivery estimate for this method in this zone.",

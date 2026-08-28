@@ -1560,9 +1560,8 @@
 			"printAwb": "Cetak AWB"
 		},
 		"settings": {
-			"connect": "Sambung",
-			"disconnect": "Putuskan",
-			"notConnected": "Belum disambungkan"
+			"connectNow": "Sambung Sekarang",
+			"connected": "Tersambung"
 		},
 		"shipment": {
 			"title": "Penghantaran",
@@ -1678,7 +1677,7 @@
 				"status": "Matikan untuk sembunyikan zon ini di checkout.",
 				"country": "Dua huruf (cth. MY).",
 				"state": "Negeri atau wilayah yang termasuk dalam zon ini.",
-				"postcodes": "Satu poskod setiap baris. Tepat: 09000. Prefiks: 47* sepadan 47500, 47600.",
+				"postcodes": "Tekan Enter atau koma untuk tambah. Tepat: 09000. Prefiks: 47* sepadan 47500, 47600.",
 				"conditions": "Sertakan geografi yang diliputi zon ini, kemudian kecualikan kawasan (cth. Sabah). Paling banyak satu baris setiap operator dan medan.",
 				"feeOverride": "Yuran untuk kaedah ini dalam zon ini.",
 				"daysOverride": "Anggaran penghantaran pilihan untuk kaedah ini dalam zon ini.",

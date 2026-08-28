@@ -72,10 +72,7 @@
 					class="w-full"
 					@update:model-value="(value) => updateMultiSelectSettingValue(template, value)"
 				/>
-				<div v-if="getInputType(template) === InputTypeEnum.OAUTH" class="flex flex-col items-stretch gap-2 sm:items-end">
-					<p data-testid="oauth-connection-status" class="text-sm text-gray-600 dark:text-gray-300">
-						{{ isOauthConnected(template) ? getTextSettingValue(template) : t('components.settings.notConnected') }}
-					</p>
+				<div v-if="getInputType(template) === InputTypeEnum.OAUTH" class="flex justify-end">
 					<UButton
 						v-if="!isOauthConnected(template)"
 						data-testid="oauth-connect"
@@ -83,17 +80,16 @@
 						:disabled="template.is_disabled"
 						@click="startOauthConnect(template)"
 					>
-						{{ t('components.settings.connect') }}
+						{{ t('components.settings.connectNow') }}
 					</UButton>
 					<UButton
 						v-else
-						data-testid="oauth-disconnect"
+						data-testid="oauth-connected"
 						color="neutral"
 						variant="soft"
-						:disabled="template.is_disabled"
-						@click="updateSettingValue(template, '')"
+						disabled
 					>
-						{{ t('components.settings.disconnect') }}
+						{{ t('components.settings.connected') }}
 					</UButton>
 				</div>
 			</div>

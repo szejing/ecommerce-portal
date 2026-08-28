@@ -114,7 +114,7 @@ describe('ZSettingTemplate', () => {
 		});
 	});
 
-	it('renders Connect for OAUTH settings instead of a text field', async () => {
+	it('renders Connect Now for disconnected OAUTH settings instead of a text field', async () => {
 		const wrapper = await mountSuspended(ZSettingTemplate, {
 			props: {
 				templates: [
@@ -130,12 +130,12 @@ describe('ZSettingTemplate', () => {
 		});
 
 		expect(wrapper.findComponent({ name: 'UInput' }).exists()).toBe(false);
-		expect(wrapper.get('[data-testid="oauth-connect"]').text()).toMatch(/connect/i);
-		expect(wrapper.find('[data-testid="oauth-disconnect"]').exists()).toBe(false);
-		expect(wrapper.get('[data-testid="oauth-connection-status"]').text().length).toBeGreaterThan(0);
+		expect(wrapper.get('[data-testid="oauth-connect"]').text()).toMatch(/connect now/i);
+		expect(wrapper.find('[data-testid="oauth-connected"]').exists()).toBe(false);
+		expect(wrapper.find('[data-testid="oauth-connection-status"]').exists()).toBe(false);
 	});
 
-	it('shows Disconnect when an OAUTH connection identity is present', async () => {
+	it('shows a disabled Connected button when an OAUTH connection identity is present', async () => {
 		const settingStore = useSettingStore();
 		settingStore.settings = [
 			{
@@ -160,7 +160,10 @@ describe('ZSettingTemplate', () => {
 		});
 
 		expect(wrapper.find('[data-testid="oauth-connect"]').exists()).toBe(false);
-		expect(wrapper.get('[data-testid="oauth-disconnect"]').exists()).toBe(true);
-		expect(wrapper.get('[data-testid="oauth-connection-status"]').text()).toContain('merchant@example.com');
+		expect(wrapper.find('[data-testid="oauth-connection-status"]').exists()).toBe(false);
+
+		const connectedButton = wrapper.get('[data-testid="oauth-connected"]');
+		expect(connectedButton.text()).toMatch(/connected/i);
+		expect(connectedButton.attributes('disabled')).toBeDefined();
 	});
 });
