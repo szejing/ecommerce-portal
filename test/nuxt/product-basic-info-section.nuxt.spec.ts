@@ -38,9 +38,8 @@ describe('ZInputProductBasicInfoSection descriptions', () => {
 			...mountOptions,
 		});
 
-		const textarea = wrapper.find('textarea');
-		expect(textarea.exists()).toBe(true);
-		expect(textarea.attributes('maxlength')).toBe(String(PRODUCT_SHORT_DESC_MAX));
+		const input = wrapper.find(`input[maxlength="${PRODUCT_SHORT_DESC_MAX}"]`);
+		expect(input.exists()).toBe(true);
 		expect(wrapper.text()).toContain(`${state.short_desc?.length} / ${PRODUCT_SHORT_DESC_MAX}`);
 	});
 

@@ -50,12 +50,10 @@
 
 				<UFormField name="short_desc" :label="t('components.productUpdate.shortDescription')" required>
 					<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.briefDescription') }}</p>
-					<UTextarea
+					<UInput
 						v-model="state.short_desc"
 						:maxlength="PRODUCT_SHORT_DESC_MAX"
 						:placeholder="t('components.productUpdate.shortDescPlaceholder')"
-						:rows="3"
-						autoresize
 					/>
 					<p class="mt-1 text-xs text-muted text-right">
 						{{

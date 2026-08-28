@@ -89,33 +89,15 @@
 				<div class="flex flex-wrap items-center gap-3">
 					<UPopover>
 						<UButton color="neutral" variant="outline" :icon="ICONS.PALETTE">
-							<span
-								class="size-4 rounded-full border border-default"
-								:style="{ backgroundColor: themeColour || 'transparent' }"
-							/>
+							<span class="size-4 rounded-full border border-default" :style="{ backgroundColor: themeColour || 'transparent' }" />
 							{{ themeColour || t('pages.storeProfilePage.storeThemeNone') }}
 						</UButton>
 						<template #content>
-							<UColorPicker
-								class="p-2"
-								format="hex"
-								:model-value="themeColour || '#FFFFFF'"
-								@update:model-value="onThemeColour"
-							/>
+							<UColorPicker class="p-2" format="hex" :model-value="themeColour || '#FFFFFF'" @update:model-value="onThemeColour" />
 						</template>
 					</UPopover>
-					<UInput
-						class="w-36 font-mono"
-						:model-value="themeColour"
-						placeholder="#C41E3A"
-						@update:model-value="onThemeColour"
-					/>
-					<UButton
-						v-if="themeColour"
-						color="neutral"
-						variant="ghost"
-						@click="onThemeColour('')"
-					>
+					<UInput class="w-36 font-mono" :model-value="themeColour" placeholder="#C41E3A" @update:model-value="onThemeColour" />
+					<UButton v-if="themeColour" color="neutral" variant="ghost" @click="onThemeColour('')">
 						{{ t('pages.storeProfilePage.storeThemeClear') }}
 					</UButton>
 				</div>
@@ -163,10 +145,7 @@
 					<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('pages.storeProfilePage.merchantInformation') }}</h3>
 
 					<!-- Thumbnail -->
-					<UFormField
-						:label="t('pages.storeProfilePage.thumbnail')"
-						:description="t('pages.storeProfilePage.thumbnailRecommendedSize')"
-					>
+					<UFormField :label="t('pages.storeProfilePage.thumbnail')" :description="t('pages.storeProfilePage.thumbnailRecommendedSize')">
 						<ZDropzone
 							class="max-w-full sm:max-w-50"
 							:key="thumbnailDropzoneKey"
@@ -180,32 +159,28 @@
 
 					<!-- Name, Company email, website, phone no -->
 					<div class="grid gap-4 sm:grid-cols-2">
-						<UFormField :label="t('common.name')">
-							<UInput
-								:model-value="getMerchantValue(GROUP_CODE.INFO, MERCHANT.NAME)"
-								@update:model-value="(v) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.NAME, v)"
-							/>
-						</UFormField>
-						<UFormField
-							class="sm:col-span-2"
-							:label="t('pages.storeProfilePage.shortDescription')"
-							:description="t('pages.storeProfilePage.shortDescriptionDesc')"
-						>
-							<UTextarea
-								:model-value="getMerchantValue(GROUP_CODE.INFO, MERCHANT.SHORT_DESC)"
-								:maxlength="280"
-								:rows="3"
-								autoresize
-								@update:model-value="(v) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.SHORT_DESC, String(v ?? ''))"
-							/>
-							<p class="mt-1 text-xs text-muted text-right">
-								{{
-									t('pages.storeProfilePage.shortDescriptionCounter', {
-										n: getMerchantValue(GROUP_CODE.INFO, MERCHANT.SHORT_DESC).length,
-									})
-								}}
-							</p>
-						</UFormField>
+						<div class="sm:col-span-2 grid gap-4 sm:grid-cols-2">
+							<UFormField :label="t('common.name')">
+								<UInput
+									:model-value="getMerchantValue(GROUP_CODE.INFO, MERCHANT.NAME)"
+									@update:model-value="(v) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.NAME, v)"
+								/>
+							</UFormField>
+							<UFormField class="sm:col-start-1" :label="t('pages.storeProfilePage.shortDescription')">
+								<UInput
+									:model-value="getMerchantValue(GROUP_CODE.INFO, MERCHANT.SHORT_DESC)"
+									:maxlength="280"
+									@update:model-value="(v) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.SHORT_DESC, String(v ?? ''))"
+								/>
+								<p class="mt-1 text-xs text-muted text-right">
+									{{
+										t('pages.storeProfilePage.shortDescriptionCounter', {
+											n: getMerchantValue(GROUP_CODE.INFO, MERCHANT.SHORT_DESC).length,
+										})
+									}}
+								</p>
+							</UFormField>
+						</div>
 						<UFormField :label="t('pages.storeProfilePage.companyEmail')">
 							<UInput
 								type="email"
@@ -305,10 +280,7 @@ import { useDataStore } from '~/stores/Data/Data';
 import type { Country } from '~/utils/types/country';
 import { ICONS } from '~/utils/icons';
 import { accountTypeLabel } from '~/utils/options/account-type';
-import {
-	normalizeStoreThemePrimaryColour,
-	STORE_THEME_PRIMARY_COLOUR_SET_CODE,
-} from '~/utils/store-theme';
+import { normalizeStoreThemePrimaryColour, STORE_THEME_PRIMARY_COLOUR_SET_CODE } from '~/utils/store-theme';
 
 definePageMeta({ ssr: false });
 
@@ -389,9 +361,7 @@ const setMerchantValue = (groupCode: string, setCode: string, value: string) => 
 	});
 };
 
-const themeColour = computed(
-	() => getMerchantValue(GROUP_CODE.INFO, STORE_THEME_PRIMARY_COLOUR_SET_CODE),
-);
+const themeColour = computed(() => getMerchantValue(GROUP_CODE.INFO, STORE_THEME_PRIMARY_COLOUR_SET_CODE));
 
 const onThemeColour = (value: string | undefined) => {
 	const raw = (value ?? '').trim();
