@@ -49,6 +49,7 @@
 					<ZInputProductBasicInfoSection
 						:state="new_product"
 						:code-disabled="false"
+						:show-long-description="showLongDescription"
 						@update:thumbnail="updateThumbnail"
 						@update:images="updateImages"
 						@delete:thumbnail="deleteThumbnail"
@@ -109,6 +110,7 @@ import { ZModalConfirmation, ZModalLoading } from '#components';
 import type { FormErrorEvent } from '#ui/types';
 import type { ProductVariationInput } from '~/utils/types/product-variation';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
+import { GROUP_CODE, PRODUCT } from 'yeppi-common';
 
 const overlay = useOverlay();
 const formRef = ref();
@@ -116,6 +118,10 @@ const formRef = ref();
 // Store
 const productStore = useProductStore();
 const { new_product, adding } = storeToRefs(productStore);
+const settingsStore = useSettingStore();
+const showLongDescription = computed(
+	() => !settingsStore.getSetting(GROUP_CODE.PRODUCT, PRODUCT.HIDE_LONG_DESC)?.getBoolean(),
+);
 const toast = useToast();
 
 // State

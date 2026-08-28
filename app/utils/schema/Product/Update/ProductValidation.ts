@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PRODUCT_SHORT_DESC_MAX } from 'yeppi-common';
 
 export type TranslateFn = (key: string) => string;
 
@@ -57,7 +58,10 @@ export const createUpdateProductValidation = (t: TranslateFn) => {
 			.min(1, t('validation.product.codeRequired'))
 			.max(16, t('validation.product.codeMax16')),
 		name: z.string({ message: t('validation.product.nameRequired') }).min(1, t('validation.product.nameRequired')),
-		short_desc: z.string({ message: t('validation.product.shortDescRequired') }).min(1, t('validation.product.shortDescRequired')),
+		short_desc: z
+			.string({ message: t('validation.product.shortDescRequired') })
+			.min(1, t('validation.product.shortDescRequired'))
+			.max(PRODUCT_SHORT_DESC_MAX, t('validation.product.shortDescMax')),
 		long_desc: z.string().optional().nullable(),
 		is_active: z.boolean().default(true),
 		status: z.string({ message: t('validation.product.statusRequired') }),
@@ -119,7 +123,10 @@ const VariantLegacy = z.object({
 export const UpdateProductValidation = z.object({
 	code: z.string({ message: 'Code is required' }).min(1, 'Code is required'),
 	name: z.string({ message: 'Name is required' }).min(1, 'Name is required'),
-	short_desc: z.string({ message: 'Short description is required' }).min(1, 'Short description is required'),
+	short_desc: z
+		.string({ message: 'Short description is required' })
+		.min(1, 'Short description is required')
+		.max(PRODUCT_SHORT_DESC_MAX, 'Short description must be at most 250 characters'),
 	long_desc: z.string().optional().nullable(),
 	is_active: z.boolean().default(true),
 	status: z.string({ message: 'Status is required' }),

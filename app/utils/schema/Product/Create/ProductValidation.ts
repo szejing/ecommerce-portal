@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PRODUCT_SHORT_DESC_MAX } from 'yeppi-common';
 
 const Price = z.object({
 	currency_code: z.string({ message: 'Currency code is required' }),
@@ -48,7 +49,10 @@ const Variant = z.object({
 const createProductBase = z.object({
 	code: z.string().optional(),
 	name: z.string({ message: 'Name is required' }).min(1, 'Name is required'),
-	short_desc: z.string({ message: 'Short description is required' }).min(1, 'Short description is required'),
+	short_desc: z
+		.string({ message: 'Short description is required' })
+		.min(1, 'Short description is required')
+		.max(PRODUCT_SHORT_DESC_MAX, 'Short description must be at most 250 characters'),
 	long_desc: z.string().optional(),
 	is_active: z.boolean().default(true),
 
