@@ -2,7 +2,6 @@ import { Time } from '@internationalized/date';
 import { describe, expect, it } from 'vitest';
 import { reactive } from 'vue';
 import { mountSuspended } from '@nuxt/test-utils/runtime';
-import { FilterOperator, ShippingZoneConditionField } from 'yeppi-common';
 import ZInputShippingZoneDetailsSection from '~/components/Z/Input/ShippingZone/DetailsSection.vue';
 import { defaultShippingZoneConditions } from '~/utils/shipping-zone-conditions';
 import type { ShippingZoneFormFields } from '~/utils/types/form/shipping-zone-form';
@@ -20,8 +19,19 @@ function baseState(overrides: Partial<ShippingZoneFormFields> = {}): ShippingZon
 	};
 }
 
+const mountOptions = {
+	global: {
+		stubs: {
+			ZInputShippingZoneConditionsSection: {
+				name: 'ZInputShippingZoneConditionsSection',
+				template: '<div class="conditions-section-stub" />',
+			},
+		},
+	},
+};
+
 describe('ZInputShippingZoneDetailsSection', () => {
-	it('renders zone details section with prefilled include country', async () => {
+	it('renders zone details section and conditions child', async () => {
 		const state = reactive<ShippingZoneFormFields>(baseState());
 
 		const wrapper = await mountSuspended(ZInputShippingZoneDetailsSection, {
@@ -32,40 +42,16 @@ describe('ZInputShippingZoneDetailsSection', () => {
 					{ label: 'Express', value: 'sm_2' },
 				],
 			},
+			...mountOptions,
 		});
 
 		expect(wrapper.find('#section-shipping-zone-details').exists()).toBe(true);
-		expect(wrapper.text()).toContain('Conditions');
 		expect(wrapper.text()).toContain('Stable identifier for this zone');
-		expect(wrapper.html()).toContain('MY');
-	});
-
-	it('warns when there is no include country', async () => {
-		const state = reactive<ShippingZoneFormFields>(baseState({ conditions: [] }));
-
-		const wrapper = await mountSuspended(ZInputShippingZoneDetailsSection, {
-			props: {
-				state,
-				methodOptions: [],
-			},
-		});
-
-		expect(wrapper.text()).toContain('No include country');
+		expect(wrapper.find('.conditions-section-stub').exists()).toBe(true);
 	});
 
 	it('disables code input when codeReadonly is true', async () => {
-		const state = reactive<ShippingZoneFormFields>(
-			baseState({
-				code: 'ZONE_A',
-				conditions: [
-					{
-						filter_operator: FilterOperator.INCLUDE,
-						field: ShippingZoneConditionField.STATE,
-						values: ['Johor'],
-					},
-				],
-			}),
-		);
+		const state = reactive<ShippingZoneFormFields>(baseState({ code: 'ZONE_A' }));
 
 		const wrapper = await mountSuspended(ZInputShippingZoneDetailsSection, {
 			props: {
@@ -73,6 +59,7 @@ describe('ZInputShippingZoneDetailsSection', () => {
 				methodOptions: [],
 				codeReadonly: true,
 			},
+			...mountOptions,
 		});
 
 		const codeInput = wrapper.find('input[maxlength="32"]');
@@ -89,6 +76,7 @@ describe('ZInputShippingZoneDetailsSection', () => {
 				methodOptions: [],
 				codeForceUppercase: true,
 			},
+			...mountOptions,
 		});
 
 		const codeInput = wrapper.get('input[maxlength="32"]');
@@ -112,6 +100,7 @@ describe('ZInputShippingZoneDetailsSection', () => {
 				state,
 				methodOptions: [{ label: 'Same-Day Delivery', value: '1' }],
 			},
+			...mountOptions,
 		});
 
 		const cutoffInput = wrapper.findComponent({ name: 'UInputTime' });

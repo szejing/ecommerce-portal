@@ -50,7 +50,30 @@
 
 				<UFormField name="short_desc" :label="t('components.productUpdate.shortDescription')" required>
 					<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.briefDescription') }}</p>
-					<UInput v-model="state.short_desc" :placeholder="t('components.productUpdate.shortDescPlaceholder')" />
+					<UTextarea
+						v-model="state.short_desc"
+						:maxlength="PRODUCT_SHORT_DESC_MAX"
+						:placeholder="t('components.productUpdate.shortDescPlaceholder')"
+						:rows="3"
+						autoresize
+					/>
+					<p class="mt-1 text-xs text-muted text-right">
+						{{
+							t('components.productUpdate.shortDescCounter', {
+								n: (state.short_desc ?? '').length,
+								max: PRODUCT_SHORT_DESC_MAX,
+							})
+						}}
+					</p>
+				</UFormField>
+
+				<UFormField v-if="showLongDescription" name="long_desc" :label="t('components.productUpdate.longDescription')">
+					<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.longDescriptionHint') }}</p>
+					<ZInputProductLongDescriptionEditor
+						:model-value="state.long_desc ?? ''"
+						:placeholder="t('components.productUpdate.longDescPlaceholder')"
+						@update:model-value="state.long_desc = $event"
+					/>
 				</UFormField>
 			</div>
 
@@ -100,7 +123,7 @@
 </template>
 
 <script lang="ts" setup>
-import { PRODUCT_GALLERY_MAX, type ProductStatus } from 'yeppi-common';
+import { PRODUCT_GALLERY_MAX, PRODUCT_SHORT_DESC_MAX, type ProductStatus } from 'yeppi-common';
 import type { Image } from '~/utils/types/image';
 import { ICONS } from '~/utils/icons';
 
@@ -113,6 +136,7 @@ export type ProductBasicInfoState = {
 	code?: string;
 	name?: string;
 	short_desc?: string;
+	long_desc?: string | null;
 	thumbnail?: File | Image;
 	images?: File[] | Image[];
 };
@@ -121,8 +145,9 @@ const props = withDefaults(
 	defineProps<{
 		state: ProductBasicInfoState;
 		codeDisabled?: boolean;
+		showLongDescription?: boolean;
 	}>(),
-	{ codeDisabled: false },
+	{ codeDisabled: false, showLongDescription: true },
 );
 
 const emit = defineEmits<{

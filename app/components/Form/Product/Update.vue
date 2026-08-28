@@ -44,6 +44,7 @@
 					<ZInputProductBasicInfoSection
 						:state="formState"
 						:code-disabled="true"
+						:show-long-description="showLongDescription"
 						@update:thumbnail="updateThumbnail"
 						@update:images="updateImages"
 						@delete:thumbnail="deleteThumbnail"
@@ -102,6 +103,7 @@ import type { Image } from '~/utils/types/image';
 import type { FormErrorEvent } from '#ui/types';
 import type { ProductVariationInput } from '~/utils/types/product-variation';
 import { transformProductToUpdate as buildProductUpdate } from '~/utils/product-transform';
+import { GROUP_CODE, PRODUCT } from 'yeppi-common';
 
 const { t } = useI18n();
 const updateProductSchema = computed(() => createUpdateProductValidation(t));
@@ -115,6 +117,10 @@ const props = defineProps({
 });
 
 const productTypeStore = useProductTypeStore();
+const settingsStore = useSettingStore();
+const showLongDescription = computed(
+	() => !settingsStore.getSetting(GROUP_CODE.PRODUCT, PRODUCT.HIDE_LONG_DESC)?.getBoolean(),
+);
 const transformProductToUpdate = (product: Product): ProductUpdate => buildProductUpdate(product, productTypeStore.prod_types);
 
 // Categories, tags, brands state (for UI binding) - declared before watch
