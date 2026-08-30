@@ -1,7 +1,7 @@
 <template>
 	<ZPagePanel id="settings-configuration" :title="t('nav.configuration')" back-to="/settings/system">
 		<template #navbar-right>
-			<UButton color="success" @click="onSave">
+			<UButton color="success" :loading="updating" :disabled="!isDirty" @click="onSave">
 				<UIcon :name="ICONS.SAVE" class="w-4 h-4" />
 				{{ t('common.save') }}
 			</UButton>
@@ -37,8 +37,14 @@ const settingsStore = useSettingStore();
 const merchantInfoStore = useMerchantInfoStore();
 const loadingModal = overlay.create(ZModalLoading, { props: { key: 'loading' } });
 
-const { segments, updating } = storeToRefs(settingsStore);
+const { segments, updating, updatedSettings } = storeToRefs(settingsStore);
 await settingsStore.getSettings();
+
+const isDirty = computed(() => updatedSettings.value.length > 0);
+
+useLeavePageGuard(isDirty, {
+	onLeave: () => settingsStore.clearUpdatedSettings(),
+});
 
 onMounted(() => {
 	if (merchantInfoStore.merchant.length === 0) {
