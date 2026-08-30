@@ -352,7 +352,8 @@
 			"priceRequired": "Sekurang-kurangnya satu harga wajib",
 			"optionNameRequired": "Nama pilihan wajib (cth: Saiz)",
 			"optionValuesRequired": "Nilai wajib (cth: S, M, L)",
-			"variantPriceRequired": "Harga wajib untuk varian ini"
+			"variantPriceRequired": "Harga wajib untuk varian ini",
+			"variantSkuDuplicate": "SKU ini sudah digunakan oleh varian lain"
 		},
 		"outlet": {
 			"outletCodeRequired": "Kod cawangan wajib",
@@ -2085,13 +2086,20 @@
 		"variantList": {
 			"title": "Senarai Variasi",
 			"pricePlaceholder": "Harga",
+			"salePricePlaceholder": "Harga jualan",
 			"stockPlaceholder": "Stok",
 			"skuPlaceholder": "SKU",
+			"barcodePlaceholder": "Kod bar",
+			"costPricePlaceholder": "Kos",
 			"applyToAll": "Gunakan Untuk Semua",
-			"price": "Harga",
+			"price": "Harga jual asal",
+			"salePrice": "Harga jualan",
 			"stock": "Stok",
 			"stockTooltip": "Kuantiti inventori tersedia untuk varian ini",
-			"sku": "SKU"
+			"sku": "SKU",
+			"barcode": "Kod bar",
+			"costPrice": "Harga kos",
+			"edit": "Edit varian"
 		},
 		"zModal": {
 			"brandDetail": {

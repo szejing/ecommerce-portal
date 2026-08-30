@@ -2,6 +2,7 @@ import type { Product } from '~/utils/types/product';
 import type { ProductUpdate } from '~/utils/types/form/product-creation';
 import type { MerchantProductTypeLike } from '~/utils/product-type-resolve';
 import { merchantTypeIdForKind } from '~/utils/product-type-resolve';
+import { normalizeSalePrice } from '~/utils/product-variant-list';
 
 /** Transform Product (with populated relations) to ProductUpdate for API. */
 export function transformProductToUpdate(
@@ -93,7 +94,7 @@ export function transformProductToUpdate(
 								currency_code: price.currency_code,
 								orig_sell_price: price.orig_sell_price,
 								cost_price: price.cost_price,
-								sale_price: price.sale_price,
+								sale_price: normalizeSalePrice(price.sale_price),
 							})) ?? [],
 					options:
 						variant.options

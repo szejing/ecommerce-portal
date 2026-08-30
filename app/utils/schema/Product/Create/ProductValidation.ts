@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PRODUCT_SHORT_DESC_MAX } from 'yeppi-common';
+import { duplicateVariantSkuIndexes } from '~/utils/product-variant-list';
 
 const Price = z.object({
 	currency_code: z.string({ message: 'Currency code is required' }),
@@ -72,6 +73,7 @@ const createProductBase = z.object({
 });
 
 const VARIANT_PRICE_REQUIRED_MSG = 'Price is required for this variant';
+const VARIANT_SKU_DUPLICATE_MSG = 'This SKU is already used by another variant';
 
 export const CreateProductValidation = createProductBase.superRefine((data, ctx) => {
 	const variants = data.variants ?? [];
@@ -91,5 +93,12 @@ export const CreateProductValidation = createProductBase.superRefine((data, ctx)
 				path: ['variants', i, 'price_types', 0, 'orig_sell_price'],
 			});
 		}
+	}
+	for (const index of duplicateVariantSkuIndexes(variants)) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			message: VARIANT_SKU_DUPLICATE_MSG,
+			path: ['variants', index, 'sku'],
+		});
 	}
 });

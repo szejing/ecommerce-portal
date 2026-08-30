@@ -60,7 +60,13 @@
 					:disabled="template.is_disabled"
 					class="w-full"
 					@update:model-value="(value) => updateSingleSelectSettingValue(template, value)"
-				/>
+				>
+					<template #default>
+						<UBadge v-if="getTextSettingValue(template)" color="primary" variant="subtle" class="truncate">
+							{{ getSelectLabel(template, getTextSettingValue(template)) }}
+						</UBadge>
+					</template>
+				</USelect>
 				<USelect
 					v-if="getInputType(template) === InputTypeEnum.SELECT_MULTI"
 					multiple
@@ -70,8 +76,18 @@
 					label-key="label"
 					:disabled="template.is_disabled"
 					class="w-full"
+					:ui="{
+						base: 'h-auto min-h-9',
+						value: 'flex min-w-0 flex-wrap gap-1 whitespace-normal pointer-events-none',
+					}"
 					@update:model-value="(value) => updateMultiSelectSettingValue(template, value)"
-				/>
+				>
+					<template #default>
+						<UBadge v-for="value in getMultiSelectSettingValue(template)" :key="value" color="primary" variant="subtle" class="truncate">
+							{{ getSelectLabel(template, value) }}
+						</UBadge>
+					</template>
+				</USelect>
 				<div v-if="getInputType(template) === InputTypeEnum.OAUTH" class="flex justify-end">
 					<UButton
 						v-if="!isOauthConnected(template)"
@@ -82,13 +98,7 @@
 					>
 						{{ t('components.settings.connectNow') }}
 					</UButton>
-					<UButton
-						v-else
-						data-testid="oauth-connected"
-						color="neutral"
-						variant="soft"
-						disabled
-					>
+					<UButton v-else data-testid="oauth-connected" color="neutral" variant="soft" disabled>
 						{{ t('components.settings.connected') }}
 					</UButton>
 				</div>
@@ -104,6 +114,8 @@ import { Setting } from '~/utils/types/setting';
 import { getOrderCompletionValidationItems } from '~/utils/options/order-completion-validation';
 import { getAdminReceiveEmailUpdateItems } from '~/utils/options/admin-receive-email-update';
 import { getCourierHandoverItems } from '~/utils/options/courier-handover';
+import { getProductLineIdentityItems } from '~/utils/options/product-line-identity';
+import { getVariantLineIdentityItems } from '~/utils/options/variant-line-identity';
 import { buildWhatsAppMeUrl } from '~/utils/whatsapp-me-url';
 
 const props = defineProps({
@@ -146,10 +158,7 @@ const getTextSettingValue = (template: SettingTempl): string => getRawSettingVal
 
 const getContactInfoValue = (setCode: string): string | null => merchantInfoStore.getMerchantInfo(GROUP_CODE.CONTACT, setCode)?.getString() ?? null;
 
-const getWhatsAppMeUrlCandidate = (): string | null => buildWhatsAppMeUrl(
-	getContactInfoValue(MERCHANT.DIAL_CODE),
-	getContactInfoValue(MERCHANT.PHONE_NO),
-);
+const getWhatsAppMeUrlCandidate = (): string | null => buildWhatsAppMeUrl(getContactInfoValue(MERCHANT.DIAL_CODE), getContactInfoValue(MERCHANT.PHONE_NO));
 
 const getTextSettingPlaceholder = (template: SettingTempl): string | undefined => {
 	if (!isWhatsAppUrlTemplate(template)) {
@@ -175,7 +184,22 @@ const getSelectItems = (template: SettingTempl) => {
 		return courierHandoverItems.map((item): SelectSettingItem => ({ ...item }));
 	}
 
+	const productLineIdentityItems = getProductLineIdentityItems(template.data_source);
+	if (productLineIdentityItems.length) {
+		return productLineIdentityItems.map((item): SelectSettingItem => ({ ...item }));
+	}
+
+	const variantLineIdentityItems = getVariantLineIdentityItems(template.data_source);
+	if (variantLineIdentityItems.length) {
+		return variantLineIdentityItems.map((item): SelectSettingItem => ({ ...item }));
+	}
+
 	return getAdminReceiveEmailUpdateItems(template.data_source).map((item): SelectSettingItem => ({ ...item }));
+};
+
+const getSelectLabel = (template: SettingTempl, value: unknown): string => {
+	const stringValue = String(value ?? '');
+	return getSelectItems(template).find((item) => String(item.value) === stringValue)?.label ?? stringValue;
 };
 
 const isOauthConnected = (template: SettingTempl): boolean => getTextSettingValue(template).trim().length > 0;

@@ -166,4 +166,60 @@ describe('ZSettingTemplate', () => {
 		expect(connectedButton.text()).toMatch(/connected/i);
 		expect(connectedButton.attributes('disabled')).toBeDefined();
 	});
+
+	it('renders the selected SELECT value as a UBadge with the option label', async () => {
+		const wrapper = await mountSuspended(ZSettingTemplate, {
+			props: {
+				templates: [
+					makeTemplate({
+						set_code: 'ProductLineIdentity',
+						set_desc: 'Product line identity',
+						input_type: InputType.SELECT,
+						data_source: 'ProductLineIdentity',
+						default_val: 'CODE',
+					}),
+				],
+			},
+		});
+
+		const select = wrapper.findComponent({ name: 'USelect' });
+		expect(select.exists()).toBe(true);
+
+		const badges = select.findAllComponents({ name: 'UBadge' });
+		expect(badges).toHaveLength(1);
+		expect(badges[0]!.text()).toBe('Product code');
+	});
+
+	it('renders each selected SELECT_MULTI value as a UBadge with the option label', async () => {
+		const settingStore = useSettingStore();
+		settingStore.settings = [
+			{
+				group_code: 'Email',
+				set_code: 'AdminReceiveEmailUpdate',
+				set_value: 'NEW_ORDER,APPOINTMENT_RESCHEDULE',
+			} as never,
+		];
+
+		const wrapper = await mountSuspended(ZSettingTemplate, {
+			props: {
+				templates: [
+					makeTemplate({
+						group_code: 'Email',
+						set_code: 'AdminReceiveEmailUpdate',
+						set_desc: 'Admin email updates',
+						input_type: InputType.SELECT_MULTI,
+						data_source: 'AdminReceiveEmailUpdate',
+						default_val: '',
+					}),
+				],
+			},
+		});
+
+		const select = wrapper.findComponent({ name: 'USelect' });
+		expect(select.exists()).toBe(true);
+		expect(select.props('multiple')).toBe(true);
+
+		const badges = select.findAllComponents({ name: 'UBadge' });
+		expect(badges.map((badge) => badge.text())).toEqual(['New order', 'Appointment reschedule request']);
+	});
 });

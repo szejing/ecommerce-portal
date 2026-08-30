@@ -124,9 +124,12 @@ export default defineNuxtConfig({
 			// Prefer "browser" entry for client build so yeppi-common uses browser-safe bundle (no Node crypto).
 			conditions: ['browser', 'import', 'module', 'default'],
 		},
-		// Ensure zod is pre-bundled for SSR to avoid undefined errors
+		// Ensure zod is pre-bundled for SSR to avoid undefined errors.
+		// Keep yeppi-common out of the Vite dep cache: the git package stays at 1.0.0,
+		// so new named exports are otherwise served from a stale prebundle.
 		optimizeDeps: {
 			include: ['zod'],
+			exclude: ['yeppi-common'],
 		},
 		ssr: {
 			noExternal: ['zod'],

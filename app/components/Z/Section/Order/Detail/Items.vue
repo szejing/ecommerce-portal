@@ -46,21 +46,15 @@
 					</div>
 
 					<div class="ml-2">
-						<div class="font-medium" :class="{ 'italic text-neutral-300': row.original.status == OrderItemStatus.VOIDED }">
-							{{ row.original.prod_code }}
-						</div>
 						<div
-							class="text-xs"
-							:class="{
-								'italic text-neutral-300': row.original.status == OrderItemStatus.VOIDED,
-								'text-neutral-500': row.original.status == OrderItemStatus.ACTIVE,
-							}"
+							v-if="productLineText(row.original)"
+							class="font-medium"
+							:class="{ 'italic text-neutral-300': row.original.status == OrderItemStatus.VOIDED }"
 						>
-							{{ row.original.prod_name.substring(0, 10) }}
+							{{ productLineText(row.original) }}
 						</div>
-
-						<div v-if="row.original.prod_variant_code" class="text-xs italic text-neutral-300">
-							{{ row.original.prod_variant_code }} : {{ row.original.prod_variant_name }}
+						<div v-if="variantLineText(row.original)" class="text-xs italic text-neutral-300">
+							{{ variantLineText(row.original) }}
 						</div>
 
 						<div v-if="row.original.appointment" class="flex items-center gap-2 mt-2">
@@ -136,7 +130,7 @@
 import type { TableRow } from '@nuxt/ui';
 import type { TableMeta, Row } from '@tanstack/vue-table';
 import { ZModalInformation, ZModalOrderDetailItem } from '#components';
-import { OrderItemStatus, OrderStatus, OrderType, formatCurrency } from 'yeppi-common';
+import { OrderItemStatus, OrderStatus, OrderType, formatCurrency, GROUP_CODE, PRODUCT } from 'yeppi-common';
 import { ICONS } from '~/utils/icons';
 import type { ItemModel } from '~/utils/models/item.model';
 import type { OrderHistory } from '~/utils/types/order-history';
@@ -144,6 +138,7 @@ import { getOrderDetailItemColumns } from '~/utils/table-columns';
 import { getFulfillmentMethodDescriptions, sumFulfillmentShippingFees } from '~/utils/fulfillment';
 import { formatAppointmentDateRange } from '~/utils/utils';
 import { visibleOrderHeaderDiscounts } from '~/utils/order-header-discounts';
+import { formatProductLineIdentity, formatVariantLineIdentity } from '~/utils/line-identity';
 
 const props = defineProps<{
 	order: OrderHistory;
@@ -155,6 +150,17 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const overlay = useOverlay();
+const settingsStore = useSettingStore();
+
+const product_line_identity = computed(
+	() => settingsStore.getSetting(GROUP_CODE.PRODUCT, PRODUCT.PRODUCT_LINE_IDENTITY)?.getString() ?? '',
+);
+const variant_line_identity = computed(
+	() => settingsStore.getSetting(GROUP_CODE.PRODUCT, PRODUCT.VARIANT_LINE_IDENTITY)?.getString() ?? '',
+);
+
+const productLineText = (item: ItemModel) => formatProductLineIdentity(item, product_line_identity.value);
+const variantLineText = (item: ItemModel) => formatVariantLineIdentity(item, variant_line_identity.value);
 
 const items = computed(() => props.order.items ?? []);
 const currency_code = computed(() => props.order.currency?.code);

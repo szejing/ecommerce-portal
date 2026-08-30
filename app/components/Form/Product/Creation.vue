@@ -111,6 +111,7 @@ import type { FormErrorEvent } from '#ui/types';
 import type { ProductVariationInput } from '~/utils/types/product-variation';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 import { GROUP_CODE, PRODUCT } from 'yeppi-common';
+import { normalizeSalePrice } from '~/utils/product-variant-list';
 
 const overlay = useOverlay();
 const formRef = ref();
@@ -474,12 +475,14 @@ const doCreateProduct = async () => {
 			variant_code: variant.variant_code!,
 			product_code: variant.product_code!,
 			name: variant.name!,
+			sku: variant.sku,
+			barcode: variant.barcode,
 			price_types: variant.price_types?.map((price) => {
 				return {
 					id: undefined,
 					orig_sell_price: price.orig_sell_price,
 					cost_price: price.cost_price,
-					sale_price: price.sale_price,
+					sale_price: normalizeSalePrice(price.sale_price),
 					currency_code: price.currency_code,
 				};
 			}),

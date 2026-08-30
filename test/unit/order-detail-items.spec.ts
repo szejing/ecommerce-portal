@@ -14,6 +14,11 @@ describe('order detail items section', () => {
 		expect(items).toContain('getOrderDetailItemColumns');
 		expect(items).toContain('ZModalOrderDetailItem');
 		expect(items).toContain('#item-cell="{ row }"');
+		expect(items).toContain('productLineText');
+		expect(items).toContain('variantLineText');
+		expect(items).toContain('formatProductLineIdentity');
+		expect(items).toContain('formatVariantLineIdentity');
+		expect(items).not.toContain('prod_name.substring(0, 10)');
 		expect(items).not.toContain('column="item"');
 	});
 

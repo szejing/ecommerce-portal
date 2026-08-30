@@ -352,7 +352,8 @@
 			"priceRequired": "At least one price is required",
 			"optionNameRequired": "Option name is required (eg: Size)",
 			"optionValuesRequired": "Value is required (eg: Small, Medium, Large)",
-			"variantPriceRequired": "Price is required for this variant"
+			"variantPriceRequired": "Price is required for this variant",
+			"variantSkuDuplicate": "This SKU is already used by another variant"
 		},
 		"outlet": {
 			"outletCodeRequired": "Outlet code is required",
@@ -2086,13 +2087,20 @@
 		"variantList": {
 			"title": "Variation List",
 			"pricePlaceholder": "Price",
+			"salePricePlaceholder": "Sale price",
 			"stockPlaceholder": "Stock",
 			"skuPlaceholder": "SKU",
+			"barcodePlaceholder": "Barcode",
+			"costPricePlaceholder": "Cost",
 			"applyToAll": "Apply To All",
-			"price": "Price",
+			"price": "Original sell price",
+			"salePrice": "Sale price",
 			"stock": "Stock",
 			"stockTooltip": "Available inventory quantity for this variant",
-			"sku": "SKU"
+			"sku": "SKU",
+			"barcode": "Barcode",
+			"costPrice": "Cost price",
+			"edit": "Edit variant"
 		},
 		"zModal": {
 			"brandDetail": {

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PRODUCT_SHORT_DESC_MAX } from 'yeppi-common';
+import { duplicateVariantSkuIndexes } from '~/utils/product-variant-list';
 
 export type TranslateFn = (key: string) => string;
 
@@ -85,6 +86,13 @@ export const createUpdateProductValidation = (t: TranslateFn) => {
 					path: ['variants', i, 'price_types', 0, 'orig_sell_price'],
 				});
 			}
+		}
+		for (const index of duplicateVariantSkuIndexes(variants)) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: t('validation.product.variantSkuDuplicate'),
+				path: ['variants', index, 'sku'],
+			});
 		}
 	});
 };

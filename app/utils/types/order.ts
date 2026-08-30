@@ -23,6 +23,8 @@ type OrderItemDto_ = {
 	prod_variant_code?: string;
 	prod_variant_name?: string;
 	prod_variant_sku?: string;
+	prod_sku?: string;
+	prod_variant_barcode?: string;
 	currency_code: string;
 	qty: number;
 	unit_sell_price: number;

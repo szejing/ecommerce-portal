@@ -75,3 +75,32 @@ describe('useMerchantInfoStore getMerchantInfos', () => {
 		});
 	});
 });
+
+describe('useDataStore getCountries', () => {
+	const getCountries = vi.fn();
+
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		vi.clearAllMocks();
+		(globalThis as unknown as { defineStore: typeof defineStore }).defineStore =
+			defineStore;
+		(globalThis as unknown as { useNuxtApp: () => unknown }).useNuxtApp = () =>
+			({
+				$api: {
+					country: { getCountries },
+				},
+			}) as unknown;
+	});
+
+	it('requests countries with $top within the API max of 100', async () => {
+		getCountries.mockResolvedValue({ data: [] });
+
+		const { useDataStore } = await import('../../app/stores/Data/Data');
+		const store = useDataStore();
+		await store.getCountries();
+
+		expect(getCountries).toHaveBeenCalledWith({
+			$top: 100,
+		});
+	});
+});

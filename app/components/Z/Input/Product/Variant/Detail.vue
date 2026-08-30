@@ -1,99 +1,101 @@
 <template>
 	<UModal
+		v-model:open="open"
+		:title="title"
 		:ui="{
-			content: 'w-full sm:max-w-[60%]',
+			content: 'w-full sm:max-w-lg',
 		}"
 	>
-		<template #header>
-			<h1>{{ product.name }} - [{{ variantDetail?.name?.replace('_', ' · ') }}]</h1>
-		</template>
-
 		<template #body>
-			<!-- *********************** Pricing *********************** -->
-			<div v-if="variantDetail.price_types && variantDetail.price_types.length > 0">
-				<div v-for="price_type in variantDetail.price_types" :key="price_type.id">
-					<ZInputPricing
-						v-model:orig-sell-price.number="price_type.orig_sell_price"
-						v-model:cost-price.number="price_type.cost_price"
-						v-model:sale-price.number="price_type.sale_price"
-						v-model:currency-code="price_type.currency_code"
-					/>
-				</div>
+			<div class="space-y-4">
+				<UFormField :label="t('components.variantList.sku')" name="sku" :error="skuError">
+					<UInput v-model="draft.sku" :placeholder="t('components.variantList.skuPlaceholder')" />
+				</UFormField>
+
+				<UFormField :label="t('components.variantList.barcode')" name="barcode">
+					<UInput v-model="draft.barcode" :placeholder="t('components.variantList.barcodePlaceholder')" />
+				</UFormField>
+
+				<UFormField :label="t('components.variantList.costPrice')" name="cost_price">
+					<UInput
+						v-model.number="draft.cost_price"
+						type="number"
+						:min="0"
+						:step="0.01"
+						:placeholder="t('components.variantList.costPricePlaceholder')"
+						:ui="{ base: 'ps-12' }"
+					>
+						<template #leading>
+							<span class="text-xs text-neutral-400">{{ currencyCode }}</span>
+						</template>
+					</UInput>
+				</UFormField>
 			</div>
-			<div v-else>
-				<ZInputPricing
-					v-model:orig-sell-price.number="price.orig_sell_price"
-					v-model:cost-price.number="price.cost_price"
-					v-model:sale-price.number="price.sale_price"
-					v-model:currency-code="price.currency_code"
-				/>
-			</div>
-			<!-- *********************** Pricing *********************** -->
 		</template>
 
 		<template #footer>
-			<div class="flex justify-between gap-4 w-full">
-				<UButton color="error" variant="ghost" @click="onDelete">{{ t('components.zInput.delete') }}</UButton>
-
-				<div class="flex-jend gap-4">
-					<UButton color="neutral" variant="soft" @click="onCancel">{{ t('common.cancel') }}</UButton>
-					<UButton color="primary" variant="solid" @click="onUpdate">{{ t('modal.confirm') }}</UButton>
-				</div>
+			<div class="flex justify-end gap-4 w-full">
+				<UButton color="neutral" variant="soft" @click="onCancel">{{ t('common.cancel') }}</UButton>
+				<UButton color="primary" variant="solid" :disabled="!!skuError" @click="onConfirm">{{ t('common.confirm') }}</UButton>
 			</div>
 		</template>
 	</UModal>
 </template>
 
 <script lang="ts" setup>
-import type { ProductCreate } from '~/utils/types/form/product-creation';
-import type { PriceInput } from '~/utils/types/price';
-import type { Product, ProductVariantInput } from '~/utils/types/product';
+import type { ProductVariantInput } from '~/utils/types/product';
+import { isDuplicateVariantSku, normalizeVariantSku } from '~/utils/product-variant-list';
 
 const { t } = useI18n();
 
-const props = defineProps({
-	product: {
-		type: Object as PropType<Product | ProductCreate>,
-		required: true,
-	},
-	details: {
-		type: Object as PropType<ProductVariantInput>,
-		required: true,
-	},
+const open = defineModel<boolean>('open', { default: false });
+
+const props = defineProps<{
+	title: string;
+	variant: ProductVariantInput;
+	otherSkus: Array<string | null | undefined>;
+	currencyCode: string;
+}>();
+
+const emit = defineEmits<{
+	confirm: [payload: { sku?: string; barcode?: string; cost_price?: number }];
+	cancel: [];
+}>();
+
+const draft = reactive({
+	sku: '',
+	barcode: '',
+	cost_price: undefined as number | undefined,
 });
 
-const price = ref<PriceInput>({
-	orig_sell_price: props.product.price_types?.[0]?.orig_sell_price ?? 0,
-	cost_price: props.product.price_types?.[0]?.cost_price ?? 0,
-	sale_price: props.product.price_types?.[0]?.sale_price ?? 0,
-	currency_code: props.product.price_types?.[0]?.currency_code ?? 'MYR',
-	id: undefined,
+const skuError = computed(() => {
+	if (!isDuplicateVariantSku(draft.sku, props.otherSkus)) return undefined;
+	return t('validation.product.variantSkuDuplicate');
 });
 
-const emit = defineEmits(['update', 'cancel', 'delete']);
-
-const variantDetail = computed({
-	get() {
-		return JSON.parse(JSON.stringify(props.details));
+watch(
+	() => open.value,
+	(isOpen) => {
+		if (!isOpen) return;
+		draft.sku = props.variant.sku ?? '';
+		draft.barcode = props.variant.barcode ?? '';
+		draft.cost_price = props.variant.price_types?.[0]?.cost_price;
 	},
-	set(_) {},
-});
-
-const onUpdate = () => {
-	if (variantDetail.value.price_types?.length == 0) {
-		variantDetail.value.price_types = [price.value];
-	}
-
-	emit('update', variantDetail.value);
-};
-
-const onDelete = () => {
-	emit('delete', variantDetail.value);
-};
+	{ immediate: true },
+);
 
 const onCancel = () => {
+	open.value = false;
 	emit('cancel');
 };
-</script>
 
-<style scoped></style>
+const onConfirm = () => {
+	if (skuError.value) return;
+	emit('confirm', {
+		sku: normalizeVariantSku(draft.sku),
+		barcode: draft.barcode?.trim() ? draft.barcode.trim() : undefined,
+		cost_price: draft.cost_price,
+	});
+	open.value = false;
+};
+</script>
