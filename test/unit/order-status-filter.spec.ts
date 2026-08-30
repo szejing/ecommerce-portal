@@ -1,9 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { OrderStatus, PaymentStatus } from 'yeppi-common';
-import { getDefaultOrderStatuses } from '../../app/utils/options/order-status';
+import { getDefaultOrderStatuses, getOrderStatusUpdateOptions } from '../../app/utils/options/order-status';
 import { buildOrderStatusODataFilter } from '../../app/utils/order-status-filter';
 
 describe('buildOrderStatusODataFilter', () => {
+	it('keeps collection-only and system-managed values out of status updates', () => {
+		const t = (key: string) => key;
+		const values = getOrderStatusUpdateOptions(t).map((option) => option.value);
+
+		expect(values).not.toContain('All');
+		expect(values).not.toContain(OrderStatus.REQUIRES_ACTION);
+		expect(values).not.toContain(OrderStatus.REFUNDED);
+		expect(values).toContain(OrderStatus.READY_FOR_PICKUP);
+		expect(values).toContain(OrderStatus.CONFIRMED);
+	});
+
 	it('returns empty string when no statuses are selected', () => {
 		expect(buildOrderStatusODataFilter([])).toBe('');
 	});

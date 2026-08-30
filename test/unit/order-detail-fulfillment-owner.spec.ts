@@ -6,7 +6,7 @@ describe('order detail fulfillment owner', () => {
 	it('defaults missing and unknown query types to order behavior', () => {
 		const source = readFileSync(resolve(process.cwd(), 'app/pages/orders/[order_no].vue'), 'utf8');
 
-		expect(source).toContain("type.value === 'sale' ? 'sale' : 'order'");
+		expect(source).toContain('type.value === \'sale\' ? \'sale\' : \'order\'');
 		expect(source.match(/type\.value === 'order'/g) ?? []).toHaveLength(0);
 		expect(source).toContain('orderStore.open(order_no_param.value, ownerType.value)');
 		expect(source).toContain('orderStore.updateStatus(new_status)');
@@ -38,5 +38,20 @@ describe('order detail fulfillment owner', () => {
 		expect(source.match(/v-if="orderForModal && \(record\?\.order_type \?\? OrderType\.PICKUP\) === OrderType\.DELIVERY"/g) ?? []).toHaveLength(2);
 		expect(source.match(/:owner-type="ownerType"/g) ?? []).toHaveLength(2);
 		expect(source.match(/@refresh="getOrderDetails"/g) ?? []).toHaveLength(2);
+	});
+
+	it('composes the workbench around items first and processing prerequisites in sequence', () => {
+		const source = readFileSync(resolve(process.cwd(), 'app/pages/orders/[order_no].vue'), 'utf8');
+		const desktop = source.slice(source.indexOf('<!-- Sidebar (desktop) -->'), source.indexOf('<!-- Mobile:'));
+		const mobile = source.slice(source.indexOf('<!-- Mobile:'));
+
+		expect(source).toContain('<OrderWorkbenchStatusSummary');
+		expect(source).toContain(':aria-label="t(\'components.orderDetail.refresh\')"');
+		expect(source.indexOf('data-testid="order-attention"')).toBeLessThan(source.indexOf('<ZSectionOrderDetailItems'));
+		expect(source.indexOf('<ZSectionOrderDetailItems')).toBeLessThan(source.indexOf('<ZSectionOrderDetailCustomer'));
+		expect(desktop.indexOf('<ZSectionOrderDetailPayment')).toBeLessThan(desktop.indexOf('<FulfillmentBatchList'));
+		expect(desktop.indexOf('<FulfillmentBatchList')).toBeLessThan(desktop.indexOf('<ZSectionOrderDetailOrderStatus'));
+		expect(mobile.indexOf('<ZSectionOrderDetailPayment')).toBeLessThan(mobile.indexOf('<FulfillmentBatchList'));
+		expect(mobile.indexOf('<FulfillmentBatchList')).toBeLessThan(mobile.indexOf('<ZSectionOrderDetailOrderStatus'));
 	});
 });

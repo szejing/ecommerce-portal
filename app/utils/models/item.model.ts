@@ -1,4 +1,5 @@
 import type { OrderItemStatus } from 'yeppi-common';
+import type { Image } from '~/utils/types/image';
 import type { AppointmentModel } from './appointment.model';
 import type { ItemTaxModel } from './item-tax.model';
 
@@ -12,6 +13,8 @@ export type ItemModel = {
 	prod_variant_sku?: string;
 	prod_sku?: string;
 	prod_variant_barcode?: string;
+	thumbnail?: Image;
+	metadata?: Record<string, unknown>;
 	currency_code: string;
 	qty: number;
 	unit_sell_price: number;

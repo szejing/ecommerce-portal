@@ -35,3 +35,11 @@ _Avoid_: Order type pickup, shipping method, EasyParcel service_id as a setting
 **Order History**:
 The merchant-facing collection of orders and converted sales, and the loaded record for one of those entries.
 _Avoid_: Orders list, sales list, bill detail
+
+**Order Workbench**:
+The merchant-facing workspace for visually verifying one loaded Order History record and carrying out its payment, fulfillment, communication, and status actions.
+_Avoid_: Order Detail, picking checklist
+
+**Visual Verification**:
+A staff review of an Order History record's active item identities, quantities, appointments, and excluded lines before fulfillment. It records no picked, checked, or packed state.
+_Avoid_: Picking completion, item check-off, packing progress

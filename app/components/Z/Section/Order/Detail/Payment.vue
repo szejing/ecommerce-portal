@@ -3,10 +3,17 @@
 		<template #header>
 			<div class="card-header-sidebar">
 				<h3 class="sidebar-title">
-					<UIcon name="i-heroicons-banknotes" class="w-5 h-5" />
+					<UIcon name="i-heroicons-banknotes" class="w-5 h-5" aria-hidden="true" />
 					{{ t('components.orderDetail.paymentInformation') }}
 				</h3>
-				<UButton v-if="order?.payments?.length == 0" variant="ghost" size="xs" :icon="ICONS.ADD_OUTLINE" @click="addPaymentInfo" />
+				<UButton
+					v-if="order?.payments?.length == 0"
+					variant="ghost"
+					size="xs"
+					:icon="ICONS.ADD_OUTLINE"
+					:aria-label="t('components.orderDetail.addPayment')"
+					@click="addPaymentInfo"
+				/>
 				<div v-if="order?.payment_status === PaymentStatus.PAID" class="status-group">
 					<UBadge color="success" size="lg">
 						<UIcon name="i-heroicons-check-circle" class="w-4 h-4" />
@@ -17,7 +24,20 @@
 		</template>
 
 		<div v-if="order?.payments && order.payments.length > 0" class="payments-list">
-			<div v-for="payment in order.payments" :key="payment.payment_line" class="payment-item" @click="viewPaymentInfo(payment)">
+			<button
+				v-for="payment in order.payments"
+				:key="payment.payment_line"
+				data-testid="payment-item"
+				type="button"
+				class="payment-item"
+				:aria-label="
+					t('components.orderDetail.viewPayment', {
+						type: payment.payment_type_desc,
+						amount: `${payment.currency_code} ${payment.payment_amt?.toFixed(2)}`,
+					})
+				"
+				@click="viewPaymentInfo(payment)"
+			>
 				<div class="payment-header">
 					<span class="payment-type">{{ payment.payment_type_desc }}</span>
 					<span class="payment-amount">{{ payment.currency_code }} {{ payment.payment_amt?.toFixed(2) }}</span>
@@ -30,7 +50,7 @@
 					<UIcon name="i-heroicons-clock" class="w-3 h-3" />
 					{{ getFormattedDate(payment.payment_date_time, 'dd MMM yyyy HH:mm') }}
 				</div>
-			</div>
+			</button>
 		</div>
 		<div v-else class="payment-empty">
 			<UIcon name="i-heroicons-currency-dollar" class="w-12 h-12 text-neutral-300" />
@@ -112,7 +132,7 @@ const viewPaymentInfo = (payment: PaymentModel) => {
 .sidebar-title {
 	font-size: 1rem;
 	font-weight: 600;
-	color: var(--color-gray-800);
+	color: var(--ui-text-highlighted);
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
@@ -129,19 +149,27 @@ const viewPaymentInfo = (payment: PaymentModel) => {
 }
 
 .payment-item {
+	appearance: none;
+	width: 100%;
 	padding: 1rem;
-	background: var(--color-gray-50);
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	background: var(--ui-bg-elevated);
 	border-radius: 0.5rem;
-	border: 1px solid var(--color-gray-200);
+	border: 1px solid var(--ui-border);
 	cursor: pointer;
 	transition: all 0.2s ease;
 }
 
 .payment-item:hover {
-	background: var(--color-gray-100);
+	background: var(--ui-bg-accented);
 	border-color: var(--color-primary-300);
-	transform: translateY(-2px);
-	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.payment-item:focus-visible {
+	outline: 2px solid var(--ui-primary);
+	outline-offset: 2px;
 }
 
 .payment-header {
@@ -154,7 +182,7 @@ const viewPaymentInfo = (payment: PaymentModel) => {
 .payment-type {
 	font-size: 0.875rem;
 	font-weight: 600;
-	color: var(--color-gray-800);
+	color: var(--ui-text-highlighted);
 }
 
 .payment-amount {
@@ -171,11 +199,11 @@ const viewPaymentInfo = (payment: PaymentModel) => {
 }
 
 .payment-ref-label {
-	color: var(--color-gray-500);
+	color: var(--ui-text-muted);
 }
 
 .payment-ref-value {
-	color: var(--color-gray-700);
+	color: var(--ui-text);
 	font-weight: 500;
 }
 
@@ -184,7 +212,7 @@ const viewPaymentInfo = (payment: PaymentModel) => {
 	align-items: center;
 	gap: 0.25rem;
 	font-size: 0.75rem;
-	color: var(--color-gray-500);
+	color: var(--ui-text-muted);
 }
 
 .payment-empty {
@@ -198,7 +226,7 @@ const viewPaymentInfo = (payment: PaymentModel) => {
 }
 
 .payment-empty-text {
-	color: var(--color-gray-500);
+	color: var(--ui-text-muted);
 	font-size: 0.875rem;
 }
 </style>

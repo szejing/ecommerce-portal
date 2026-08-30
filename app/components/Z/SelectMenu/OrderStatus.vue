@@ -28,25 +28,21 @@
 </template>
 
 <script lang="ts" setup>
-import { OrderStatus } from 'yeppi-common';
-import { getOrderStatusOptions, getOrderStatusColor } from '~/utils/options';
+import type { OrderStatus } from 'yeppi-common';
+import { getOrderStatusUpdateOptions, getOrderStatusColor } from '~/utils/options';
 
 const { t } = useI18n();
 
 const props = defineProps<{ status: OrderStatus | undefined }>();
 const emit = defineEmits(['update:status']);
 
-const items = computed(() => getOrderStatusOptions(t).filter((o) => o.value !== OrderStatus.REQUIRES_ACTION && o.value !== OrderStatus.REFUNDED));
+const items = computed(() => getOrderStatusUpdateOptions(t));
 const status = computed({
 	get() {
-		return props.status ?? 'All';
+		return props.status;
 	},
 	set(value) {
-		if (value === 'All') {
-			emit('update:status', undefined);
-		} else {
-			emit('update:status', value);
-		}
+		emit('update:status', value);
 	},
 });
 

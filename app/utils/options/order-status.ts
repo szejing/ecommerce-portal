@@ -62,6 +62,12 @@ export function getOrderStatusOptions(t: TranslateFn) {
 	];
 }
 
+export function getOrderStatusUpdateOptions(t: TranslateFn) {
+	return getOrderStatusOptions(t).filter(
+		(option) => option.value !== 'All' && option.value !== OrderStatus.REQUIRES_ACTION && option.value !== OrderStatus.REFUNDED,
+	);
+}
+
 export function getOrderStatusOption(t: TranslateFn, status: OrderStatus) {
 	return getOrderStatusOptions(t).find((option) => option.value === status);
 }

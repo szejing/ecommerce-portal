@@ -38,74 +38,48 @@
 					</div>
 				</div>
 				<div class="order-header-right">
-					<div class="status-badges">
-						<UButton
-							color="primary"
-							:icon="ICONS.SYNC_ROUNDED"
-							variant="ghost"
-							:disabled="refreshing || refreshCooldown > 0"
-							:loading="refreshing"
-							:class="{ 'spin-icon': refreshing }"
-							@click="refreshOrder"
-						>
-							{{ refresh_button_text }}
-						</UButton>
-
-						<div class="status-badge-stack">
-							<div class="status-group">
-								<UBadge v-if="order?.status === OrderStatus.PENDING_PAYMENT" variant="subtle" color="info" size="lg">{{ t('options.pendingPayment') }}</UBadge>
-								<UBadge v-else-if="String(order?.status) === 'paid'" color="info" size="lg">{{ t('options.paid') }}</UBadge>
-								<UBadge v-else-if="order?.status === OrderStatus.PROCESSING" color="info" size="lg">{{ t('options.processing') }}</UBadge>
-								<UBadge v-else-if="String(order?.status) === 'shipped'" color="primary" size="lg">{{ t('options.shipped') }}</UBadge>
-								<UBadge v-else-if="String(order?.status) === 'delivered'" color="success" size="lg">{{ t('options.delivered') }}</UBadge>
-								<UBadge v-else-if="order?.status === OrderStatus.COMPLETED" color="success" size="lg">{{ t('options.completed') }}</UBadge>
-								<UBadge v-else-if="order?.status === OrderStatus.REQUIRES_ACTION" color="warning" size="lg">{{ t('options.requiresAction') }}</UBadge>
-								<UBadge v-else-if="order?.status === OrderStatus.REFUNDED" color="error" size="lg">{{ t('options.refunded') }}</UBadge>
-								<UBadge v-else-if="order?.status === OrderStatus.CANCELLED" color="error" size="lg">{{ t('options.cancelled') }}</UBadge>
-							</div>
-							<p v-if="order?.last_updated" class="status-last-updated" :title="t('table.lastUpdated')">
-								{{ order.last_updated }}
-							</p>
-						</div>
-					</div>
+					<UButton
+						color="primary"
+						:icon="ICONS.SYNC_ROUNDED"
+						variant="ghost"
+						:disabled="refreshing || refreshCooldown > 0"
+						:loading="refreshing"
+						:class="{ 'spin-icon': refreshing }"
+						:aria-label="t('components.orderDetail.refresh')"
+						@click="refreshOrder"
+					>
+						{{ refresh_button_text }}
+					</UButton>
 				</div>
+				<OrderWorkbenchStatusSummary v-if="orderForModal" :order="orderForModal" class="order-header-states" />
+				<p v-if="order?.last_updated" class="status-last-updated" :title="t('table.lastUpdated')">
+					{{ order.last_updated }}
+				</p>
 			</div>
 
 			<!-- Main Grid Layout -->
 			<div class="wrapper-grid">
 				<div class="main-wrapper">
-					<!-- Customer Detail -->
-					<UCard class="customer-card">
-						<template #header>
-							<div class="card-header">
-								<h2 class="card-title">
-									<UIcon :name="ICONS.CUSTOMER_GROUP_ROUNDED" class="w-5 h-5" />
-									{{ t('components.orderDetail.customerInformation') }}
-								</h2>
-								<UButton variant="ghost" size="sm" @click="editCustomerDetail">
-									<UIcon name="i-heroicons-pencil" class="w-3 h-3" />
-									{{ t('components.orderDetail.edit') }}
-								</UButton>
-							</div>
-						</template>
-						<ZSectionOrderDetailCustomer :customer="customer" />
-					</UCard>
+					<UAlert
+						v-if="record?.remarks"
+						data-testid="order-attention"
+						color="warning"
+						variant="subtle"
+						icon="i-heroicons-chat-bubble-left-ellipsis"
+						:title="t('components.orderDetail.remarks')"
+						:description="record.remarks"
+					/>
 
 					<!-- Order Items -->
 					<ZSectionOrderDetailItems v-if="orderForModal" :order="orderForModal" @refresh="onItemsRefresh" />
 
-					<!-- Remarks Section -->
-					<UCard v-if="record?.remarks" class="remarks-card">
-						<template #header>
-							<div class="card-header">
-								<h2 class="card-title">
-									<UIcon name="i-heroicons-chat-bubble-left-ellipsis" class="w-5 h-5" />
-									{{ t('components.orderDetail.remarks') }}
-								</h2>
-							</div>
-						</template>
-						<p class="remarks-text">{{ record?.remarks }}</p>
-					</UCard>
+					<!-- Customer Detail -->
+					<ZSectionOrderDetailCustomer
+						:customer="record?.customer"
+						:show-addresses="(record?.order_type ?? OrderType.PICKUP) === OrderType.DELIVERY"
+						:order-no="record?.order_no"
+						@refresh="refreshOrder"
+					/>
 
 					<Activities :activities="activityLogEntries" />
 				</div>
@@ -113,6 +87,15 @@
 				<!-- Sidebar (desktop) -->
 				<div v-if="record !== undefined && isLgUp" class="side-wrapper">
 					<div class="sticky-sidebar">
+						<ZSectionOrderDetailPayment :order="orderForModal" @refresh="refreshOrder" />
+
+						<FulfillmentBatchList
+							v-if="orderForModal && (record?.order_type ?? OrderType.PICKUP) === OrderType.DELIVERY"
+							:order="orderForModal"
+							:owner-type="ownerType"
+							@refresh="getOrderDetails"
+						/>
+
 						<ZSectionOrderDetailOrderStatus
 							v-model:status="new_order_status"
 							:current-status="order?.status"
@@ -130,30 +113,33 @@
 							:loading="is_resending_email"
 							@resend="handleResendCurrentStatusEmail"
 						/>
-
-						<ZSectionOrderDetailPayment :order="orderForModal" @refresh="refreshOrder" />
-
-						<FulfillmentBatchList
-							v-if="orderForModal && (record?.order_type ?? OrderType.PICKUP) === OrderType.DELIVERY"
-							:order="orderForModal"
-							:owner-type="ownerType"
-							@refresh="getOrderDetails"
-						/>
 					</div>
 				</div>
 			</div>
 
-			<!-- Mobile: sticky entry to order actions drawer (status and payment) -->
+			<!-- Mobile: sticky processing summary and order actions drawer -->
 			<div
 				v-if="record !== undefined && !isLgUp"
 				class="mobile-actions-bar fixed inset-x-0 bottom-0 z-40 border-t border-default bg-default/95 px-4 pt-3 backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]"
 			>
 				<UDrawer v-model:open="isOrderActionsOpen" :title="t('components.orderDetail.orderActionsTitle')" direction="bottom">
-					<UButton block color="primary" :icon="ICONS.SETTINGS_ROUNDED" class="mobile-actions-open-trigger w-full">
-						{{ t('components.orderDetail.manageOrder') }}
-					</UButton>
+					<div class="mobile-actions-trigger-layout">
+						<OrderWorkbenchStatusSummary v-if="orderForModal" :order="orderForModal" compact :show-order="false" />
+						<UButton color="primary" :icon="ICONS.SETTINGS_ROUNDED" class="mobile-actions-open-trigger min-h-11" @click="isOrderActionsOpen = true">
+							{{ t('components.orderDetail.processOrder') }}
+						</UButton>
+					</div>
 					<template #body>
-						<div class="mobile-actions-drawer-body space-y-4 max-h-[min(70vh,32rem)] overflow-y-auto overscroll-contain px-0.5 pb-4">
+						<div class="mobile-actions-drawer-body max-h-[min(82dvh,48rem)] space-y-4 overflow-y-auto overscroll-contain px-0.5 pb-4">
+							<ZSectionOrderDetailPayment :order="orderForModal" @refresh="refreshOrder" />
+
+							<FulfillmentBatchList
+								v-if="orderForModal && (record?.order_type ?? OrderType.PICKUP) === OrderType.DELIVERY"
+								:order="orderForModal"
+								:owner-type="ownerType"
+								@refresh="getOrderDetails"
+							/>
+
 							<ZSectionOrderDetailOrderStatus
 								v-model:status="new_order_status"
 								:current-status="order?.status"
@@ -171,15 +157,6 @@
 								:loading="is_resending_email"
 								@resend="handleResendCurrentStatusEmail"
 							/>
-
-							<ZSectionOrderDetailPayment :order="orderForModal" @refresh="refreshOrder" />
-
-							<FulfillmentBatchList
-								v-if="orderForModal && (record?.order_type ?? OrderType.PICKUP) === OrderType.DELIVERY"
-								:order="orderForModal"
-								:owner-type="ownerType"
-								@refresh="getOrderDetails"
-							/>
 						</div>
 					</template>
 				</UDrawer>
@@ -189,7 +166,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ZModalConfirmation, ZModalOrderDetailCustomer } from '#components';
+import { ZModalConfirmation } from '#components';
 import { OrderResendEmailAction, OrderStatus, OrderType } from 'yeppi-common';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 import { ICONS } from '~/utils/icons';
@@ -257,8 +234,6 @@ type ResendEmailAction = OrderResendEmailAction;
 
 const overlay = useOverlay();
 const new_order_status = ref<OrderStatus>(OrderStatus.PENDING_PAYMENT);
-
-const customer = computed(() => record.value?.customer);
 
 const { t } = useI18n();
 
@@ -422,31 +397,12 @@ const executeOrderStatusUpdate = async (new_status: OrderStatus) => {
 	if (outcome.stayOnPage) successNotification(t('components.orderDetail.statusUpdateSuccess'));
 	else useRouter().back();
 };
-
-const editCustomerDetail = async () => {
-	if (!customer.value || !record.value) return;
-
-	const customerModal = overlay.create(ZModalOrderDetailCustomer, {
-		props: {
-			orderNo: record.value.order_no,
-			customer: JSON.parse(JSON.stringify(customer.value)),
-			onUpdate: () => {
-				customerModal.close();
-				refreshOrder();
-			},
-			onCancel: () => {
-				customerModal.close();
-			},
-		},
-	});
-
-	customerModal.open();
-};
 </script>
 
 <style scoped>
 .order-detail-container {
 	max-width: 1600px;
+	width: 100%;
 }
 
 .order-not-found {
@@ -476,15 +432,17 @@ const editCustomerDetail = async () => {
 	grid-template-columns: 1fr auto;
 	gap: 1rem;
 	align-items: start;
+	border: 1px solid var(--ui-border);
+	background: var(--ui-bg);
 	border-radius: 1rem;
-	padding: 2rem;
-	margin-bottom: 2rem;
-	box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+	padding: 1.25rem;
+	margin-bottom: 1.5rem;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 @media (min-width: 768px) {
 	.order-header {
-		gap: 2rem;
+		padding: 1.5rem;
 	}
 }
 
@@ -518,37 +476,14 @@ const editCustomerDetail = async () => {
 	align-items: flex-start;
 }
 
-.status-badges {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-	align-items: flex-end;
-}
-
-.status-badge-stack {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-end;
-	gap: 0.375rem;
-}
-
-.status-group {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	align-items: flex-start;
-}
-
-@media (min-width: 768px) {
-	.status-group {
-		align-items: flex-end;
-	}
+.order-header-states {
+	grid-column: 1 / -1;
 }
 
 .status-last-updated {
+	grid-column: 1 / -1;
 	margin: 0;
-	max-width: min(100%, 18rem);
-	text-align: right;
+	text-align: left;
 	font-size: 0.6875rem;
 	line-height: 1.25;
 	font-variant-numeric: tabular-nums;
@@ -593,42 +528,9 @@ const editCustomerDetail = async () => {
 	gap: 1rem;
 }
 
-.card-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.card-title {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	font-size: 1.125rem;
-	font-weight: 600;
-	color: var(--color-gray-800);
-}
-
-.customer-card,
-.remarks-card {
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-	transition: box-shadow 0.2s ease;
-}
-
-.customer-card:hover,
-.remarks-card:hover {
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.remarks-text {
-	font-size: 0.875rem;
-	color: var(--color-gray-700);
-	line-height: 1.6;
-	white-space: pre-wrap;
-}
-
 @media (max-width: 640px) {
 	.order-header {
-		padding: 1.5rem;
+		padding: 1rem;
 		gap: 1rem;
 		grid-template-columns: 1fr auto;
 	}
@@ -636,9 +538,23 @@ const editCustomerDetail = async () => {
 	.order-number {
 		font-size: 1.5rem;
 	}
+}
 
-	.status-badges {
-		gap: 0.75rem;
+.mobile-actions-trigger-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: end;
+	gap: 0.75rem;
+}
+
+@media (max-width: 420px) {
+	.mobile-actions-trigger-layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.mobile-actions-open-trigger {
+		width: 100%;
+		justify-content: center;
 	}
 }
 
