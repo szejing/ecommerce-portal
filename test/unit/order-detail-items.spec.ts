@@ -16,20 +16,27 @@ describe('order detail items section', () => {
 		expect(items).toContain('#item-cell="{ row }"');
 		expect(items).toContain('productLineText');
 		expect(items).toContain('variantLineText');
-		expect(items).toContain('data-testid="order-item-variant-line"');
-		expect(items).toContain('class="order-item-variant-line"');
-		expect(items).toContain('color: var(--ui-text-highlighted)');
-		expect(items).toMatch(/\.order-item-variant-line\s*\{[\s\S]*?font-size:\s*1rem/);
-		expect(items).not.toMatch(/variantLineText\(item\)[\s\S]*?text-sm font-semibold leading-5 text-highlighted/);
+		expect(items).toContain('ZSectionOrderDetailItemIdentity');
 		expect(items).toContain('formatProductLineIdentity');
 		expect(items).toContain('formatVariantLineIdentity');
-		expect(items).toContain('wrap-anywhere');
 		expect(items).toContain('itemThumbnailUrl');
 		expect(items).toContain('product-holder.svg');
 		expect(items).toContain('getOrderItemStatusColor');
 		expect(items).toContain('whitespace-normal');
 		expect(items).not.toContain('prod_name.substring(0, 10)');
 		expect(items).not.toContain('column="item"');
+
+		const identity = readFileSync(resolve(process.cwd(), 'app/components/Z/Section/Order/Detail/ItemIdentity.vue'), 'utf8');
+		expect(identity).toContain('data-testid="order-item-product-line"');
+		expect(identity).toContain('data-testid="order-item-variant-line"');
+		expect(identity).toContain('class="order-item-product-line"');
+		expect(identity).toContain('class="order-item-variant-value"');
+		expect(identity).toContain('components.orderDetail.variant');
+		expect(identity).toContain('color: var(--ui-text-highlighted)');
+		expect(identity).toContain('color: var(--ui-text)');
+		expect(identity).toMatch(/\.order-item-product-line\s*\{[\s\S]*?font-weight:\s*600/);
+		expect(identity).toMatch(/\.order-item-variant-value\s*\{[\s\S]*?font-size:\s*0\.8rem/);
+		expect(identity).not.toMatch(/variantText[\s\S]*?text-sm font-semibold leading-5 text-highlighted/);
 	});
 
 	it('lets the item identity wrap and keeps money columns nowrap', () => {

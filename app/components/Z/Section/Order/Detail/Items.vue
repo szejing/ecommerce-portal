@@ -41,21 +41,11 @@
 							class="size-14 rounded-lg object-cover shrink-0 bg-elevated"
 						/>
 						<div class="min-w-0 flex-1 space-y-1">
-							<p
-								v-if="productLineText(item)"
-								class="text-sm font-semibold leading-5 text-highlighted wrap-anywhere"
-								:class="{ 'line-through text-muted': item.status === OrderItemStatus.VOIDED }"
-							>
-								{{ productLineText(item) }}
-							</p>
-							<p
-								v-if="variantLineText(item)"
-								data-testid="order-item-variant-line"
-								class="order-item-variant-line"
-								:class="{ 'is-voided': item.status === OrderItemStatus.VOIDED }"
-							>
-								{{ variantLineText(item) }}
-							</p>
+							<ZSectionOrderDetailItemIdentity
+								:product-text="productLineText(item)"
+								:variant-text="variantLineText(item)"
+								:is-voided="item.status === OrderItemStatus.VOIDED"
+							/>
 							<UBadge v-if="item.status !== OrderItemStatus.ACTIVE" :color="getOrderItemStatusColor(item.status)" variant="subtle" size="sm">
 								{{ itemStatusLabel(item.status) }}
 							</UBadge>
@@ -123,21 +113,11 @@
 						class="size-12 rounded-md object-cover shrink-0 bg-elevated"
 					/>
 					<div class="min-w-0 flex-1 space-y-1">
-						<p
-							v-if="productLineText(row.original)"
-							class="font-medium text-sm text-highlighted leading-5 wrap-anywhere"
-							:class="{ 'line-through text-muted': row.original.status === OrderItemStatus.VOIDED }"
-						>
-							{{ productLineText(row.original) }}
-						</p>
-						<p
-							v-if="variantLineText(row.original)"
-							data-testid="order-item-variant-line"
-							class="order-item-variant-line"
-							:class="{ 'is-voided': row.original.status === OrderItemStatus.VOIDED }"
-						>
-							{{ variantLineText(row.original) }}
-						</p>
+						<ZSectionOrderDetailItemIdentity
+							:product-text="productLineText(row.original)"
+							:variant-text="variantLineText(row.original)"
+							:is-voided="row.original.status === OrderItemStatus.VOIDED"
+						/>
 						<UBadge v-if="row.original.status !== OrderItemStatus.ACTIVE" :color="getOrderItemStatusColor(row.original.status)" variant="subtle" size="sm">
 							{{ itemStatusLabel(row.original.status) }}
 						</UBadge>
@@ -343,18 +323,5 @@ const openOrderItemEdit = (item: ItemModel) => {
 	font-size: 1.125rem;
 	font-weight: 600;
 	color: var(--ui-text-highlighted);
-}
-
-.order-item-variant-line {
-	font-size: 1rem;
-	font-weight: 500;
-	line-height: 1.25rem;
-	color: var(--ui-text-highlighted);
-	overflow-wrap: anywhere;
-}
-
-.order-item-variant-line.is-voided {
-	text-decoration: line-through;
-	color: var(--ui-text-muted);
 }
 </style>

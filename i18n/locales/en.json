@@ -1473,6 +1473,7 @@
 		},
 		"orderDetail": {
 			"item": "Item",
+			"variant": "Variant",
 			"unitSellPrice": "Unit Sell Price",
 			"unitPrice": "Unit Price",
 			"qty": "Qty",

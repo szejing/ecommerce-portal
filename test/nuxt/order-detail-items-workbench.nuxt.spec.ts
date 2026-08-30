@@ -65,14 +65,22 @@ describe('OrderDetailItems workbench', () => {
 		expect(wrapper.text()).not.toContain('Editable');
 	});
 
-	it('highlights variant line identity as a secondary line', async () => {
+	it('styles product and variant identities as distinct staff-readable lines', async () => {
 		const wrapper = await mountSuspended(OrderDetailItems, { props: { order: order(OrderStatus.PENDING_PAYMENT) } });
-		const variantLines = wrapper.findAll('[data-testid="order-item-variant-line"]');
+		const productLine = wrapper.get('[data-testid="order-item-product-line"]');
+		const variantLine = wrapper.get('[data-testid="order-item-variant-line"]');
+		const variantValue = wrapper.get('[data-testid="order-item-variant-value"]');
 
-		expect(variantLines.length).toBeGreaterThan(0);
-		expect(variantLines[0].text()).toContain('VAR-1');
-		expect(variantLines[0].classes()).toContain('order-item-variant-line');
-		expect(variantLines[0].classes()).not.toContain('font-semibold');
-		expect(variantLines[0].classes()).not.toContain('is-voided');
+		expect(productLine.text()).toContain('Product 1');
+		expect(productLine.classes()).toContain('order-item-product-line');
+		expect(productLine.classes()).not.toContain('is-voided');
+		expect(variantLine.text()).toContain('Variant');
+		expect(variantLine.text()).toContain('VAR-1');
+		expect(variantLine.classes()).toContain('order-item-variant-line');
+		expect(variantLine.classes()).not.toContain('font-semibold');
+		expect(variantLine.classes()).not.toContain('is-voided');
+		expect(variantValue.classes()).toContain('order-item-variant-value');
+		const mobileVariantLines = wrapper.get('[data-testid="order-item-mobile-list"]').findAll('[data-testid="order-item-variant-line"]');
+		expect(mobileVariantLines.at(-1)?.classes()).toContain('is-voided');
 	});
 });

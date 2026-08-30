@@ -1472,6 +1472,7 @@
 		},
 		"orderDetail": {
 			"item": "Item",
+			"variant": "Varian",
 			"unitSellPrice": "Harga Jual Unit",
 			"unitPrice": "Harga Unit",
 			"qty": "Kuantiti",
