@@ -3,7 +3,8 @@
 # ==============================
 # Use buildx/compose target platform so native packages match the final image.
 # For production, docker-compose.yml targets amd64 for Digital Ocean.
-# Use bun:latest or bun:1 with Node.js 20+ for crypto.hash support (required by vite 7.x)
+# Use bun:latest or bun:1 with a real Node install for the Nuxt/Vite build.
+# Node 22+ is required: Tailwind 4.3 / lightningcss 1.32 call Set.prototype.difference.
 FROM oven/bun:1 AS builder
 
 WORKDIR /app
@@ -13,8 +14,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y git npm curl && \
     # Check if Node.js is available and version
     (node --version 2>/dev/null || echo "Node.js not found via node command") && \
-    # Install Node.js 20.x if not available or if version is too old
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    # Install Node.js 22.x (Set.prototype.difference; Vite 7 also needs Node 20+ crypto.hash)
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs && \
     node --version && \
     npm --version && \
@@ -111,7 +112,7 @@ RUN node --version && \
 # Production stage
 # ==============================
 # Always use target platform for production (amd64 for Digital Ocean)
-FROM --platform=${TARGETPLATFORM:-linux/amd64} node:20-alpine AS production
+FROM --platform=${TARGETPLATFORM:-linux/amd64} node:22-alpine AS production
 
 WORKDIR /app
 
