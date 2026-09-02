@@ -8,8 +8,9 @@ describe('order detail fulfillment owner', () => {
 
 		expect(source).toContain('type.value === \'sale\' ? \'sale\' : \'order\'');
 		expect(source.match(/type\.value === 'order'/g) ?? []).toHaveLength(0);
-		expect(source).toContain('orderStore.open(order_no_param.value, ownerType.value)');
+		expect(source).toContain('orderStore.open(order_no_param.value, ownerType.value, { silent: !!order.value })');
 		expect(source).toContain('orderStore.updateStatus(new_status)');
+		expect(source).toContain('sessionLoading.value && !order.value');
 	});
 
 	it('passes fulfillment context and the resolved action through the global resend control', () => {

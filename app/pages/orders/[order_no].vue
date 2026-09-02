@@ -185,7 +185,7 @@ import { useMediaQuery } from '@vueuse/core';
 const orderStore = useOrderStore();
 const { current: order, notFound: order_not_found, sessionLoading, updating, resendingEmail, refreshing, refreshCooldown } = storeToRefs(orderStore);
 
-const loading = computed(() => sessionLoading.value);
+const loading = computed(() => sessionLoading.value && !order.value);
 
 const route = useRoute();
 const isLgUp = useMediaQuery('(min-width: 1024px)');
@@ -328,7 +328,7 @@ onBeforeUnmount(() => {
 });
 
 const getOrderDetails = async () => {
-	await orderStore.open(order_no_param.value, ownerType.value);
+	await orderStore.open(order_no_param.value, ownerType.value, { silent: !!order.value });
 };
 
 const onItemsRefresh = () => {

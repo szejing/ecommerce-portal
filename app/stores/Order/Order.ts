@@ -406,29 +406,48 @@ export const useOrderStore = defineStore('orderStore', () => {
 		return data.order;
 	}
 
-	async function open(orderNo: string, owner: OrderHistoryOwner): Promise<OrderHistorySessionOutcome> {
+	async function open(orderNo: string, owner: OrderHistoryOwner, options: { silent?: boolean } = {}): Promise<OrderHistorySessionOutcome> {
+		const silent = options.silent === true;
 		ownerState.value = owner;
-		notFoundState.value = false;
 		sessionFailureState.value = undefined;
-		sessionLoadingState.value = true;
+		if (!silent) {
+			notFoundState.value = false;
+			sessionLoadingState.value = true;
+		}
 		try {
 			const record = await fetchCurrent(orderNo, owner);
 			if (!record) {
-				currentState.value = undefined;
-				notFoundState.value = true;
+				if (!silent || !currentState.value) {
+					currentState.value = undefined;
+					notFoundState.value = true;
+				}
 				return { status: 'completed' };
 			}
 			currentState.value = record;
 			return { status: 'completed' };
 		} catch (error) {
-			currentState.value = undefined;
-			notFoundState.value = true;
+			if (!silent) {
+				currentState.value = undefined;
+				notFoundState.value = true;
+			}
 			const failure = requestFailure(error);
 			sessionFailureState.value = failure;
 			return { status: 'failed', failure };
 		} finally {
-			sessionLoadingState.value = false;
+			if (!silent) sessionLoadingState.value = false;
 		}
+	}
+
+	async function reloadCurrent(): Promise<OrderHistorySessionOutcome> {
+		if (!currentState.value?.order_no) {
+			return { status: 'rejected', failure: { kind: 'missing_session' } };
+		}
+		return open(currentState.value.order_no, ownerState.value, { silent: true });
+	}
+
+	function applyLocalStatus(status: OrderStatus): void {
+		if (!currentState.value) return;
+		currentState.value = { ...currentState.value, status };
 	}
 
 	async function refreshCurrent(): Promise<OrderHistorySessionOutcome> {
@@ -440,7 +459,7 @@ export const useOrderStore = defineStore('orderStore', () => {
 		}
 		refreshingState.value = true;
 		try {
-			const outcome = await open(currentState.value.order_no, ownerState.value);
+			const outcome = await reloadCurrent();
 			if (outcome.status === 'completed' && currentState.value) startCooldown();
 			return outcome;
 		} finally {
@@ -456,11 +475,17 @@ export const useOrderStore = defineStore('orderStore', () => {
 			if (ownerState.value === 'order') {
 				const data = await useNuxtApp().$api.order.updateStatus(order_no, customer.customer_no, status);
 				const stayOnPage = !!(data?.status && status !== OrderStatus.COMPLETED);
-				if (stayOnPage) await open(order_no, ownerState.value);
+				if (stayOnPage) {
+					applyLocalStatus(status);
+					await reloadCurrent();
+				}
 				return { status: 'completed', stayOnPage };
 			}
 			const data = await useNuxtApp().$api.sale.updateStatus(order_no, customer.customer_no, status);
-			if (data?.status) await open(order_no, ownerState.value);
+			if (data?.status) {
+				applyLocalStatus(status);
+				await reloadCurrent();
+			}
 			return { status: 'completed', stayOnPage: !!data?.status };
 		} catch (error) {
 			return { status: 'failed', failure: requestFailure(error) };
@@ -474,7 +499,7 @@ export const useOrderStore = defineStore('orderStore', () => {
 		const payments = existingPayments.length === 0 ? [{ ...payment, payment_line: 1 }] : existingPayments;
 		try {
 			const data = await useNuxtApp().$api.order.updatePayments(currentState.value.order_no, currentState.value.customer.customer_no, payments);
-			if (data.status) await open(currentState.value.order_no, ownerState.value);
+			if (data.status) await reloadCurrent();
 			return { status: 'completed' };
 		} catch (error) {
 			return { status: 'failed', failure: requestFailure(error) };
@@ -485,7 +510,7 @@ export const useOrderStore = defineStore('orderStore', () => {
 		if (!currentState.value) return { status: 'rejected', failure: { kind: 'missing_session' } };
 		try {
 			const data = await useNuxtApp().$api.order.updateCustomer(currentState.value.order_no, customer);
-			if (data.status) await open(currentState.value.order_no, ownerState.value);
+			if (data.status) await reloadCurrent();
 			return { status: 'completed' };
 		} catch (error) {
 			return { status: 'failed', failure: requestFailure(error) };
@@ -497,7 +522,7 @@ export const useOrderStore = defineStore('orderStore', () => {
 		try {
 			const items = existingItems.map((orderItem) => (orderItem.item_line === item.item_line ? item : orderItem));
 			const data = await useNuxtApp().$api.order.updateItems(currentState.value.order_no, currentState.value.customer.customer_no, items);
-			if (data.status) await open(currentState.value.order_no, ownerState.value);
+			if (data.status) await reloadCurrent();
 			return { status: 'completed' };
 		} catch (error) {
 			return { status: 'failed', failure: requestFailure(error) };

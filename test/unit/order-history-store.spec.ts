@@ -218,4 +218,65 @@ describe('useOrderStore', () => {
 		expect(await store.refreshCurrent()).toEqual({ status: 'rejected', failure: { kind: 'cooldown' } });
 		expect(getOrderByOrderNo).toHaveBeenCalledTimes(2);
 	});
+
+	it('updates status in place without toggling session loading', async () => {
+		getOrderByOrderNo.mockResolvedValue({ order: order('WM-100') });
+		const store = useOrderStore();
+		await store.open('WM-100', 'order');
+		expect(store.sessionLoading).toBe(false);
+
+		updateStatus.mockResolvedValue({ status: true });
+		const refetch = deferred<{ order: OrderHistory }>();
+		getOrderByOrderNo.mockReturnValueOnce(refetch.promise);
+
+		const pending = store.updateStatus(OrderStatus.SHIPPED);
+		await Promise.resolve();
+		expect(updateStatus).toHaveBeenCalledWith('WM-100', 'C1', OrderStatus.SHIPPED);
+		expect(store.updating).toBe(true);
+		expect(store.sessionLoading).toBe(false);
+		expect(store.current?.status).toBe(OrderStatus.SHIPPED);
+		expect(store.current?.order_no).toBe('WM-100');
+
+		refetch.resolve({
+			order: { ...order('WM-100'), status: OrderStatus.SHIPPED, last_updated: '2026-09-02 23:00:00' } as OrderHistory,
+		});
+		await pending;
+
+		expect(store.updating).toBe(false);
+		expect(store.sessionLoading).toBe(false);
+		expect(store.current?.status).toBe(OrderStatus.SHIPPED);
+		expect(store.current?.last_updated).toBe('2026-09-02 23:00:00');
+		expect(getOrderByOrderNo).toHaveBeenCalledTimes(2);
+	});
+
+	it('keeps the current order when a silent status reload fails', async () => {
+		getOrderByOrderNo.mockResolvedValue({ order: order('WM-100') });
+		const store = useOrderStore();
+		await store.open('WM-100', 'order');
+
+		updateStatus.mockResolvedValue({ status: true });
+		getOrderByOrderNo.mockRejectedValueOnce(new Error('network down'));
+
+		const outcome = await store.updateStatus(OrderStatus.SHIPPED);
+
+		expect(outcome).toEqual({ status: 'completed', stayOnPage: true });
+		expect(store.notFound).toBe(false);
+		expect(store.sessionLoading).toBe(false);
+		expect(store.current?.order_no).toBe('WM-100');
+		expect(store.current?.status).toBe(OrderStatus.SHIPPED);
+	});
+
+	it('does not refetch after completing an order', async () => {
+		getOrderByOrderNo.mockResolvedValue({ order: order('WM-100') });
+		updateStatus.mockResolvedValue({ status: true });
+		const store = useOrderStore();
+		await store.open('WM-100', 'order');
+		getOrderByOrderNo.mockClear();
+
+		const outcome = await store.updateStatus(OrderStatus.COMPLETED);
+
+		expect(outcome).toEqual({ status: 'completed', stayOnPage: false });
+		expect(getOrderByOrderNo).not.toHaveBeenCalled();
+		expect(store.current?.status).toBe(OrderStatus.PROCESSING);
+	});
 });
