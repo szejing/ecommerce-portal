@@ -1,5 +1,5 @@
 <template>
-	<UApp>
+	<UApp :toaster="toastToaster">
 		<NuxtRouteAnnouncer />
 		<NuxtLayout>
 			<NuxtLoadingIndicator color="repeating-linear-gradient(to right,#C2C9FF 0%,#402E7A 100%)" />
@@ -11,6 +11,7 @@
 <script lang="ts" setup>
 import { ZModalMessage } from '#components';
 import { ICONS } from '~/utils/icons';
+import { getToastProgress, toastToaster } from '~/utils/toast-appearance';
 
 const toast = useToast();
 
@@ -42,7 +43,7 @@ watch(toastNotification, () => {
 			description: toastNotification.value.description,
 			icon: toastNotification.value.icon,
 			duration: toastNotification.value.timeout,
-			progress: false,
+			progress: getToastProgress(toastNotification.value.color),
 			closeIcon: ICONS.CLOSE_ROUNDED,
 		});
 	}

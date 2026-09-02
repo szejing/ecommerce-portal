@@ -1,4 +1,5 @@
 import { theme } from '../theme';
+import { toastFilledColorVariants } from './utils/toast-appearance';
 
 export default defineAppConfig({
 	// title: 'HeroesTech Solutions',
@@ -120,6 +121,12 @@ export default defineAppConfig({
 					formTrigger:
 						'w-full min-h-[38px] py-[6px] px-[10px] border border-[var(--ui-border)] rounded-[var(--ui-radius)] bg-[var(--ui-bg)] ring-0 transition-[border-color_0.15s_ease] hover:border-[var(--ui-border-hover,var(--color-primary-400))]',
 				},
+			},
+		},
+
+		toast: {
+			variants: {
+				color: toastFilledColorVariants,
 			},
 		},
 
