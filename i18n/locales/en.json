@@ -190,7 +190,9 @@
 		"actions": {
 			"clearFilters": "Clear filters",
 			"export": "Export pending",
-			"import": "Import workbook"
+			"import": "Import workbook",
+			"pushSelected": "Push selected ({count})",
+			"pushAllEasyParcel": "Push all to EasyParcel"
 		},
 		"table": {
 			"title": "Pending shipment batches",
@@ -206,7 +208,9 @@
 			"shippingMethod": "Shipping method",
 			"courier": "Courier",
 			"tracking": "Tracking no.",
-			"result": "Result"
+			"result": "Result",
+			"selectAll": "Select all bookable rows on this page",
+			"selectRow": "Select order {orderNo}"
 		},
 		"workflow": {
 			"title": "Shipment arrangement workflow",
@@ -1572,8 +1576,26 @@
 			"createMissingBatch": "Create missing batch",
 			"noSplitDeleteHint": "Batch deletion and splitting are not available yet. Completion validation is enforced by the backend.",
 			"bookCourier": "Book courier",
+			"pushToEasyParcel": "Push to EasyParcel",
 			"cancelCourierBooking": "Cancel booking",
-			"printAwb": "Print AWB"
+			"printAwb": "Print AWB",
+			"courierBooking": {
+				"title": "Courier booking",
+				"description": "Book EasyParcel for order {orderNo} · batch #{batchNo}",
+				"queueProgress": "Booking {current} of {total}",
+				"queuedNext": "Booked. Continuing with {current} of {total}.",
+				"submitted": "Courier booking submitted to EasyParcel",
+				"weightKg": "Weight (kg)",
+				"widthCm": "Width (cm)",
+				"heightCm": "Height (cm)",
+				"lengthCm": "Length (cm)",
+				"collectionDate": "Collection date",
+				"handover": "Courier handover",
+				"dropoffPoint": "Drop-off point ID",
+				"fetchQuotes": "Get quotes",
+				"walletBalance": "Wallet balance: {amount} {currency}",
+				"selectService": "Select EasyParcel service"
+			}
 		},
 		"settings": {
 			"connectNow": "Connect Now",

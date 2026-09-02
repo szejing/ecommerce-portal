@@ -122,6 +122,7 @@ describe('FulfillmentBatchCard', () => {
 		});
 
 		expect(bookable.find('[data-testid="fulfillment-book-courier"]').exists()).toBe(true);
+		expect(bookable.find('[data-testid="fulfillment-book-courier"]').text()).toContain('Push to EasyParcel');
 		expect(booked.find('[data-testid="fulfillment-book-courier"]').exists()).toBe(false);
 		expect(booked.get('[data-testid="fulfillment-edit"]').attributes('disabled')).toBeDefined();
 		expect(booked.get('[data-testid="fulfillment-tracking"]').html()).toContain('https://track.example/AWB-1');

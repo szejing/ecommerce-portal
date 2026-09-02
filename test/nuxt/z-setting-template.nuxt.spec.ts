@@ -130,7 +130,9 @@ describe('ZSettingTemplate', () => {
 		});
 
 		expect(wrapper.findComponent({ name: 'UInput' }).exists()).toBe(false);
-		expect(wrapper.get('[data-testid="oauth-connect"]').text()).toMatch(/connect now/i);
+		const connectButton = wrapper.get('[data-testid="oauth-connect"]');
+		expect(connectButton.text()).toMatch(/connect now/i);
+		expect(connectButton.attributes('href')).toBe('/merchant/oauth/easyparcel/start');
 		expect(wrapper.find('[data-testid="oauth-connected"]').exists()).toBe(false);
 		expect(wrapper.find('[data-testid="oauth-connection-status"]').exists()).toBe(false);
 	});

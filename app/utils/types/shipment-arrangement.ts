@@ -18,6 +18,7 @@ export interface ShipmentArrangementListRow {
 	recipient: string;
 	destination: string;
 	shipping_method: string;
+	booking_no?: string | null;
 }
 
 export interface ShipmentArrangementPreviewRow extends ShipmentArrangementListRow {

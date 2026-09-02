@@ -247,6 +247,15 @@ export const Routes = {
 			Preview: () => 'fulfillment/arrangement/preview',
 			Apply: () => 'fulfillment/arrangement/apply',
 		},
+		CourierBooking: {
+			Context: () => 'fulfillment/courier-booking/context',
+			Quote: (id: string) => `fulfillment/${id}/courier-booking/quote`,
+			Submit: (id: string) => `fulfillment/${id}/courier-booking/submit`,
+		},
+	},
+	OAuth: {
+		Start: (provider: string) => `oauth/${provider}/start`,
+		Callback: (provider: string) => `oauth/${provider}/callback`,
 	},
 	Couriers: {
 		Many: () => `${API_PATH.COURIERS}/`,

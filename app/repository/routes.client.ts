@@ -259,6 +259,11 @@ const MerchantRoutes = {
 			Preview: () => `${prefix}/${API_PATH.MERCHANT}/fulfillment/arrangement/preview`,
 			Apply: () => `${prefix}/${API_PATH.MERCHANT}/fulfillment/arrangement/apply`,
 		},
+		CourierBooking: {
+			Context: () => `${prefix}/${API_PATH.MERCHANT}/fulfillment/courier-booking/context`,
+			Quote: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/courier-booking/quote`,
+			Submit: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/courier-booking/submit`,
+		},
 	},
 	/** Server-side Nominatim proxy (OpenStreetMap); no extra API key. */
 	Geocode: {

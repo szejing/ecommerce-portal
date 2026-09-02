@@ -1,14 +1,61 @@
+import type { Ref } from 'vue';
 import { h } from 'vue';
 import { getFormattedDate } from 'yeppi-common';
 import type { TableColumn } from '@nuxt/ui';
-import { UBadge } from '#components';
+import { UBadge, UCheckbox } from '#components';
 import type { ShipmentArrangementListRow, ShipmentArrangementPreviewRow } from '~/utils/types/shipment-arrangement';
 import { headerCell } from './styles';
 
 type TranslateFn = (key: string) => string;
 
-export function getShipmentArrangementColumns(t: TranslateFn): TableColumn<ShipmentArrangementListRow>[] {
-	return [
+type ShipmentArrangementSelectionOptions = {
+	selectedIds: Ref<Set<string>>;
+	isRowSelectable: (row: ShipmentArrangementListRow) => boolean;
+	onToggleRow: (row: ShipmentArrangementListRow, selected: boolean) => void;
+	onToggleAllVisible: (rows: ShipmentArrangementListRow[], selected: boolean) => void;
+};
+
+export function getShipmentArrangementColumns(
+	t: TranslateFn,
+	selection?: ShipmentArrangementSelectionOptions,
+): TableColumn<ShipmentArrangementListRow>[] {
+	const columns: TableColumn<ShipmentArrangementListRow>[] = [];
+
+	if (selection) {
+		columns.push({
+			id: 'select',
+			header: ({ table }) => {
+				const rows = table.getRowModel().rows.map((row) => row.original);
+				const selectableRows = rows.filter((row) => selection.isRowSelectable(row));
+				const allSelected = selectableRows.length > 0
+					&& selectableRows.every((row) => selection.selectedIds.value.has(row.fulfillment_id));
+				const someSelected = selectableRows.some((row) => selection.selectedIds.value.has(row.fulfillment_id));
+				return h(UCheckbox, {
+					'modelValue': allSelected,
+					'indeterminate': !allSelected && someSelected,
+					'aria-label': t('shipmentArrangement.table.selectAll'),
+					'onUpdate:modelValue': (value: unknown) => {
+						selection.onToggleAllVisible(rows, value === true);
+					},
+				});
+			},
+			cell: ({ row }) => {
+				const selectable = selection.isRowSelectable(row.original);
+				return h(UCheckbox, {
+					'modelValue': selection.selectedIds.value.has(row.original.fulfillment_id),
+					'disabled': !selectable,
+					'aria-label': `${t('shipmentArrangement.table.selectRow')} ${row.original.order_no}`,
+					'onUpdate:modelValue': (value: unknown) => {
+						selection.onToggleRow(row.original, value === true);
+					},
+				});
+			},
+			enableSorting: false,
+			enableHiding: false,
+		});
+	}
+
+	columns.push(
 		{
 			accessorKey: 'order_no',
 			header: () => headerCell(t('shipmentArrangement.table.order')),
@@ -39,7 +86,9 @@ export function getShipmentArrangementColumns(t: TranslateFn): TableColumn<Shipm
 			header: () => headerCell(t('shipmentArrangement.table.shippingMethod')),
 			cell: ({ row }) => h(UBadge, { color: 'secondary', variant: 'soft', label: row.original.shipping_method }),
 		},
-	];
+	);
+
+	return columns;
 }
 
 export function getShipmentArrangementPreviewColumns(t: TranslateFn): TableColumn<ShipmentArrangementPreviewRow>[] {

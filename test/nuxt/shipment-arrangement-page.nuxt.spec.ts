@@ -6,6 +6,9 @@ import { useShipmentArrangementStore } from '~/stores/ShipmentArrangement/Shipme
 import type { ShipmentArrangementFilters } from '~/stores/ShipmentArrangement/ShipmentArrangement';
 import { useShippingMethodStore } from '~/stores/ShippingMethod/ShippingMethod';
 import { useAppUiStore } from '~/stores/AppUi/AppUi';
+import { useSettingStore } from '~/stores/Setting/Setting';
+import { EASYPARCEL, GROUP_CODE } from 'yeppi-common';
+import { Setting } from '~/utils/types/setting';
 import type { ShipmentArrangementListRow } from '~/utils/types/shipment-arrangement';
 
 const pendingRow: ShipmentArrangementListRow = {
@@ -37,6 +40,7 @@ describe('ShipmentArrangementPage', () => {
 		useShipmentArrangementStore().$reset();
 		useShippingMethodStore().$reset();
 		useAppUiStore().$reset();
+		useSettingStore().$reset();
 		mockPendingResponse();
 		vi.spyOn(useShippingMethodStore(), 'fetchActiveShippingMethodOptions').mockResolvedValue([]);
 	});
@@ -233,5 +237,32 @@ describe('ShipmentArrangementPage', () => {
 		wrapper.unmount();
 
 		expect(dispose).toHaveBeenCalledTimes(1);
+	});
+
+	it('shows EasyParcel push actions only when the merchant is connected', async () => {
+		mockPendingResponse([pendingRow]);
+		useSettingStore().settings = [
+			new Setting({
+				group_code: GROUP_CODE.EASYPARCEL,
+				set_code: EASYPARCEL.CONNECTION,
+				set_value: 'merchant@example.com',
+			} as Setting),
+		];
+		const wrapper = await mountPage();
+		await flushPromises();
+
+		expect(wrapper.find('[data-testid="push-selected-easyparcel"]').exists()).toBe(true);
+		expect(wrapper.find('[data-testid="push-all-easyparcel"]').exists()).toBe(true);
+		wrapper.unmount();
+	});
+
+	it('hides EasyParcel push actions when the merchant is not connected', async () => {
+		mockPendingResponse([pendingRow]);
+		const wrapper = await mountPage();
+		await flushPromises();
+
+		expect(wrapper.find('[data-testid="push-selected-easyparcel"]').exists()).toBe(false);
+		expect(wrapper.find('[data-testid="push-all-easyparcel"]').exists()).toBe(false);
+		wrapper.unmount();
 	});
 });

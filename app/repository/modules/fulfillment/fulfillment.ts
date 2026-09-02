@@ -12,6 +12,11 @@ import type {
 	ShipmentArrangementPreviewResponse,
 	ShipmentArrangementQuery,
 } from '~/utils/types/shipment-arrangement';
+import type {
+	CourierBookingContext,
+	CourierBookingQuoteResponse,
+	CourierBookingSubmitResponse,
+} from '~/utils/types/courier-booking';
 
 class FulfillmentModule extends HttpFactory {
 	private readonly RESOURCE = MerchantRoutes.Fulfillment;
@@ -106,6 +111,49 @@ class FulfillmentModule extends HttpFactory {
 		return await this.call<FulfillmentResp>({
 			method: 'PATCH',
 			url: this.RESOURCE.MarkDelivered(encodeURIComponent(id)),
+			body,
+		});
+	}
+
+	async getCourierBookingContext(merchant_id: string): Promise<CourierBookingContext> {
+		return await this.call<CourierBookingContext>({
+			method: 'GET',
+			url: this.RESOURCE.CourierBooking.Context(),
+			query: { merchant_id },
+		});
+	}
+
+	async quoteCourierBooking(
+		id: string,
+		body: {
+			merchant_id: string;
+			parcel: { weight_kg: number; width_cm: number; height_cm: number; length_cm: number };
+			handover: string;
+			dropoff_point_id?: string | null;
+		},
+	): Promise<CourierBookingQuoteResponse> {
+		return await this.call<CourierBookingQuoteResponse>({
+			method: 'POST',
+			url: this.RESOURCE.CourierBooking.Quote(encodeURIComponent(id)),
+			body,
+		});
+	}
+
+	async submitCourierBooking(
+		id: string,
+		body: {
+			merchant_id: string;
+			parcel: { weight_kg: number; width_cm: number; height_cm: number; length_cm: number };
+			handover: string;
+			dropoff_point_id?: string | null;
+			service_id: string;
+			collection_date: string;
+			sender: CourierBookingContext['sender'];
+		},
+	): Promise<CourierBookingSubmitResponse> {
+		return await this.call<CourierBookingSubmitResponse>({
+			method: 'POST',
+			url: this.RESOURCE.CourierBooking.Submit(encodeURIComponent(id)),
 			body,
 		});
 	}

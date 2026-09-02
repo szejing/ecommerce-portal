@@ -93,8 +93,9 @@
 						v-if="!isOauthConnected(template)"
 						data-testid="oauth-connect"
 						color="primary"
+						:to="template.is_disabled ? undefined : '/merchant/oauth/easyparcel/start'"
+						:external="!template.is_disabled"
 						:disabled="template.is_disabled"
-						@click="startOauthConnect(template)"
 					>
 						{{ t('components.settings.connectNow') }}
 					</UButton>
@@ -203,14 +204,6 @@ const getSelectLabel = (template: SettingTempl, value: unknown): string => {
 };
 
 const isOauthConnected = (template: SettingTempl): boolean => getTextSettingValue(template).trim().length > 0;
-
-const startOauthConnect = (template: SettingTempl) => {
-	if (template.is_disabled) {
-		return;
-	}
-
-	navigateTo('/merchant/easyparcel/oauth/start', { external: true });
-};
 
 const getMultiSelectSettingValue = (template: SettingTempl): string[] => {
 	const raw = getRawSettingValue(template) ?? template.default_val ?? '';

@@ -76,15 +76,41 @@
 						<h2 class="text-base font-semibold text-default">{{ t('shipmentArrangement.table.pendingTitle') }}</h2>
 						<p class="text-sm text-muted">{{ t('shipmentArrangement.table.pendingCount', { count: store.total }) }}</p>
 					</div>
-					<ZTableToolbar
-						v-model:selected-column-keys="selectedColumnKeys"
-						:model-value="store.pageSize"
-						class="w-full sm:w-auto"
-						:page-size-options="options_page_size"
-						:export-enabled="false"
-						:column-options="columnOptions"
-						@update:model-value="store.setPageSize"
-					/>
+					<div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+						<div v-if="isEasyParcelConnected" class="flex flex-wrap gap-2">
+							<UButton
+								data-testid="push-selected-easyparcel"
+								color="primary"
+								variant="soft"
+								icon="i-lucide-truck"
+								class="min-h-11"
+								:disabled="selectedCount === 0"
+								@click="openSelectedBooking"
+							>
+								{{ t('shipmentArrangement.actions.pushSelected', { count: selectedCount }) }}
+							</UButton>
+							<UButton
+								data-testid="push-all-easyparcel"
+								color="primary"
+								variant="outline"
+								icon="i-lucide-package-plus"
+								class="min-h-11"
+								:disabled="store.rows.length === 0"
+								@click="pushAllVisibleToEasyParcel"
+							>
+								{{ t('shipmentArrangement.actions.pushAllEasyParcel') }}
+							</UButton>
+						</div>
+						<ZTableToolbar
+							v-model:selected-column-keys="selectedColumnKeys"
+							:model-value="store.pageSize"
+							class="w-full sm:w-auto"
+							:page-size-options="options_page_size"
+							:export-enabled="false"
+							:column-options="columnOptions"
+							@update:model-value="store.setPageSize"
+						/>
+					</div>
 				</div>
 
 				<div v-if="store.loading" data-testid="pending-loading" class="space-y-0 divide-y divide-default">
@@ -132,6 +158,12 @@
 				@apply="applyPreview"
 				@dismiss="store.dismissImport"
 			/>
+
+			<FulfillmentCourierBookingModal
+				v-model:open="bookingModalOpen"
+				:targets="bookingTargets"
+				@close="onBookingClose"
+			/>
 		</div>
 	</ZPagePanel>
 </template>
@@ -141,6 +173,8 @@ import { options_page_size } from '~/utils/options';
 import { getShipmentArrangementColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
+import type { CourierBookingTarget } from '~/utils/types/courier-booking';
+import type { ShipmentArrangementListRow } from '~/utils/types/shipment-arrangement';
 
 const SHIPMENT_ARRANGEMENT_COLUMN_LABELS = {
 	order_no: 'shipmentArrangement.table.order',
@@ -152,8 +186,12 @@ const SHIPMENT_ARRANGEMENT_COLUMN_LABELS = {
 } as const;
 
 const store = useShipmentArrangementStore();
+const { isConnected: isEasyParcelConnected } = useEasyParcelConnection();
 const { t } = useI18n();
 const fileInput = ref<HTMLInputElement>();
+const selectedFulfillmentIds = ref(new Set<string>());
+const bookingTargets = ref<CourierBookingTarget[]>([]);
+const bookingModalOpen = ref(false);
 const previewOpen = computed({
 	get: () => store.preview != null,
 	set: (open: boolean) => {
@@ -161,7 +199,31 @@ const previewOpen = computed({
 	},
 });
 
-const columns = computed(() => getShipmentArrangementColumns(t));
+const columns = computed(() => {
+	if (!isEasyParcelConnected.value) {
+		return getShipmentArrangementColumns(t);
+	}
+	return getShipmentArrangementColumns(t, {
+		selectedIds: selectedFulfillmentIds,
+		isRowSelectable: (row) => !(row.booking_no ?? '').trim(),
+		onToggleRow: (row, selected) => {
+			const next = new Set(selectedFulfillmentIds.value);
+			if (selected) next.add(row.fulfillment_id);
+			else next.delete(row.fulfillment_id);
+			selectedFulfillmentIds.value = next;
+		},
+		onToggleAllVisible: (rows, selected) => {
+			const next = new Set(selectedFulfillmentIds.value);
+			for (const row of rows) {
+				if (!(row.booking_no ?? '').trim()) {
+					if (selected) next.add(row.fulfillment_id);
+					else next.delete(row.fulfillment_id);
+				}
+			}
+			selectedFulfillmentIds.value = next;
+		},
+	});
+});
 const columnOptions = computed(() => columnOptionsFromLabelMap(t, SHIPMENT_ARRANGEMENT_COLUMN_LABELS));
 const { selectedColumnKeys, visibleColumns } = useTableColumnVisibility(columns, columnOptions);
 const shippingMethodOptions = computed(() => [
@@ -173,7 +235,45 @@ const importFailureDescription = computed(() =>
 		? t('shipmentArrangement.states.invalidFile')
 		: store.importFailure?.message,
 );
+const selectedCount = computed(() => selectedFulfillmentIds.value.size);
+const selectedRowsOnPage = computed(() =>
+	store.rows.filter((row) => selectedFulfillmentIds.value.has(row.fulfillment_id)),
+);
 useHead({ title: () => t('shipmentArrangement.title') });
+
+const isRowSelectable = (row: ShipmentArrangementListRow) => !(row.booking_no ?? '').trim();
+
+const pruneSelection = () => {
+	const visibleIds = new Set(store.rows.map((row) => row.fulfillment_id));
+	selectedFulfillmentIds.value = new Set(
+		[...selectedFulfillmentIds.value].filter((id) => visibleIds.has(id)),
+	);
+};
+
+const openSelectedBooking = () => {
+	bookingTargets.value = selectedRowsOnPage.value.map((row) => ({
+		fulfillmentId: row.fulfillment_id,
+		orderNo: row.order_no,
+		batchNo: row.batch_no,
+	}));
+	bookingModalOpen.value = true;
+};
+
+const pushAllVisibleToEasyParcel = () => {
+	bookingTargets.value = store.rows.filter(isRowSelectable).map((row) => ({
+		fulfillmentId: row.fulfillment_id,
+		orderNo: row.order_no,
+		batchNo: row.batch_no,
+	}));
+	bookingModalOpen.value = true;
+};
+
+const onBookingClose = async (booked?: boolean) => {
+	bookingModalOpen.value = false;
+	if (!booked) return;
+	selectedFulfillmentIds.value = new Set();
+	await store.refreshPending();
+};
 
 const exportPending = async (): Promise<void> => {
 	const outcome = await store.exportPending();
@@ -215,6 +315,10 @@ const applyPreview = async (): Promise<void> => {
 onMounted(async () => {
 	await store.initialize();
 	if (store.optionsFailure) failedNotification(store.optionsFailure.message);
+});
+
+watch(() => store.rows, () => {
+	pruneSelection();
 });
 
 onBeforeUnmount(() => store.dispose());

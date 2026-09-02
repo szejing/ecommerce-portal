@@ -190,7 +190,9 @@
 		"actions": {
 			"clearFilters": "Kosongkan penapis",
 			"export": "Eksport belum selesai",
-			"import": "Import buku kerja"
+			"import": "Import buku kerja",
+			"pushSelected": "Hantar dipilih ({count})",
+			"pushAllEasyParcel": "Hantar semua ke EasyParcel"
 		},
 		"table": {
 			"title": "Kelompok penghantaran belum selesai",
@@ -206,7 +208,9 @@
 			"shippingMethod": "Kaedah penghantaran",
 			"courier": "Kurier",
 			"tracking": "No. penjejakan",
-			"result": "Keputusan"
+			"result": "Keputusan",
+			"selectAll": "Pilih semua baris boleh ditempah pada halaman ini",
+			"selectRow": "Pilih pesanan {orderNo}"
 		},
 		"workflow": {
 			"title": "Aliran pengurusan penghantaran",
@@ -1571,8 +1575,26 @@
 			"createMissingBatch": "Cipta kelompok yang tiada",
 			"noSplitDeleteHint": "Pemadaman dan pemisahan kelompok belum tersedia. Pengesahan pelengkapan dikuatkuasakan oleh bahagian backend.",
 			"bookCourier": "Tempah kurier",
+			"pushToEasyParcel": "Hantar ke EasyParcel",
 			"cancelCourierBooking": "Batal tempahan",
-			"printAwb": "Cetak AWB"
+			"printAwb": "Cetak AWB",
+			"courierBooking": {
+				"title": "Tempahan kurier",
+				"description": "Tempah EasyParcel untuk pesanan {orderNo} · kelompok #{batchNo}",
+				"queueProgress": "Menempah {current} daripada {total}",
+				"queuedNext": "Ditempah. Meneruskan {current} daripada {total}.",
+				"submitted": "Tempahan kurier dihantar ke EasyParcel",
+				"weightKg": "Berat (kg)",
+				"widthCm": "Lebar (cm)",
+				"heightCm": "Tinggi (cm)",
+				"lengthCm": "Panjang (cm)",
+				"collectionDate": "Tarikh pengambilan",
+				"handover": "Serahan kurier",
+				"dropoffPoint": "ID titik serahan",
+				"fetchQuotes": "Dapatkan sebut harga",
+				"walletBalance": "Baki dompet: {amount} {currency}",
+				"selectService": "Pilih perkhidmatan EasyParcel"
+			}
 		},
 		"settings": {
 			"connectNow": "Sambung Sekarang",

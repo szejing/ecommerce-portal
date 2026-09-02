@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { getRandomPort } from 'get-port-please';
 import { afterAll, describe, expect, test } from 'vitest';
-import { $fetch, setup } from '@nuxt/test-utils/e2e';
+import { $fetch, fetch, setup } from '@nuxt/test-utils/e2e';
 
 /**
  * Spins up a minimal upstream API so Nitro merchant proxy routes can be exercised
@@ -29,6 +29,18 @@ function startMockBackend(): Promise<{ baseUrl: string; close: () => Promise<voi
 			if (req.method === 'POST' && (path === '/api/auth/login' || path === '/api/auth/login/')) {
 				res.writeHead(200, { 'Content-Type': 'application/json' });
 				res.end(JSON.stringify({ access_token: 'mock-token', token_type: 'Bearer' }));
+				return;
+			}
+
+			if (req.method === 'GET' && path === '/api/oauth/easyparcel/start') {
+				res.writeHead(200, { 'Content-Type': 'application/json' });
+				res.end(JSON.stringify({ authorize_url: 'https://api.easyparcel.com/oauth/login?client_id=mock' }));
+				return;
+			}
+
+			if (req.method === 'POST' && path === '/api/oauth/easyparcel/callback') {
+				res.writeHead(200, { 'Content-Type': 'application/json' });
+				res.end(JSON.stringify({ status: 200, message: 'Connected' }));
 				return;
 			}
 
@@ -98,5 +110,40 @@ describe('merchant Nitro API (proxied to mock upstream)', async () => {
 			body: { email: 'a@b.com', password: 'x' },
 		});
 		expect(data).toMatchObject({ access_token: 'mock-token', token_type: 'Bearer' });
+	});
+
+	test('GET /merchant/oauth/easyparcel/start redirects guests to login', async () => {
+		const res = await fetch('/merchant/oauth/easyparcel/start', {
+			redirect: 'manual',
+		});
+		expect(res.status).toBe(302);
+		expect(res.headers.get('location')).toMatch(/\/login$/);
+	});
+
+	test('GET /merchant/oauth/easyparcel/start redirects staff to EasyParcel', async () => {
+		const res = await fetch('/merchant/oauth/easyparcel/start', {
+			redirect: 'manual',
+			headers: {
+				cookie: 'access-token=mock-token; x-merchant-id=M00001',
+			},
+		});
+		expect(res.status).toBe(302);
+		expect(res.headers.get('location')).toBe(
+			'https://api.easyparcel.com/oauth/login?client_id=mock',
+		);
+	});
+
+	test('GET /merchant/oauth/easyparcel/callback redirects to Configuration', async () => {
+		const res = await fetch(
+			'/merchant/oauth/easyparcel/callback?code=c1&state=s1',
+			{
+				redirect: 'manual',
+				headers: {
+					cookie: 'access-token=mock-token; x-merchant-id=M00001',
+				},
+			},
+		);
+		expect(res.status).toBe(302);
+		expect(res.headers.get('location')).toMatch(/\/settings\/configuration$/);
 	});
 });

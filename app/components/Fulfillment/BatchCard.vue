@@ -153,7 +153,7 @@ const nextActions = computed(() => {
 					:disabled="loading"
 					@click="emit('book', batch)"
 				>
-					{{ t('components.fulfillment.bookCourier') }}
+					{{ t('components.fulfillment.pushToEasyParcel') }}
 				</UButton>
 
 				<UPopover v-if="nextActions.length" :content="{ align: 'start' }">
