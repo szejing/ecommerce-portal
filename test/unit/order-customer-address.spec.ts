@@ -11,14 +11,14 @@ const sampleAddress = {
 	address3: '',
 	city: 'Kuala Lumpur',
 	postal_code: '50450',
-	state: 'WP Kuala Lumpur',
+	state: 'Kuala Lumpur',
 	country_code: 'MY',
 };
 
 describe('formatOrderAddressMultiline', () => {
 	it('builds newline-separated lines plus city row', () => {
 		expect(formatOrderAddressMultiline(sampleAddress)).toBe(
-			['B1-40-5, SOHO SUITES', '20, Jalan Perak', 'Kuala Lumpur, WP Kuala Lumpur, 50450, MY'].join('\n'),
+			['B1-40-5, SOHO SUITES', '20, Jalan Perak', 'Kuala Lumpur, Kuala Lumpur, 50450, MY'].join('\n'),
 		);
 	});
 
@@ -30,7 +30,7 @@ describe('formatOrderAddressMultiline', () => {
 describe('orderAddressToMapsSearchQuery', () => {
 	it('maps CRM fields to comma search query', () => {
 		expect(orderAddressToMapsSearchQuery(sampleAddress)).toBe(
-			'B1-40-5, SOHO SUITES, 20, Jalan Perak, 50450, Kuala Lumpur, WP Kuala Lumpur, MY',
+			'B1-40-5, SOHO SUITES, 20, Jalan Perak, 50450, Kuala Lumpur, Kuala Lumpur, MY',
 		);
 	});
 });

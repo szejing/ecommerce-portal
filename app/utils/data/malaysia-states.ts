@@ -1,24 +1,34 @@
+/**
+ * Keep in sync with yeppi-common/src/constants/malaysia-states.ts (EasyParcel Option B labels).
+ */
+const MALAYSIA_STATES = [
+	'Johor',
+	'Kedah',
+	'Kelantan',
+	'Melaka',
+	'Negeri Sembilan',
+	'Pahang',
+	'Pulau Pinang',
+	'Perak',
+	'Perlis',
+	'Sabah',
+	'Sarawak',
+	'Selangor',
+	'Terengganu',
+	'Kuala Lumpur',
+	'Labuan',
+	'Putrajaya',
+] as const;
+
 export type MalaysiaStateOption = { label: string; value: string };
 
-/** 13 states + 3 federal territories (English labels, stored as condition values). */
-export const MALAYSIA_STATE_OPTIONS: MalaysiaStateOption[] = [
-	{ label: 'Johor', value: 'Johor' },
-	{ label: 'Kedah', value: 'Kedah' },
-	{ label: 'Kelantan', value: 'Kelantan' },
-	{ label: 'Melaka', value: 'Melaka' },
-	{ label: 'Negeri Sembilan', value: 'Negeri Sembilan' },
-	{ label: 'Pahang', value: 'Pahang' },
-	{ label: 'Pulau Pinang', value: 'Pulau Pinang' },
-	{ label: 'Perak', value: 'Perak' },
-	{ label: 'Perlis', value: 'Perlis' },
-	{ label: 'Sabah', value: 'Sabah' },
-	{ label: 'Sarawak', value: 'Sarawak' },
-	{ label: 'Selangor', value: 'Selangor' },
-	{ label: 'Terengganu', value: 'Terengganu' },
-	{ label: 'WP Kuala Lumpur', value: 'WP Kuala Lumpur' },
-	{ label: 'WP Labuan', value: 'WP Labuan' },
-	{ label: 'WP Putrajaya', value: 'WP Putrajaya' },
-];
+/** 13 states + 3 federal territories (EasyParcel English labels). */
+export const MALAYSIA_STATE_OPTIONS: MalaysiaStateOption[] = MALAYSIA_STATES.map(
+	(value) => ({
+		label: value,
+		value,
+	}),
+);
 
 /** Multiple states are stored in API `state` joined by `|` (names do not contain `|`). */
 export const MALAYSIA_STATES_API_DELIMITER = '|';
