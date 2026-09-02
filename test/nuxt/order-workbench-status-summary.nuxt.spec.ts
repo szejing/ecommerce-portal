@@ -63,4 +63,26 @@ describe('OrderWorkbenchStatusSummary', () => {
 		expect(wrapper.findAll('.state-summary-item')).toHaveLength(3);
 		expect(wrapper.findAll('.state-summary-item dt')).toHaveLength(3);
 	});
+
+	it('advances to the next status and can jump to completed', async () => {
+		const wrapper = await mountSuspended(OrderWorkbenchStatusSummary, {
+			props: { order: order({ status: OrderStatus.CONFIRMED, order_type: OrderType.DELIVERY }) },
+		});
+
+		await wrapper.get('[data-testid="workbench-order-status-next"]').trigger('click');
+		expect(wrapper.emitted('update:status')?.[0]).toEqual([OrderStatus.PAID]);
+
+		await wrapper.get('[data-testid="workbench-order-status-complete"]').trigger('click');
+		expect(wrapper.emitted('update:status')?.[1]).toEqual([OrderStatus.COMPLETED]);
+	});
+
+	it('hides next and complete shortcuts on a completed order', async () => {
+		const wrapper = await mountSuspended(OrderWorkbenchStatusSummary, {
+			props: { order: order({ status: OrderStatus.COMPLETED }) },
+		});
+
+		expect(wrapper.find('[data-testid="workbench-order-status-next"]').exists()).toBe(false);
+		expect(wrapper.find('[data-testid="workbench-order-status-complete"]').exists()).toBe(false);
+		expect(wrapper.get('[data-testid="workbench-order-status"]').text()).toContain('Completed');
+	});
 });

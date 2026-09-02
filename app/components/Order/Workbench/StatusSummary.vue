@@ -10,9 +10,41 @@
 		<div v-if="showOrder" data-testid="workbench-order-status" class="state-summary-item">
 			<dt class="state-summary-label">{{ t('components.orderDetail.orderState') }}</dt>
 			<dd class="state-summary-value">
-				<UBadge :color="orderState.color" variant="subtle" size="sm" class="max-w-full capitalize">
-					<span class="min-w-0 truncate whitespace-nowrap">{{ orderState.label }}</span>
-				</UBadge>
+				<div class="status-control">
+					<div class="status-split text-inverted" :class="statusPillClass" :title="orderState.label">
+						<ZSelectMenuOrderStatus
+							appearance="pill"
+							:status="order.status"
+							:disabled="updating"
+							@update:status="onStatusSelected"
+						/>
+						<button
+							v-if="nextStatus"
+							type="button"
+							data-testid="workbench-order-status-next"
+							class="status-split-next"
+							:disabled="updating"
+							:aria-label="t('components.orderDetail.nextOrderStatus', { status: nextStatusLabel })"
+							:title="t('components.orderDetail.nextOrderStatus', { status: nextStatusLabel })"
+							@click="onStatusSelected(nextStatus)"
+						>
+							<UIcon :name="ICONS.CHEVRON_RIGHT" class="size-4" aria-hidden="true" />
+						</button>
+					</div>
+					<UButton
+						v-if="showComplete"
+						data-testid="workbench-order-status-complete"
+						color="neutral"
+						variant="subtle"
+						size="sm"
+						square
+						:icon="ICONS.CHECK_ROUNDED"
+						:disabled="updating"
+						:aria-label="t('components.orderDetail.completeOrderStatus')"
+						:title="t('components.orderDetail.completeOrderStatus')"
+						@click="onStatusSelected(OrderStatus.COMPLETED)"
+					/>
+				</div>
 			</dd>
 		</div>
 		<div data-testid="workbench-payment-status" class="state-summary-item">
@@ -35,10 +67,12 @@
 </template>
 
 <script lang="ts" setup>
-import { OrderType } from 'yeppi-common';
+import { OrderStatus, OrderType } from 'yeppi-common';
 import {
+	canCompleteOrderStatus,
 	getFulfillmentStatusColor,
 	getFulfillmentStatusOptions,
+	getNextOrderStatus,
 	getOrderStatusColor,
 	getOrderStatusOption,
 	getPaymentStatusColor,
@@ -46,6 +80,7 @@ import {
 	getShipmentStatusColor,
 	getShipmentStatusOptions,
 } from '~/utils/options';
+import { ICONS } from '~/utils/icons';
 import type { FulfillmentLifecycleStatusValue, ShipmentStatusValue } from '~/utils/types/order-fulfillment-shipping';
 import type { OrderHistory } from '~/utils/types/order-history';
 
@@ -53,10 +88,16 @@ const props = withDefaults(defineProps<{
 	order: OrderHistory;
 	compact?: boolean;
 	showOrder?: boolean;
+	updating?: boolean;
 }>(), {
 	compact: false,
 	showOrder: true,
+	updating: false,
 });
+
+const emit = defineEmits<{
+	'update:status': [status: OrderStatus];
+}>();
 
 const { t } = useI18n();
 
@@ -64,6 +105,34 @@ const orderState = computed(() => ({
 	label: getOrderStatusOption(t, props.order.status)?.label ?? props.order.status,
 	color: getOrderStatusColor(props.order.status) ?? 'neutral',
 }));
+
+const nextStatus = computed(() => getNextOrderStatus(props.order.status, props.order.order_type));
+const nextStatusLabel = computed(() => {
+	if (!nextStatus.value) {
+		return '';
+	}
+	return getOrderStatusOption(t, nextStatus.value)?.label ?? nextStatus.value;
+});
+const showComplete = computed(() => canCompleteOrderStatus(props.order.status));
+
+const statusPillClass = computed(() => {
+	switch (orderState.value.color) {
+		case 'primary':
+			return 'bg-primary-500';
+		case 'success':
+			return 'bg-success-500';
+		case 'warning':
+			return 'bg-warning-500';
+		case 'error':
+			return 'bg-error-500';
+		case 'secondary':
+			return 'bg-secondary-500';
+		case 'neutral':
+			return 'bg-inverted';
+		default:
+			return 'bg-info-500';
+	}
+});
 
 const paymentState = computed(() => ({
 	label: getPaymentStatusOptions(t).find((option) => option.value === props.order.payment_status)?.label ?? t('options.pending'),
@@ -104,6 +173,13 @@ const fulfillmentState = computed(() => {
 
 	return { label: t('options.processing'), color: 'info' as const };
 });
+
+function onStatusSelected(status: OrderStatus | undefined) {
+	if (!status || status === props.order.status || props.updating) {
+		return;
+	}
+	emit('update:status', status);
+}
 </script>
 
 <style scoped>
@@ -159,6 +235,51 @@ const fulfillmentState = computed(() => {
 	min-width: 0;
 	margin: 0;
 	justify-content: flex-end;
+}
+
+.status-control {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	min-width: 0;
+}
+
+.status-split {
+	display: inline-flex;
+	align-items: stretch;
+	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
+	border-radius: 0.5rem;
+}
+
+.status-split-next {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	min-width: 2rem;
+	padding-inline: 0.25rem;
+	border: 0;
+	border-left: 1px solid color-mix(in srgb, white 30%, transparent);
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+	touch-action: manipulation;
+}
+
+.status-split-next:hover:not(:disabled) {
+	background: color-mix(in srgb, white 12%, transparent);
+}
+
+.status-split-next:focus-visible {
+	outline: 2px solid color-mix(in srgb, white 80%, transparent);
+	outline-offset: -2px;
+}
+
+.status-split-next:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
 }
 
 @media (min-width: 640px) {

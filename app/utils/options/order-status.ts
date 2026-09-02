@@ -1,4 +1,4 @@
-import { getOrderStatusColor as getCommonOrderStatusColor, OrderStatus, type UiBadgeColor } from 'yeppi-common';
+import { getOrderStatusColor as getCommonOrderStatusColor, OrderStatus, OrderType, type UiBadgeColor } from 'yeppi-common';
 
 type TranslateFn = (key: string) => string;
 
@@ -70,6 +70,45 @@ export function getOrderStatusUpdateOptions(t: TranslateFn) {
 
 export function getOrderStatusOption(t: TranslateFn, status: OrderStatus) {
 	return getOrderStatusOptions(t).find((option) => option.value === status);
+}
+
+const PICKUP_STATUS_PROGRESS: OrderStatus[] = [
+	OrderStatus.PENDING_PAYMENT,
+	OrderStatus.CONFIRMED,
+	OrderStatus.PAID,
+	OrderStatus.PROCESSING,
+	OrderStatus.READY_FOR_PICKUP,
+	OrderStatus.COMPLETED,
+];
+
+const DELIVERY_STATUS_PROGRESS: OrderStatus[] = [
+	OrderStatus.PENDING_PAYMENT,
+	OrderStatus.CONFIRMED,
+	OrderStatus.PAID,
+	OrderStatus.PROCESSING,
+	OrderStatus.SHIPPED,
+	OrderStatus.DELIVERED,
+	OrderStatus.COMPLETED,
+];
+
+export function getOrderStatusProgressPath(orderType: OrderType | string | undefined): OrderStatus[] {
+	return orderType === OrderType.DELIVERY ? DELIVERY_STATUS_PROGRESS : PICKUP_STATUS_PROGRESS;
+}
+
+export function getNextOrderStatus(current: OrderStatus | string | undefined, orderType?: OrderType | string): OrderStatus | undefined {
+	const path = getOrderStatusProgressPath(orderType);
+	const index = path.indexOf(current as OrderStatus);
+	if (index < 0 || index >= path.length - 1) {
+		return undefined;
+	}
+	return path[index + 1];
+}
+
+export function canCompleteOrderStatus(current: OrderStatus | string | undefined): boolean {
+	if (!current) {
+		return false;
+	}
+	return current !== OrderStatus.COMPLETED && current !== OrderStatus.CANCELLED && current !== OrderStatus.REFUNDED;
 }
 
 export const getOrderStatusColor = (status: string): UiBadgeColor | undefined => {

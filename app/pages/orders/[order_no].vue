@@ -51,7 +51,13 @@
 						{{ refresh_button_text }}
 					</UButton>
 				</div>
-				<OrderWorkbenchStatusSummary v-if="orderForModal" :order="orderForModal" class="order-header-states" />
+				<OrderWorkbenchStatusSummary
+					v-if="orderForModal"
+					:order="orderForModal"
+					:updating="updating"
+					class="order-header-states"
+					@update:status="handleWorkbenchStatusChange"
+				/>
 				<p v-if="order?.last_updated" class="status-last-updated" :title="t('table.lastUpdated')">
 					{{ order.last_updated }}
 				</p>
@@ -345,6 +351,15 @@ const refresh_button_text = computed(() => {
 	}
 	return t('components.orderDetail.refresh');
 });
+
+const handleWorkbenchStatusChange = async (status: OrderStatus) => {
+	if (!order.value || status === order.value.status || updating.value) {
+		return;
+	}
+
+	new_order_status.value = status;
+	await handleUpdateOrderStatus();
+};
 
 const handleUpdateOrderStatus = async () => {
 	if (!order.value) {
