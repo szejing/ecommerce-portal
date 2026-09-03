@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { useStorage } from '@vueuse/core';
+import { startOfDay } from 'date-fns';
 import type { CourierHandover } from 'yeppi-common';
-import { KEY } from 'yeppi-common';
+import { getFormattedDate, KEY } from 'yeppi-common';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
+import { COURIER_BOOKING_LAST_SERVICE_STORAGE_KEY, pickCourierServiceId } from '~/utils/courier-booking-last-service';
 import { getCourierHandoverItems } from '~/utils/options/courier-handover';
 import type {
 	CourierBookingContext,
@@ -28,6 +31,7 @@ const context = ref<CourierBookingContext>();
 const quotes = ref<CourierBookingQuote[]>([]);
 const wallet = ref<{ balance: number; currency: string }>();
 const selectedServiceId = ref<string>();
+const lastServiceId = useStorage(COURIER_BOOKING_LAST_SERVICE_STORAGE_KEY, '');
 const queueIndex = ref(0);
 
 const parcel = reactive({
@@ -36,9 +40,12 @@ const parcel = reactive({
 	height_cm: '',
 	length_cm: '',
 });
-const collectionDate = ref('');
+const collectionDate = ref<Date>(startOfDay(new Date()));
+const collectionDatePopoverOpen = ref(false);
 const handover = ref<CourierHandover>('PICKUP');
 const dropoffPointId = ref('');
+const collectionDateMin = computed(() => startOfDay(new Date()));
+const collectionDateLabel = computed(() => getFormattedDate(collectionDate.value, 'dd-MM-yyyy'));
 
 const activeTarget = computed(() => props.targets[queueIndex.value]);
 const handoverOptions = computed(() => getCourierHandoverItems('EasyParcel'));
@@ -53,10 +60,14 @@ const resetQuoteState = () => {
 	selectedServiceId.value = undefined;
 };
 
+const rememberServiceId = (serviceId?: string) => {
+	if (serviceId) lastServiceId.value = serviceId;
+};
+
 const loadContext = async () => {
 	const merchant_id = String(useCookie(KEY.X_MERCHANT_ID).value ?? '');
 	context.value = await useNuxtApp().$api.fulfillment.getCourierBookingContext(merchant_id);
-	collectionDate.value = context.value.collection_date;
+	collectionDate.value = startOfDay(new Date());
 	handover.value = context.value.handover;
 	dropoffPointId.value = context.value.dropoff_point_id ?? '';
 };
@@ -80,7 +91,7 @@ const fetchQuotes = async () => {
 		});
 		quotes.value = response.quotes;
 		wallet.value = response.wallet;
-		selectedServiceId.value = response.quotes[0]?.service_id;
+		selectedServiceId.value = pickCourierServiceId(response.quotes, lastServiceId.value);
 	} catch (error) {
 		failedNotification(error instanceof Error ? error.message : String(error));
 	} finally {
@@ -104,9 +115,10 @@ const submitBooking = async () => {
 			handover: handover.value,
 			dropoff_point_id: dropoffPointId.value.trim() || null,
 			service_id: selectedServiceId.value as string,
-			collection_date: collectionDate.value,
+			collection_date: getFormattedDate(collectionDate.value, 'yyyy-MM-dd'),
 			sender: context.value.sender,
 		});
+		rememberServiceId(selectedServiceId.value);
 
 		if (queueIndex.value < props.targets.length - 1) {
 			queueIndex.value += 1;
@@ -137,6 +149,7 @@ watch(open, async (isOpen) => {
 	}
 	queueIndex.value = 0;
 	resetQuoteState();
+	collectionDate.value = startOfDay(new Date());
 	try {
 		await loadContext();
 	} catch (error) {
@@ -149,6 +162,25 @@ watch(() => props.targets, () => {
 	queueIndex.value = 0;
 	resetQuoteState();
 });
+
+watchDebounced(
+	() => ({
+		open: open.value,
+		canQuote: canQuote.value,
+		fulfillmentId: activeTarget.value?.fulfillmentId,
+		weight_kg: parcel.weight_kg,
+		width_cm: parcel.width_cm,
+		height_cm: parcel.height_cm,
+		length_cm: parcel.length_cm,
+		handover: handover.value,
+		dropoffPointId: dropoffPointId.value,
+	}),
+	(state) => {
+		if (!state.open || !state.canQuote || !state.fulfillmentId || quoting.value || saving.value) return;
+		fetchQuotes();
+	},
+	{ debounce: 400 },
+);
 </script>
 
 <template>
@@ -186,7 +218,27 @@ watch(() => props.targets, () => {
 				<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 					<label class="space-y-1 text-sm">
 						<span>{{ t('components.fulfillment.courierBooking.collectionDate') }}</span>
-						<UInput v-model="collectionDate" type="date" data-testid="courier-booking-collection-date" />
+						<UPopover v-model:open="collectionDatePopoverOpen" :content="{ align: 'start' }" :modal="true">
+							<UButton
+								icon="i-lucide-calendar"
+								color="neutral"
+								variant="outline"
+								class="w-full min-w-0 justify-between group"
+								data-testid="courier-booking-collection-date"
+							>
+								<span class="truncate">{{ collectionDateLabel }}</span>
+								<UIcon name="i-lucide-chevron-down" class="shrink-0 size-5 text-dimmed group-data-[state=open]:rotate-180 transition-transform" />
+							</UButton>
+							<template #content>
+								<div class="p-2">
+									<ZDatePicker
+										v-model="collectionDate"
+										:min-date="collectionDateMin"
+										@close="collectionDatePopoverOpen = false"
+									/>
+								</div>
+							</template>
+						</UPopover>
 					</label>
 					<label class="space-y-1 text-sm">
 						<span>{{ t('components.fulfillment.courierBooking.handover') }}</span>
@@ -206,6 +258,26 @@ watch(() => props.targets, () => {
 					<UInput v-model="dropoffPointId" data-testid="courier-booking-dropoff-point" />
 				</label>
 
+				<USelectMenu
+					v-if="quotes.length"
+					v-model="selectedServiceId"
+					:items="quotes.map((quote) => ({
+						value: quote.service_id,
+						label: quote.service_name
+							? `${quote.service_name}${quote.price != null ? ` — ${quote.price}` : ''}`
+							: quote.service_id,
+					}))"
+					value-key="value"
+					:placeholder="t('components.fulfillment.courierBooking.selectService')"
+					class="w-full"
+					data-testid="courier-booking-service"
+					@update:model-value="rememberServiceId"
+				/>
+			</div>
+		</template>
+
+		<template #footer>
+			<div class="flex-jbetween-icenter w-full">
 				<div class="flex flex-wrap items-center gap-2">
 					<UButton
 						color="neutral"
@@ -222,39 +294,21 @@ watch(() => props.targets, () => {
 						{{ t('components.fulfillment.courierBooking.walletBalance', { amount: wallet.balance, currency: wallet.currency }) }}
 					</p>
 				</div>
-
-				<USelectMenu
-					v-if="quotes.length"
-					v-model="selectedServiceId"
-					:items="quotes.map((quote) => ({
-						value: quote.service_id,
-						label: quote.service_name
-							? `${quote.service_name}${quote.price != null ? ` — ${quote.price}` : ''}`
-							: quote.service_id,
-					}))"
-					value-key="value"
-					:placeholder="t('components.fulfillment.courierBooking.selectService')"
-					class="w-full"
-					data-testid="courier-booking-service"
-				/>
-			</div>
-		</template>
-
-		<template #footer>
-			<div class="flex w-full justify-end gap-2">
-				<UButton color="neutral" variant="ghost" :disabled="saving" @click="open = false">
-					{{ t('common.cancel') }}
-				</UButton>
-				<UButton
-					color="primary"
-					icon="i-lucide-truck"
-					:loading="saving"
-					:disabled="!canSubmit || quoting"
-					data-testid="courier-booking-submit"
-					@click="submitBooking"
-				>
-					{{ t('components.fulfillment.pushToEasyParcel') }}
-				</UButton>
+				<div class="flex gap-2">
+					<UButton color="neutral" variant="ghost" :disabled="saving" @click="open = false">
+						{{ t('common.cancel') }}
+					</UButton>
+					<UButton
+						color="primary"
+						icon="i-lucide-truck"
+						:loading="saving"
+						:disabled="!canSubmit || quoting"
+						data-testid="courier-booking-submit"
+						@click="submitBooking"
+					>
+						{{ t('common.confirm') }}
+					</UButton>
+				</div>
 			</div>
 		</template>
 	</UModal>

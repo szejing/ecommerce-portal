@@ -50,7 +50,7 @@
 				</div>
 			</UCard>
 		</div>
-		<div v-else class="p-6 space-y-6">
+		<div v-else class="space-y-6">
 			<div
 				class="flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between"
 				:class="
