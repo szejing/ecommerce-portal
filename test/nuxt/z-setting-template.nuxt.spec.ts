@@ -76,6 +76,26 @@ describe('ZSettingTemplate', () => {
 		expect(wrapper.findComponent({ name: 'USwitch' }).exists()).toBe(true);
 	});
 
+	it('renders PurgeDeletedCatalogMedia through the standard Boolean switch', async () => {
+		const wrapper = await mountSuspended(ZSettingTemplate, {
+			props: {
+				templates: [
+					makeTemplate({
+						group_code: GROUP_CODE.PRODUCT,
+						set_code: 'PurgeDeletedCatalogMedia',
+						set_desc: 'Purge deleted catalog media',
+						input_type: InputType.BOOLEAN,
+						default_val: '0',
+					}),
+				],
+			},
+		});
+
+		expect(wrapper.findComponent({ name: 'USwitch' }).exists()).toBe(true);
+		const row = wrapper.find('.py-3 > .flex.gap-2');
+		expect(row.classes()).toContain('flex-row');
+	});
+
 	it('prefills an empty WhatsAppUrl text setting from Contact dial code and phone number once', async () => {
 		const settingStore = useSettingStore();
 		const merchantInfoStore = useMerchantInfoStore();
