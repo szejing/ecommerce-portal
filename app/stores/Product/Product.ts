@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { defaultProductRelations, getFormattedDate, ProductStatus, removeDuplicateExpands, type ErrorResponse } from 'yeppi-common';
+import { getFormattedDate, ProductStatus, type ErrorResponse } from 'yeppi-common';
 import { options_page_size } from '~/utils/options';
 import type { Product } from '~/utils/types/product';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
@@ -11,6 +11,8 @@ import type { ProductImportResp, ProductImportTemplateType } from '~/repository/
 import { resolveProductImportSummary } from '~/utils/product-import-feedback';
 
 export const PRODUCT_FILTER_DEBOUNCE_MS = 500;
+
+const PRODUCT_LISTING_EXPAND = ['price_types', 'thumbnail', 'type', 'variants'] as const;
 
 export type ProductFailure = { kind: 'request_failed'; message: string };
 export type ProductRefreshOutcome =
@@ -159,7 +161,7 @@ export const useProductStore = defineStore('productStore', {
 					$top: this.filter.page_size,
 					$count: true,
 					$skip: (this.filter.current_page - 1) * this.filter.page_size,
-					$expand: removeDuplicateExpands(defaultProductRelations).join(','),
+					$expand: PRODUCT_LISTING_EXPAND.join(','),
 					$orderby: 'updated_at desc',
 				};
 				if (status) queryParams.$filter = `status eq '${status}'`;

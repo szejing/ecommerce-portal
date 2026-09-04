@@ -83,6 +83,13 @@ describe('useProductStore', () => {
 		expect(store.filters.query).toBe('');
 	});
 
+	it('lists products with table-only expands', async () => {
+		const store = useProductStore();
+		await store.refreshListing();
+		expect(getMany.mock.calls[0]?.[0].$expand).toBe('price_types,thumbnail,type,variants');
+		expect(getMany.mock.calls[0]?.[0].$expand).not.toMatch(/brands|categories|collection|images|tags|variations/);
+	});
+
 	it('does not let an older listing request replace rows', async () => {
 		const first = deferred<{ data: Product[]; '@odata.count': number }>();
 		const second = deferred<{ data: Product[]; '@odata.count': number }>();
