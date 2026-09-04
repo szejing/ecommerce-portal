@@ -103,6 +103,9 @@ const MerchantRoutes = {
 		Many: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.SETTINGS}/many`,
 		SaveMany: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.SETTINGS}/update`,
 	},
+	OAuth: {
+		Disconnect: (provider: string) => `${prefix}/${API_PATH.MERCHANT}/oauth/${encodeURIComponent(provider)}/disconnect`,
+	},
 	CrmUsers: {
 		Create: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.CRM_USERS}/create`,
 		Many: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.CRM_USERS}/many`,

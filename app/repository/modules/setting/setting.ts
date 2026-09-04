@@ -23,6 +23,13 @@ class SettingModule extends HttpFactory {
 			body: settings,
 		});
 	}
+
+	async disconnectOauth(provider: string): Promise<{ status: number; message: string }> {
+		return await this.call<{ status: number; message: string }>({
+			method: 'POST',
+			url: MerchantRoutes.OAuth.Disconnect(provider),
+		});
+	}
 }
 
 export default SettingModule;

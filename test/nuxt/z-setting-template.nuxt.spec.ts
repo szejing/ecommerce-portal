@@ -1,11 +1,23 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import { mountSuspended } from '@nuxt/test-utils/runtime';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime';
 import { GROUP_CODE, InputType, MERCHANT } from 'yeppi-common';
 import ZSettingTemplate from '~/components/Z/Setting/Template.vue';
 import type { SettingTempl } from '~/utils/types/setting-templ';
 import { useMerchantInfoStore } from '~/stores/MerchantInfo/MerchantInfo';
 import { useSettingStore } from '~/stores/Setting/Setting';
 import { MerchantInfo } from '~/utils/types/merchant-info';
+
+const overlayOpen = vi.hoisted(() => vi.fn());
+const overlayCreate = vi.hoisted(() =>
+	vi.fn(() => ({
+		open: overlayOpen,
+		close: vi.fn(),
+	})),
+);
+
+mockNuxtImport('useOverlay', () => () => ({
+	create: overlayCreate,
+}));
 
 const baseTemplate = {
 	group_code: 'Email',
@@ -25,10 +37,13 @@ function makeTemplate(overrides: Partial<SettingTempl> & Pick<SettingTempl, 'set
 
 describe('ZSettingTemplate', () => {
 	beforeEach(() => {
+		overlayCreate.mockClear();
+		overlayOpen.mockClear();
 		const settingStore = useSettingStore();
 		const merchantInfoStore = useMerchantInfoStore();
 		settingStore.settings = [];
 		settingStore.updatedSettings = [];
+		settingStore.updating = false;
 		merchantInfoStore.merchant = [];
 	});
 
@@ -154,6 +169,7 @@ describe('ZSettingTemplate', () => {
 		expect(connectButton.text()).toMatch(/connect now/i);
 		expect(connectButton.attributes('href')).toBe('/merchant/oauth/easyparcel/start');
 		expect(wrapper.find('[data-testid="oauth-connected"]').exists()).toBe(false);
+		expect(wrapper.find('[data-testid="oauth-disconnect"]').exists()).toBe(false);
 		expect(wrapper.find('[data-testid="oauth-connection-status"]').exists()).toBe(false);
 	});
 
@@ -187,6 +203,40 @@ describe('ZSettingTemplate', () => {
 		const connectedButton = wrapper.get('[data-testid="oauth-connected"]');
 		expect(connectedButton.text()).toMatch(/connected/i);
 		expect(connectedButton.attributes('disabled')).toBeDefined();
+
+		const disconnectButton = wrapper.get('[data-testid="oauth-disconnect"]');
+		expect(disconnectButton.text()).toMatch(/disconnect/i);
+		expect(disconnectButton.attributes('disabled')).toBeFalsy();
+	});
+
+	it('opens a confirmation modal when Disconnect is clicked', async () => {
+		const settingStore = useSettingStore();
+		settingStore.settings = [
+			{
+				group_code: 'EasyParcel',
+				set_code: 'Connection',
+				set_value: 'merchant@example.com',
+			} as never,
+		];
+
+		const wrapper = await mountSuspended(ZSettingTemplate, {
+			props: {
+				templates: [
+					makeTemplate({
+						group_code: 'EasyParcel',
+						set_code: 'Connection',
+						set_desc: 'EasyParcel Connection',
+						input_type: InputType.OAUTH,
+						data_source: 'EasyParcel',
+					}),
+				],
+			},
+		});
+
+		await wrapper.get('[data-testid="oauth-disconnect"]').trigger('click');
+
+		expect(overlayCreate).toHaveBeenCalled();
+		expect(overlayOpen).toHaveBeenCalled();
 	});
 
 	it('renders the selected SELECT value as a UBadge with the option label', async () => {

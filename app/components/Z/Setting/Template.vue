@@ -88,20 +88,31 @@
 						</UBadge>
 					</template>
 				</USelect>
-				<div v-if="getInputType(template) === InputTypeEnum.OAUTH" class="flex justify-end">
+				<div v-if="getInputType(template) === InputTypeEnum.OAUTH" class="flex justify-end gap-2">
 					<UButton
 						v-if="!isOauthConnected(template)"
 						data-testid="oauth-connect"
 						color="primary"
-						:to="template.is_disabled ? undefined : '/merchant/oauth/easyparcel/start'"
+						:to="template.is_disabled ? undefined : `/merchant/oauth/${oauthProviderSlug(template)}/start`"
 						:external="!template.is_disabled"
 						:disabled="template.is_disabled"
 					>
 						{{ t('components.settings.connectNow') }}
 					</UButton>
-					<UButton v-else data-testid="oauth-connected" color="neutral" variant="soft" disabled>
-						{{ t('components.settings.connected') }}
-					</UButton>
+					<template v-else>
+						<UButton data-testid="oauth-connected" color="neutral" variant="soft" disabled>
+							{{ t('components.settings.connected') }}
+						</UButton>
+						<UButton
+							data-testid="oauth-disconnect"
+							color="error"
+							variant="outline"
+							:disabled="template.is_disabled || updating"
+							@click="requestOauthDisconnect(template)"
+						>
+							{{ t('components.settings.disconnect') }}
+						</UButton>
+					</template>
 				</div>
 			</div>
 		</div>
@@ -118,6 +129,8 @@ import { getCourierHandoverItems } from '~/utils/options/courier-handover';
 import { getProductLineIdentityItems } from '~/utils/options/product-line-identity';
 import { getVariantLineIdentityItems } from '~/utils/options/variant-line-identity';
 import { buildWhatsAppMeUrl } from '~/utils/whatsapp-me-url';
+import { ZModalConfirmation } from '#components';
+import { successNotification } from '~/stores/AppUi/AppUi';
 
 const props = defineProps({
 	templates: {
@@ -128,10 +141,11 @@ const props = defineProps({
 
 const { templates } = toRefs(props);
 const { t } = useI18n();
+const overlay = useOverlay();
 
 const settingsStore = useSettingStore();
 const merchantInfoStore = useMerchantInfoStore();
-const { settings, updatedSettings } = storeToRefs(settingsStore);
+const { settings, updatedSettings, updating } = storeToRefs(settingsStore);
 
 const WHATSAPP_URL_PLACEHOLDER = 'https://wa.me/60xxxxxxxxx';
 const prefilledWhatsAppSetCodes = ref(new Set<string>());
@@ -204,6 +218,35 @@ const getSelectLabel = (template: SettingTempl, value: unknown): string => {
 };
 
 const isOauthConnected = (template: SettingTempl): boolean => getTextSettingValue(template).trim().length > 0;
+
+const oauthProviderSlug = (template: SettingTempl): string => (template.data_source ?? '').trim().toLowerCase() || 'easyparcel';
+
+const requestOauthDisconnect = (template: SettingTempl) => {
+	if (template.is_disabled || updating.value) {
+		return;
+	}
+
+	const confirmModal = overlay.create(ZModalConfirmation, {
+		props: {
+			title: t('components.settings.disconnectTitle'),
+			message: t('components.settings.disconnectMessage'),
+			titleVariant: 'danger',
+			action: 'delete',
+			onConfirm: async () => {
+				try {
+					const disconnected = await settingsStore.disconnectOauth(oauthProviderSlug(template));
+					if (disconnected) {
+						successNotification(t('components.settings.disconnected'));
+					}
+				} finally {
+					confirmModal.close();
+				}
+			},
+			onCancel: () => confirmModal.close(),
+		},
+	});
+	confirmModal.open();
+};
 
 const getMultiSelectSettingValue = (template: SettingTempl): string[] => {
 	const raw = getRawSettingValue(template) ?? template.default_val ?? '';

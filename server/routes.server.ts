@@ -256,6 +256,7 @@ export const Routes = {
 	OAuth: {
 		Start: (provider: string) => `oauth/${provider}/start`,
 		Callback: (provider: string) => `oauth/${provider}/callback`,
+		Disconnect: (provider: string) => `oauth/${provider}/disconnect`,
 	},
 	Couriers: {
 		Many: () => `${API_PATH.COURIERS}/`,

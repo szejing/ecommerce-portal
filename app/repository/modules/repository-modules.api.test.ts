@@ -418,6 +418,12 @@ describe('SettingModule', () => {
 		expect(lastFetch().opts.method).toBe('POST');
 		expect(lastFetch().opts.body).toBe(updateSettingsPayload);
 	});
+
+	it('disconnectOauth posts to the provider disconnect route', async () => {
+		await mod.disconnectOauth('easyparcel');
+		expect(lastFetch().url).toBe(MerchantRoutes.OAuth.Disconnect('easyparcel'));
+		expect(lastFetch().opts.method).toBe('POST');
+	});
 });
 
 describe('ProductModule', () => {

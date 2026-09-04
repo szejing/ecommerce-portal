@@ -1601,7 +1601,11 @@
 		},
 		"settings": {
 			"connectNow": "Sambung Sekarang",
-			"connected": "Tersambung"
+			"connected": "Tersambung",
+			"disconnect": "Putuskan",
+			"disconnectTitle": "Putuskan sambungan?",
+			"disconnectMessage": "Akaun ini akan diputuskan. Tempahan kurier akan berhenti sehingga anda sambung semula.",
+			"disconnected": "Terputus"
 		},
 		"shipment": {
 			"title": "Penghantaran",

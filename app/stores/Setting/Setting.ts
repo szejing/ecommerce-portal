@@ -55,6 +55,22 @@ export const useSettingStore = defineStore('settingStore', {
 			this.updatedSettings = [];
 		},
 
+		async disconnectOauth(provider: string): Promise<boolean> {
+			this.updating = true;
+			const { $api } = useNuxtApp();
+			try {
+				await $api.setting.disconnectOauth(provider);
+				await this.getSettings();
+				return true;
+			} catch (err: unknown | ErrorResponse) {
+				const message = (err as ErrorResponse).message ?? 'Failed to disconnect';
+				failedNotification(message);
+				return false;
+			} finally {
+				this.updating = false;
+			}
+		},
+
 		async updateSettings() {
 			this.updating = true;
 			const { $api } = useNuxtApp();

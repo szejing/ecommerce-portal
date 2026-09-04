@@ -44,6 +44,12 @@ function startMockBackend(): Promise<{ baseUrl: string; close: () => Promise<voi
 				return;
 			}
 
+			if (req.method === 'POST' && path === '/api/oauth/easyparcel/disconnect') {
+				res.writeHead(200, { 'Content-Type': 'application/json' });
+				res.end(JSON.stringify({ status: 200, message: 'Disconnected' }));
+				return;
+			}
+
 			res.writeHead(404, { 'Content-Type': 'application/json' });
 			res.end(JSON.stringify({ error: 'mock not found', path }));
 		});
@@ -145,5 +151,15 @@ describe('merchant Nitro API (proxied to mock upstream)', async () => {
 		);
 		expect(res.status).toBe(302);
 		expect(res.headers.get('location')).toMatch(/\/settings\/configuration$/);
+	});
+
+	test('POST /merchant/oauth/easyparcel/disconnect returns upstream JSON', async () => {
+		const data = await $fetch('/merchant/oauth/easyparcel/disconnect', {
+			method: 'POST',
+			headers: {
+				cookie: 'access-token=mock-token; x-merchant-id=M00001',
+			},
+		});
+		expect(data).toMatchObject({ status: 200, message: 'Disconnected' });
 	});
 });

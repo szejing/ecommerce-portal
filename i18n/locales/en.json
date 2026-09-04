@@ -1602,7 +1602,11 @@
 		},
 		"settings": {
 			"connectNow": "Connect Now",
-			"connected": "Connected"
+			"connected": "Connected",
+			"disconnect": "Disconnect",
+			"disconnectTitle": "Disconnect?",
+			"disconnectMessage": "This account will be unlinked. Courier booking will stop until you connect again.",
+			"disconnected": "Disconnected"
 		},
 		"shipment": {
 			"title": "Shipment",
