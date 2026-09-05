@@ -173,7 +173,11 @@
 	"summSale": {
 		"notifications": {
 			"exported": "Ringkasan jualan berjaya dieksport",
-			"exportFailed": "Gagal mengeksport ringkasan jualan"
+			"exportFailed": "Gagal mengeksport ringkasan jualan",
+			"shippingExported": "Ringkasan penghantaran berjaya dieksport",
+			"shippingExportFailed": "Gagal mengeksport ringkasan penghantaran",
+			"shippingDetailsExported": "Butiran penghantaran berjaya dieksport",
+			"shippingDetailsExportFailed": "Gagal mengeksport butiran penghantaran"
 		}
 	},
 	"shipmentArrangement": {
@@ -490,6 +494,16 @@
 		"salesItemsDesc": "Prestasi produk dan jualan mengikut item",
 		"salesPaymentDesc": "Kaedah pembayaran dan analisa transaksi",
 		"salesCustomerDesc": "Corak pembelian pelanggan dan metrik kesetiaan",
+		"salesShipping": "Ringkasan Penghantaran",
+		"salesShippingDesc": "Yuran tempahan kurier berbanding yuran penghantaran dikutip mengikut hari tempahan",
+		"salesShippingDetails": "Ringkasan Butiran Penghantaran",
+		"salesShippingDetailsDesc": "Yuran penghantaran tempahan kurier dan status penghantaran setiap jualan",
+		"salesShippingTitle": "Wemotoo CRM - Ringkasan Penghantaran",
+		"salesShippingDetailsTitle": "Wemotoo CRM - Ringkasan Butiran Penghantaran",
+		"analyticsSalesShipping": "Analitik Ringkasan Penghantaran Jualan",
+		"analyticsSalesShippingDetails": "Analitik Butiran Penghantaran Jualan",
+		"noSalesShippingFound": "Tiada ringkasan penghantaran dijumpai",
+		"noSalesShippingDetailsFound": "Tiada butiran penghantaran dijumpai",
 		"analyticsOrdersCustomers": "Analitik Pelanggan Pesanan",
 		"analyticsOrdersSummary": "Analitik Ringkasan Pesanan",
 		"analyticsOrdersItems": "Analitik Item Pesanan",
@@ -944,6 +958,11 @@
 		"bizDate": "Tarikh perniagaan",
 		"dateTime": "Tarikh & masa",
 		"orderNo": "No. Pesanan",
+		"invoiceNo": "No. Invois",
+		"shipmentStatus": "Status penghantaran",
+		"freeShippingDiscount": "Diskaun penghantaran percuma",
+		"shippingFeeCollected": "Yuran penghantaran dikutip",
+		"integratorCharge": "Caj penyepaduan",
 		"orderType": "Jenis pesanan",
 		"customer": "Pelanggan",
 		"status": "Status",

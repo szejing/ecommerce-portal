@@ -173,7 +173,11 @@
 	"summSale": {
 		"notifications": {
 			"exported": "Sales summary exported successfully",
-			"exportFailed": "Failed to export sales summary"
+			"exportFailed": "Failed to export sales summary",
+			"shippingExported": "Shipping summary exported successfully",
+			"shippingExportFailed": "Failed to export shipping summary",
+			"shippingDetailsExported": "Shipping details exported successfully",
+			"shippingDetailsExportFailed": "Failed to export shipping details"
 		}
 	},
 	"shipmentArrangement": {
@@ -490,6 +494,16 @@
 		"salesItemsDesc": "Product performance and sales by item",
 		"salesPaymentDesc": "Payment methods and transaction analysis",
 		"salesCustomerDesc": "Customer purchase patterns and loyalty metrics",
+		"salesShipping": "Shipping Summary",
+		"salesShippingDesc": "Courier booking fees vs shipping collected by booking day",
+		"salesShippingDetails": "Shipping Details Summary",
+		"salesShippingDetailsDesc": "Per-sale courier booking shipping money and shipment status",
+		"salesShippingTitle": "Wemotoo CRM - Shipping Summary",
+		"salesShippingDetailsTitle": "Wemotoo CRM - Shipping Details Summary",
+		"analyticsSalesShipping": "Analytics Sales Shipping Summary",
+		"analyticsSalesShippingDetails": "Analytics Sales Shipping Details",
+		"noSalesShippingFound": "No shipping summary found",
+		"noSalesShippingDetailsFound": "No shipping details found",
 		"analyticsOrdersCustomers": "Analytics Orders Customers",
 		"analyticsOrdersSummary": "Analytics Orders Summary",
 		"analyticsOrdersItems": "Analytics Orders Items",
@@ -945,6 +959,11 @@
 		"bizDate": "Business date",
 		"dateTime": "Date & time",
 		"orderNo": "Order No",
+		"invoiceNo": "Invoice No",
+		"shipmentStatus": "Shipment status",
+		"freeShippingDiscount": "Free shipping discount",
+		"shippingFeeCollected": "Shipping fee collected",
+		"integratorCharge": "Integrator charge",
 		"orderType": "Order type",
 		"customer": "Customer",
 		"status": "Status",

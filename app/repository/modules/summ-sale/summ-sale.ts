@@ -1,4 +1,4 @@
-import type { SummSaleBill, SummSaleCustomer, SummSaleItem, SummSalePayment } from '~/utils/types/summ-sales';
+import type { SummSaleBill, SummSaleCustomer, SummSaleItem, SummSalePayment, SummSaleShipping, SummSaleShippingDetail } from '~/utils/types/summ-sales';
 import HttpFactory from '../../factory';
 import MerchantRoutes from '../../routes.client';
 import type { GetDashboardSummReq } from './models/request';
@@ -125,6 +125,44 @@ class SaleSummaryModule extends HttpFactory {
 			query,
 			fetchOptions: {
 				responseType: 'blob', // Tell the HTTP client to expect a blob response
+			},
+		});
+	}
+
+	async getSummSalesShipping(query: BaseODataReq): Promise<BaseODataResp<SummSaleShipping>> {
+		return await this.call<BaseODataResp<SummSaleShipping>>({
+			method: 'GET',
+			url: `${this.RESOURCE.Shipping()}`,
+			query,
+		});
+	}
+
+	async exportSalesShipping(query: BaseODataReq): Promise<Blob> {
+		return await this.call<Blob>({
+			method: 'POST',
+			url: `${this.RESOURCE.ExportShipping()}`,
+			query,
+			fetchOptions: {
+				responseType: 'blob',
+			},
+		});
+	}
+
+	async getSummSalesShippingDetails(query: BaseODataReq): Promise<BaseODataResp<SummSaleShippingDetail>> {
+		return await this.call<BaseODataResp<SummSaleShippingDetail>>({
+			method: 'GET',
+			url: `${this.RESOURCE.ShippingDetails()}`,
+			query,
+		});
+	}
+
+	async exportSalesShippingDetails(query: BaseODataReq): Promise<Blob> {
+		return await this.call<Blob>({
+			method: 'POST',
+			url: `${this.RESOURCE.ExportShippingDetails()}`,
+			query,
+			fetchOptions: {
+				responseType: 'blob',
 			},
 		});
 	}

@@ -15,6 +15,8 @@ describe('AnalyticsIndexPage', () => {
 		const html = wrapper.html();
 		expect(html).toContain('/analytics/orders/summary');
 		expect(html).toContain('/analytics/sales/summary');
+		expect(html).toContain('/analytics/sales/shipping');
+		expect(html).toContain('/analytics/sales/shipping-details');
 		expect(html).not.toContain('/analytics/google-analytics');
 		expect(html).not.toContain('Manage Google Analytics');
 	});

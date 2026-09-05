@@ -16,7 +16,14 @@
 				@export="salesSummStore.exportSaleItemSummary"
 			/>
 
-			<UCard v-if="groupedByDate.length === 0" class="overflow-hidden">
+			<UCard
+				v-if="groupedByDate.length === 0"
+				class="overflow-hidden"
+				:ui="{
+					header: 'bg-elevated/40 px-4 py-3 sm:px-6',
+					body: 'p-0 sm:p-0',
+				}"
+			>
 				<UTable :data="[]" :columns="visibleColumns" :loading="loading" :ui="salesItemTableUi">
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">

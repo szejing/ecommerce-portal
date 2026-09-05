@@ -6,8 +6,8 @@
 
 		<div class="space-y-6">
 			<ZTableToolbar
-				:model-value="order_summ.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
+				:model-value="order_summ.page_size"
 				:page-size-options="options_page_size"
 				:export-enabled="true"
 				:exporting="order_summ.exporting"

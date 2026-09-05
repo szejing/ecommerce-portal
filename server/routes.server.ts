@@ -154,6 +154,10 @@ export const Routes = {
 		ExportPayments: () => `${API_PATH.SUMM_SALES}/payments/export`,
 		Customers: () => `${API_PATH.SUMM_SALES}/customers`,
 		ExportCustomers: () => `${API_PATH.SUMM_SALES}/customers/export`,
+		Shipping: () => `${API_PATH.SUMM_SALES}/shipping`,
+		ExportShipping: () => `${API_PATH.SUMM_SALES}/shipping/export`,
+		ShippingDetails: () => `${API_PATH.SUMM_SALES}/shipping-details`,
+		ExportShippingDetails: () => `${API_PATH.SUMM_SALES}/shipping-details/export`,
 	},
 	PaymentTypes: {
 		Many: () => `${API_PATH.PAYMENT_TYPES}/`,

@@ -110,3 +110,27 @@ export type SummSaleCustomer = {
 	total_qty: number;
 	total_voided_qty: number;
 };
+
+export type SummSaleShipping = {
+	biz_date: Date;
+	currency_code: string;
+	net_amt: number;
+	free_shipping_disc_amt: number;
+	shipping_fee: number;
+	integrator_charge: number;
+	total_txns: number;
+	total_qty: number;
+};
+
+export type SummSaleShippingDetail = {
+	order_no: string;
+	inv_no: string;
+	biz_date: Date;
+	currency_code: string;
+	shipment_status: string;
+	net_amt: number;
+	free_shipping_disc_amt: number;
+	shipping_fee: number;
+	integrator_charge: number;
+	total_qty: number;
+};

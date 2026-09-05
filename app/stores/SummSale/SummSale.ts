@@ -5,6 +5,7 @@ import { initialEmptySaleSumm } from './models/sale-summ.model';
 import { initialEmptySaleSummItem } from './models/sale-summ-items.model';
 import { initialEmptySaleSummPayment } from './models/sale-summ-payments.model';
 import { initialEmptySaleSummCustomer } from './models/sale-summ-customer.model';
+import { initialEmptySaleSummShipping } from './models/sale-summ-shipping.model';
 import type { Range } from '~/utils/interface';
 import type { SummDaily_, SummCustomer_, SummProduct_, TotalSaleAmt_ } from '~/repository/modules/summ-sale/models/response/get-dashboard-summ.resp';
 import { sub } from 'date-fns';
@@ -51,6 +52,7 @@ export const useSummSaleStore = defineStore('summSaleStore', {
 		sale_summ_items: structuredClone(initialEmptySaleSummItem),
 		sale_summ_payments: structuredClone(initialEmptySaleSummPayment),
 		sale_summ_customer: structuredClone(initialEmptySaleSummCustomer),
+		sale_summ_shipping: structuredClone(initialEmptySaleSummShipping),
 		listFailure: undefined as Extract<SummSaleFailure, { kind: 'request_failed' }> | undefined,
 		listingGeneration: 0 as number,
 	}),
@@ -571,6 +573,178 @@ export const useSummSaleStore = defineStore('summSaleStore', {
 				failedNotification(message);
 			} finally {
 				this.sale_summ_customer.exporting = false;
+			}
+		},
+
+		buildShippingFilter_(mode: 'summary' | 'details' = 'summary') {
+			const filter = this.sale_summ_shipping.filter;
+			const clauses: string[] = [];
+			if (filter.currency_code) clauses.push(`currency_code eq '${filter.currency_code}'`);
+			if (mode === 'details' && filter.shipment_status) {
+				clauses.push(`shipment_status eq '${filter.shipment_status}'`);
+			}
+			if (filter.date_range.end) {
+				clauses.push(
+					`(biz_date between '${getFormattedDate(filter.date_range.start!, 'yyyy-MM-dd')}' and '${getFormattedDate(filter.date_range.end, 'yyyy-MM-dd')}')`,
+				);
+			} else if (filter.date_range.start) {
+				clauses.push(`biz_date le '${getFormattedDate(filter.date_range.start, 'yyyy-MM-dd')}'`);
+			}
+			return clauses.join(' and ');
+		},
+
+		async refreshShippingListing(): Promise<SummSaleRefreshOutcome> {
+			this.sale_summ_shipping.loading = true;
+			this.listFailure = undefined;
+			const { $api } = useNuxtApp();
+			try {
+				const { data, '@odata.count': total } = await $api.summSales.getSummSalesShipping({
+					$filter: this.buildShippingFilter_('summary'),
+					$orderby: 'biz_date desc',
+					$top: this.sale_summ_shipping.page_size,
+					$skip: (this.sale_summ_shipping.current_page - 1) * this.sale_summ_shipping.page_size,
+				});
+				if (data) {
+					this.sale_summ_shipping.data = data;
+					this.sale_summ_shipping.total_data = total ?? 0;
+				}
+				return { status: 'completed' };
+			} catch (err: unknown | ErrorResponse) {
+				const failure = {
+					kind: 'request_failed' as const,
+					message: (err as ErrorResponse).message ?? 'Failed to load shipping summary',
+				};
+				this.listFailure = failure;
+				return { status: 'failed', failure };
+			} finally {
+				this.sale_summ_shipping.loading = false;
+			}
+		},
+
+		async refreshShippingDetailsListing(): Promise<SummSaleRefreshOutcome> {
+			this.sale_summ_shipping.loading = true;
+			this.listFailure = undefined;
+			const { $api } = useNuxtApp();
+			try {
+				const { data, '@odata.count': total } = await $api.summSales.getSummSalesShippingDetails({
+					$filter: this.buildShippingFilter_('details'),
+					$orderby: 'biz_date desc,order_no asc',
+					$top: this.sale_summ_shipping.page_size,
+					$skip: (this.sale_summ_shipping.current_page - 1) * this.sale_summ_shipping.page_size,
+				});
+				if (data) {
+					this.sale_summ_shipping.details = data;
+					this.sale_summ_shipping.total_data = total ?? 0;
+				}
+				return { status: 'completed' };
+			} catch (err: unknown | ErrorResponse) {
+				const failure = {
+					kind: 'request_failed' as const,
+					message: (err as ErrorResponse).message ?? 'Failed to load shipping details',
+				};
+				this.listFailure = failure;
+				return { status: 'failed', failure };
+			} finally {
+				this.sale_summ_shipping.loading = false;
+			}
+		},
+
+		async setShippingDateRange(range: Range, mode: 'summary' | 'details' = 'summary'): Promise<SummSaleRefreshOutcome> {
+			this.sale_summ_shipping.filter.date_range = {
+				start: range.start ? new Date(range.start) : new Date(),
+				end: range.end ? new Date(range.end) : undefined,
+			};
+			this.sale_summ_shipping.current_page = 1;
+			return mode === 'details' ? this.refreshShippingDetailsListing() : this.refreshShippingListing();
+		},
+
+		async setShippingPage(page: number, mode: 'summary' | 'details' = 'summary'): Promise<SummSaleRefreshOutcome> {
+			this.sale_summ_shipping.current_page = page;
+			return mode === 'details' ? this.refreshShippingDetailsListing() : this.refreshShippingListing();
+		},
+
+		async setShippingPageSize(size: number, mode: 'summary' | 'details' = 'summary'): Promise<SummSaleRefreshOutcome> {
+			this.sale_summ_shipping.page_size = size;
+			this.sale_summ_shipping.current_page = 1;
+			return mode === 'details' ? this.refreshShippingDetailsListing() : this.refreshShippingListing();
+		},
+
+		async setShippingShipmentStatus(status: string | undefined): Promise<SummSaleRefreshOutcome> {
+			this.sale_summ_shipping.filter.shipment_status = status;
+			this.sale_summ_shipping.current_page = 1;
+			return this.refreshShippingDetailsListing();
+		},
+
+		async clearShippingFilters(mode: 'summary' | 'details' = 'summary'): Promise<SummSaleRefreshOutcome> {
+			this.sale_summ_shipping.filter.date_range = defaultSummDateRange();
+			this.sale_summ_shipping.filter.currency_code = 'MYR';
+			this.sale_summ_shipping.filter.shipment_status = undefined;
+			this.sale_summ_shipping.filter.search = undefined;
+			this.sale_summ_shipping.current_page = 1;
+			return mode === 'details' ? this.refreshShippingDetailsListing() : this.refreshShippingListing();
+		},
+
+		async exportShippingSummary(): Promise<SummSaleExportOutcome> {
+			this.sale_summ_shipping.exporting = true;
+			const { $api } = useNuxtApp();
+			let objectUrl: string | undefined;
+			try {
+				const blob = await $api.summSales.exportSalesShipping({
+					$filter: this.buildShippingFilter_('summary'),
+					$orderby: 'biz_date desc',
+				});
+				if (!blob) return { status: 'failed', failure: { kind: 'export_empty' } };
+				objectUrl = URL.createObjectURL(blob);
+				const link = document.createElement('a');
+				link.href = objectUrl;
+				link.download = `sales_shipping_${getFormattedDate(new Date(), 'yyyyMMdd_HHmmss')}.csv`;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				return { status: 'completed' };
+			} catch (err: unknown | ErrorResponse) {
+				return {
+					status: 'failed',
+					failure: {
+						kind: 'request_failed',
+						message: (err as ErrorResponse).message ?? 'Failed to export shipping summary',
+					},
+				};
+			} finally {
+				if (objectUrl) URL.revokeObjectURL(objectUrl);
+				this.sale_summ_shipping.exporting = false;
+			}
+		},
+
+		async exportShippingDetails(): Promise<SummSaleExportOutcome> {
+			this.sale_summ_shipping.exporting = true;
+			const { $api } = useNuxtApp();
+			let objectUrl: string | undefined;
+			try {
+				const blob = await $api.summSales.exportSalesShippingDetails({
+					$filter: this.buildShippingFilter_('details'),
+					$orderby: 'biz_date desc,order_no asc',
+				});
+				if (!blob) return { status: 'failed', failure: { kind: 'export_empty' } };
+				objectUrl = URL.createObjectURL(blob);
+				const link = document.createElement('a');
+				link.href = objectUrl;
+				link.download = `sales_shipping_details_${getFormattedDate(new Date(), 'yyyyMMdd_HHmmss')}.csv`;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				return { status: 'completed' };
+			} catch (err: unknown | ErrorResponse) {
+				return {
+					status: 'failed',
+					failure: {
+						kind: 'request_failed',
+						message: (err as ErrorResponse).message ?? 'Failed to export shipping details',
+					},
+				};
+			} finally {
+				if (objectUrl) URL.revokeObjectURL(objectUrl);
+				this.sale_summ_shipping.exporting = false;
 			}
 		},
 	},

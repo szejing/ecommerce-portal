@@ -375,6 +375,28 @@ describe('SaleSummaryModule (summ-sale)', () => {
 		expect(lastFetch().url).toBe(MerchantRoutes.SummSales.ExportPayments());
 		expect(lastFetch().opts.responseType).toBe('blob');
 	});
+
+	it('getSummSalesShipping', async () => {
+		await mod.getSummSalesShipping(odata);
+		expect(lastFetch().url).toBe(MerchantRoutes.SummSales.Shipping());
+	});
+
+	it('exportSalesShipping', async () => {
+		await mod.exportSalesShipping(odata);
+		expect(lastFetch().url).toBe(MerchantRoutes.SummSales.ExportShipping());
+		expect(lastFetch().opts.responseType).toBe('blob');
+	});
+
+	it('getSummSalesShippingDetails', async () => {
+		await mod.getSummSalesShippingDetails(odata);
+		expect(lastFetch().url).toBe(MerchantRoutes.SummSales.ShippingDetails());
+	});
+
+	it('exportSalesShippingDetails', async () => {
+		await mod.exportSalesShippingDetails(odata);
+		expect(lastFetch().url).toBe(MerchantRoutes.SummSales.ExportShippingDetails());
+		expect(lastFetch().opts.responseType).toBe('blob');
+	});
 });
 
 describe('SaleModule', () => {

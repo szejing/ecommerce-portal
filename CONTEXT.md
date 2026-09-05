@@ -36,6 +36,14 @@ _Avoid_: Order type pickup, shipping method, EasyParcel service_id as a setting
 The merchant-facing collection of orders and converted sales, and the loaded record for one of those entries.
 _Avoid_: Orders list, sales list, bill detail
 
+**Shipping Summary**:
+The CRM analytics report of Courier-Booking shipping money by booking day. Shown only under Sales analytics (`/analytics/sales/shipping`). Bookings made before Sale conversion surface here when the Order converts (booking day kept). Distinct from Sale Summary and Order Summary bill tables.
+_Avoid_: Sale Summary shipping column, Order analytics shipping pages, one merged shipping list across Order and Sale
+
+**Shipping Details Summary**:
+The CRM analytics report of the same shipping money grain as Shipping Summary, one row per Sale. Shows Shipment Status; the daily Shipping Summary does not. Route: `/analytics/sales/shipping-details`.
+_Avoid_: Shipping Summary (daily), Order History, Order-side shipping details
+
 **Order Workbench**:
 The merchant-facing workspace for visually verifying one loaded Order History record and carrying out its payment, fulfillment, communication, and status actions.
 _Avoid_: Order Detail, picking checklist

@@ -13,6 +13,7 @@ import { getPaymentTypeGroupColumns } from './payment/payment-type-group';
 import { getPaymentTypeColumns } from './payment/payment-type';
 import { getPaymentMethodColumns } from './payment/payment-method';
 import { getSummPaymentColumns, SUMM_PAYMENT_COLUMN_LABELS } from './analytics/summ-payment';
+import { getSummShippingColumns, getSummShippingDetailColumns, SUMM_SHIPPING_COLUMN_LABELS, SUMM_SHIPPING_DETAIL_COLUMN_LABELS } from './analytics/summ-shipping';
 import { getSaleColumns } from './sale/sale';
 import { getBrandColumns } from './brand';
 import { getSummCustomerColumns, getSummCustomerColumnLabels } from './analytics/summ-customer';
@@ -82,6 +83,10 @@ export {
 	getShipmentArrangementColumns,
 	getShipmentArrangementPreviewColumns,
 	SUMM_PAYMENT_COLUMN_LABELS,
+	getSummShippingColumns,
+	getSummShippingDetailColumns,
+	SUMM_SHIPPING_COLUMN_LABELS,
+	SUMM_SHIPPING_DETAIL_COLUMN_LABELS,
 };
 
 export type { SummBillTableRow, SummCountKey, SummCustomerVariant, SummItemRow };

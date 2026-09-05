@@ -298,6 +298,22 @@ const salesReportLinks = computed(() => [
 		iconWrapClass: 'bg-violet-500/10',
 		iconClass: 'text-violet-600 dark:text-violet-400',
 	},
+	{
+		title: t('pages.salesShipping'),
+		to: '/analytics/sales/shipping',
+		description: t('pages.salesShippingDesc'),
+		icon: 'i-heroicons-truck-20-solid',
+		iconWrapClass: 'bg-sky-500/10',
+		iconClass: 'text-sky-600 dark:text-sky-400',
+	},
+	{
+		title: t('pages.salesShippingDetails'),
+		to: '/analytics/sales/shipping-details',
+		description: t('pages.salesShippingDetailsDesc'),
+		icon: 'i-heroicons-clipboard-document-list-20-solid',
+		iconWrapClass: 'bg-teal-500/10',
+		iconClass: 'text-teal-600 dark:text-teal-400',
+	},
 ]);
 
 onMounted(() => {

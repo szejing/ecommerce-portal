@@ -49,6 +49,8 @@ const analyticsGroups = computed(() => [
 			{ label: t('pages.salesItems'), to: '/analytics/sales/items' },
 			{ label: t('pages.salesPayment'), to: '/analytics/sales/payments' },
 			{ label: t('pages.salesCustomer'), to: '/analytics/sales/customers' },
+			{ label: t('pages.salesShipping'), to: '/analytics/sales/shipping' },
+			{ label: t('pages.salesShippingDetails'), to: '/analytics/sales/shipping-details' },
 		],
 	},
 ]);

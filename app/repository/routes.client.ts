@@ -170,6 +170,10 @@ const MerchantRoutes = {
 		ExportCustomers: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.SUMM_SALES}/customers/export`,
 		Payments: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.SUMM_SALES}/payments`,
 		ExportPayments: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.SUMM_SALES}/payments/export`,
+		Shipping: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.SUMM_SALES}/shipping`,
+		ExportShipping: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.SUMM_SALES}/shipping/export`,
+		ShippingDetails: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.SUMM_SALES}/shipping-details`,
+		ExportShippingDetails: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.SUMM_SALES}/shipping-details/export`,
 	},
 	PaymentTypes: {
 		Many: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.PAYMENT_TYPES}/many`,
@@ -311,6 +315,8 @@ const MerchantRoutes = {
 		Reset: (channel: string, templateCode: string) => `${prefix}/${API_PATH.MERCHANT}/document-templates/${encodeURIComponent(channel)}/${encodeURIComponent(templateCode)}/reset`,
 		Revisions: (channel: string, templateCode: string) => `${prefix}/${API_PATH.MERCHANT}/document-templates/${encodeURIComponent(channel)}/${encodeURIComponent(templateCode)}/revisions`,
 		Restore: (channel: string, templateCode: string, revisionNo: number | string) => `${prefix}/${API_PATH.MERCHANT}/document-templates/${encodeURIComponent(channel)}/${encodeURIComponent(templateCode)}/revisions/${encodeURIComponent(String(revisionNo))}/restore`,
+		Complete: () => `${prefix}/${API_PATH.MERCHANT}/conversations/connection/complete`,
+		Disconnect: () => `${prefix}/${API_PATH.MERCHANT}/conversations/connection/disconnect`,
 	},
 };
 
