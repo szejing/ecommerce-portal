@@ -1,6 +1,7 @@
 import { h } from 'vue';
 import type { TableColumn, TableRow } from '@nuxt/ui';
-import { getFormattedDate } from 'yeppi-common';
+import { getFormattedDate, getShipmentStatusColor } from 'yeppi-common';
+import { UBadge } from '#components';
 import { headerCell, moneyCell, numberCell, tableCellMeta } from '../styles';
 import type { TranslateFn } from './types';
 import type { SummSaleShipping, SummSaleShippingDetail } from '~/utils/types/summ-sales';
@@ -9,7 +10,7 @@ export const SUMM_SHIPPING_COLUMN_LABELS = {
 	biz_date: 'table.bizDate',
 	currency_code: 'table.currency',
 	net_amt: 'table.netAmt',
-	free_shipping_disc_amt: 'table.freeShippingDiscount',
+	free_shipping_disc_amt: 'table.shippingDiscount',
 	shipping_fee: 'table.shippingFeeCollected',
 	integrator_charge: 'table.integratorCharge',
 	total_txns: 'table.totalTransactions',
@@ -22,7 +23,7 @@ export const SUMM_SHIPPING_DETAIL_COLUMN_LABELS = {
 	inv_no: 'table.invoiceNo',
 	shipment_status: 'table.shipmentStatus',
 	net_amt: 'table.netAmt',
-	free_shipping_disc_amt: 'table.freeShippingDiscount',
+	free_shipping_disc_amt: 'table.shippingDiscount',
 	shipping_fee: 'table.shippingFeeCollected',
 	integrator_charge: 'table.integratorCharge',
 	total_qty: 'table.totalItems',
@@ -130,7 +131,11 @@ export function getSummShippingDetailColumns(t: TranslateFn): TableColumn<SummSa
 		{
 			accessorKey: 'shipment_status',
 			header: () => headerCell(t(SUMM_SHIPPING_DETAIL_COLUMN_LABELS.shipment_status)),
-			cell: ({ row }) => row.original.shipment_status,
+			cell: ({ row }) => {
+				const status = row.original.shipment_status;
+				const color = getShipmentStatusColor(status) ?? 'neutral';
+				return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () => status);
+			},
 		},
 		{
 			accessorKey: 'net_amt',

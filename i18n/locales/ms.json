@@ -960,7 +960,7 @@
 		"orderNo": "No. Pesanan",
 		"invoiceNo": "No. Invois",
 		"shipmentStatus": "Status penghantaran",
-		"freeShippingDiscount": "Diskaun penghantaran percuma",
+		"shippingDiscount": "Diskaun penghantaran",
 		"shippingFeeCollected": "Yuran penghantaran dikutip",
 		"integratorCharge": "Caj penyepaduan",
 		"orderType": "Jenis pesanan",

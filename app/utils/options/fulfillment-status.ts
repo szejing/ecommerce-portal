@@ -1,32 +1,29 @@
+import {
+	FulfillmentLifecycleStatus,
+	getFulfillmentLifecycleStatusColor,
+	type UiBadgeColor,
+} from 'yeppi-common';
 import type { FulfillmentLifecycleStatusValue } from '~/utils/types/order-fulfillment-shipping';
 
 type TranslateFn = (key: string) => string;
 
 export const options_fulfillment_status: FulfillmentLifecycleStatusValue[] = [
-	'pending',
-	'processing',
-	'packed',
-	'fulfilled',
+	FulfillmentLifecycleStatus.PENDING,
+	FulfillmentLifecycleStatus.PROCESSING,
+	FulfillmentLifecycleStatus.PACKED,
+	FulfillmentLifecycleStatus.FULFILLED,
 ];
 
 export function getFulfillmentStatusOptions(t: TranslateFn) {
 	return [
-		{ value: 'pending', label: t('options.pending') },
-		{ value: 'processing', label: t('options.processing') },
-		{ value: 'packed', label: t('options.packed') },
-		{ value: 'fulfilled', label: t('options.fulfilled') },
+		{ value: FulfillmentLifecycleStatus.PENDING, label: t('options.pending') },
+		{ value: FulfillmentLifecycleStatus.PROCESSING, label: t('options.processing') },
+		{ value: FulfillmentLifecycleStatus.PACKED, label: t('options.packed') },
+		{ value: FulfillmentLifecycleStatus.FULFILLED, label: t('options.fulfilled') },
 	];
 }
 
-export const getFulfillmentStatusColor = (
-	status: string,
-): 'primary' | 'error' | 'success' | 'warning' | 'secondary' | 'info' | 'neutral' | undefined => {
-	const color: Record<string, 'primary' | 'error' | 'success' | 'warning' | 'secondary' | 'info' | 'neutral' | undefined> = {
-		pending: 'warning',
-		processing: 'info',
-		packed: 'primary',
-		fulfilled: 'success',
-	};
-
-	return color[status];
+/** Lifecycle packing status colors (portal uses lifecycle values under this name). */
+export const getFulfillmentStatusColor = (status: string): UiBadgeColor | undefined => {
+	return getFulfillmentLifecycleStatusColor(status);
 };

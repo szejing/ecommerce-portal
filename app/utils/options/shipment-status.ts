@@ -1,29 +1,34 @@
+import {
+	getShipmentStatusColor as getCommonShipmentStatusColor,
+	ShipmentStatus,
+	type UiBadgeColor,
+} from 'yeppi-common';
 import type { ShipmentStatusValue } from '~/utils/types/order-fulfillment-shipping';
 
 type TranslateFn = (key: string) => string;
 
 export const options_shipment_status: ShipmentStatusValue[] = [
-	'pending',
-	'shipped',
-	'in_transit',
-	'delivered',
-	'failed',
+	ShipmentStatus.PENDING,
+	ShipmentStatus.SHIPPED,
+	ShipmentStatus.IN_TRANSIT,
+	ShipmentStatus.DELIVERED,
+	ShipmentStatus.FAILED,
 ];
 
 const SHIPMENT_STATUS_PROGRESS: ShipmentStatusValue[] = [
-	'pending',
-	'shipped',
-	'in_transit',
-	'delivered',
+	ShipmentStatus.PENDING,
+	ShipmentStatus.SHIPPED,
+	ShipmentStatus.IN_TRANSIT,
+	ShipmentStatus.DELIVERED,
 ];
 
 export function getShipmentStatusOptions(t: TranslateFn) {
 	return [
-		{ value: 'pending', label: t('options.pending') },
-		{ value: 'shipped', label: t('options.shipped') },
-		{ value: 'in_transit', label: t('options.inTransit') },
-		{ value: 'delivered', label: t('options.delivered') },
-		{ value: 'failed', label: t('options.failed') },
+		{ value: ShipmentStatus.PENDING, label: t('options.pending') },
+		{ value: ShipmentStatus.SHIPPED, label: t('options.shipped') },
+		{ value: ShipmentStatus.IN_TRANSIT, label: t('options.inTransit') },
+		{ value: ShipmentStatus.DELIVERED, label: t('options.delivered') },
+		{ value: ShipmentStatus.FAILED, label: t('options.failed') },
 	];
 }
 
@@ -39,19 +44,9 @@ export function canCompleteShipmentStatus(current: ShipmentStatusValue | string 
 	if (!current) {
 		return false;
 	}
-	return current !== 'delivered' && current !== 'failed';
+	return current !== ShipmentStatus.DELIVERED && current !== ShipmentStatus.FAILED;
 }
 
-export const getShipmentStatusColor = (
-	status: string,
-): 'primary' | 'error' | 'success' | 'warning' | 'secondary' | 'info' | 'neutral' | undefined => {
-	const color: Record<string, 'primary' | 'error' | 'success' | 'warning' | 'secondary' | 'info' | 'neutral' | undefined> = {
-		pending: 'warning',
-		shipped: 'primary',
-		in_transit: 'info',
-		delivered: 'success',
-		failed: 'error',
-	};
-
-	return color[status];
+export const getShipmentStatusColor = (status: string): UiBadgeColor | undefined => {
+	return getCommonShipmentStatusColor(status);
 };
