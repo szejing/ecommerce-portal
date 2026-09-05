@@ -132,7 +132,6 @@ const submitBooking = async () => {
 		}
 
 		successNotification(t('components.fulfillment.courierBooking.submitted'));
-		open.value = false;
 		emit('close', true);
 	} catch (error) {
 		failedNotification(error instanceof Error ? error.message : String(error));
@@ -154,7 +153,7 @@ watch(open, async (isOpen) => {
 		await loadContext();
 	} catch (error) {
 		failedNotification(error instanceof Error ? error.message : String(error));
-		open.value = false;
+		emit('close', false);
 	}
 });
 
@@ -295,7 +294,7 @@ watchDebounced(
 					</p>
 				</div>
 				<div class="flex gap-2">
-					<UButton color="neutral" variant="ghost" :disabled="saving" @click="open = false">
+					<UButton color="neutral" variant="ghost" :disabled="saving" @click="emit('close', false)">
 						{{ t('common.cancel') }}
 					</UButton>
 					<UButton

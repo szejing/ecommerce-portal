@@ -47,9 +47,7 @@ const awbLinks = computed(() =>
 		{ href: props.batch.metadata?.awb_urls?.a6?.trim(), label: 'A6' },
 	].filter((link): link is { href: string; label: string } => Boolean(link.href)),
 );
-const canShowBookCourier = computed(
-	() => props.canBookCourier && !isCourierBooked.value && props.batch.shipment_status === 'pending',
-);
+const canShowBookCourier = computed(() => props.canBookCourier && !isCourierBooked.value && props.batch.shipment_status === 'pending');
 const methodLabel = computed(() => props.batch.shipping_method?.description || '');
 const zoneLabel = computed(() => props.batch.shipping_zone_id?.trim() || '');
 
@@ -91,26 +89,13 @@ const nextActions = computed(() => {
 						<span data-testid="fulfillment-courier" class="shipping-courier">{{ courierLabel }}</span>
 						<div data-testid="fulfillment-tracking" class="shipping-tracking">
 							<span class="shipping-tracking-label">{{ t('components.fulfillment.trackingNumber') }}:</span>
-							<a
-								v-if="trackingHref"
-								:href="trackingHref"
-								target="_blank"
-								rel="noopener noreferrer"
-								class="shipping-tracking-value underline"
-							>
+							<a v-if="trackingHref" :href="trackingHref" target="_blank" rel="noopener noreferrer" class="shipping-tracking-value underline">
 								{{ trackingLabel }}
 							</a>
 							<span v-else class="shipping-tracking-value">{{ trackingLabel }}</span>
 						</div>
 						<div v-if="awbLinks.length" data-testid="fulfillment-awb-links" class="shipping-meta flex flex-wrap gap-2">
-							<a
-								v-for="link in awbLinks"
-								:key="link.label"
-								:href="link.href"
-								target="_blank"
-								rel="noopener noreferrer"
-								class="underline"
-							>
+							<a v-for="link in awbLinks" :key="link.label" :href="link.href" target="_blank" rel="noopener noreferrer" class="underline">
 								{{ t('components.fulfillment.printAwb') }} {{ link.label }}
 							</a>
 						</div>
@@ -137,7 +122,7 @@ const nextActions = computed(() => {
 					color="neutral"
 					variant="soft"
 					icon="i-heroicons-pencil-square"
-					:disabled="loading || isCourierBooked"
+					:disabled="loading"
 					@click="emit('edit', batch)"
 				>
 					{{ t('common.edit') }}

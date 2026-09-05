@@ -14,7 +14,13 @@ import {
 	isAllOrderStatusesSelected,
 } from './order-status';
 import { options_order_item_status, getOrderItemStatusColor, getOrderItemStatusOptions } from './order-item-status';
-import { options_payment_status, getPaymentStatusColor, getPaymentStatusOptions } from './payment-status';
+import {
+	options_payment_status,
+	getPaymentStatusColor,
+	getPaymentStatusOptions,
+	getNextPaymentStatus,
+	canCompletePaymentStatus,
+} from './payment-status';
 import { options_page_size } from './page-size';
 import { options_appointment_status, getAppointmentStatusColor, getAppointmentStatusOptions } from './appointment-status';
 import { options_amount_type, getAmountTypeOptions } from './amount-type';
@@ -27,6 +33,8 @@ import {
 	options_shipment_status,
 	getShipmentStatusColor,
 	getShipmentStatusOptions,
+	getNextShipmentStatus,
+	canCompleteShipmentStatus,
 } from './shipment-status';
 import { SHIPPING_ZONE_STATUS_FILTER_ALL, getShippingZoneStatusFilterItems } from './shipping-zone-filter';
 import {
@@ -65,6 +73,8 @@ export {
 	options_payment_status,
 	getPaymentStatusColor,
 	getPaymentStatusOptions,
+	getNextPaymentStatus,
+	canCompletePaymentStatus,
 	options_appointment_status,
 	getAppointmentStatusColor,
 	getAppointmentStatusOptions,
@@ -76,6 +86,8 @@ export {
 	options_shipment_status,
 	getShipmentStatusColor,
 	getShipmentStatusOptions,
+	getNextShipmentStatus,
+	canCompleteShipmentStatus,
 	SHIPPING_ZONE_STATUS_FILTER_ALL,
 	getShippingZoneStatusFilterItems,
 	ACTIVITY_LOG_FILTER_ALL,

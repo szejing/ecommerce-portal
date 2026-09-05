@@ -10,6 +10,13 @@ export const options_shipment_status: ShipmentStatusValue[] = [
 	'failed',
 ];
 
+const SHIPMENT_STATUS_PROGRESS: ShipmentStatusValue[] = [
+	'pending',
+	'shipped',
+	'in_transit',
+	'delivered',
+];
+
 export function getShipmentStatusOptions(t: TranslateFn) {
 	return [
 		{ value: 'pending', label: t('options.pending') },
@@ -18,6 +25,21 @@ export function getShipmentStatusOptions(t: TranslateFn) {
 		{ value: 'delivered', label: t('options.delivered') },
 		{ value: 'failed', label: t('options.failed') },
 	];
+}
+
+export function getNextShipmentStatus(current: ShipmentStatusValue | string | undefined): ShipmentStatusValue | undefined {
+	const index = SHIPMENT_STATUS_PROGRESS.indexOf(current as ShipmentStatusValue);
+	if (index < 0 || index >= SHIPMENT_STATUS_PROGRESS.length - 1) {
+		return undefined;
+	}
+	return SHIPMENT_STATUS_PROGRESS[index + 1];
+}
+
+export function canCompleteShipmentStatus(current: ShipmentStatusValue | string | undefined): boolean {
+	if (!current) {
+		return false;
+	}
+	return current !== 'delivered' && current !== 'failed';
 }
 
 export const getShipmentStatusColor = (

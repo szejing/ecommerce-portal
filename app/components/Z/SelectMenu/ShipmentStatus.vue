@@ -7,10 +7,10 @@
 		:variant="appearance === 'pill' ? 'none' : undefined"
 		:trailing-icon="appearance === 'pill' ? '' : undefined"
 		:disabled="disabled"
-		:placeholder="t('components.selectMenu.selectPaymentStatus')"
-		:aria-label="t('components.orderDetail.changePaymentStatus')"
+		:placeholder="t('components.selectMenu.selectShipmentStatus')"
+		:aria-label="t('components.orderDetail.changeShipmentStatus')"
 		:search-input="{
-			placeholder: 'Search payment status…',
+			placeholder: 'Search shipment status…',
 			icon: 'i-lucide-search',
 		}"
 		:ui="selectUi"
@@ -18,16 +18,16 @@
 	>
 		<template #default>
 			<span v-if="status" :class="appearance === 'pill' ? 'status-select-pill-label' : undefined">
-				<UBadge v-if="appearance !== 'pill'" :color="getPaymentStatusColor(status)" variant="subtle" class="truncate">
+				<UBadge v-if="appearance !== 'pill'" :color="getShipmentStatusColor(status)" variant="subtle" class="truncate">
 					{{ selectedLabel }}
 				</UBadge>
 				<template v-else>{{ selectedLabel }}</template>
 			</span>
-			<span v-else class="text-neutral-400">{{ t('components.selectMenu.selectPaymentStatus') }}</span>
+			<span v-else class="text-neutral-400">{{ t('components.selectMenu.selectShipmentStatus') }}</span>
 		</template>
 
 		<template #item="{ item }">
-			<UBadge :color="getPaymentStatusColor(item.value)" variant="subtle" class="truncate">
+			<UBadge :color="getShipmentStatusColor(item.value)" variant="subtle" class="truncate">
 				{{ item.label }}
 			</UBadge>
 		</template>
@@ -35,14 +35,14 @@
 </template>
 
 <script lang="ts" setup>
-import type { PaymentStatus } from 'yeppi-common';
-import { getPaymentStatusOptions, getPaymentStatusColor } from '~/utils/options';
+import { getShipmentStatusOptions, getShipmentStatusColor } from '~/utils/options';
+import type { ShipmentStatusValue } from '~/utils/types/order-fulfillment-shipping';
 
 const { t } = useI18n();
 
 const props = withDefaults(
 	defineProps<{
-		paymentStatus: PaymentStatus | undefined;
+		shipmentStatus: ShipmentStatusValue | undefined;
 		disabled?: boolean;
 		appearance?: 'default' | 'pill';
 	}>(),
@@ -52,17 +52,17 @@ const props = withDefaults(
 	},
 );
 const emit = defineEmits<{
-	'update:paymentStatus': [status: PaymentStatus | undefined];
+	'update:shipmentStatus': [status: ShipmentStatusValue | undefined];
 }>();
 
-const items = computed(() => getPaymentStatusOptions(t));
+const items = computed(() => getShipmentStatusOptions(t));
 
 const status = computed({
 	get() {
-		return props.paymentStatus;
+		return props.shipmentStatus;
 	},
 	set(value) {
-		emit('update:paymentStatus', value);
+		emit('update:shipmentStatus', value);
 	},
 });
 

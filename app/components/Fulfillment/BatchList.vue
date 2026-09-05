@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LazyFulfillmentArrangementModal } from '#components';
+import { LazyFulfillmentArrangementModal, LazyFulfillmentCourierBookingModal } from '#components';
 import { PaymentStatus } from 'yeppi-common';
 import { useCourierStore } from '~/stores/Courier/Courier';
 import { useFulfillmentStore, type FulfillmentAction } from '~/stores/Fulfillment/Fulfillment';
@@ -10,12 +10,15 @@ import type { OrderHistory } from '~/utils/types/order-history';
 
 const { t } = useI18n();
 
-const props = withDefaults(defineProps<{
-	order: OrderHistory;
-	ownerType?: 'order' | 'sale';
-}>(), {
-	ownerType: 'order',
-});
+const props = withDefaults(
+	defineProps<{
+		order: OrderHistory;
+		ownerType?: 'order' | 'sale';
+	}>(),
+	{
+		ownerType: 'order',
+	},
+);
 
 const emit = defineEmits<{
 	refresh: [];
@@ -26,15 +29,11 @@ const fulfillmentStore = useFulfillmentStore();
 const courierStore = useCourierStore();
 const { isConnected: isEasyParcelConnected } = useEasyParcelConnection();
 const arrangementCouriers = ref<Courier[]>([]);
-const bookingTargets = ref<CourierBookingTarget[]>([]);
-const bookingModalOpen = ref(false);
 
 const batches = computed(() => [...(props.order.fulfillments ?? [])].sort((left, right) => left.batch_no - right.batch_no));
 const loading = computed(() => fulfillmentStore.updating);
 const currencyCode = computed(() => props.order.currency?.code ?? 'MYR');
-const canBookCourier = computed(
-	() => isEasyParcelConnected.value && props.order.payment_status === PaymentStatus.PAID,
-);
+const canBookCourier = computed(() => isEasyParcelConnected.value && props.order.payment_status === PaymentStatus.PAID);
 
 const editBatch = async (batch: FulfillmentBatch) => {
 	arrangementCouriers.value = await courierStore.fetchAllActiveCouriers();
@@ -54,22 +53,26 @@ const editBatch = async (batch: FulfillmentBatch) => {
 	if (saved) emit('refresh');
 };
 
-const openBookingModal = (targets: CourierBookingTarget[]) => {
-	bookingTargets.value = targets;
-	bookingModalOpen.value = true;
+const openBookingModal = async (targets: CourierBookingTarget[]) => {
+	const bookingModal = overlay.create(LazyFulfillmentCourierBookingModal, {
+		props: {
+			open: true,
+			targets,
+		},
+	});
+
+	const booked = await bookingModal.open().result;
+	if (booked) emit('refresh');
 };
 
 const bookBatch = (batch: FulfillmentBatch) => {
-	openBookingModal([{
-		fulfillmentId: batch.id,
-		orderNo: batch.order_no,
-		batchNo: batch.batch_no,
-	}]);
-};
-
-const onBookingClose = (booked?: boolean) => {
-	bookingModalOpen.value = false;
-	if (booked) emit('refresh');
+	void openBookingModal([
+		{
+			fulfillmentId: batch.id,
+			orderNo: batch.order_no,
+			batchNo: batch.batch_no,
+		},
+	]);
 };
 
 const runAction = async (action: FulfillmentAction, batch: FulfillmentBatch) => {
@@ -100,12 +103,6 @@ const runAction = async (action: FulfillmentAction, batch: FulfillmentBatch) => 
 			@edit="editBatch"
 			@book="bookBatch"
 			@action="runAction"
-		/>
-
-		<FulfillmentCourierBookingModal
-			v-model:open="bookingModalOpen"
-			:targets="bookingTargets"
-			@close="onBookingClose"
 		/>
 	</section>
 </template>

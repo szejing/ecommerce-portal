@@ -5,8 +5,8 @@ import OrderWorkbenchStatusSummary from '~/components/Order/Workbench/StatusSumm
 import type { FulfillmentBatch } from '~/utils/types/order-fulfillment-shipping';
 import type { OrderHistory } from '~/utils/types/order-history';
 
-const fulfillment = (status: FulfillmentBatch['status'], shipmentStatus: FulfillmentBatch['shipment_status']): FulfillmentBatch => ({
-	id: 'batch-1',
+const fulfillment = (status: FulfillmentBatch['status'], shipmentStatus: FulfillmentBatch['shipment_status'], id = 'batch-1'): FulfillmentBatch => ({
+	id,
 	order_no: 'ORD-1',
 	inv_no: 'ORD-1',
 	batch_no: 1,
@@ -42,7 +42,7 @@ describe('OrderWorkbenchStatusSummary', () => {
 
 		expect(wrapper.get('[data-testid="workbench-order-status"]').text()).toContain('Confirmed');
 		expect(wrapper.get('[data-testid="workbench-payment-status"]').text()).toContain('Pending');
-		expect(wrapper.get('[data-testid="workbench-fulfillment-status"]').text()).toContain('Packed');
+		expect(wrapper.get('[data-testid="workbench-fulfillment-status"]').text()).toContain('Pending');
 	});
 
 	it('represents pickup without inventing a shipment state', async () => {
@@ -54,6 +54,7 @@ describe('OrderWorkbenchStatusSummary', () => {
 
 		expect(wrapper.get('[data-testid="workbench-order-status"]').text()).toContain('Ready for Pickup');
 		expect(wrapper.get('[data-testid="workbench-fulfillment-status"]').text()).toContain('Pickup');
+		expect(wrapper.findComponent({ name: 'ZSelectMenuShipmentStatus' }).exists()).toBe(false);
 	});
 
 	it('renders one labelled group instead of stacked status cards', async () => {
@@ -84,5 +85,67 @@ describe('OrderWorkbenchStatusSummary', () => {
 		expect(wrapper.find('[data-testid="workbench-order-status-next"]').exists()).toBe(false);
 		expect(wrapper.find('[data-testid="workbench-order-status-complete"]').exists()).toBe(false);
 		expect(wrapper.get('[data-testid="workbench-order-status"]').text()).toContain('Completed');
+	});
+
+	it('emits payment status changes from the payment select', async () => {
+		const wrapper = await mountSuspended(OrderWorkbenchStatusSummary, { props: { order: order({}) } });
+
+		const paymentSelect = wrapper.findComponent({ name: 'ZSelectMenuPaymentStatus' });
+		expect(paymentSelect.exists()).toBe(true);
+		await paymentSelect.vm.$emit('update:paymentStatus', PaymentStatus.PAID);
+
+		expect(wrapper.emitted('update:paymentStatus')?.[0]).toEqual([PaymentStatus.PAID]);
+	});
+
+	it('advances payment status with next and complete shortcuts', async () => {
+		const wrapper = await mountSuspended(OrderWorkbenchStatusSummary, {
+			props: { order: order({ payment_status: PaymentStatus.PENDING }) },
+		});
+
+		await wrapper.get('[data-testid="workbench-payment-status-next"]').trigger('click');
+		expect(wrapper.emitted('update:paymentStatus')?.[0]).toEqual([PaymentStatus.PARTIALLY_PAID]);
+
+		await wrapper.get('[data-testid="workbench-payment-status-complete"]').trigger('click');
+		expect(wrapper.emitted('update:paymentStatus')?.[1]).toEqual([PaymentStatus.PAID]);
+	});
+
+	it('emits shipment status changes when batches share one shipment status', async () => {
+		const wrapper = await mountSuspended(OrderWorkbenchStatusSummary, {
+			props: { order: order({ fulfillments: [fulfillment('packed', 'pending')] }) },
+		});
+
+		const shipmentSelect = wrapper.findComponent({ name: 'ZSelectMenuShipmentStatus' });
+		expect(shipmentSelect.exists()).toBe(true);
+		await shipmentSelect.vm.$emit('update:shipmentStatus', 'shipped');
+
+		expect(wrapper.emitted('update:shipmentStatus')?.[0]).toEqual(['shipped']);
+	});
+
+	it('advances shipment status with next and complete shortcuts', async () => {
+		const wrapper = await mountSuspended(OrderWorkbenchStatusSummary, {
+			props: { order: order({ fulfillments: [fulfillment('packed', 'pending')] }) },
+		});
+
+		await wrapper.get('[data-testid="workbench-shipment-status-next"]').trigger('click');
+		expect(wrapper.emitted('update:shipmentStatus')?.[0]).toEqual(['shipped']);
+
+		await wrapper.get('[data-testid="workbench-shipment-status-complete"]').trigger('click');
+		expect(wrapper.emitted('update:shipmentStatus')?.[1]).toEqual(['delivered']);
+	});
+
+	it('keeps a read-only fulfillment badge when shipment statuses differ', async () => {
+		const wrapper = await mountSuspended(OrderWorkbenchStatusSummary, {
+			props: {
+				order: order({
+					fulfillments: [
+						fulfillment('packed', 'pending', 'batch-1'),
+						fulfillment('fulfilled', 'shipped', 'batch-2'),
+					],
+				}),
+			},
+		});
+
+		expect(wrapper.findComponent({ name: 'ZSelectMenuShipmentStatus' }).exists()).toBe(false);
+		expect(wrapper.get('[data-testid="workbench-fulfillment-status"]').text()).toContain('Processing');
 	});
 });
