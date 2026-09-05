@@ -3,20 +3,33 @@
 		<template #header>
 			<div class="w-full flex-between items-center">
 				<h2>{{ t('components.zInput.inventory') }}</h2>
-				<div class="w-[50%] flex-jend items-center gap-4">
-					<UCheckbox v-model="variantDetail.manage_inventory" name="manageInventory" :label="t('components.zInput.manageInventory')" color="success" />
-				</div>
 			</div>
 		</template>
 
-		<div v-if="variantDetail.manage_inventory" class="section-grid-basic-details">
-			<UFormField v-slot="{ error }" :label="t('components.zInput.sku')" name="sku">
-				<UInput v-model="variantDetail.sku" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" />
-			</UFormField>
+		<div class="flex flex-col gap-4">
+			<div class="flex flex-wrap items-center gap-4">
+				<UCheckbox
+					v-model="variantDetail.manage_inventory"
+					name="manageInventory"
+					:label="t('components.zInput.manageInventory')"
+					color="success" />
+				<UCheckbox
+					v-model="variantDetail.allow_preorder"
+					name="allowPreorder"
+					:label="t('components.zInput.allowPreorder')"
+					color="success" />
+			</div>
 
-			<UFormField v-slot="{ error }" :label="t('components.zInput.quantity')" name="quantity">
-				<UInput v-model="variantDetail.inventory_quantity" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" type="number" />
-			</UFormField>
+			<div v-if="variantDetail.manage_inventory" class="section-grid-basic-details">
+				<UFormField v-slot="{ error }" :label="t('components.zInput.quantity')" name="quantity">
+					<UInput
+						v-model.number="variantDetail.inventory_quantity"
+						:trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined"
+						type="number"
+						:min="0"
+						step="1" />
+				</UFormField>
+			</div>
 		</div>
 	</UCard>
 </template>

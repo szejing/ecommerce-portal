@@ -2,35 +2,66 @@
 	<div v-if="validVariations.length > 0 && variantRows.length > 0" class="space-y-4">
 		<h4 class="text-sm font-semibold text-neutral-900">{{ t('components.variantList.title') }}</h4>
 
-		<!-- Apply to All row -->
-		<div class="flex items-center gap-3 mb-2">
-			<UInput
-				v-model="applyAll.orig"
-				:placeholder="t('components.variantList.pricePlaceholder')"
-				type="number"
-				size="sm"
-				class="max-w-44"
-				:ui="{ base: 'ps-12' }"
-			>
-				<template #leading>
-					<span class="text-xs text-neutral-400">{{ currencyCode }}</span>
-				</template>
-			</UInput>
-			<UInput
-				v-model="applyAll.sale"
-				:placeholder="t('components.variantList.salePricePlaceholder')"
-				type="number"
-				size="sm"
-				class="max-w-44"
-				:ui="{ base: 'ps-12' }"
-			>
-				<template #leading>
-					<span class="text-xs text-neutral-400">{{ currencyCode }}</span>
-				</template>
-			</UInput>
-			<UButton color="primary" variant="soft" size="sm" @click="applyToAll">
-				{{ t('components.variantList.applyToAll') }}
-			</UButton>
+		<!-- Apply to All -->
+		<div class="space-y-2 mb-2">
+			<div class="flex flex-wrap items-center gap-3">
+				<UInput
+					v-model="applyAll.orig"
+					:placeholder="t('components.variantList.pricePlaceholder')"
+					type="number"
+					size="sm"
+					class="max-w-44"
+					:ui="{ base: 'ps-12' }"
+					:aria-label="t('components.variantList.price')"
+				>
+					<template #leading>
+						<span class="text-xs text-neutral-400">{{ currencyCode }}</span>
+					</template>
+				</UInput>
+				<UInput
+					v-model="applyAll.sale"
+					:placeholder="t('components.variantList.salePricePlaceholder')"
+					type="number"
+					size="sm"
+					class="max-w-44"
+					:ui="{ base: 'ps-12' }"
+					:aria-label="t('components.variantList.salePrice')"
+				>
+					<template #leading>
+						<span class="text-xs text-neutral-400">{{ currencyCode }}</span>
+					</template>
+				</UInput>
+			</div>
+			<div class="flex flex-wrap items-center gap-3">
+				<UCheckbox
+					v-model="applyAll.manage_inventory"
+					name="applyAllManageInventory"
+					:label="t('components.zInput.manageInventory')"
+					color="success"
+					@update:model-value="onApplyAllManageChange"
+				/>
+				<UCheckbox
+					v-model="applyAll.allow_preorder"
+					name="applyAllAllowPreorder"
+					:label="t('components.zInput.allowPreorder')"
+					color="success"
+					:disabled="!applyAll.manage_inventory"
+				/>
+				<UInput
+					v-if="applyAll.manage_inventory"
+					v-model="applyAll.inventory_quantity"
+					:placeholder="t('components.zInput.quantity')"
+					type="number"
+					size="sm"
+					class="max-w-36"
+					:min="0"
+					step="1"
+					:aria-label="t('components.zInput.quantity')"
+				/>
+				<UButton color="primary" variant="soft" size="sm" @click="applyToAll">
+					{{ t('components.variantList.applyToAll') }}
+				</UButton>
+			</div>
 		</div>
 
 		<!-- Variants Table -->
@@ -49,6 +80,9 @@
 						</th>
 						<th class="text-left px-3 py-2 text-xs font-semibold text-neutral-700">
 							{{ t('components.variantList.salePrice') }}
+						</th>
+						<th v-if="showStockColumn" class="text-left px-3 py-2 text-xs font-semibold text-neutral-700">
+							{{ t('components.variantList.stock') }}
 						</th>
 						<th class="w-12 px-3 py-2">
 							<span class="sr-only">{{ t('components.variantList.edit') }}</span>
@@ -117,40 +151,39 @@
 								</UInput>
 							</td>
 
-							<td class="px-3 py-2 align-middle">
-								<UButton
-									color="neutral"
-									variant="ghost"
+							<!-- Stock (On Hand) when Manage Inventory is on -->
+							<td v-if="showStockColumn" class="px-3 py-2 align-top">
+								<UInput
+									v-if="row.variant.manage_inventory"
+									v-model.number="row.variant.inventory_quantity"
+									type="number"
 									size="sm"
-									square
-									:icon="ICONS.PENCIL"
-									:aria-label="t('components.variantList.edit')"
-									@click="openVariantDetail(rowIdx)"
+									class="max-w-28"
+									:min="0"
+									step="1"
+									:placeholder="t('components.variantList.stockPlaceholder')"
+									:aria-label="t('components.variantList.stock')"
+									@update:model-value="emitVariants"
 								/>
+								<span v-else class="text-neutral-400">—</span>
 							</td>
 						</tr>
 					</template>
 				</tbody>
 			</table>
 		</div>
-
-		<ZInputProductVariantDetail
-			v-model:open="detailOpen"
-			:title="detailTitle"
-			:variant="editingVariant"
-			:other-skus="editingOtherSkus"
-			:currency-code="currencyCode"
-			@confirm="confirmVariantDetail"
-		/>
 	</div>
 </template>
 
 <script lang="ts" setup>
+import { ZInputProductVariantDetail } from '#components';
 import type { ProductCreate } from '~/utils/types/form/product-creation';
 import type { Product, ProductVariantInput } from '~/utils/types/product';
 import type { ProductOptionInput } from '~/utils/types/product-option';
 import type { ProductVariationInput } from '~/utils/types/product-variation';
 import {
+	applyVariantDetailPayload,
+	applyVariantListInventoryToAll,
 	applyVariantListPricesToAll,
 	getValidProductOptions,
 	getValidProductVariations,
@@ -158,8 +191,10 @@ import {
 	resolveProductVariationId,
 } from '~/utils/product-variant-list';
 import { ICONS } from '~/utils/icons';
+import { successNotification } from '~/stores/AppUi/AppUi';
 
 const { t } = useI18n();
+const overlay = useOverlay();
 
 const props = defineProps<{
 	product: Product | ProductCreate;
@@ -172,7 +207,17 @@ const emit = defineEmits(['update:variants', 'delete:variant']);
 const applyAll = reactive({
 	orig: undefined as number | undefined,
 	sale: undefined as number | undefined,
+	manage_inventory: false,
+	allow_preorder: false,
+	inventory_quantity: undefined as number | undefined,
 });
+
+const onApplyAllManageChange = (value: boolean | 'indeterminate') => {
+	if (value !== true) {
+		applyAll.allow_preorder = false;
+		applyAll.inventory_quantity = undefined;
+	}
+};
 
 type VariantRow = {
 	key: string;
@@ -182,8 +227,8 @@ type VariantRow = {
 };
 
 const variantRows = ref<VariantRow[]>([]);
-const detailOpen = ref(false);
-const editingRowIndex = ref<number | null>(null);
+
+const showStockColumn = computed(() => variantRows.value.some((row) => row.variant.manage_inventory));
 
 const validVariations = computed(() => getValidProductVariations(props.variations));
 
@@ -207,21 +252,6 @@ const isFirstInGroup = (rowIdx: number) => {
 
 const currencyCode = computed(() => {
 	return props.product.price_types?.[0]?.currency_code ?? 'MYR';
-});
-
-const editingVariant = computed<ProductVariantInput>(() => {
-	if (editingRowIndex.value == null) return {};
-	return variantRows.value[editingRowIndex.value]?.variant ?? {};
-});
-
-const editingOtherSkus = computed(() => {
-	return variantRows.value.filter((_, index) => index !== editingRowIndex.value).map((row) => row.variant.sku);
-});
-
-const detailTitle = computed(() => {
-	const labels = editingVariant.value.options?.map((option) => option.value).filter(Boolean) ?? [];
-	if (labels.length > 0) return labels.join(' · ');
-	return variantRows.value[editingRowIndex.value ?? -1]?.optionLabels.join(' · ') ?? '';
 });
 
 const createDefaultVariant = (name: string, options: ProductOptionInput[]): ProductVariantInput => {
@@ -255,20 +285,22 @@ const clearInvalidSale = (variant: ProductVariantInput) => {
 	emitVariants();
 };
 
-const openVariantDetail = (rowIdx: number) => {
-	editingRowIndex.value = rowIdx;
-	detailOpen.value = true;
-};
-
-const confirmVariantDetail = (payload: { sku?: string; barcode?: string; cost_price?: number }) => {
-	const row = editingRowIndex.value != null ? variantRows.value[editingRowIndex.value] : undefined;
+const openVariantDetail = async (rowIdx: number) => {
+	const row = variantRows.value[rowIdx];
 	if (!row) return;
-	row.variant.sku = payload.sku;
-	row.variant.barcode = payload.barcode;
-	if (row.variant.price_types?.[0]) {
-		row.variant.price_types[0].cost_price = payload.cost_price;
-	}
-	editingRowIndex.value = null;
+
+	const otherSkus = variantRows.value.filter((_, index) => index !== rowIdx).map((r) => r.variant.sku);
+	const modal = overlay.create(ZInputProductVariantDetail);
+	const instance = modal.open({
+		variant: JSON.parse(JSON.stringify(row.variant)) as ProductVariantInput,
+		otherSkus,
+		currencyCode: currencyCode.value,
+	});
+
+	const payload = await instance.result;
+	if (!payload) return;
+
+	applyVariantDetailPayload(row.variant, payload);
 	emitVariants();
 };
 
@@ -357,11 +389,10 @@ watch(
 );
 
 const applyToAll = () => {
-	applyVariantListPricesToAll(
-		variantRows.value.map((row) => row.variant),
-		applyAll.orig,
-		applyAll.sale,
-	);
+	const variants = variantRows.value.map((row) => row.variant);
+	applyVariantListPricesToAll(variants, applyAll.orig, applyAll.sale);
+	applyVariantListInventoryToAll(variants, applyAll.manage_inventory, applyAll.allow_preorder, applyAll.inventory_quantity);
 	emitVariants();
+	successNotification(t('components.variantList.applyToAllSuccess'));
 };
 </script>

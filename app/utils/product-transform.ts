@@ -24,6 +24,9 @@ export function transformProductToUpdate(
 		is_giftcard: product.is_giftcard,
 		is_active: product.is_active,
 		status: product.status,
+		manage_inventory: product.manage_inventory,
+		inventory_quantity: product.inventory_quantity,
+		allow_preorder: product.allow_preorder,
 		type_id,
 		category_codes:
 			product.categories
@@ -78,7 +81,7 @@ export function transformProductToUpdate(
 					barcode: variant.barcode,
 					hs_code: variant.hs_code,
 					inventory_quantity: variant.inventory_quantity,
-					allow_backorder: variant.allow_backorder,
+					allow_preorder: variant.allow_preorder,
 					manage_inventory: variant.manage_inventory,
 					weight: variant.weight,
 					length: variant.length,

@@ -37,7 +37,7 @@ export type ProductVariantInput = {
 	barcode?: string;
 	hs_code?: string;
 	inventory_quantity?: number;
-	allow_backorder?: boolean;
+	allow_preorder?: boolean;
 	manage_inventory?: boolean;
 	weight?: number;
 	length?: number;
@@ -84,6 +84,10 @@ export type Product = {
 	/** Per-product variation sets: variation id/name + scoped options (max 2 per product). */
 	variations?: ProductVariation[];
 	variants?: ProductVariant[];
+
+	manage_inventory?: boolean;
+	inventory_quantity?: number;
+	allow_preorder?: boolean;
 
 	// Timestamps
 	created_at?: Date;

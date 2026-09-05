@@ -35,7 +35,7 @@ const Variant = z.object({
 	barcode: z.string().optional(),
 	hs_code: z.string().optional(),
 	inventory_quantity: z.number().optional(),
-	allow_backorder: z.boolean().optional(),
+	allow_preorder: z.boolean().optional(),
 	manage_inventory: z.boolean().optional(),
 	weight: z.number().optional(),
 	length: z.number().optional(),
@@ -68,6 +68,9 @@ const createProductBase = z.object({
 	variations: z.array(Variation).optional(),
 	// variants
 	variants: z.array(Variant).optional(),
+	manage_inventory: z.boolean().optional(),
+	inventory_quantity: z.number().optional(),
+	allow_preorder: z.boolean().optional(),
 	// FK to merchant product_types (BasicInfo uses type_id)
 	type_id: z.number().default(1),
 });

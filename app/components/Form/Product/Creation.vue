@@ -71,6 +71,13 @@
 						@update:sale-price="sale_price = $event"
 					/>
 
+					<!-- Simple-product inventory (no variants) -->
+					<ZInputProductInventory
+						v-if="!(new_product.variants && new_product.variants.length)"
+						:details="new_product as any"
+						@update:variant-detail="Object.assign(new_product, $event)"
+					/>
+
 					<!-- Section 4: Additional Info (only show for physical items) -->
 					<UCard id="section-additional-info" class="shadow-md scroll-mt-4">
 						<template #header>
@@ -477,6 +484,9 @@ const doCreateProduct = async () => {
 			name: variant.name!,
 			sku: variant.sku,
 			barcode: variant.barcode,
+			manage_inventory: variant.manage_inventory,
+			inventory_quantity: variant.inventory_quantity,
+			allow_preorder: variant.allow_preorder,
 			price_types: variant.price_types?.map((price) => {
 				return {
 					id: undefined,

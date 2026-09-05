@@ -80,3 +80,78 @@ export function applyVariantListPricesToAll(
 		}
 	}
 }
+
+type VariantInventoryApplyTarget = {
+	manage_inventory?: boolean;
+	allow_preorder?: boolean;
+	inventory_quantity?: number;
+};
+
+/**
+ * Apply-to-all inventory: Manage / Allow always overwrite.
+ * Manage off forces Allow off and leaves On Hand untouched.
+ * Manage on: blank On Hand skips; filled (incl. 0) writes.
+ */
+export function applyVariantListInventoryToAll(
+	variants: VariantInventoryApplyTarget[],
+	manageInventory: boolean,
+	allowPreorder: boolean,
+	quantity: number | string | null | undefined,
+): void {
+	const manage = !!manageInventory;
+	const allow = manage && !!allowPreorder;
+	const applyQty = manage && isFilledApplyValue(quantity);
+	const parsedQty = applyQty ? Number(quantity) : undefined;
+
+	for (const variant of variants) {
+		variant.manage_inventory = manage;
+		variant.allow_preorder = allow;
+		if (applyQty && parsedQty != null && Number.isFinite(parsedQty)) {
+			variant.inventory_quantity = parsedQty;
+		}
+	}
+}
+
+export type VariantDetailPayload = {
+	sku?: string;
+	barcode?: string;
+	orig_sell_price?: number;
+	sale_price?: number;
+	cost_price?: number;
+	manage_inventory?: boolean;
+	allow_preorder?: boolean;
+	inventory_quantity?: number;
+};
+
+type VariantDetailTarget = {
+	sku?: string;
+	barcode?: string;
+	manage_inventory?: boolean;
+	allow_preorder?: boolean;
+	inventory_quantity?: number;
+	price_types?: Array<{
+		orig_sell_price?: number;
+		sale_price?: number | null;
+		cost_price?: number;
+		currency_code?: string;
+	}>;
+};
+
+/** Merge confirmed detail-modal fields onto a variant row (prices + inventory). */
+export function applyVariantDetailPayload(variant: VariantDetailTarget, payload: VariantDetailPayload): void {
+	variant.sku = payload.sku;
+	variant.barcode = payload.barcode;
+	variant.manage_inventory = payload.manage_inventory;
+	variant.allow_preorder = payload.allow_preorder;
+	variant.inventory_quantity = payload.inventory_quantity;
+
+	if (!variant.price_types?.[0]) {
+		variant.price_types = [{ orig_sell_price: 0, currency_code: 'MYR' }];
+	}
+	const priceType = variant.price_types[0]!;
+	if (payload.orig_sell_price != null && Number.isFinite(payload.orig_sell_price)) {
+		priceType.orig_sell_price = payload.orig_sell_price;
+	}
+	priceType.sale_price = normalizeSalePrice(payload.sale_price);
+	priceType.cost_price = payload.cost_price;
+}

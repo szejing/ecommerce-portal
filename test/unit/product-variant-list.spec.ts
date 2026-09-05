@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+	applyVariantDetailPayload,
+	applyVariantListInventoryToAll,
 	applyVariantListPricesToAll,
 	duplicateVariantSkuIndexes,
 	getValidProductOptions,
@@ -80,7 +82,7 @@ describe('variant SKU helpers', () => {
 	});
 });
 
-describe('variant Sale Price helpers', () => {
+describe('variant Apply-to-all and detail helpers', () => {
 	it('treats empty and zero Sale Price as off', () => {
 		expect(normalizeSalePrice(undefined)).toBeUndefined();
 		expect(normalizeSalePrice(null)).toBeUndefined();
@@ -106,5 +108,59 @@ describe('variant Sale Price helpers', () => {
 		applyVariantListPricesToAll(variants, undefined, 5);
 		expect(variants[0]?.price_types?.[0]?.sale_price).toBe(5);
 		expect(variants[1]?.price_types?.[0]?.sale_price).toBe(5);
+	});
+
+	it('applies inventory to all with manage on/off and blank qty skip', () => {
+		const variants = [
+			{ manage_inventory: false, allow_preorder: true, inventory_quantity: 9 },
+			{ manage_inventory: true, allow_preorder: false, inventory_quantity: 2 },
+		];
+
+		applyVariantListInventoryToAll(variants, true, true, 5);
+		expect(variants[0]).toEqual({ manage_inventory: true, allow_preorder: true, inventory_quantity: 5 });
+		expect(variants[1]).toEqual({ manage_inventory: true, allow_preorder: true, inventory_quantity: 5 });
+
+		applyVariantListInventoryToAll(variants, true, false, undefined);
+		expect(variants[0]).toEqual({ manage_inventory: true, allow_preorder: false, inventory_quantity: 5 });
+		expect(variants[1]).toEqual({ manage_inventory: true, allow_preorder: false, inventory_quantity: 5 });
+
+		applyVariantListInventoryToAll(variants, false, true, 99);
+		expect(variants[0]).toEqual({ manage_inventory: false, allow_preorder: false, inventory_quantity: 5 });
+		expect(variants[1]).toEqual({ manage_inventory: false, allow_preorder: false, inventory_quantity: 5 });
+
+		applyVariantListInventoryToAll(variants, true, false, 0);
+		expect(variants[0]?.inventory_quantity).toBe(0);
+		expect(variants[1]?.inventory_quantity).toBe(0);
+	});
+
+	it('merges detail-modal payload onto prices and inventory fields', () => {
+		const variant = {
+			sku: 'OLD',
+			barcode: '111',
+			manage_inventory: false,
+			allow_preorder: false,
+			inventory_quantity: 0,
+			price_types: [{ orig_sell_price: 10, sale_price: 8, cost_price: 3, currency_code: 'MYR' }],
+		};
+
+		applyVariantDetailPayload(variant, {
+			sku: 'NEW-SKU',
+			barcode: '999',
+			orig_sell_price: 25,
+			sale_price: 0,
+			cost_price: 12,
+			manage_inventory: true,
+			allow_preorder: true,
+			inventory_quantity: 4,
+		});
+
+		expect(variant).toEqual({
+			sku: 'NEW-SKU',
+			barcode: '999',
+			manage_inventory: true,
+			allow_preorder: true,
+			inventory_quantity: 4,
+			price_types: [{ orig_sell_price: 25, sale_price: undefined, cost_price: 12, currency_code: 'MYR' }],
+		});
 	});
 });

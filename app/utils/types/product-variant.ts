@@ -13,7 +13,7 @@ export type ProductVariantInput = {
 	barcode?: string;
 	hs_code?: string;
 	inventory_quantity?: number;
-	allow_backorder?: boolean;
+	allow_preorder?: boolean;
 	manage_inventory?: boolean;
 	weight?: number;
 	length?: number;
@@ -38,7 +38,7 @@ export type ProductVariant = {
 	barcode?: string;
 	hs_code?: string;
 	inventory_quantity?: number;
-	allow_backorder?: boolean;
+	allow_preorder?: boolean;
 	manage_inventory?: boolean;
 	weight?: number;
 	length?: number;

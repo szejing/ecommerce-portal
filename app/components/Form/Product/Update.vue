@@ -66,6 +66,12 @@
 						@update:sale-price="sale_price = $event"
 					/>
 
+					<ZInputProductInventory
+						v-if="!(formState.variants && formState.variants.length)"
+						:details="formState"
+						@update:variant-detail="Object.assign(formState, $event)"
+					/>
+
 					<!-- Section 4: Additional Info (only show for physical items) -->
 					<UCard id="section-additional-info" class="shadow-md scroll-mt-4">
 						<template #header>
@@ -118,9 +124,7 @@ const props = defineProps({
 
 const productTypeStore = useProductTypeStore();
 const settingsStore = useSettingStore();
-const showLongDescription = computed(
-	() => !settingsStore.getSetting(GROUP_CODE.PRODUCT, PRODUCT.HIDE_LONG_DESC)?.getBoolean(),
-);
+const showLongDescription = computed(() => !settingsStore.getSetting(GROUP_CODE.PRODUCT, PRODUCT.HIDE_LONG_DESC)?.getBoolean());
 const transformProductToUpdate = (product: Product): ProductUpdate => buildProductUpdate(product, productTypeStore.prod_types);
 
 // Categories, tags, brands state (for UI binding) - declared before watch
@@ -158,20 +162,6 @@ const productForAdditionalInfo = computed(() => {
 		type_id: state.type_id ?? 0,
 	} as ProductCreate | Product;
 });
-
-// Icons
-const ICONS = {
-	CHECK_ROUNDED: 'i-heroicons-check-circle-20-solid',
-	HELP: 'i-heroicons-question-mark-circle',
-	INFO: 'i-heroicons-information-circle',
-	ARROW_RIGHT: 'i-heroicons-arrow-right',
-	ARROW_LEFT: 'i-heroicons-arrow-left',
-	TAG: 'i-heroicons-tag',
-	CURRENCY: 'i-heroicons-currency-dollar',
-	LAYERS: 'i-heroicons-squares-2x2',
-	IMAGE: 'i-heroicons-photo',
-	SAVE: 'i-heroicons-document-arrow-down',
-};
 
 // State
 const activeSection = ref('section-basic-info');

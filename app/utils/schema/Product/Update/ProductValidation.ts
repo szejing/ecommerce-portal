@@ -27,7 +27,7 @@ const Option = z.object({ id: z.number().optional(), variation_id: z.number().op
 
 const Variation = z.object({ id: z.number().optional(), name: z.string().optional(), options: z.array(Option).optional() });
 
-const buildVariant = (t: TranslateFn) => {
+const buildVariant = () => {
 	return z.object({
 		variant_code: z.string().optional().nullable(),
 		product_code: z.string().optional().nullable(),
@@ -38,7 +38,7 @@ const buildVariant = (t: TranslateFn) => {
 		barcode: z.string().optional().nullable(),
 		hs_code: z.string().optional().nullable(),
 		inventory_quantity: z.number().optional().nullable(),
-		allow_backorder: z.boolean().optional().nullable(),
+		allow_preorder: z.boolean().optional().nullable(),
 		manage_inventory: z.boolean().optional().nullable(),
 		weight: z.number().optional().nullable(),
 		length: z.number().optional().nullable(),
@@ -52,12 +52,9 @@ const buildVariant = (t: TranslateFn) => {
 };
 
 export const createUpdateProductValidation = (t: TranslateFn) => {
-	const Variant = buildVariant(t);
+	const Variant = buildVariant();
 	const base = z.object({
-		code: z
-			.string({ message: t('validation.product.codeRequired') })
-			.min(1, t('validation.product.codeRequired'))
-			.max(16, t('validation.product.codeMax16')),
+		code: z.string({ message: t('validation.product.codeRequired') }).min(1, t('validation.product.codeRequired')),
 		name: z.string({ message: t('validation.product.nameRequired') }).min(1, t('validation.product.nameRequired')),
 		short_desc: z
 			.string({ message: t('validation.product.shortDescRequired') })
@@ -71,6 +68,9 @@ export const createUpdateProductValidation = (t: TranslateFn) => {
 		price_types: z.array(Price).min(1, t('validation.product.priceRequired')),
 		variations: z.array(Variation).optional().nullable(),
 		variants: z.array(Variant).optional().nullable(),
+		manage_inventory: z.boolean().optional().nullable(),
+		inventory_quantity: z.number().optional().nullable(),
+		allow_preorder: z.boolean().optional().nullable(),
 		type_id: z.number().default(1),
 	});
 	return base.superRefine((data, ctx) => {
@@ -115,7 +115,7 @@ const VariantLegacy = z.object({
 	barcode: z.string().optional().nullable(),
 	hs_code: z.string().optional().nullable(),
 	inventory_quantity: z.number().optional().nullable(),
-	allow_backorder: z.boolean().optional().nullable(),
+	allow_preorder: z.boolean().optional().nullable(),
 	manage_inventory: z.boolean().optional().nullable(),
 	weight: z.number().optional().nullable(),
 	length: z.number().optional().nullable(),
