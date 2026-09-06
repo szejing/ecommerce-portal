@@ -9,17 +9,18 @@ FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-# Install git and npm for git-based dependencies and optional package installation
-# Note: bun:1 should include Node.js 18+, but we'll verify and use Node.js explicitly for vite
+# Install git/curl, then real Node.js 22 (not Bun's node shim).
+# Bun image puts a Node 20-compatible `node` earlier on PATH; Tailwind 4.3 /
+# lightningcss need Set.prototype.difference (Node 22+).
 RUN apt-get update && apt-get install -y git npm curl && \
-    # Check if Node.js is available and version
-    (node --version 2>/dev/null || echo "Node.js not found via node command") && \
-    # Install Node.js 22.x (Set.prototype.difference; Vite 7 also needs Node 20+ crypto.hash)
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs && \
-    node --version && \
-    npm --version && \
+    /usr/bin/node --version && \
+    /usr/bin/node -e 'const major=Number(process.versions.node.split(".")[0]); if (major < 22) { console.error("Need Node 22+, got", process.version); process.exit(1); }' && \
     rm -rf /var/lib/apt/lists/*
+
+# Prefer NodeSource binaries over Bun's `node` shim for all later RUN steps.
+ENV PATH="/usr/bin:${PATH}"
 
 # Copy dependency files first (better caching)
 COPY package.json bun.lock ./
@@ -98,14 +99,16 @@ RUN if [ ! -d "node_modules/vite" ] || [ ! -f "node_modules/vite/package.json" ]
 RUN bun run nuxt prepare
 
 # Build Nuxt app (production). Nitro bundling is memory-heavy; keep heap within Docker limits.
-# Override at build time: docker build --build-arg NODE_MEMORY_MB=6144 ...
+# Override at build time: docker build --build-arg NODE_MEMORY_MB=6144 --build-arg ENV_FILE=.env.prod ...
+ARG ENV_FILE=.env.dev
 ARG NODE_MEMORY_MB=5120
 ENV NODE_ENV=production
 ENV NUXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="--max-old-space-size=${NODE_MEMORY_MB}"
-# Use Node (not bun runtime) for nuxt build — lower peak memory than `bun --bun nuxt build`
+# Use real Node 22 (not bun runtime) for nuxt build — lower peak memory than `bun --bun nuxt build`
 RUN node --version && \
-    node node_modules/nuxt/bin/nuxt.mjs build --dotenv .env.prod
+    node -e 'const major=Number(process.versions.node.split(".")[0]); if (major < 22) { console.error("Need Node 22+ for Nuxt build, got", process.version); process.exit(1); }' && \
+    node node_modules/nuxt/bin/nuxt.mjs build --dotenv "${ENV_FILE}"
 
 
 # ==============================
@@ -122,8 +125,9 @@ COPY --from=builder /app/.output/ ./.output/
 # Copy package.json (useful for debugging/env checks)
 COPY --from=builder /app/package.json ./
 
-# Copy environment file if it exists
-COPY .env.prod* ./
+# Copy selected environment file (default .env.dev; override via --build-arg ENV_FILE=...)
+ARG ENV_FILE=.env.dev
+COPY ${ENV_FILE} ./
 
 # Env vars
 ENV NODE_ENV=production
