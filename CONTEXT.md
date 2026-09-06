@@ -123,3 +123,7 @@ _Avoid_: fake percentage, estimated completion, upload progress
 **Import Unit**:
 One countable work item of an import. A product group for Product Import, a customer row for Customer Import.
 _Avoid_: spreadsheet row (for Product Import), variant, uploaded file
+
+**Import Report**:
+The lasting summary of one Product Import or Customer Import run, retained on the Activity Log. It includes Import Unit counts (total, created, updated, failed), the source file name when known, and the list of failed Import Units (row, code, message). Distinct from Import Progress, which is live only while the import runs.
+_Avoid_: Import Progress, toast-only summary, System Log, spreadsheet dump

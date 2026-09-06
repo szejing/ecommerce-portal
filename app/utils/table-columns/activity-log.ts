@@ -1,8 +1,9 @@
 import type { TableColumn } from '@nuxt/ui';
-import { UBadge } from '#components';
+import { UBadge, UButton } from '#components';
 import { format } from 'date-fns';
 import { h, type VNode } from 'vue';
 import { parseActivityLogRichText, type ActivityLogRichTextSegment } from '~/utils/activity-log-rich-text';
+import { ICONS } from '~/utils/icons';
 import { getActivityLogActionLabel, getActivityLogActorTypeLabel, getActivityLogSourceLabel } from '~/utils/options';
 import type { ActivityLog } from '~/utils/types/activity-log';
 import { getSortableHeader, headerCell } from './styles';
@@ -15,6 +16,7 @@ export const ACTIVITY_LOG_COLUMN_LABELS = {
 	action: 'table.action',
 	actor: 'table.actor',
 	source: 'table.source',
+	actions: 'table.actions',
 } as const;
 
 type BadgeColor = 'neutral' | 'error' | 'primary' | 'secondary' | 'success' | 'info' | 'warning';
@@ -91,8 +93,12 @@ const renderActivityLogRichText = (value: string | undefined, className: string)
 
 const getActivityDescriptionText = (log: ActivityLog): string => log.internal_desc ?? log.desc ?? '-';
 
-export function getActivityLogColumns(t: TranslateFn): TableColumn<ActivityLog>[] {
-	return [
+export type ActivityLogColumnOptions = {
+	onView?: (log: ActivityLog) => void;
+};
+
+export function getActivityLogColumns(t: TranslateFn, options: ActivityLogColumnOptions = {}): TableColumn<ActivityLog>[] {
+	const columns: TableColumn<ActivityLog>[] = [
 		{
 			accessorKey: 'created_at',
 			header: ({ column }) => getSortableHeader(column, t('table.createdAt')),
@@ -144,4 +150,37 @@ export function getActivityLogColumns(t: TranslateFn): TableColumn<ActivityLog>[
 			},
 		},
 	];
+
+	if (options.onView) {
+		columns.push({
+			id: 'actions',
+			header: () => headerCell(t('table.actions')),
+			cell: ({ row }) =>
+				h(
+					'div',
+					{
+						class: 'relative z-[1] flex justify-end',
+						onClick: (e: Event) => e.stopPropagation(),
+					},
+					[
+						h(UButton, {
+							icon: ICONS.EYE,
+							color: 'neutral',
+							variant: 'ghost',
+							size: 'sm',
+							'aria-label': t('common.view'),
+							onClick: () => options.onView?.(row.original),
+						}),
+					],
+				),
+			meta: {
+				class: {
+					th: 'whitespace-nowrap w-16',
+					td: 'whitespace-nowrap w-16',
+				},
+			},
+		});
+	}
+
+	return columns;
 }

@@ -79,7 +79,8 @@
 		"select": "Pilih",
 		"apply": "Guna",
 		"phoneNo": "No. telefon",
-		"close": "Tutup"
+		"close": "Tutup",
+		"view": "Lihat"
 	},
 	"form": {
 		"code": "Kod",
@@ -1039,6 +1040,7 @@
 		"reasonType": "Jenis sebab",
 		"createdAt": "Dicipta pada",
 		"action": "Tindakan",
+		"actions": "Tindakan",
 		"actor": "Pelaku",
 		"source": "Sumber",
 		"visibility": "Keterlihatan",
@@ -2178,6 +2180,26 @@
 			"edit": "Edit varian"
 		},
 		"zModal": {
+			"activityLogDetail": {
+				"title": "Butiran Log Aktiviti",
+				"description": "Keterangan",
+				"refNo": "Rujukan",
+				"refNo2": "Rujukan 2",
+				"fileName": "Fail",
+				"importReport": "Laporan Import",
+				"total": "Jumlah",
+				"created": "Dicipta",
+				"updated": "Dikemas kini",
+				"failed": "Gagal",
+				"failedUnits": "{count} Unit Import gagal",
+				"noFailedUnits": "Tiada Unit Import yang gagal.",
+				"unitRow": "Baris",
+				"unitCode": "Kod",
+				"unitMessage": "Mesej",
+				"copyFailedUnits": "Salin unit gagal",
+				"copyFailedUnitsSuccess": "Unit Import gagal disalin",
+				"copyFailedUnitsFailed": "Tidak dapat menyalin Unit Import gagal"
+			},
 			"brandDetail": {
 				"status": "Status",
 				"currentStatusLabel": "Jenama kini {status}",

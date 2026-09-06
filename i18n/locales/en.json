@@ -79,7 +79,8 @@
 		"select": "Select",
 		"apply": "Apply",
 		"phoneNo": "Phone No",
-		"close": "Close"
+		"close": "Close",
+		"view": "View"
 	},
 	"form": {
 		"code": "Code",
@@ -1040,6 +1041,7 @@
 		"reasonType": "Reason type",
 		"createdAt": "Created at",
 		"action": "Action",
+		"actions": "Actions",
 		"actor": "Actor",
 		"source": "Source",
 		"visibility": "Visibility",
@@ -2179,6 +2181,26 @@
 			"edit": "Edit variant"
 		},
 		"zModal": {
+			"activityLogDetail": {
+				"title": "Activity Log Detail",
+				"description": "Description",
+				"refNo": "Reference",
+				"refNo2": "Reference 2",
+				"fileName": "File",
+				"importReport": "Import Report",
+				"total": "Total",
+				"created": "Created",
+				"updated": "Updated",
+				"failed": "Failed",
+				"failedUnits": "{count} failed Import Units",
+				"noFailedUnits": "No failed Import Units.",
+				"unitRow": "Row",
+				"unitCode": "Code",
+				"unitMessage": "Message",
+				"copyFailedUnits": "Copy failed units",
+				"copyFailedUnitsSuccess": "Failed Import Units copied",
+				"copyFailedUnitsFailed": "Could not copy failed Import Units"
+			},
 			"brandDetail": {
 				"status": "Status",
 				"currentStatusLabel": "Brand is currently {status}",

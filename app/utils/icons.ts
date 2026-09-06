@@ -63,4 +63,6 @@ export const ICONS = {
 	DOCUMENT: 'i-heroicons-document',
 	LIGHTBULB: 'i-heroicons-light-bulb',
 	ARROW_DOWN: 'i-heroicons-arrow-down',
+	EYE: 'i-heroicons-eye',
+	CLIPBOARD: 'i-heroicons-clipboard-document',
 };

@@ -32,7 +32,13 @@
 			</template>
 
 			<UCard v-else :ui="{ body: 'p-0 sm:p-0' }">
-				<UTable :data="activity_logs" :columns="visibleColumns" :loading="loading">
+				<UTable
+					:data="activity_logs"
+					:columns="visibleColumns"
+					:loading="loading"
+					:ui="{ tr: 'cursor-pointer' }"
+					@select="selectActivityLog"
+				>
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.LIST" class="w-12 h-12 text-gray-400" />
@@ -73,17 +79,35 @@
 </template>
 
 <script lang="ts" setup>
+import type { TableRow } from '@nuxt/ui';
+import { ZModalActivityLogDetail } from '#components';
 import { options_page_size } from '~/utils/options';
 import { ACTIVITY_LOG_COLUMN_LABELS, getActivityLogColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import { ICONS } from '~/utils/icons';
 import { failedNotification } from '~/stores/AppUi/AppUi';
+import type { ActivityLog } from '~/utils/types/activity-log';
 
 const { t } = useI18n();
+const overlay = useOverlay();
 const activityLogStore = useActivityLogStore();
 const { activity_logs, total_activity_logs, filters, loading, exporting, listFailure } = storeToRefs(activityLogStore);
 
-const activityLogColumns = computed(() => getActivityLogColumns(t));
+const openActivityLogDetail = (activityLog: ActivityLog) => {
+	const detailModal = overlay.create(ZModalActivityLogDetail, {
+		props: {
+			activityLog: JSON.parse(JSON.stringify(activityLog)),
+		},
+	});
+
+	detailModal.open();
+};
+
+const activityLogColumns = computed(() =>
+	getActivityLogColumns(t, {
+		onView: openActivityLogDetail,
+	}),
+);
 const columnOptions = computed(() => columnOptionsFromLabelMap(t, ACTIVITY_LOG_COLUMN_LABELS));
 const { selectedColumnKeys, visibleColumns } = useTableColumnVisibility(activityLogColumns, columnOptions);
 const initialize = ref(true);
@@ -93,6 +117,12 @@ useHead({ title: () => t('pages.activityLogsTitle') });
 watch(listFailure, (failure) => {
 	if (failure) failedNotification(failure.message);
 });
+
+const selectActivityLog = (_event: Event, row: TableRow<ActivityLog>) => {
+	const activityLog = row.original;
+	if (!activityLog) return;
+	openActivityLogDetail(activityLog);
+};
 
 onMounted(async () => {
 	initialize.value = true;
