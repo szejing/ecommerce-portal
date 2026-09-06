@@ -16,8 +16,13 @@ vi.mock('../../app/stores/AppUi/AppUi', () => ({
 
 const getMany = vi.fn();
 const create = vi.fn();
+const importProducts = vi.fn();
 const upload = vi.fn();
 const uploadMultiple = vi.fn();
+
+const translate = (key: string, params?: Record<string, unknown>) => `${key}:${JSON.stringify(params ?? {})}`;
+
+const workbook = () => new File(['code,name'], 'products.csv', { type: 'text/csv' });
 
 function deferred<T>() {
 	let resolve!: (value: T) => void;
@@ -43,6 +48,7 @@ describe('useProductStore', () => {
 		setActivePinia(createPinia());
 		getMany.mockReset();
 		create.mockReset();
+		importProducts.mockReset();
 		upload.mockReset();
 		uploadMultiple.mockReset();
 		successNotification.mockClear();
@@ -51,9 +57,10 @@ describe('useProductStore', () => {
 		create.mockResolvedValue({ product: product('SKU-1') });
 		(globalThis as unknown as { useNuxtApp: () => unknown }).useNuxtApp = () => ({
 			$api: {
-				product: { getMany, create },
+				product: { getMany, create, importProducts },
 				image: { upload, uploadMultiple },
 			},
+			$i18n: { t: translate },
 		});
 	});
 
@@ -138,5 +145,66 @@ describe('useProductStore', () => {
 		expect(outcome).toEqual({ status: 'failed', failure: { kind: 'request_failed', message: 'SKU exists' } });
 		expect(successNotification).not.toHaveBeenCalled();
 		expect(failedNotification).not.toHaveBeenCalled();
+	});
+
+	it('tracks Import Progress while the import runs', async () => {
+		let report: ((progress: { processed: number; total: number | null }) => void) | undefined;
+		importProducts.mockImplementation(async (_file, _templateType, options) => {
+			report = options.onProgress;
+			report?.({ processed: 0, total: null });
+			report?.({ processed: 12, total: 40 });
+			return { total: 40, created: 40, updated: 0, failed: 0, errors: [], images_attached: 0, image_warnings: [], stopped: false };
+		});
+
+		const store = useProductStore();
+		await store.importProducts(workbook());
+
+		expect(store.import_processed).toBe(12);
+		expect(store.import_total).toBe(40);
+		expect(store.importing).toBe(false);
+		expect(successNotification).toHaveBeenCalledWith('import.summary:{"created":40,"updated":0}');
+	});
+
+	it('reports the partial progress of an import stopped by staff', async () => {
+		importProducts.mockImplementation(
+			(_file, _templateType, options) =>
+				new Promise((_resolve, reject) => {
+					options.onProgress?.({ processed: 3, total: 40 });
+					options.signal.addEventListener('abort', () => {
+						const abort = new Error('Aborted');
+						abort.name = 'AbortError';
+						reject(abort);
+					});
+				}),
+		);
+
+		const store = useProductStore();
+		const pending = store.importProducts(workbook());
+		expect(store.import_processed).toBe(3);
+
+		store.stopImportProducts();
+
+		await expect(pending).resolves.toBeUndefined();
+		expect(failedNotification).toHaveBeenCalledWith('import.stoppedSummary:{"processed":3,"total":40}');
+		expect(store.importing).toBe(false);
+	});
+
+	it('reports a backend-stopped import instead of a success summary', async () => {
+		importProducts.mockResolvedValue({
+			total: 40,
+			created: 5,
+			updated: 0,
+			failed: 0,
+			errors: [],
+			images_attached: 0,
+			image_warnings: [],
+			stopped: true,
+		});
+
+		const store = useProductStore();
+		await store.importProducts(workbook());
+
+		expect(successNotification).not.toHaveBeenCalled();
+		expect(failedNotification).toHaveBeenCalledWith('import.stoppedSummaryUnknownTotal:{"processed":0}');
 	});
 });

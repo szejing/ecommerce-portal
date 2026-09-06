@@ -1134,7 +1134,13 @@
 		"tiktokDescription": "Use a TikTok Seller Center batch-edit product workbook.",
 		"imagesAttached": "Attached {count} product image(s).",
 		"imageWarnings": "{count} product image import warning(s)",
-		"imageWarningDetail": "Row {row} · {code}: {message}"
+		"imageWarningDetail": "Row {row} · {code}: {message}",
+		"progressCount": "{processed} of {total} imported",
+		"progressPreparing": "Preparing import…",
+		"elapsed": "Elapsed {elapsed}",
+		"stopImport": "Stop import",
+		"stoppedSummary": "Import stopped · {processed} of {total} reported (any product already started may still finish)",
+		"stoppedSummaryUnknownTotal": "Import stopped after {processed} reported (any product already started may still finish)"
 	},
 	"modal": {
 		"leavePage": "Leave page?",

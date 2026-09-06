@@ -7,8 +7,8 @@ import type { ProductCreate, ProductUpdate } from '~/utils/types/form/product-cr
 import { dir } from '~/utils/constants/dir';
 import type { BaseODataReq } from '~/repository/base/base.req';
 import type { ImageReq } from '~/repository/modules/image/models/request/image.req';
-import type { ProductImportResp, ProductImportTemplateType } from '~/repository/modules/product/product';
-import { resolveProductImportSummary } from '~/utils/product-import-feedback';
+import type { ProductImportStreamResult, ProductImportTemplateType } from '~/repository/modules/product/product';
+import { resolveProductImportStoppedSummary, resolveProductImportSummary } from '~/utils/product-import-feedback';
 
 export const PRODUCT_FILTER_DEBOUNCE_MS = 500;
 
@@ -24,6 +24,15 @@ export type ProductMutationOutcome =
 	| { status: 'failed'; failure: ProductFailure };
 
 let productFilterTimer: ReturnType<typeof setTimeout> | undefined;
+let productImportController: AbortController | undefined;
+let productImportElapsedTimer: ReturnType<typeof setInterval> | undefined;
+
+const PRODUCT_IMPORT_ELAPSED_TICK_MS = 1000;
+
+// Aborting a fetch rejects with a DOMException, which is not an Error instance everywhere.
+function isAbortError(error: unknown): boolean {
+	return typeof error === 'object' && error !== null && (error as { name?: string }).name === 'AbortError';
+}
 
 type ProductFilter = {
 	query: string;
@@ -94,6 +103,10 @@ export const useProductStore = defineStore('productStore', {
 		updating: false as boolean,
 		exporting: false as boolean,
 		importing: false as boolean,
+		import_processed: 0 as number,
+		import_total: null as number | null,
+		import_started_at: null as number | null,
+		import_elapsed_seconds: 0 as number,
 		downloading_template: false as boolean,
 		new_product: structuredClone(initialEmptyProduct),
 		products: [] as Product[],
@@ -417,30 +430,65 @@ export const useProductStore = defineStore('productStore', {
 			}
 		},
 
-		async importProducts(file: File, templateType: ProductImportTemplateType = 'wemotoo'): Promise<ProductImportResp> {
+		async importProducts(file: File, templateType: ProductImportTemplateType = 'wemotoo'): Promise<ProductImportStreamResult | undefined> {
 			this.importing = true;
+			this.import_processed = 0;
+			this.import_total = null;
+			this.import_started_at = Date.now();
+			this.import_elapsed_seconds = 0;
+			productImportController = new AbortController();
+
+			if (productImportElapsedTimer) clearInterval(productImportElapsedTimer);
+			productImportElapsedTimer = setInterval(() => {
+				if (!this.import_started_at) return;
+				this.import_elapsed_seconds = Math.floor((Date.now() - this.import_started_at) / 1000);
+			}, PRODUCT_IMPORT_ELAPSED_TICK_MS);
 
 			const { $api, $i18n } = useNuxtApp();
 
 			try {
-				const result = await $api.product.importProducts(file, templateType);
-				const summary = resolveProductImportSummary(result, $i18n.t);
+				const result = await $api.product.importProducts(file, templateType, {
+					signal: productImportController.signal,
+					onProgress: ({ processed, total }) => {
+						this.import_processed = processed;
+						this.import_total = total;
+					},
+				});
 
-				if (summary.failed) {
-					failedNotification(summary.message);
+				if (result.stopped) {
+					failedNotification(resolveProductImportStoppedSummary(this.import_processed, this.import_total, $i18n.t));
 				} else {
-					successNotification(summary.message);
+					const summary = resolveProductImportSummary(result, $i18n.t);
+
+					if (summary.failed) {
+						failedNotification(summary.message);
+					} else {
+						successNotification(summary.message);
+					}
 				}
 
 				await this.getProducts();
 				return result;
 			} catch (err: unknown | ErrorResponse) {
+				if (isAbortError(err)) {
+					failedNotification(resolveProductImportStoppedSummary(this.import_processed, this.import_total, $i18n.t));
+					await this.getProducts();
+					return undefined;
+				}
+
 				const message = (err as ErrorResponse).message ?? (err instanceof Error ? err.message : 'Failed to import products');
 				failedNotification(message);
 				throw new Error(message);
 			} finally {
+				if (productImportElapsedTimer) clearInterval(productImportElapsedTimer);
+				productImportElapsedTimer = undefined;
+				productImportController = undefined;
 				this.importing = false;
 			}
+		},
+
+		stopImportProducts() {
+			productImportController?.abort();
 		},
 
 		async downloadImportTemplate() {

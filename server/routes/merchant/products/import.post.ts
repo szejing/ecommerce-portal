@@ -1,6 +1,7 @@
 import { generateImageHeaders } from '../../../base_api';
 import { Routes } from '#root/server/routes.server';
 import { KEY } from 'yeppi-common';
+import { PRODUCT_IMPORT_STREAM_ACCEPT, createProductImportUpstreamFetchOptions } from '#root/server/utils/product-import-upstream';
 
 const PRODUCT_IMPORT_ALLOWED_EXTENSIONS = ['.csv', '.xlsx'] as const;
 const PRODUCT_IMPORT_UNSUPPORTED_FILE_MESSAGE = 'Only CSV and XLSX product import files are supported';
@@ -54,13 +55,25 @@ export default defineEventHandler(async (event) => {
 		newFormData.append('template_type', templateType);
 		newFormData.append('file', blob, file.name);
 
-		const result = await $fetch(`${Routes.Products.Import()}`, {
+		// Import Progress is streamed as NDJSON, so the upstream body is passed
+		// through untouched instead of being buffered and parsed as JSON.
+		const upstream = await $fetch.raw(`${Routes.Products.Import()}`, {
 			baseURL: String(config.public.baseUrl ?? ''),
 			method: 'POST',
 			body: newFormData,
-			headers: generateImageHeaders(event, Routes.Products.Import()),
+			headers: {
+				...generateImageHeaders(event, Routes.Products.Import()),
+				Accept: PRODUCT_IMPORT_STREAM_ACCEPT,
+			},
+			responseType: 'stream',
+			...createProductImportUpstreamFetchOptions(),
 		});
-		return result;
+
+		setResponseStatus(event, upstream.status);
+		setResponseHeader(event, 'content-type', upstream.headers.get('content-type') || 'application/x-ndjson');
+		setResponseHeader(event, 'cache-control', 'no-cache, no-transform');
+		setResponseHeader(event, 'x-accel-buffering', 'no');
+		return upstream._data;
 	} catch (err) {
 		return err;
 	}

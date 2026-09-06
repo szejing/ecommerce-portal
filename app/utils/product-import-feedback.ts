@@ -42,3 +42,13 @@ export function resolveProductImportSummary(
 
 	return { message: messages.join('\n'), failed: failed > 0 };
 }
+
+export function resolveProductImportStoppedSummary(
+	processed: number,
+	total: number | null,
+	t: Translate,
+): string {
+	return total && total > 0
+		? t('import.stoppedSummary', { processed, total })
+		: t('import.stoppedSummaryUnknownTotal', { processed });
+}

@@ -1133,7 +1133,13 @@
 		"tiktokDescription": "Gunakan buku kerja produk edit pukal TikTok Seller Center.",
 		"imagesAttached": "{count} imej produk dilampirkan.",
 		"imageWarnings": "{count} amaran import imej produk",
-		"imageWarningDetail": "Baris {row} · {code}: {message}"
+		"imageWarningDetail": "Baris {row} · {code}: {message}",
+		"progressCount": "{processed} daripada {total} diimport",
+		"progressPreparing": "Menyediakan import…",
+		"elapsed": "Masa berlalu {elapsed}",
+		"stopImport": "Hentikan import",
+		"stoppedSummary": "Import dihentikan · {processed} daripada {total} dilaporkan (produk yang sudah mula mungkin masih selesai)",
+		"stoppedSummaryUnknownTotal": "Import dihentikan selepas {processed} dilaporkan (produk yang sudah mula mungkin masih selesai)"
 	},
 	"modal": {
 		"leavePage": "Tinggalkan halaman?",

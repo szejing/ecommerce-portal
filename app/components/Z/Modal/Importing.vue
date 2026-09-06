@@ -25,24 +25,76 @@
 						{{ message ?? t('modal.importingMessage') }}
 					</p>
 				</div>
+
+				<div class="w-full space-y-2">
+					<UProgress
+						data-testid="importing-progress"
+						:model-value="determinate ? processedCount : null"
+						:max="determinate ? (total as number) : undefined"
+						:status="determinate"
+					>
+						<template #status>
+							<span>{{ progressLabel }}</span>
+						</template>
+					</UProgress>
+
+					<p
+						role="status"
+						aria-live="polite"
+						aria-atomic="true"
+						data-testid="importing-progress-status"
+						class="text-xs text-gray-500 dark:text-gray-400"
+					>
+						{{ progressLabel }} · {{ t('import.elapsed', { elapsed: elapsedLabel }) }}
+					</p>
+				</div>
+
+				<UButton
+					v-if="showStop"
+					data-testid="importing-stop"
+					color="error"
+					variant="soft"
+					size="sm"
+					:label="t('import.stopImport')"
+					@click="emit('stop')"
+				/>
 			</div>
 		</template>
 	</UModal>
 </template>
 
 <script lang="ts" setup>
+import { formatElapsedTime } from '~/utils/import-stream';
+
 const { t } = useI18n();
 
-withDefaults(
+const props = withDefaults(
 	defineProps<{
 		title?: string;
 		message?: string;
+		processed?: number | null;
+		total?: number | null;
+		elapsedSeconds?: number;
+		showStop?: boolean;
 	}>(),
 	{
 		title: undefined,
 		message: undefined,
+		processed: null,
+		total: null,
+		elapsedSeconds: 0,
+		showStop: false,
 	},
 );
+
+const emit = defineEmits<{ stop: [] }>();
+
+const processedCount = computed(() => props.processed ?? 0);
+const determinate = computed(() => typeof props.total === 'number' && props.total > 0);
+const progressLabel = computed(() =>
+	determinate.value ? t('import.progressCount', { processed: processedCount.value, total: props.total }) : t('import.progressPreparing'),
+);
+const elapsedLabel = computed(() => formatElapsedTime(props.elapsedSeconds));
 </script>
 
 <style scoped></style>

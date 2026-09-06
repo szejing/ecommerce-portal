@@ -83,7 +83,16 @@ const { t } = useI18n();
 const productStore = useProductStore();
 const overlay = useOverlay();
 const loadingModal = overlay.create(ZModalLoading, { props: { key: 'loading' } });
-const importLoadingModal = overlay.create(ZModalImporting, { props: { key: 'product-import-loading' } });
+const importLoadingModal = overlay.create(ZModalImporting, {
+	props: {
+		key: 'product-import-loading',
+		processed: null as number | null,
+		total: null as number | null,
+		elapsedSeconds: 0,
+		showStop: true,
+		onStop: () => productStore.stopImportProducts(),
+	},
+});
 
 const PRODUCT_COLUMN_LABELS = {
 	name: 'table.codeAndName',
@@ -118,7 +127,20 @@ const productImportSources = computed(() => [
 	},
 ]);
 
-const { products, loading, filters, total_products, exporting, updating, importing, downloading_template, listFailure } = storeToRefs(productStore);
+const {
+	products,
+	loading,
+	filters,
+	total_products,
+	exporting,
+	updating,
+	importing,
+	import_processed,
+	import_total,
+	import_elapsed_seconds,
+	downloading_template,
+	listFailure,
+} = storeToRefs(productStore);
 const initialize = ref(true);
 
 watch(listFailure, (failure) => {
@@ -164,6 +186,15 @@ watch(
 		} else {
 			importLoadingModal.close();
 		}
+	},
+);
+
+// useOverlay copies props on create/open, so Import Progress has to be pushed in.
+watch(
+	() => [import_processed.value, import_total.value, import_elapsed_seconds.value] as const,
+	([processed, total, elapsedSeconds]) => {
+		if (!importing.value) return;
+		importLoadingModal.patch({ processed, total, elapsedSeconds });
 	},
 );
 

@@ -115,3 +115,11 @@ _Avoid_: mandatory setup blocker, staff notice, inbox-connected state
 **Manual Conversation Customer Link**:
 The audited action through which CRM Staff link or unlink a Conversation Contact to an existing customer of the current Merchant Store. It does not create a new customer.
 _Avoid_: chat-created Customer, unaudited contact merge, cross-merchant customer link
+
+**Import Progress**:
+The live processed and total count of Import Units reported while an import runs. Unknown totals stay unknown until the file is counted; it is never a synthetic percentage.
+_Avoid_: fake percentage, estimated completion, upload progress
+
+**Import Unit**:
+One countable work item of an import. A product group for Product Import, a customer row for Customer Import.
+_Avoid_: spreadsheet row (for Product Import), variant, uploaded file
