@@ -23,8 +23,23 @@ describe('order detail items section', () => {
 		expect(items).toContain('product-holder.svg');
 		expect(items).toContain('getOrderItemStatusColor');
 		expect(items).toContain('whitespace-normal');
+		expect(items).toContain('showsPreorderLine');
+		expect(items).toContain('order-item-preorder');
+		expect(items).toContain('bg-warning/10');
+		expect(items).toContain('components.orderDetail.preorder');
 		expect(items).not.toContain('prod_name.substring(0, 10)');
 		expect(items).not.toContain('column="item"');
+
+		const itemModel = readFileSync(resolve(process.cwd(), 'app/utils/models/item.model.ts'), 'utf8');
+		expect(itemModel).toContain('is_preorder?: boolean');
+
+		const itemInput = readFileSync(resolve(process.cwd(), 'app/components/Z/Input/Order/Detail/Item.vue'), 'utf8');
+		expect(itemInput).toContain('isPreorder?: boolean');
+		expect(itemInput).toContain('showsPreorderBadge');
+		expect(itemInput).toContain('order-item-preorder');
+
+		const itemModal = readFileSync(resolve(process.cwd(), 'app/components/Z/Modal/Order/Detail/Item.vue'), 'utf8');
+		expect(itemModal).toContain(':is-preorder="state.item.is_preorder"');
 
 		const identity = readFileSync(resolve(process.cwd(), 'app/components/Z/Section/Order/Detail/ItemIdentity.vue'), 'utf8');
 		expect(identity).toContain('data-testid="order-item-product-line"');

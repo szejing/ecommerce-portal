@@ -1533,6 +1533,7 @@
 			"excludedItemCount": "{count} excluded",
 			"excludedFromFulfillment": "Excluded from fulfillment",
 			"editOrderItem": "Edit {item}",
+			"preorder": "Pre-order",
 			"editable": "Editable",
 			"orderNotEditableMessage": "This order is no longer editable.",
 			"billNotEditableMessage": "This bill is no longer editable.",
@@ -2070,7 +2071,12 @@
 			"voided": "VOIDED",
 			"refunded": "REFUNDED",
 			"active": "ACTIVE",
-			"changeItemStatus": "Change item status"
+			"changeItemStatus": "Change item status",
+			"variant": "Variant",
+			"sellerSku": "Seller SKU",
+			"searchVariant": "Search variant",
+			"variantLoadFailed": "Could not load product variants.",
+			"variantPriceMissing": "This variant has no catalog price. Pick another variant."
 		},
 		"zInput": {
 			"address1": "Address 1",

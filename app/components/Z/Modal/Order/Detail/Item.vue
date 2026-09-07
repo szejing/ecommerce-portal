@@ -15,10 +15,13 @@
 					v-model:prod-variant-code="state.item.prod_variant_code"
 					v-model:prod-variant-name="state.item.prod_variant_name"
 					v-model:prod-variant-sku="state.item.prod_variant_sku"
+					v-model:prod-variant-barcode="state.item.prod_variant_barcode"
 					v-model:currency-code="state.item.currency_code"
 					v-model:order-qty="state.item.qty"
 					v-model:unit-sell-price="state.item.unit_sell_price"
+					v-model:orig-sell-price="state.item.orig_sell_price"
 					v-model:appointment="state.item.appointment"
+					:is-preorder="state.item.is_preorder"
 				/>
 				<!-- *********************** General Info *********************** -->
 

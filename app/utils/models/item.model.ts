@@ -29,6 +29,8 @@ export type ItemModel = {
 	tax_amt_exc?: number;
 	adj_amt?: number;
 	status: OrderItemStatus;
+	/** Snapshotted at Order Intake — Pre-order Line (survives later catalog changes). */
+	is_preorder?: boolean;
 	appointment?: AppointmentModel;
 	taxes: ItemTaxModel[];
 };

@@ -31,7 +31,7 @@
 					</p>
 					<UBadge color="neutral" variant="subtle" size="sm">{{ workload.excludedLineCount }}</UBadge>
 				</div>
-				<article data-testid="order-item-mobile-card" class="px-4 py-4" :class="item.status === OrderItemStatus.ACTIVE ? 'bg-default' : 'bg-elevated/25'">
+				<article data-testid="order-item-mobile-card" class="px-4 py-4" :class="itemSurfaceClass(item)">
 					<div class="flex items-start gap-3">
 						<img
 							:src="itemThumbnailUrl(item)"
@@ -46,9 +46,21 @@
 								:variant-text="variantLineText(item)"
 								:is-voided="item.status === OrderItemStatus.VOIDED"
 							/>
-							<UBadge v-if="item.status !== OrderItemStatus.ACTIVE" :color="getOrderItemStatusColor(item.status)" variant="subtle" size="sm">
-								{{ itemStatusLabel(item.status) }}
-							</UBadge>
+							<div class="flex flex-wrap items-center gap-1.5">
+								<UBadge
+									v-if="showsPreorderLine(item)"
+									data-testid="order-item-preorder"
+									color="warning"
+									variant="subtle"
+									size="sm"
+									class="whitespace-nowrap"
+								>
+									{{ t('components.orderDetail.preorder') }}
+								</UBadge>
+								<UBadge v-if="item.status !== OrderItemStatus.ACTIVE" :color="getOrderItemStatusColor(item.status)" variant="subtle" size="sm">
+									{{ itemStatusLabel(item.status) }}
+								</UBadge>
+							</div>
 						</div>
 						<div class="shrink-0 rounded-lg bg-primary/10 px-2.5 py-1.5 text-center text-primary ring ring-inset ring-primary/20">
 							<p class="text-[0.625rem] font-semibold uppercase leading-3 tracking-wide">{{ t('components.orderDetail.qty') }}</p>
@@ -118,9 +130,21 @@
 							:variant-text="variantLineText(row.original)"
 							:is-voided="row.original.status === OrderItemStatus.VOIDED"
 						/>
-						<UBadge v-if="row.original.status !== OrderItemStatus.ACTIVE" :color="getOrderItemStatusColor(row.original.status)" variant="subtle" size="sm">
-							{{ itemStatusLabel(row.original.status) }}
-						</UBadge>
+						<div class="flex flex-wrap items-center gap-1.5">
+							<UBadge
+								v-if="showsPreorderLine(row.original)"
+								data-testid="order-item-preorder"
+								color="warning"
+								variant="subtle"
+								size="sm"
+								class="whitespace-nowrap"
+							>
+								{{ t('components.orderDetail.preorder') }}
+							</UBadge>
+							<UBadge v-if="row.original.status !== OrderItemStatus.ACTIVE" :color="getOrderItemStatusColor(row.original.status)" variant="subtle" size="sm">
+								{{ itemStatusLabel(row.original.status) }}
+							</UBadge>
+						</div>
 						<div v-if="row.original.appointment" class="flex items-start gap-1.5 pt-0.5">
 							<UIcon :name="ICONS.CALENDAR" class="size-4 shrink-0 mt-0.5 text-muted" aria-hidden="true" />
 							<div class="min-w-0 flex flex-col text-xs">
@@ -235,6 +259,14 @@ const variantLineText = (item: ItemModel) => formatVariantLineIdentity(item, var
 
 const itemStatusLabel = (status: OrderItemStatus) => getOrderItemStatusOptions(t).find((option) => option.value === status)?.label ?? status;
 
+const showsPreorderLine = (item: ItemModel) => !!item.is_preorder && item.status !== OrderItemStatus.VOIDED;
+
+const itemSurfaceClass = (item: ItemModel) => {
+	if (showsPreorderLine(item)) return 'bg-warning/10';
+	if (item.status !== OrderItemStatus.ACTIVE) return 'bg-elevated/25';
+	return 'bg-default';
+};
+
 const itemThumbnailUrl = (item: ItemModel) => {
 	const fromThumb = item.thumbnail?.url?.trim();
 	if (fromThumb) return fromThumb;
@@ -266,8 +298,11 @@ const order_detail_item_columns = computed(() => getOrderDetailItemColumns(t));
 const order_items_table_meta = computed<TableMeta<ItemModel>>(() => ({
 	class: {
 		tr: (row: Row<ItemModel>) => {
-			if (row.original === workload.value.excludedItems[0]) return 'border-t-2 border-default bg-elevated/30';
-			return row.original.status === OrderItemStatus.ACTIVE ? '' : 'bg-elevated/30';
+			const classes: string[] = [];
+			if (row.original === workload.value.excludedItems[0]) classes.push('border-t-2 border-default');
+			if (showsPreorderLine(row.original)) classes.push('bg-warning/10');
+			else if (row.original.status !== OrderItemStatus.ACTIVE) classes.push('bg-elevated/30');
+			return classes.join(' ');
 		},
 	},
 }));

@@ -1532,6 +1532,7 @@
 			"excludedItemCount": "{count} dikecualikan",
 			"excludedFromFulfillment": "Dikecualikan daripada pemenuhan",
 			"editOrderItem": "Edit {item}",
+			"preorder": "Pre-order",
 			"editable": "Boleh diedit",
 			"orderNotEditableMessage": "Pesanan ini tidak lagi boleh diedit.",
 			"billNotEditableMessage": "Bil ini tidak lagi boleh diedit.",
@@ -2069,7 +2070,12 @@
 			"voided": "DIBATALKAN",
 			"refunded": "DIPULANGKAN",
 			"active": "AKTIF",
-			"changeItemStatus": "Tukar status item"
+			"changeItemStatus": "Tukar status item",
+			"variant": "Varian",
+			"sellerSku": "SKU Penjual",
+			"searchVariant": "Cari varian",
+			"variantLoadFailed": "Tidak dapat memuatkan varian produk.",
+			"variantPriceMissing": "Varian ini tiada harga katalog. Pilih varian lain."
 		},
 		"zInput": {
 			"address1": "Alamat 1",

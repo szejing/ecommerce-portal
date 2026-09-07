@@ -2,31 +2,93 @@
 	<div class="space-y-6">
 		<!-- Product & status -->
 		<UCard class="card">
-			<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-				<div class="flex items-start gap-3 min-w-0">
-					<div class="shrink-0 rounded-lg bg-elevated p-2">
-						<UIcon :name="ICONS.CUBE" class="w-6 h-6 text-muted" />
+			<div class="flex flex-col gap-4">
+				<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+					<div class="flex items-start gap-3 min-w-0">
+						<div class="shrink-0 rounded-lg bg-elevated p-2">
+							<UIcon :name="ICONS.CUBE" class="w-6 h-6 text-muted" />
+						</div>
+						<div class="min-w-0">
+							<div class="flex flex-wrap items-center gap-2">
+								<h2 class="font-semibold text-default truncate">#{{ prodCode }}</h2>
+								<UBadge
+									v-if="showsPreorderBadge"
+									data-testid="order-item-preorder"
+									color="warning"
+									variant="subtle"
+									size="sm"
+									class="whitespace-nowrap"
+								>
+									{{ t('components.orderDetail.preorder') }}
+								</UBadge>
+							</div>
+							<p class="text-sm text-muted mt-0.5 truncate">{{ prodName }}</p>
+						</div>
 					</div>
-					<div class="min-w-0">
-						<h2 class="font-semibold text-default truncate">#{{ prodCode }}</h2>
-						<p class="text-sm text-muted mt-0.5 truncate">{{ prodName }}</p>
-					</div>
+					<UFormField :label="t('components.orderInput.status')" name="item_status" class="sm:w-40 shrink-0">
+						<UTooltip :text="t('components.orderInput.changeItemStatus')" :popper="{ placement: 'bottom' }">
+							<USelectMenu v-model="status" :items="itemStatusOptions" value-key="value" size="md" :ui="{ base: 'min-w-full' }">
+								<template #default>
+									<UBadge :color="getOrderItemStatusColor(status)" variant="subtle" class="truncate w-full justify-center">
+										{{ itemStatusLabel }}
+									</UBadge>
+								</template>
+								<template #item="{ item }">
+									<UBadge :color="getOrderItemStatusColor(item.value)" variant="subtle" class="truncate">
+										{{ item.label }}
+									</UBadge>
+								</template>
+							</USelectMenu>
+						</UTooltip>
+					</UFormField>
 				</div>
-				<UFormField :label="t('components.orderInput.status')" name="item_status" class="sm:w-40 shrink-0">
-					<UTooltip :text="t('components.orderInput.changeItemStatus')" :popper="{ placement: 'bottom' }">
-						<USelectMenu v-model="status" :items="itemStatusOptions" value-key="value" size="md" :ui="{ base: 'min-w-full' }">
-							<template #default>
-								<UBadge :color="getOrderItemStatusColor(status)" variant="subtle" class="truncate w-full justify-center">
-									{{ itemStatusLabel }}
-								</UBadge>
-							</template>
-							<template #item="{ item }">
-								<UBadge :color="getOrderItemStatusColor(item.value)" variant="subtle" class="truncate">
-									{{ item.label }}
-								</UBadge>
-							</template>
-						</USelectMenu>
-					</UTooltip>
+
+				<UFormField
+					v-if="prodVariantCode"
+					:label="t('components.orderInput.variant')"
+					name="prod_variant_code"
+					data-testid="order-item-variant"
+				>
+					<USelectMenu
+						:model-value="prodVariantCode"
+						:items="prodVariants"
+						value-key="variant_code"
+						label-key="name"
+						:filter-fields="['variant_code', 'name', 'sku']"
+						:loading="isLoading"
+						:disabled="isLoading || prodVariants.length === 0"
+						:search-input="{ placeholder: t('components.orderInput.searchVariant') }"
+						class="w-full"
+						:ui="{ content: 'min-w-80' }"
+						@update:model-value="onVariantSelected"
+					>
+						<template #default>
+							<div class="min-w-0 text-left py-0.5">
+								<p class="text-sm text-default truncate">
+									<span class="font-medium">{{ prodVariantCode }}</span>
+									<span v-if="prodVariantName" class="text-muted"> · {{ prodVariantName }}</span>
+								</p>
+								<p class="text-xs text-muted truncate">
+									{{ t('components.orderInput.sellerSku') }}: {{ prodVariantSku?.trim() || '—' }}
+									<span class="mx-1">·</span>
+									{{ formatCurrency(unitSellPrice, currencyCode) }}
+								</p>
+							</div>
+						</template>
+						<template #item="{ item }">
+							<div class="min-w-0 py-0.5">
+								<p class="text-sm text-default truncate">
+									<span class="font-medium">{{ item.variant_code }}</span>
+									<span v-if="item.name" class="text-muted"> · {{ item.name }}</span>
+								</p>
+								<p class="text-xs text-muted truncate">
+									{{ t('components.orderInput.sellerSku') }}: {{ item.sku?.trim() || '—' }}
+									<span class="mx-1">·</span>
+									{{ formatVariantPrice(item) }}
+								</p>
+							</div>
+						</template>
+					</USelectMenu>
 				</UFormField>
 			</div>
 		</UCard>
@@ -88,17 +150,18 @@
 
 <script lang="ts" setup>
 import { ZSelectMenuDateTime } from '#components';
-import { OrderItemStatus } from 'yeppi-common';
+import { formatCurrency, OrderItemStatus } from 'yeppi-common';
 import type { AppointmentModel } from '~/utils/models';
 import type { ProductVariant } from '~/utils/types/product-variant';
 import { getOrderItemStatusOptions, getOrderItemStatusColor } from '~/utils/options';
 import { ICONS } from '~/utils/icons';
+import { mapCatalogVariantToOrderItemFields, resolveCatalogVariantSellPrice } from '~/utils/order-item-variant';
+import { failedNotification } from '~/stores/AppUi/AppUi';
 
 const { $api } = useNuxtApp();
 const { t } = useI18n();
 const isLoading = ref(false);
 const prodVariants = ref<ProductVariant[]>([]);
-const selectedVariantCode = ref<ProductVariant>();
 
 const props = defineProps<{
 	status: OrderItemStatus;
@@ -107,34 +170,48 @@ const props = defineProps<{
 	prodVariantCode?: string;
 	prodVariantName?: string;
 	prodVariantSku?: string;
+	prodVariantBarcode?: string;
 	currencyCode: string;
 	orderQty: number;
 	unitSellPrice: number;
+	origSellPrice?: number;
+	isPreorder?: boolean;
 	appointment?: AppointmentModel;
 }>();
 
 const itemStatusOptions = computed(() => getOrderItemStatusOptions(t).filter((o) => o.value !== 'All'));
 const itemStatusLabel = computed(() => itemStatusOptions.value.find((o) => o.value === props.status)?.label ?? props.status);
+const showsPreorderBadge = computed(() => !!props.isPreorder && props.status !== OrderItemStatus.VOIDED);
 
 onMounted(async () => {
-	selectedVariantCode.value = props.prodVariantCode ? ({ variant_code: props.prodVariantCode } as ProductVariant) : undefined;
+	if (!props.prodVariantCode) {
+		return;
+	}
 
-	if (props.prodVariantCode) {
-		isLoading.value = true;
+	isLoading.value = true;
 
-		try {
-			const { variants } = await $api.productVariant.getVariantsByProdCode(props.prodCode);
-
-			prodVariants.value = variants;
-		} catch (error) {
-			console.error(error);
-		} finally {
-			isLoading.value = false;
-		}
+	try {
+		const { variants } = await $api.productVariant.getVariantsByProdCode(props.prodCode);
+		prodVariants.value = variants;
+	} catch (error) {
+		console.error(error);
+		failedNotification(t('components.orderInput.variantLoadFailed'));
+	} finally {
+		isLoading.value = false;
 	}
 });
 
-const emit = defineEmits(['update:status', 'update:orderQty', 'update:appointment']);
+const emit = defineEmits([
+	'update:status',
+	'update:orderQty',
+	'update:appointment',
+	'update:prodVariantCode',
+	'update:prodVariantName',
+	'update:prodVariantSku',
+	'update:prodVariantBarcode',
+	'update:unitSellPrice',
+	'update:origSellPrice',
+]);
 
 const status = computed({
 	get() {
@@ -179,6 +256,39 @@ const appointmentDate = computed({
 const netTotal = computed(() => {
 	return props.unitSellPrice * orderQty.value;
 });
+
+function formatVariantPrice(variant: ProductVariant): string {
+	const price = resolveCatalogVariantSellPrice(variant);
+	if (price == null) {
+		return '—';
+	}
+	const currency = variant.price_types?.[0]?.currency_code ?? props.currencyCode;
+	return formatCurrency(price, currency);
+}
+
+function onVariantSelected(code: string | undefined) {
+	if (!code || code === props.prodVariantCode) {
+		return;
+	}
+
+	const variant = prodVariants.value.find((entry) => entry.variant_code === code);
+	if (!variant) {
+		return;
+	}
+
+	const mapped = mapCatalogVariantToOrderItemFields(variant);
+	if (!mapped) {
+		failedNotification(t('components.orderInput.variantPriceMissing'));
+		return;
+	}
+
+	emit('update:prodVariantCode', mapped.prod_variant_code);
+	emit('update:prodVariantName', mapped.prod_variant_name);
+	emit('update:prodVariantSku', mapped.prod_variant_sku);
+	emit('update:prodVariantBarcode', mapped.prod_variant_barcode);
+	emit('update:unitSellPrice', mapped.unit_sell_price);
+	emit('update:origSellPrice', mapped.orig_sell_price);
+}
 </script>
 
 <style scoped>

@@ -6,7 +6,7 @@ import OrderDetailItems from '~/components/Z/Section/Order/Detail/Items.vue';
 import type { ItemModel } from '~/utils/models/item.model';
 import type { OrderHistory } from '~/utils/types/order-history';
 
-const item = (itemLine: number, status: OrderItemStatus, qty: number): ItemModel => ({
+const item = (itemLine: number, status: OrderItemStatus, qty: number, extras: Partial<ItemModel> = {}): ItemModel => ({
 	item_line: itemLine,
 	parent_item_line: 0,
 	prod_code: `P-${itemLine}`,
@@ -23,16 +23,17 @@ const item = (itemLine: number, status: OrderItemStatus, qty: number): ItemModel
 	net_amt_exc: qty * 10,
 	status,
 	taxes: [],
+	...extras,
 });
 
-const order = (status: OrderStatus): OrderHistory => ({
+const order = (status: OrderStatus, items?: ItemModel[]): OrderHistory => ({
 	order_no: 'ORD-1',
 	inv_no: 'ORD-1',
 	type: 'order',
 	status,
 	payment_status: PaymentStatus.PENDING,
 	order_type: OrderType.DELIVERY,
-	items: [item(1, OrderItemStatus.ACTIVE, 2), item(2, OrderItemStatus.VOIDED, 7), item(3, OrderItemStatus.ACTIVE, 3)],
+	items: items ?? [item(1, OrderItemStatus.ACTIVE, 2), item(2, OrderItemStatus.VOIDED, 7), item(3, OrderItemStatus.ACTIVE, 3)],
 	fulfillments: [],
 	payments: [],
 	taxes: [],
@@ -82,5 +83,30 @@ describe('OrderDetailItems workbench', () => {
 		expect(variantValue.classes()).toContain('order-item-variant-value');
 		const mobileVariantLines = wrapper.get('[data-testid="order-item-mobile-list"]').findAll('[data-testid="order-item-variant-line"]');
 		expect(mobileVariantLines.at(-1)?.classes()).toContain('is-voided');
+	});
+
+	it('shows Pre-order badge and warning tint for active Pre-order Lines only', async () => {
+		const wrapper = await mountSuspended(OrderDetailItems, {
+			props: {
+				order: order(OrderStatus.PENDING_PAYMENT, [
+					item(1, OrderItemStatus.ACTIVE, 1, { is_preorder: true }),
+					item(2, OrderItemStatus.VOIDED, 1, { is_preorder: true }),
+					item(3, OrderItemStatus.ACTIVE, 1, { is_preorder: false }),
+				]),
+			},
+		});
+
+		const mobileCards = wrapper.get('[data-testid="order-item-mobile-list"]').findAll('[data-testid="order-item-mobile-card"]');
+		expect(mobileCards).toHaveLength(3);
+		expect(mobileCards[0]?.classes()).toContain('bg-warning/10');
+		expect(mobileCards[0]?.findAll('[data-testid="order-item-preorder"]')).toHaveLength(1);
+		expect(mobileCards[0]?.get('[data-testid="order-item-preorder"]').text()).toBe('Pre-order');
+		expect(mobileCards[1]?.find('[data-testid="order-item-preorder"]').exists()).toBe(false);
+		expect(mobileCards[1]?.classes()).not.toContain('bg-warning/10');
+		expect(mobileCards[2]?.find('[data-testid="order-item-preorder"]').exists()).toBe(false);
+
+		const tablePreorderBadges = wrapper.get('[data-testid="order-item-table"]').findAll('[data-testid="order-item-preorder"]');
+		expect(tablePreorderBadges).toHaveLength(1);
+		expect(tablePreorderBadges[0]?.text()).toBe('Pre-order');
 	});
 });
