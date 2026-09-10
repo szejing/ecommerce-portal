@@ -1,6 +1,6 @@
 import { Fragment, h } from 'vue';
 import type { TableColumn } from '@nuxt/ui';
-import { getOrderStatusColor, OrderType, type UiBadgeColor } from 'yeppi-common';
+import { getOrderStatusColor, OrderType, type BadgeColor } from 'yeppi-common';
 import { UBadge, UIcon, UTooltip } from '#components';
 import type { OrderHistory } from '~/utils/types/order-history';
 import { getSortableHeader, headerCell, moneyCell, tableCellMeta } from '../styles';
@@ -11,7 +11,7 @@ import { getFulfillmentMethodDescriptions } from '~/utils/fulfillment';
 type TranslateFn = (key: string) => string;
 
 /** Full-height left strip gradient by order status (matches status badge colors). */
-const statusStripClassMap: Record<UiBadgeColor, string> = {
+const statusStripClassMap: Record<BadgeColor, string> = {
 	primary: 'bg-gradient-to-r from-primary-500 to-transparent',
 	secondary: 'bg-gradient-to-r from-secondary-500 to-transparent',
 	success: 'bg-gradient-to-r from-success-500 to-transparent',

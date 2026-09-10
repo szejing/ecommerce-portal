@@ -1,8 +1,4 @@
-import {
-	getShipmentStatusColor as getCommonShipmentStatusColor,
-	ShipmentStatus,
-	type UiBadgeColor,
-} from 'yeppi-common';
+import { getShipmentStatusColor as getCommonShipmentStatusColor, ShipmentStatus, type BadgeColor } from 'yeppi-common';
 import type { ShipmentStatusValue } from '~/utils/types/order-fulfillment-shipping';
 
 type TranslateFn = (key: string) => string;
@@ -15,12 +11,7 @@ export const options_shipment_status: ShipmentStatusValue[] = [
 	ShipmentStatus.FAILED,
 ];
 
-const SHIPMENT_STATUS_PROGRESS: ShipmentStatusValue[] = [
-	ShipmentStatus.PENDING,
-	ShipmentStatus.SHIPPED,
-	ShipmentStatus.IN_TRANSIT,
-	ShipmentStatus.DELIVERED,
-];
+const SHIPMENT_STATUS_PROGRESS: ShipmentStatusValue[] = [ShipmentStatus.PENDING, ShipmentStatus.SHIPPED, ShipmentStatus.IN_TRANSIT, ShipmentStatus.DELIVERED];
 
 export function getShipmentStatusOptions(t: TranslateFn) {
 	return [
@@ -47,6 +38,6 @@ export function canCompleteShipmentStatus(current: ShipmentStatusValue | string 
 	return current !== ShipmentStatus.DELIVERED && current !== ShipmentStatus.FAILED;
 }
 
-export const getShipmentStatusColor = (status: string): UiBadgeColor | undefined => {
+export const getShipmentStatusColor = (status: string): BadgeColor | undefined => {
 	return getCommonShipmentStatusColor(status);
 };

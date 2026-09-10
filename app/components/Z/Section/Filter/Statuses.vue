@@ -28,12 +28,7 @@
 					{{ t('options.all') }}
 				</UBadge>
 				<template v-else-if="selectedLabels.length === 1">
-					<UBadge
-						v-if="getColor"
-						:color="getColor(selectedLabels[0]!.value) ?? 'neutral'"
-						variant="subtle"
-						class="truncate"
-					>
+					<UBadge v-if="getColor" :color="getColor(selectedLabels[0]!.value) ?? 'neutral'" variant="subtle" class="truncate">
 						{{ selectedLabels[0]!.label }}
 					</UBadge>
 					<span v-else class="text-sm text-default truncate">{{ selectedLabels[0]!.label }}</span>
@@ -45,12 +40,7 @@
 
 			<!-- Use item-label (not item) so the selected tick remains -->
 			<template #item-label="{ item }">
-				<UBadge
-					v-if="getColor"
-					:color="getColor(item.value) ?? 'neutral'"
-					variant="subtle"
-					class="truncate"
-				>
+				<UBadge v-if="getColor" :color="getColor(item.value) ?? 'neutral'" variant="subtle" class="truncate">
 					{{ item.label }}
 				</UBadge>
 				<span v-else>{{ item.label }}</span>
@@ -60,7 +50,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { UiBadgeColor } from 'yeppi-common';
+import type { BadgeColor } from 'yeppi-common';
 
 const { t } = useI18n();
 
@@ -78,7 +68,7 @@ const props = withDefaults(
 		showLabel?: boolean;
 		disabled?: boolean;
 		wrapperClass?: string;
-		getColor?: (value: string) => UiBadgeColor | undefined;
+		getColor?: (value: string) => BadgeColor | undefined;
 	}>(),
 	{
 		modelValue: () => [],

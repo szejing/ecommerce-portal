@@ -1,4 +1,4 @@
-import { getPaymentStatusColor as getCommonPaymentStatusColor, PaymentStatus, type UiBadgeColor } from 'yeppi-common';
+import { getPaymentStatusColor as getCommonPaymentStatusColor, PaymentStatus, type BadgeColor } from 'yeppi-common';
 
 type TranslateFn = (key: string) => string;
 
@@ -10,11 +10,7 @@ export const options_payment_status = [
 	PaymentStatus.REFUNDED,
 ];
 
-const PAYMENT_STATUS_PROGRESS: PaymentStatus[] = [
-	PaymentStatus.PENDING,
-	PaymentStatus.PARTIALLY_PAID,
-	PaymentStatus.PAID,
-];
+const PAYMENT_STATUS_PROGRESS: PaymentStatus[] = [PaymentStatus.PENDING, PaymentStatus.PARTIALLY_PAID, PaymentStatus.PAID];
 
 export function getPaymentStatusOptions(t: TranslateFn) {
 	return [
@@ -41,7 +37,7 @@ export function canCompletePaymentStatus(current: PaymentStatus | string | undef
 	return current !== PaymentStatus.PAID && current !== PaymentStatus.REFUNDED && current !== PaymentStatus.PARTIALLY_REFUNDED;
 }
 
-export const getPaymentStatusColor = (status: string): UiBadgeColor | undefined => {
+export const getPaymentStatusColor = (status: string): BadgeColor | undefined => {
 	if (status === 'All') {
 		return 'neutral';
 	}

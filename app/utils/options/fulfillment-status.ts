@@ -1,8 +1,4 @@
-import {
-	FulfillmentLifecycleStatus,
-	getFulfillmentLifecycleStatusColor,
-	type UiBadgeColor,
-} from 'yeppi-common';
+import { FulfillmentLifecycleStatus, getFulfillmentLifecycleStatusColor, type BadgeColor } from 'yeppi-common';
 import type { FulfillmentLifecycleStatusValue } from '~/utils/types/order-fulfillment-shipping';
 
 type TranslateFn = (key: string) => string;
@@ -24,6 +20,6 @@ export function getFulfillmentStatusOptions(t: TranslateFn) {
 }
 
 /** Lifecycle packing status colors (portal uses lifecycle values under this name). */
-export const getFulfillmentStatusColor = (status: string): UiBadgeColor | undefined => {
+export const getFulfillmentStatusColor = (status: string): BadgeColor | undefined => {
 	return getFulfillmentLifecycleStatusColor(status);
 };

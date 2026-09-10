@@ -1,4 +1,4 @@
-import { getOrderStatusColor as getCommonOrderStatusColor, OrderStatus, OrderType, type UiBadgeColor } from 'yeppi-common';
+import { getOrderStatusColor as getCommonOrderStatusColor, OrderStatus, OrderType, type BadgeColor } from 'yeppi-common';
 
 type TranslateFn = (key: string) => string;
 
@@ -111,7 +111,7 @@ export function canCompleteOrderStatus(current: OrderStatus | string | undefined
 	return current !== OrderStatus.COMPLETED && current !== OrderStatus.CANCELLED && current !== OrderStatus.REFUNDED;
 }
 
-export const getOrderStatusColor = (status: string): UiBadgeColor | undefined => {
+export const getOrderStatusColor = (status: string): BadgeColor | undefined => {
 	if (status === 'All') {
 		return 'neutral';
 	}
