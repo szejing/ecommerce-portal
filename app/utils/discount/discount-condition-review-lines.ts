@@ -108,11 +108,25 @@ export function getConditionFilterReviewPart(cond: CreateDiscountConditionReq, t
 	return plain ? { kind: 'plain', text: plain } : null;
 }
 
+type DiscountConditionReviewInput = {
+	filter_operator?: FilterOperator | null;
+	filter_condition?: FilterCondition | null;
+	filter_value?: string | null;
+	disc_value?: number | null;
+};
+
+const toCreateCondition = (cond: DiscountConditionReviewInput): CreateDiscountConditionReq => ({
+	...(cond.filter_operator != null ? { filter_operator: cond.filter_operator } : {}),
+	...(cond.filter_condition != null ? { filter_condition: cond.filter_condition } : {}),
+	...(cond.filter_value != null ? { filter_value: cond.filter_value } : {}),
+	...(cond.disc_value != null ? { disc_value: cond.disc_value } : {}),
+});
+
 /**
  * Review lines: optional spend bounds on the discount plus structured filter per condition row.
  */
 export function buildDiscountConditionReviewItems(
-	conditions: CreateDiscountConditionReq[] | undefined,
+	conditions: DiscountConditionReviewInput[] | undefined,
 	t: Translate,
 	currencyCode: string,
 	spendBounds?: DiscountSpendBounds,
@@ -125,7 +139,8 @@ export function buildDiscountConditionReviewItems(
 
 	const items: ConditionReviewLineItem[] = [];
 	let index = 0;
-	for (const cond of conditions) {
+	for (const raw of conditions) {
+		const cond = toCreateCondition(raw);
 		const filter = getConditionFilterReviewPart(cond, t);
 		const includeAmount = index === 0 && Boolean(amountText);
 		if (includeAmount || filter) {

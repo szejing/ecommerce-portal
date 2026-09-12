@@ -58,6 +58,7 @@
 		"language": "Language",
 		"english": "English",
 		"bahasaMelayu": "Bahasa Melayu",
+		"simplifiedChinese": "Simplified Chinese",
 		"edit": "Edit",
 		"delete": "Delete",
 		"create": "Create",
@@ -474,7 +475,8 @@
 			"codeRequired": "Voucher code is required",
 			"nameRequired": "Name is required",
 			"statusRequired": "Status is required",
-			"endBeforeStart": "End date must be on or after the start date"
+			"endBeforeStart": "End date must be on or after the start date",
+			"discountCodeRequired": "Pick an existing discount"
 		}
 	},
 	"pages": {
@@ -1032,6 +1034,7 @@
 		"rule": "Rule",
 		"usage": "Usage",
 		"linkedDiscount": "Linked discount",
+		"allocation": "Applies to",
 		"shippingZoneName": "Zone",
 		"shippingZoneRegion": "Region",
 		"shippingZoneMethods": "Methods",
@@ -1982,6 +1985,8 @@
 			"discValuePercentHint": "Enter 1–100 (percent off).",
 			"allocation": "Apply discount to",
 			"allocationHint": "Set to bill discount (whole order) or item discount (each line item).",
+			"allocationBill": "Order (shop)",
+			"allocationItem": "Product line",
 			"allocationFixedHint": "This is fixed by the voucher type you selected.",
 			"conditionsSection": "Conditions",
 			"conditionsHelp": "Optional: limit when this discount applies (e.g. specific products or groups).",
@@ -2037,8 +2042,12 @@
 			"nameHint": "Name for this voucher",
 			"descriptionHint": "Short description (optional).",
 			"discountCodeHint": "Required. Pick a discount.",
+			"discountSource": "Discount",
+			"createNewDiscount": "Create a new discount",
+			"useExistingDiscount": "Use an existing discount",
 			"linkedDiscountTitle": "Linked discount",
-			"linkedDiscountBody": "A new discount will use the same code as this voucher ({code}) and will be linked automatically."
+			"linkedDiscountBody": "A new discount will use the same code as this voucher ({code}) and will be linked automatically.",
+			"linkedDiscountRetargetHint": "You can point this voucher at a different discount. Past orders keep the amounts already recorded."
 		},
 		"orderInput": {
 			"status": "Status",

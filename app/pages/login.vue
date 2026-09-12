@@ -20,6 +20,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { SupportedLocale } from '~/utils/constants/i18n';
 import { LOCALE_STORAGE_KEY } from '~/utils/constants/i18n';
 
 definePageMeta({ layout: 'auth' });
@@ -40,6 +41,7 @@ const appVersion = computed(() => {
 const localeItems = computed(() => [
 	{ label: t('common.english'), value: 'en' },
 	{ label: t('common.bahasaMelayu'), value: 'ms' },
+	{ label: t('common.simplifiedChinese'), value: 'zh-CN' },
 ]);
 
 const switchLocale = (newLocale: string) => {
@@ -49,7 +51,7 @@ const switchLocale = (newLocale: string) => {
 		} catch {
 			// ignore
 		}
-		setLocale(newLocale as 'en' | 'ms');
+		setLocale(newLocale as SupportedLocale);
 	}
 };
 </script>

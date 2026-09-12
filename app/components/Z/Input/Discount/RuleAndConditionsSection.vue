@@ -33,6 +33,19 @@
 				<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ t('components.discountForm.usageLimitHint') }}</p>
 				<UInput v-model.number="usageLimitModel" type="number" min="1" :placeholder="t('components.discountForm.usageLimitPlaceholder')" />
 			</UFormField>
+			<UFormField :label="t('components.discountForm.allocation')" :name="fieldName('allocation')" required>
+				<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">
+					{{ lockAllocation ? t('components.discountForm.allocationFixedHint') : t('components.discountForm.allocationHint') }}
+				</p>
+				<USelect
+					:model-value="state.allocation"
+					:items="allocationItems"
+					value-attribute="value"
+					class="w-full"
+					:disabled="lockAllocation"
+					@update:model-value="onAllocationSelect"
+				/>
+			</UFormField>
 		</div>
 
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2 px-4">
@@ -107,8 +120,10 @@ const props = withDefaults(
 		state: DiscountCreate;
 		/** Dot-prefix for UFormField names (e.g. `discount` → `discount.disc_type`). */
 		formFieldPrefix?: string;
+		/** When true, allocation is owned by the voucher type (shop vs product). */
+		lockAllocation?: boolean;
 	}>(),
-	{ formFieldPrefix: '' },
+	{ formFieldPrefix: '', lockAllocation: false },
 );
 
 const { t } = useI18n();
@@ -133,6 +148,15 @@ const discTypeLabel = (rt: DiscountType) =>
 	);
 
 const discTypeItems = computed(() => Object.values(DiscountType).map((v) => ({ label: discTypeLabel(v), value: v })));
+
+const allocationItems = computed(() => [
+	{ label: t('components.discountForm.allocationBill'), value: AllocationType.BILL },
+	{ label: t('components.discountForm.allocationItem'), value: AllocationType.ITEM },
+]);
+
+const onAllocationSelect = (v: AllocationType) => {
+	state.value.allocation = v;
+};
 
 const discValueSuffix = computed(() => {
 	const rt = state.value.disc_type;

@@ -58,6 +58,7 @@
 		"language": "Bahasa",
 		"english": "English",
 		"bahasaMelayu": "Bahasa Melayu",
+		"simplifiedChinese": "Bahasa Cina Ringkas",
 		"edit": "Edit",
 		"delete": "Padam",
 		"create": "Cipta",
@@ -474,7 +475,8 @@
 			"codeRequired": "Kod baucar wajib",
 			"nameRequired": "Nama wajib",
 			"statusRequired": "Status wajib",
-			"endBeforeStart": "Tarikh tamat mesti pada atau selepas tarikh mula"
+			"endBeforeStart": "Tarikh tamat mesti pada atau selepas tarikh mula",
+			"discountCodeRequired": "Pilih diskaun sedia ada"
 		}
 	},
 	"pages": {
@@ -1031,6 +1033,7 @@
 		"rule": "Peraturan",
 		"usage": "Penggunaan",
 		"linkedDiscount": "Diskaun dipautkan",
+		"allocation": "Terapkan pada",
 		"shippingZoneName": "Zon",
 		"shippingZoneRegion": "Wilayah",
 		"shippingZoneMethods": "Kaedah",
@@ -1981,6 +1984,8 @@
 			"discValuePercentHint": "Masukkan 1–100 (peratus potongan).",
 			"allocation": "Terapkan diskaun pada",
 			"allocationHint": "Tetapkan sebagai diskaun bil (keseluruhan pesanan) atau diskaun item (setiap baris).",
+			"allocationBill": "Pesanan (kedai)",
+			"allocationItem": "Baris produk",
 			"allocationFixedHint": "Ini ditetapkan mengikut jenis baucar yang anda pilih.",
 			"conditionsSection": "Syarat",
 			"conditionsHelp": "Pilihan: hadkan bila diskaun ini digunakan (cth. produk atau kumpulan tertentu).",
@@ -2036,8 +2041,12 @@
 			"nameHint": "Nama untuk baucar ini",
 			"descriptionHint": "Nota ringkas (pilihan).",
 			"discountCodeHint": "Wajib. Pilih diskaun.",
+			"discountSource": "Diskaun",
+			"createNewDiscount": "Cipta diskaun baharu",
+			"useExistingDiscount": "Guna diskaun sedia ada",
 			"linkedDiscountTitle": "Diskaun dipautkan",
-			"linkedDiscountBody": "Diskaun baharu akan menggunakan kod yang sama dengan baucar ini ({code}) dan akan dipautkan secara automatik."
+			"linkedDiscountBody": "Diskaun baharu akan menggunakan kod yang sama dengan baucar ini ({code}) dan akan dipautkan secara automatik.",
+			"linkedDiscountRetargetHint": "Anda boleh pautkan baucar ini kepada diskaun lain. Pesanan lalu mengekalkan jumlah yang sudah direkod."
 		},
 		"orderInput": {
 			"status": "Status",

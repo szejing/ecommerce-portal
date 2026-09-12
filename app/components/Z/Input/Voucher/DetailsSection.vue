@@ -38,6 +38,55 @@
 				</UFormField>
 			</div>
 
+			<div class="space-y-2">
+				<p class="text-sm font-medium">{{ t('components.voucherForm.linkedDiscountTitle') }}</p>
+				<p v-if="discountLinkMode === 'create'" class="text-xs text-neutral-500 dark:text-neutral-400">
+					{{ t('components.voucherForm.linkedDiscountBody', { code: state.code?.trim() || '—' }) }}
+				</p>
+				<p v-else-if="showRetargetHint" class="text-xs text-neutral-500 dark:text-neutral-400">
+					{{ t('components.voucherForm.linkedDiscountRetargetHint') }}
+				</p>
+				<UFormField
+					v-if="discountLinkMode === 'pick'"
+					:name="fieldName('discount_code')"
+					:label="t('components.voucherForm.discountCodeHint')"
+					required
+				>
+					<div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+						<div class="min-w-0 flex-1">
+							<ZSelectMenuDiscount
+								v-model="discountCodeSelect"
+								:discounts="discounts"
+								:none-label="noneLabel"
+								:loading="discountOptionsLoading"
+							/>
+						</div>
+						<UButton
+							v-if="discountEditTo"
+							:to="discountEditTo"
+							color="neutral"
+							variant="outline"
+							size="sm"
+							class="shrink-0"
+						>
+							{{ t('pages.editDiscount') }}
+						</UButton>
+					</div>
+				</UFormField>
+				<div v-else-if="discountLinkMode === 'locked'" class="flex flex-wrap items-center gap-3">
+					<UBadge variant="subtle" color="info" size="md">{{ state.discount_code || t('common.notSet') }}</UBadge>
+					<UButton
+						v-if="discountEditTo"
+						:to="discountEditTo"
+						color="neutral"
+						variant="outline"
+						size="sm"
+					>
+						{{ t('pages.editDiscount') }}
+					</UButton>
+				</div>
+			</div>
+
 			<div class="grid grid-cols-12">
 				<div id="section-voucher-validity" class="col-span-12 scroll-mt-4 space-y-3 border-t border-default pt-4 lg:col-span-6">
 					<div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
@@ -120,8 +169,12 @@ const props = withDefaults(
 		discounts: Discount[];
 		noneLabel: string;
 		discountOptionsLoading?: boolean;
-		/** When true, discount is created with the same code as the voucher (no picker). */
-		linkDiscountToVoucherCode?: boolean;
+		/** create = bundled new rule, pick = existing Discount, locked = read-only link. */
+		discountLinkMode?: 'create' | 'pick' | 'locked';
+		/** CRM Discount edit route for the currently selected Discount. */
+		discountEditTo?: string;
+		/** Explain that retarget does not rewrite past order/sale snapshot amounts. */
+		showRetargetHint?: boolean;
 		/** Dot-prefix for UFormField names (e.g. `voucher` → `voucher.code`). */
 		formFieldPrefix?: string;
 	}>(),
@@ -129,7 +182,8 @@ const props = withDefaults(
 		codeDisabled: false,
 		showStatusSwitch: false,
 		discountOptionsLoading: false,
-		linkDiscountToVoucherCode: false,
+		discountLinkMode: 'locked',
+		showRetargetHint: false,
 		formFieldPrefix: '',
 	},
 );

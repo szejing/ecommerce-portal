@@ -60,8 +60,9 @@
 
 <script lang="ts" setup>
 import type { DropdownMenuItem } from '@nuxt/ui';
+import type { SupportedLocale } from '~/utils/constants/i18n';
 import { useAuthStore } from '~/stores';
-import { LOCALE_STORAGE_KEY } from '~/utils/constants/i18n';
+import { LOCALE_STORAGE_KEY, SUPPORTED_LOCALES } from '~/utils/constants/i18n';
 
 defineProps<{
 	collapsed?: boolean;
@@ -78,7 +79,7 @@ const appVersion = computed(() => {
 	return typeof version === 'string' && version.trim() ? version.trim() : '';
 });
 
-const switchLocale = (newLocale: 'en' | 'ms') => {
+const switchLocale = (newLocale: SupportedLocale) => {
 	if (import.meta.client) {
 		try {
 			localStorage.setItem(LOCALE_STORAGE_KEY, newLocale);
@@ -89,13 +90,13 @@ const switchLocale = (newLocale: 'en' | 'ms') => {
 	}
 };
 
-type SelectableValue = 'light' | 'dark' | 'en' | 'ms';
+type SelectableValue = 'light' | 'dark' | SupportedLocale;
 
 const isItemSelected = (item: DropdownMenuItem): boolean => {
 	const value = (item as DropdownMenuItem & { value?: SelectableValue }).value;
 	if (value === undefined) return false;
 	if (value === 'light' || value === 'dark') return colorMode.value === value;
-	if (value === 'en' || value === 'ms') return locale.value === value;
+	if ((SUPPORTED_LOCALES as readonly string[]).includes(value)) return locale.value === value;
 	return false;
 };
 
@@ -159,6 +160,15 @@ const items = computed<DropdownMenuItem[][]>(() => {
 						onSelect(e: Event) {
 							e.preventDefault();
 							switchLocale('ms');
+						},
+					},
+					{
+						label: t('common.simplifiedChinese'),
+						icon: 'i-lucide-languages',
+						value: 'zh-CN' as const,
+						onSelect(e: Event) {
+							e.preventDefault();
+							switchLocale('zh-CN');
 						},
 					},
 				],

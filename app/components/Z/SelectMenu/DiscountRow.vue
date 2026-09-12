@@ -34,7 +34,7 @@
 				<UBadge v-if="row.disc_type && row.disc_type !== DiscountType.FREE_SHIPPING" color="neutral" variant="subtle" class="shrink-0 tabular-nums">
 					{{ formatDiscountDiscValue(row.disc_type, row.disc_value) }}
 				</UBadge>
-				<UBadge v-if="row.disc_type" :color="discTypeBadgeColor(row.disc_type)" variant="subtle" class="shrink-0 capitalize">
+				<UBadge v-if="row.disc_type" :color="getDiscountTypeBadgeColor(row.disc_type)" variant="subtle" class="shrink-0 capitalize">
 					{{ discTypeLabel(row.disc_type) }}
 				</UBadge>
 			</div>
@@ -45,18 +45,12 @@
 <script lang="ts" setup>
 import { DiscountType } from 'yeppi-common';
 import type { DiscountSelectMenuRow } from '~/utils/types/discount-select-menu';
-import { formatDiscountDiscValue } from '~/utils/discount-rule-display';
+import { formatDiscountDiscValue, getDiscountTypeBadgeColor } from '~/utils/discount-rule-display';
 
 const DISC_TYPE_I18N: Record<DiscountType, string> = {
 	[DiscountType.PERCENTAGE]: 'components.discountForm.discTypeOptionPercentage',
 	[DiscountType.FIXED]: 'components.discountForm.discTypeOptionFixed',
 	[DiscountType.FREE_SHIPPING]: 'components.discountForm.discTypeOptionFreeShipping',
-};
-
-const DISC_TYPE_BADGE_COLOR: Record<DiscountType, 'info' | 'primary' | 'success'> = {
-	[DiscountType.PERCENTAGE]: 'info',
-	[DiscountType.FIXED]: 'primary',
-	[DiscountType.FREE_SHIPPING]: 'success',
 };
 
 const { t } = useI18n();
@@ -69,9 +63,5 @@ defineProps<{
 
 function discTypeLabel(rt: DiscountType): string {
 	return t(DISC_TYPE_I18N[rt]);
-}
-
-function discTypeBadgeColor(rt: DiscountType): 'info' | 'primary' | 'success' {
-	return DISC_TYPE_BADGE_COLOR[rt];
 }
 </script>

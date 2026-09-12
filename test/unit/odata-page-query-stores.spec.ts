@@ -104,3 +104,51 @@ describe('useDataStore getCountries', () => {
 		});
 	});
 });
+
+describe('useDiscountStore fetchDiscountsForSelect', () => {
+	const getMany = vi.fn();
+
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		vi.clearAllMocks();
+		(globalThis as unknown as { defineStore: typeof defineStore }).defineStore =
+			defineStore;
+		(globalThis as unknown as { useNuxtApp: () => unknown }).useNuxtApp = () =>
+			({
+				$api: {
+					discount: { getMany },
+				},
+			}) as unknown;
+	});
+
+	it('requests active discounts matching allocation with $top within the API max of 100', async () => {
+		getMany.mockResolvedValue({ data: [] });
+
+		const { useDiscountStore } = await import('../../app/stores/discount/discount');
+		const store = useDiscountStore();
+		await store.fetchDiscountsForSelect('bill');
+
+		expect(getMany).toHaveBeenCalledWith({
+			$top: 100,
+			$skip: 0,
+			$orderby: 'code asc',
+			$expand: 'conditions',
+			$filter: "is_disabled eq false and allocation eq 'bill'",
+		});
+	});
+
+	it('filters the listing by inactive status', async () => {
+		getMany.mockResolvedValue({ data: [], '@odata.count': 0 });
+
+		const { useDiscountStore } = await import('../../app/stores/discount/discount');
+		const store = useDiscountStore();
+		store.filter.status = 'inactive';
+		await store.getDiscounts();
+
+		expect(getMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				$filter: 'is_disabled eq true',
+			}),
+		);
+	});
+});

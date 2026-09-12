@@ -32,6 +32,7 @@
 <script lang="ts" setup>
 import { AllocationType } from 'yeppi-common';
 import { ICONS } from '~/utils/icons';
+import { isVoucherCreateDraftDirty } from '~/utils/voucher/form-dirty';
 
 const { t } = useI18n();
 useHead({ title: () => t('pages.createShopVoucher') });
@@ -43,13 +44,7 @@ const { adding, new_voucher } = storeToRefs(voucherStore);
 const { new_discount } = storeToRefs(discountStore);
 const formRef = ref<{ submit: () => void } | null>(null);
 
-const isDirty = computed(() => {
-	const v = new_voucher.value;
-	const vDirty = !!(v.code?.trim() || v.description?.trim() || v.discount_code?.trim());
-	const d = new_discount.value;
-	const dDirty = !!(d.description?.trim() || (d.conditions?.length ?? 0) > 0 || d.usage_limit != null);
-	return vDirty || dDirty;
-});
+const isDirty = computed(() => isVoucherCreateDraftDirty(new_voucher.value, new_discount.value));
 
 useLeavePageGuard(isDirty, {
 	onLeave: () => {

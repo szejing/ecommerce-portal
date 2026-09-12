@@ -6,6 +6,20 @@
 				<UInput v-model="filter.query" :placeholder="t('components.filter.searchDiscounts')" :icon="ICONS.SEARCH_ROUNDED" @input="debouncedSearch" />
 			</div>
 
+			<div class="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
+				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.status') }}</label>
+				<USelect
+					:model-value="statusSelectValue"
+					:items="statusItems"
+					value-attribute="value"
+					color="neutral"
+					variant="outline"
+					class="w-full"
+					:ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform' }"
+					@update:model-value="onStatusChange"
+				/>
+			</div>
+
 			<div class="flex flex-col gap-1.5 justify-end">
 				<div class="flex gap-2">
 					<UButton variant="outline" color="neutral" :disabled="is_loading" @click="clearFilters">
@@ -36,6 +50,7 @@
 
 <script lang="ts" setup>
 import { ICONS } from '~/utils/icons';
+
 const { t } = useI18n();
 const discountStore = useDiscountStore();
 const { filter } = storeToRefs(discountStore);
@@ -43,15 +58,21 @@ const { filter } = storeToRefs(discountStore);
 const is_loading = computed(() => discountStore.loading);
 const searchTimeout = ref<ReturnType<typeof setTimeout> | null>(null);
 
+const STATUS_FILTER_ALL = 'all' as const;
+
 const statusItems = computed(() => [
-	{ label: t('options.all'), value: '' },
+	{ label: t('options.all'), value: STATUS_FILTER_ALL },
 	{ label: t('common.active'), value: 'active' },
 	{ label: t('common.inactive'), value: 'inactive' },
 ]);
 
+/** Maps store filter to USelect (never use '' — reserved for clearing the select). */
+const statusSelectValue = computed(() => filter.value.status ?? STATUS_FILTER_ALL);
+
 const hasActiveFilters = computed(() => filter.value.query || filter.value.status);
 
 const search = async () => {
+	filter.value.current_page = 1;
 	await discountStore.getDiscounts();
 };
 
@@ -59,13 +80,17 @@ const debouncedSearch = () => {
 	if (searchTimeout.value) {
 		clearTimeout(searchTimeout.value);
 	}
-	searchTimeout.value = setTimeout(async () => {
-		await search();
+	searchTimeout.value = setTimeout(() => {
+		void search();
 	}, 500);
 };
 
 const onStatusChange = async (value: string | undefined) => {
-	filter.value.status = value ? value : undefined;
+	if (!value || value === STATUS_FILTER_ALL) {
+		filter.value.status = undefined;
+	} else {
+		filter.value.status = value;
+	}
 	filter.value.current_page = 1;
 	await search();
 };
@@ -74,7 +99,7 @@ const clearFilters = async () => {
 	filter.value.query = '';
 	filter.value.status = undefined;
 	filter.value.current_page = 1;
-	await search();
+	await discountStore.getDiscounts();
 };
 
 const clearFilter = async (filterKey: string) => {
@@ -83,7 +108,8 @@ const clearFilter = async (filterKey: string) => {
 	} else if (filterKey === 'status') {
 		filter.value.status = undefined;
 	}
-	await search();
+	filter.value.current_page = 1;
+	await discountStore.getDiscounts();
 };
 
 onUnmounted(() => {

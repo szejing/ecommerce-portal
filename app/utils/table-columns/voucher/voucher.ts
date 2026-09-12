@@ -1,5 +1,6 @@
 import { UBadge, USwitch } from '#components';
 import type { TableColumn } from '@nuxt/ui';
+import { getDiscountTypeBadgeColor } from '~/utils/discount-rule-display';
 import type { Voucher } from '~/utils/types/voucher';
 import { useVoucherStore } from '~/stores/voucher/voucher';
 import { getSortableHeader, headerCell, mutedCell, TABLE_ALIGN_RIGHT, tableCellMeta } from '../styles';
@@ -22,9 +23,10 @@ export function getVoucherColumns(t: TranslateFn): TableColumn<Voucher>[] {
 			accessorKey: 'discount_code',
 			header: () => headerCell(t('table.linkedDiscount')),
 			cell: ({ row }) => {
-				const code = row.original.discount.code;
+				const discount = row.original.discount;
+				const code = discount?.code;
 				if (!code) return mutedCell();
-				return h(UBadge, { variant: 'subtle', color: 'info', size: 'md' }, () => code);
+				return h(UBadge, { variant: 'subtle', color: getDiscountTypeBadgeColor(discount?.disc_type), size: 'md' }, () => code);
 			},
 		},
 		{

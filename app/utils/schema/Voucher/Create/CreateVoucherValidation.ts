@@ -16,7 +16,9 @@ export function CreateVoucherValidation(t: TranslateFn, opts?: CreateVoucherVali
 				.transform((s) => s.toUpperCase()),
 			description: z.string().optional(),
 			is_disabled: z.boolean().default(false),
-			discount_code: opts?.linkDiscountToVoucher ? z.string().optional() : z.string(),
+			discount_code: opts?.linkDiscountToVoucher
+				? z.string().optional()
+				: z.string({ message: t('validation.voucher.discountCodeRequired') }).min(1, t('validation.voucher.discountCodeRequired')),
 			starts_at: z.string().optional(),
 			ends_at: z.string().optional(),
 			usage_limit: z.number().int().positive().optional(),

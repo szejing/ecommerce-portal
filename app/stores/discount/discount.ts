@@ -124,13 +124,15 @@ export const useDiscountStore = defineStore('discountStore', {
 		},
 
 		/** Load discounts for pickers (e.g. voucher form) without changing listing filter/state. */
-		async fetchDiscountsForSelect(): Promise<Discount[]> {
+		async fetchDiscountsForSelect(allocation: AllocationType): Promise<Discount[]> {
 			const { $api } = useNuxtApp();
 			try {
 				const response = await $api.discount.getMany({
-					$top: 500,
+					$top: 100,
 					$skip: 0,
 					$orderby: 'code asc',
+					$expand: removeDuplicateExpands(defaultDiscountRelations).join(','),
+					$filter: `is_disabled eq false and allocation eq '${allocation}'`,
 				});
 				return response.data ?? [];
 			} catch (err: unknown | ErrorResponse) {

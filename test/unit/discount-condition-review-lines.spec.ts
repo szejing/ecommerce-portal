@@ -40,6 +40,16 @@ describe('buildDiscountConditionReviewItems', () => {
 		const conditions: CreateDiscountConditionReq[] = [{ filter_operator: undefined, filter_condition: undefined, filter_value: '' }];
 		expect(buildDiscountConditionReviewItems(conditions, t, 'RM')).toEqual([]);
 	});
+
+	it('accepts catalog discount conditions that use null instead of undefined', () => {
+		expect(
+			buildDiscountConditionReviewItems(
+				[{ filter_operator: null, filter_condition: null, filter_value: null }],
+				t,
+				'RM',
+			),
+		).toEqual([]);
+	});
 });
 
 describe('getConditionFilterReviewPart', () => {

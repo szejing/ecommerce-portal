@@ -60,6 +60,7 @@ import { ICONS } from '~/utils/icons';
 const DISCOUNT_COLUMN_LABELS = {
 	code: 'table.code',
 	disc_type: 'table.rule',
+	allocation: 'table.allocation',
 	usage_count: 'table.usage',
 	is_disabled: 'table.active',
 } as const;

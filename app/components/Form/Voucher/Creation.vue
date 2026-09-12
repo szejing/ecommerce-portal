@@ -2,15 +2,23 @@
 	<div class="w-full">
 		<UForm ref="formRef" :schema="formSchema" :state="uFormState" class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6" @submit="onSubmit" @error="onError">
 			<div class="lg:col-span-9 space-y-6">
+				<UCard class="shadow-md">
+					<div class="px-4 py-3 space-y-2">
+						<p class="text-sm font-medium">{{ t('components.voucherForm.discountSource') }}</p>
+						<URadioGroup v-model="linkMode" :items="discountSourceItems" value-key="value" />
+					</div>
+				</UCard>
+
 				<ZInputVoucherDetailsSection
 					:state="voucherSectionState"
 					form-field-prefix="voucher"
-					:discounts="[]"
+					:discounts="discountOptions"
 					:none-label="t('components.discountForm.filterNone')"
-					link-discount-to-voucher-code
+					:discount-options-loading="discountOptionsLoading"
+					:discount-link-mode="linkMode"
 				/>
 
-				<ZInputDiscountRuleAndConditionsSection :state="new_discount" form-field-prefix="discount" />
+				<ZInputDiscountRuleAndConditionsSection v-if="linkMode === 'create'" :state="new_discount" form-field-prefix="discount" lock-allocation />
 			</div>
 			<div class="lg:col-span-3">
 				<div class="lg:sticky lg:top-4">
@@ -23,8 +31,7 @@
 
 <script lang="ts" setup>
 import { startOfDay } from 'date-fns';
-import { AllocationType, DiscountType } from 'yeppi-common';
-import { getFormattedDate } from 'yeppi-common';
+import { type AllocationType, DiscountType, getFormattedDate } from 'yeppi-common';
 import type { FormErrorEvent, FormSubmitEvent } from '#ui/types';
 import { ZModalLoading } from '#components';
 import type { z } from 'zod';
@@ -32,9 +39,10 @@ import type { CreateVoucherReq } from '~/repository/modules/voucher/models/reque
 import type { CreateDiscountReq } from '~/repository/modules/discount/models/request/create-discount.req';
 import { useDiscountStore } from '~/stores/discount/discount';
 import { useVoucherStore } from '~/stores/voucher/voucher';
-import { CreateBundledVoucherFormValidation } from '~/utils/schema';
+import { CreateBundledVoucherFormValidation, CreatePickedVoucherFormValidation } from '~/utils/schema';
 import { buildDiscountApplySummaryLine } from '~/utils/discount/apply-summary';
 import { buildDiscountConditionReviewItems } from '~/utils/discount/discount-condition-review-lines';
+import type { Discount } from '~/utils/types/discount';
 import type { VoucherFormState } from '~/utils/types/form/voucher-creation';
 
 const props = withDefaults(
@@ -50,8 +58,20 @@ const props = withDefaults(
 const { t } = useI18n();
 
 type BundledSchema = z.infer<ReturnType<typeof CreateBundledVoucherFormValidation>>;
+type PickedSchema = z.infer<ReturnType<typeof CreatePickedVoucherFormValidation>>;
 
-const formSchema = computed(() => CreateBundledVoucherFormValidation(t));
+const linkMode = ref<'create' | 'pick'>('create');
+const discountOptions = ref<Discount[]>([]);
+const discountOptionsLoading = ref(false);
+
+const discountSourceItems = computed(() => [
+	{ label: t('components.voucherForm.createNewDiscount'), value: 'create' },
+	{ label: t('components.voucherForm.useExistingDiscount'), value: 'pick' },
+]);
+
+const formSchema = computed(() =>
+	linkMode.value === 'create' ? CreateBundledVoucherFormValidation(t) : CreatePickedVoucherFormValidation(t),
+);
 
 const voucherStore = useVoucherStore();
 const discountStore = useDiscountStore();
@@ -156,9 +176,19 @@ const applyAllocation = () => {
 	new_discount.value.allocation = props.allocation;
 };
 
+const reviewDiscount = computed(() => {
+	if (linkMode.value === 'pick') {
+		const code = new_voucher.value.discount_code?.trim();
+		return discountOptions.value.find((d) => d.code === code);
+	}
+	return new_discount.value;
+});
+
 const ruleSummaryLabel = computed(() => {
-	const rt = new_discount.value.disc_type ?? DiscountType.PERCENTAGE;
-	const rv = new_discount.value.disc_value;
+	const source = reviewDiscount.value;
+	if (!source) return t('common.notSet');
+	const rt = source.disc_type ?? DiscountType.PERCENTAGE;
+	const rv = source.disc_value;
 	const typeName = discTypeLabel(rt);
 	if (rt === DiscountType.PERCENTAGE) {
 		return `${typeName}: ${rv}%`;
@@ -170,13 +200,13 @@ const ruleSummaryLabel = computed(() => {
 });
 
 const allocationReviewLabel = computed(() => {
-	const a = new_discount.value.allocation;
+	const a = reviewDiscount.value?.allocation ?? new_discount.value.allocation;
 	if (a == null) return t('common.notSet');
 	return humanizeEnum(a);
 });
 
 const discountUsageLimitReviewLabel = computed(() => {
-	const ul = new_discount.value.usage_limit;
+	const ul = reviewDiscount.value?.usage_limit ?? new_discount.value.usage_limit;
 	if (ul != null && ul > 0) return String(ul);
 	return t('components.voucherForm.usageLimitNotSet');
 });
@@ -199,7 +229,7 @@ const voucherReviewSummary = computed(() => {
 		validityEndsAt = getFormattedDate(new Date(e), 'dd-MM-yyyy');
 	}
 
-	const ul = new_discount.value.usage_limit;
+	const ul = reviewDiscount.value?.usage_limit ?? new_discount.value.usage_limit;
 	const usageLimitLabel = ul != null && ul > 0 ? String(ul) : t('components.voucherForm.usageLimitNotSet');
 
 	const codeTrim = v.code?.trim() ?? '';
@@ -214,22 +244,24 @@ const voucherReviewSummary = computed(() => {
 
 	return {
 		...base,
-		discountDetails: {
-			ruleSummary: ruleSummaryLabel.value,
-			conditionsCount: new_discount.value.conditions?.length ?? 0,
-			allocationLabel: allocationReviewLabel.value,
-			discountUsageLimitLabel: discountUsageLimitReviewLabel.value,
-			discountApplySummary: buildDiscountApplySummaryLine(t, {
-				discType: new_discount.value.disc_type,
-				discValue: new_discount.value.disc_value,
-				allocation: new_discount.value.allocation,
-				currencyCode: discValue,
-			}),
-			conditionReviewItems: buildDiscountConditionReviewItems(new_discount.value.conditions, t, discValue, {
-				min_order_amt: new_discount.value.min_order_amt,
-				max_disc_amt: new_discount.value.max_disc_amt,
-			}),
-		},
+		discountDetails: reviewDiscount.value
+			? {
+					ruleSummary: ruleSummaryLabel.value,
+					conditionsCount: reviewDiscount.value.conditions?.length ?? 0,
+					allocationLabel: allocationReviewLabel.value,
+					discountUsageLimitLabel: discountUsageLimitReviewLabel.value,
+					discountApplySummary: buildDiscountApplySummaryLine(t, {
+						discType: reviewDiscount.value.disc_type,
+						discValue: reviewDiscount.value.disc_value,
+						allocation: reviewDiscount.value.allocation,
+						currencyCode: discValue,
+					}),
+					conditionReviewItems: buildDiscountConditionReviewItems(reviewDiscount.value.conditions, t, discValue, {
+						min_order_amt: reviewDiscount.value.min_order_amt,
+						max_disc_amt: reviewDiscount.value.max_disc_amt,
+					}),
+				}
+			: undefined,
 	};
 });
 
@@ -246,15 +278,44 @@ const syncBundledDiscountFromVoucher = () => {
 };
 
 watch([() => new_voucher.value.code, () => new_voucher.value.description, () => new_voucher.value.is_disabled], () => {
-	syncBundledDiscountFromVoucher();
+	if (linkMode.value === 'create') {
+		syncBundledDiscountFromVoucher();
+	}
+});
+
+watch(linkMode, async (mode) => {
+	if (mode === 'create') {
+		syncBundledDiscountFromVoucher();
+		applyAllocation();
+		return;
+	}
+	new_voucher.value.discount_code = '';
+	await loadPickerDiscounts();
 });
 
 watch(
 	() => props.allocation,
-	() => {
+	async () => {
 		applyAllocation();
+		if (linkMode.value === 'pick') {
+			new_voucher.value.discount_code = '';
+			await loadPickerDiscounts();
+		}
 	},
 );
+
+const loadPickerDiscounts = async () => {
+	if (props.allocation == null) {
+		discountOptions.value = [];
+		return;
+	}
+	discountOptionsLoading.value = true;
+	try {
+		discountOptions.value = await discountStore.fetchDiscountsForSelect(props.allocation);
+	} finally {
+		discountOptionsLoading.value = false;
+	}
+};
 
 onMounted(async () => {
 	voucherStore.resetNewVoucher();
@@ -287,12 +348,33 @@ const buildBundledCreateDiscountPayload = (data: BundledSchema['discount']): Cre
 	};
 };
 
-const onSubmit = async (event: FormSubmitEvent<BundledSchema>) => {
+const onSubmit = async (event: FormSubmitEvent<BundledSchema | PickedSchema>) => {
 	try {
-		const { voucher: d, discount: disc } = event.data;
+		const d = event.data.voucher;
 		const startsAt = d.ends_at && !d.starts_at ? startOfDay(new Date()).toISOString() : d.starts_at;
 		const codeTrim = d.code.trim();
 
+		if (linkMode.value === 'pick') {
+			const discountCode = d.discount_code?.trim();
+			if (!discountCode) {
+				return;
+			}
+			const payload: CreateVoucherReq = {
+				code: codeTrim,
+				description: d.description?.trim(),
+				is_disabled: d.is_disabled,
+				discount_code: discountCode,
+				starts_at: startsAt,
+				ends_at: d.ends_at,
+			};
+			const created = await voucherStore.createVoucher(payload);
+			if (created?.voucher.code) {
+				router.push(props.postCreateListPath);
+			}
+			return;
+		}
+
+		const disc = (event.data as BundledSchema).discount;
 		const pendingDiscount = buildBundledCreateDiscountPayload(disc);
 		const { code: _omit, ...discountBody } = pendingDiscount;
 
@@ -317,8 +399,10 @@ const onSubmit = async (event: FormSubmitEvent<BundledSchema>) => {
 };
 
 const submit = () => {
-	syncBundledDiscountFromVoucher();
-	applyAllocation();
+	if (linkMode.value === 'create') {
+		syncBundledDiscountFromVoucher();
+		applyAllocation();
+	}
 	formRef.value?.submit();
 };
 

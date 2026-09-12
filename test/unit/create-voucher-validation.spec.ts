@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CreatePickedVoucherFormValidation } from '../../app/utils/schema/Voucher/Create/CreatePickedVoucherFormValidation';
 import { CreateVoucherValidation } from '../../app/utils/schema/Voucher/Create/CreateVoucherValidation';
 
 const t = (key: string) => key;
@@ -62,5 +63,43 @@ describe('CreateVoucherValidation', () => {
 			usage_limit: 100,
 		});
 		expect(parsed.usage_limit).toBe(100);
+	});
+
+	it('rejects empty discount_code when picking an existing discount', () => {
+		const schema = CreateVoucherValidation(t);
+		expect(() =>
+			schema.parse({
+				code: 'V1',
+				is_disabled: false,
+				discount_code: '',
+			}),
+		).toThrow();
+	});
+});
+
+describe('CreatePickedVoucherFormValidation', () => {
+	it('accepts a voucher that points at an existing discount', () => {
+		const schema = CreatePickedVoucherFormValidation(t);
+		const parsed = schema.parse({
+			voucher: {
+				code: 'V1',
+				is_disabled: false,
+				discount_code: 'SUMMER10',
+			},
+		});
+		expect(parsed.voucher.discount_code).toBe('SUMMER10');
+	});
+
+	it('rejects pick-create without a discount_code', () => {
+		const schema = CreatePickedVoucherFormValidation(t);
+		expect(() =>
+			schema.parse({
+				voucher: {
+					code: 'V1',
+					is_disabled: false,
+					discount_code: '',
+				},
+			}),
+		).toThrow();
 	});
 });

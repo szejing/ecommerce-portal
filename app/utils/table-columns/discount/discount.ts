@@ -1,6 +1,6 @@
 import { UBadge, USwitch } from '#components';
-import { DiscountType } from 'yeppi-common';
-import { formatDiscountDiscValue } from '~/utils/discount-rule-display';
+import { AllocationType, DiscountType } from 'yeppi-common';
+import { formatDiscountDiscValue, getDiscountTypeBadgeColor } from '~/utils/discount-rule-display';
 import type { TableColumn } from '@nuxt/ui';
 import type { Discount } from '~/utils/types/discount';
 import { getSortableHeader, headerCell, tableCellMeta } from '../styles';
@@ -14,10 +14,9 @@ const DISC_TYPE_I18N: Record<DiscountType, string> = {
 	[DiscountType.FREE_SHIPPING]: 'components.discountForm.discTypeOptionFreeShipping',
 };
 
-const DISC_TYPE_BADGE_COLOR: Record<DiscountType, 'info' | 'primary' | 'success'> = {
-	[DiscountType.PERCENTAGE]: 'info',
-	[DiscountType.FIXED]: 'primary',
-	[DiscountType.FREE_SHIPPING]: 'success',
+const ALLOCATION_I18N: Record<AllocationType, string> = {
+	[AllocationType.BILL]: 'components.discountForm.allocationBill',
+	[AllocationType.ITEM]: 'components.discountForm.allocationItem',
 };
 
 export const getDiscountColumns = (t: TranslateFn): TableColumn<Discount>[] => {
@@ -39,7 +38,7 @@ export const getDiscountColumns = (t: TranslateFn): TableColumn<Discount>[] => {
 			cell: ({ row }) => {
 				const rt = row.original.disc_type;
 				const labelKey = DISC_TYPE_I18N[rt];
-				const color = DISC_TYPE_BADGE_COLOR[rt];
+				const color = getDiscountTypeBadgeColor(rt);
 				const children: ReturnType<typeof h>[] = [
 					h(UBadge, { variant: 'subtle', color, class: 'capitalize w-fit' }, () => (labelKey ? t(labelKey) : String(rt))),
 				];
@@ -47,6 +46,16 @@ export const getDiscountColumns = (t: TranslateFn): TableColumn<Discount>[] => {
 					children.push(h('span', { class: 'text-sm font-semibold tabular-nums text-default' }, formatDiscountDiscValue(rt, row.original.disc_value)));
 				}
 				return h('div', { class: 'flex flex-col gap-1 items-start' }, children);
+			},
+		},
+		{
+			accessorKey: 'allocation',
+			header: () => headerCell(t('table.allocation')),
+			cell: ({ row }) => {
+				const labelKey = row.original.allocation ? ALLOCATION_I18N[row.original.allocation] : undefined;
+				return h(UBadge, { variant: 'subtle', color: 'neutral', class: 'w-fit' }, () =>
+					labelKey ? t(labelKey) : t('common.notSet'),
+				);
 			},
 		},
 		{

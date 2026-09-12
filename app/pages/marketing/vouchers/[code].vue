@@ -2,7 +2,7 @@
 	<ZPagePanel id="vouchers-edit" :title="`${t('pages.editVoucher')} #${current_voucher?.code ?? code}`" :back-to="listBackPath" grow>
 		<div class="container w-full mx-auto">
 			<FormVoucherUpdateLoading v-if="isLoading" />
-			<FormVoucherUpdate v-else-if="current_voucher" ref="formRef" :voucher="current_voucher" />
+			<FormVoucherUpdate v-else-if="current_voucher" ref="formRef" v-model:dirty="formDirty" :voucher="current_voucher" />
 		</div>
 
 		<template #footer>
@@ -56,11 +56,12 @@ const code = route.params.code as string;
 
 const overlay = useOverlay();
 const voucherStore = useVoucherStore();
-const discountStore = useDiscountStore();
 const { updating, current_voucher } = storeToRefs(voucherStore);
-const { updating: discountUpdating } = storeToRefs(discountStore);
-const saving = computed(() => updating.value || discountUpdating.value);
+const saving = computed(() => updating.value);
 const formRef = ref<{ submit: () => void } | null>(null);
+const formDirty = ref(false);
+const skipLeaveGuard = ref(false);
+const isDirty = computed(() => formDirty.value && !skipLeaveGuard.value);
 
 const isLoading = ref(!current_voucher.value);
 
@@ -69,8 +70,10 @@ useHead({ title: () => `${t('pages.editVoucher')} #${current_voucher.value?.code
 
 const listBackPath = computed(() => voucherListingPathForAllocation(current_voucher.value?.discount?.allocation ?? AllocationType.BILL));
 
-onBeforeRouteLeave(() => {
-	current_voucher.value = undefined;
+useLeavePageGuard(isDirty, {
+	onLeave: () => {
+		current_voucher.value = undefined;
+	},
 });
 
 onBeforeMount(async () => {
@@ -102,6 +105,7 @@ const deleteVoucher = async () => {
 			message: t('pages.confirmDeleteVoucher'),
 			action: 'delete',
 			onConfirm: async () => {
+				skipLeaveGuard.value = true;
 				await voucherStore.deleteVoucher(current_voucher.value!.code);
 				confirmModal.close();
 				navigateTo(listBackPath.value);
