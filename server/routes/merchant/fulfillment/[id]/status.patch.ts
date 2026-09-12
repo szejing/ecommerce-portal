@@ -3,11 +3,11 @@ import { Routes } from '#root/server/routes.server';
 
 export default defineEventHandler(async (event) => {
 	try {
-		const id = getRouterParam(event, 'order_no');
+		const id = getRouterParam(event, 'id');
 		if (!id) throw createError({ statusCode: 400, statusMessage: 'Fulfillment id is required' });
 		const body = await readBody(event);
 
-		return await signedFetch(event, Routes.Fulfillment.MarkDelivered(id), {
+		return await signedFetch(event, Routes.Fulfillment.UpdateStatus(id), {
 			method: 'PATCH',
 			body,
 		});

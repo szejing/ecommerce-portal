@@ -240,12 +240,7 @@ export const Routes = {
 	Fulfillment: {
 		Create: (order_no: string) => `fulfillment/${order_no}/create`,
 		Update: (id: string) => `fulfillment/${id}`,
-		MarkProcessing: (id: string) => `fulfillment/${id}/processing`,
-		MarkPacked: (id: string) => `fulfillment/${id}/packed`,
-		MarkFulfilled: (id: string) => `fulfillment/${id}/fulfilled`,
-		MarkShipped: (id: string) => `fulfillment/${id}/shipped`,
-		MarkInTransit: (id: string) => `fulfillment/${id}/in-transit`,
-		MarkDelivered: (id: string) => `fulfillment/${id}/delivered`,
+		UpdateStatus: (id: string) => `fulfillment/${id}/status`,
 		Arrangement: {
 			List: () => 'fulfillment/arrangement',
 			Export: () => 'fulfillment/arrangement/export',

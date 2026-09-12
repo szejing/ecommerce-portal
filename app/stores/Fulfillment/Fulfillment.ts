@@ -6,6 +6,15 @@ import type { FulfillmentBatch } from '~/utils/types/order-fulfillment-shipping'
 
 export type FulfillmentAction = 'processing' | 'packed' | 'fulfilled' | 'shipped' | 'in_transit' | 'delivered';
 
+const FULFILLMENT_STATUS_I18N: Record<FulfillmentAction, string> = {
+	processing: 'options.processing',
+	packed: 'options.packed',
+	fulfilled: 'options.fulfilled',
+	shipped: 'options.shipped',
+	in_transit: 'options.inTransit',
+	delivered: 'options.delivered',
+};
+
 export const useFulfillmentStore = defineStore('fulfillmentStore', {
 	state: () => ({
 		loading: false as boolean,
@@ -24,10 +33,10 @@ export const useFulfillmentStore = defineStore('fulfillmentStore', {
 					merchant_id: String(merchant_id ?? ''),
 				});
 				this.lastFulfillment = response.fulfillment;
-				successNotification('Fulfillment created');
+				successNotification('components.fulfillment.notifications.created');
 				return response.fulfillment;
 			} catch (err: unknown | ErrorResponse) {
-				const message = (err as ErrorResponse).message ?? 'Failed to create fulfillment';
+				const message = (err as ErrorResponse).message ?? 'components.fulfillment.notifications.createFailed';
 				failedNotification(message);
 				throw err;
 			} finally {
@@ -46,10 +55,10 @@ export const useFulfillmentStore = defineStore('fulfillmentStore', {
 					...payload,
 				});
 				this.lastFulfillment = response.fulfillment;
-				successNotification('Fulfillment arrangement updated');
+				successNotification('components.fulfillment.notifications.arrangementUpdated');
 				return response.fulfillment;
 			} catch (err: unknown | ErrorResponse) {
-				const message = (err as ErrorResponse).message ?? 'Failed to update fulfillment arrangement';
+				const message = (err as ErrorResponse).message ?? 'components.fulfillment.notifications.arrangementUpdateFailed';
 				failedNotification(message);
 				throw err;
 			} finally {
@@ -87,20 +96,18 @@ export const useFulfillmentStore = defineStore('fulfillmentStore', {
 			this.updating = true;
 
 			try {
-				const body = { merchant_id: String(merchant_id ?? '') };
-				let response;
-				if (next === 'processing') response = await $api.fulfillment.markProcessing(id, body);
-				else if (next === 'packed') response = await $api.fulfillment.markPacked(id, body);
-				else if (next === 'fulfilled') response = await $api.fulfillment.markFulfilled(id, body);
-				else if (next === 'shipped') response = await $api.fulfillment.markShipped(id, body);
-				else if (next === 'in_transit') response = await $api.fulfillment.markInTransit(id, body);
-				else response = await $api.fulfillment.markDelivered(id, body);
+				const response = await $api.fulfillment.updateStatus(id, {
+					merchant_id: String(merchant_id ?? ''),
+					status: next,
+				});
 
 				this.lastFulfillment = response.fulfillment;
-				successNotification(`Fulfillment marked as ${next}`);
+				successNotification('components.fulfillment.notifications.markedAs', {
+					status: FULFILLMENT_STATUS_I18N[next],
+				});
 				return response.fulfillment;
 			} catch (err: unknown | ErrorResponse) {
-				const message = (err as ErrorResponse).message ?? 'Failed to update fulfillment';
+				const message = (err as ErrorResponse).message ?? 'components.fulfillment.notifications.updateFailed';
 				failedNotification(message);
 				throw err;
 			} finally {

@@ -215,24 +215,20 @@ describe('FulfillmentModule', () => {
 		expect(lastFetch().opts.body).toEqual(payload);
 	});
 
-	it.each([
-		['processing', 'markProcessing', 'MarkProcessing'],
-		['packed', 'markPacked', 'MarkPacked'],
-		['fulfilled', 'markFulfilled', 'MarkFulfilled'],
-		['shipped', 'markShipped', 'MarkShipped'],
-		['in_transit', 'markInTransit', 'MarkInTransit'],
-		['delivered', 'markDelivered', 'MarkDelivered'],
-	] as const)('calls the %s action with the batch UUID', async (_label, methodName, routeName) => {
-		setMockFetch(async () => ({ fulfillment: { id: 'batch-uuid' } }));
-		const mod = new FulfillmentModule();
-		const payload = { merchant_id: 'm1' };
+	it.each(['processing', 'packed', 'fulfilled', 'shipped', 'in_transit', 'delivered'] as const)(
+		'updates %s through the shared status route',
+		async (status) => {
+			setMockFetch(async () => ({ fulfillment: { id: 'batch-uuid' } }));
+			const mod = new FulfillmentModule();
+			const payload = { merchant_id: 'm1', status };
 
-		await mod[methodName]('batch-uuid', payload);
+			await mod.updateStatus('batch-uuid', payload);
 
-		expect(lastFetch().url).toBe(MerchantRoutes.Fulfillment[routeName]('batch-uuid'));
-		expect(lastFetch().opts.method).toBe('PATCH');
-		expect(lastFetch().opts.body).toEqual(payload);
-	});
+			expect(lastFetch().url).toBe(MerchantRoutes.Fulfillment.UpdateStatus('batch-uuid'));
+			expect(lastFetch().opts.method).toBe('PATCH');
+			expect(lastFetch().opts.body).toEqual(payload);
+		},
+	);
 });
 
 describe('CourierModule', () => {

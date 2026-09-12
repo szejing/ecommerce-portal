@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import type { ToastNotification } from '~/utils/types/event-notification';
+import { resolveNotificationMessage, type NotificationTranslateValues } from '~/utils/notification-message';
 
 // Grouped navigation structure for UDashboardGroup (labels are i18n keys)
 const default_navigations = [
@@ -196,30 +197,30 @@ export const useAppUiStore = defineStore('appUiStore', {
 	},
 });
 
-export const successNotification = (description: string) => {
+export const successNotification = (description: string, values?: NotificationTranslateValues) => {
 	const appUiStore = useAppUiStore();
 	appUiStore.showToast({
 		color: 'success',
 		icon: ICONS.CHECK_OUTLINE_ROUNDED,
-		description,
+		description: resolveNotificationMessage(description, values),
 	});
 };
 
-export const failedNotification = (description: string) => {
+export const failedNotification = (description: string, values?: NotificationTranslateValues) => {
 	const appUiStore = useAppUiStore();
 	appUiStore.showToast({
 		color: 'error',
 		icon: ICONS.ERROR_OUTLINE,
-		description,
+		description: resolveNotificationMessage(description, values),
 	});
 };
 
-export const failedModal = (description: string, title?: string) => {
+export const failedModal = (description: string, title?: string, values?: NotificationTranslateValues) => {
 	const appUiStore = useAppUiStore();
 	appUiStore.addModal({
 		color: 'error',
 		icon: ICONS.ERROR_OUTLINE,
-		description,
-		title,
+		description: resolveNotificationMessage(description, values),
+		title: title ? resolveNotificationMessage(title) : title,
 	});
 };

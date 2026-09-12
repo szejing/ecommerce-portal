@@ -40,32 +40,43 @@ describe('Fulfillment server proxy routes', () => {
 
 	it('maps arrangement and lifecycle operations to the fulfillment UUID', () => {
 		expect(Routes.Fulfillment.Update('batch-uuid')).toBe('fulfillment/batch-uuid');
-		expect(Routes.Fulfillment.MarkProcessing('batch-uuid')).toBe('fulfillment/batch-uuid/processing');
-		expect(Routes.Fulfillment.MarkPacked('batch-uuid')).toBe('fulfillment/batch-uuid/packed');
-		expect(Routes.Fulfillment.MarkFulfilled('batch-uuid')).toBe('fulfillment/batch-uuid/fulfilled');
-		expect(Routes.Fulfillment.MarkShipped('batch-uuid')).toBe('fulfillment/batch-uuid/shipped');
-		expect(Routes.Fulfillment.MarkInTransit('batch-uuid')).toBe('fulfillment/batch-uuid/in-transit');
-		expect(Routes.Fulfillment.MarkDelivered('batch-uuid')).toBe('fulfillment/batch-uuid/delivered');
+		expect(Routes.Fulfillment.UpdateStatus('batch-uuid')).toBe(
+			'fulfillment/batch-uuid/status',
+		);
 	});
 
 	it('keeps create-by-order and provides every supported Nitro handler', async () => {
 		expect(Routes.Fulfillment.Create('ORD-1')).toBe('fulfillment/ORD-1/create');
 
 		const routeFiles = [
-			'[order_no].patch.ts',
-			'[order_no]/create.post.ts',
-			'[order_no]/processing.patch.ts',
-			'[order_no]/packed.patch.ts',
-			'[order_no]/fulfilled.patch.ts',
-			'[order_no]/shipped.patch.ts',
-			'[order_no]/in-transit.patch.ts',
-			'[order_no]/delivered.patch.ts',
+			'[id].patch.ts',
+			'[id]/create.post.ts',
+			'[id]/status.patch.ts',
 		];
 
 		for (const routeFile of routeFiles) {
 			const file = Bun.file(new URL(`../../server/routes/merchant/fulfillment/${routeFile}`, import.meta.url));
 			expect(await file.exists(), routeFile).toBe(true);
 		}
+	});
+
+	it('uses one nested dynamic param folder so Nitro can register status and create', async () => {
+		const fulfillmentDir = new URL('../../server/routes/merchant/fulfillment/', import.meta.url);
+		const nestedParamFolders: string[] = [];
+
+		for await (const entry of new Bun.Glob('*').scan({
+			cwd: fulfillmentDir.pathname,
+			onlyFiles: false,
+		})) {
+			const name = entry.replace(/\/$/, '');
+			if (!name.includes('/') && name.startsWith('[') && name.endsWith(']')) {
+				nestedParamFolders.push(name);
+			}
+		}
+
+		expect(nestedParamFolders.sort()).toEqual(['[id]']);
+		const legacyParamFile = Bun.file(new URL('../../server/routes/merchant/fulfillment/[order_no].patch.ts', import.meta.url));
+		expect(await legacyParamFile.exists()).toBe(false);
 	});
 
 	it('maps shipment arrangement list, export, preview, and apply routes', () => {

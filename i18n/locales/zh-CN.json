@@ -1615,6 +1615,14 @@
 			"noBatches": "未找到履约批次",
 			"noBatchesHint": "创建第一个缺失的维修或取货批次以继续履约。",
 			"createMissingBatch": "创建缺失批次",
+			"notifications": {
+				"created": "履约已创建",
+				"createFailed": "创建履约失败",
+				"arrangementUpdated": "履约安排已更新",
+				"arrangementUpdateFailed": "更新履约安排失败",
+				"markedAs": "履约已标记为{status}",
+				"updateFailed": "更新履约失败"
+			},
 			"noSplitDeleteHint": "暂不支持批量删除和拆分。完成验证由后端强制执行。",
 			"bookCourier": "图书快递",
 			"pushToEasyParcel": "推送至 EasyParcel",

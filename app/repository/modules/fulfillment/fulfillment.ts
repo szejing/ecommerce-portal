@@ -3,6 +3,7 @@ import MerchantRoutes from '~/repository/routes.client';
 import { KEY } from 'yeppi-common';
 import type { FulfillmentActionReq } from './models/request/fulfillment-action.req';
 import type { UpdateFulfillmentReq } from './models/request/update-fulfillment.req';
+import type { UpdateFulfillmentStatusReq } from './models/request/update-fulfillment-status.req';
 import type { FulfillmentResp } from './models/response/fulfillment.resp';
 import type {
 	ShipmentArrangementApplyRequest,
@@ -75,50 +76,10 @@ class FulfillmentModule extends HttpFactory {
 		});
 	}
 
-	async markProcessing(id: string, body: FulfillmentActionReq): Promise<FulfillmentResp> {
+	async updateStatus(id: string, body: UpdateFulfillmentStatusReq): Promise<FulfillmentResp> {
 		return await this.call<FulfillmentResp>({
 			method: 'PATCH',
-			url: this.RESOURCE.MarkProcessing(encodeURIComponent(id)),
-			body,
-		});
-	}
-
-	async markPacked(id: string, body: FulfillmentActionReq): Promise<FulfillmentResp> {
-		return await this.call<FulfillmentResp>({
-			method: 'PATCH',
-			url: this.RESOURCE.MarkPacked(encodeURIComponent(id)),
-			body,
-		});
-	}
-
-	async markFulfilled(id: string, body: FulfillmentActionReq): Promise<FulfillmentResp> {
-		return await this.call<FulfillmentResp>({
-			method: 'PATCH',
-			url: this.RESOURCE.MarkFulfilled(encodeURIComponent(id)),
-			body,
-		});
-	}
-
-	async markShipped(id: string, body: FulfillmentActionReq): Promise<FulfillmentResp> {
-		return await this.call<FulfillmentResp>({
-			method: 'PATCH',
-			url: this.RESOURCE.MarkShipped(encodeURIComponent(id)),
-			body,
-		});
-	}
-
-	async markInTransit(id: string, body: FulfillmentActionReq): Promise<FulfillmentResp> {
-		return await this.call<FulfillmentResp>({
-			method: 'PATCH',
-			url: this.RESOURCE.MarkInTransit(encodeURIComponent(id)),
-			body,
-		});
-	}
-
-	async markDelivered(id: string, body: FulfillmentActionReq): Promise<FulfillmentResp> {
-		return await this.call<FulfillmentResp>({
-			method: 'PATCH',
-			url: this.RESOURCE.MarkDelivered(encodeURIComponent(id)),
+			url: this.RESOURCE.UpdateStatus(encodeURIComponent(id)),
 			body,
 		});
 	}

@@ -1616,6 +1616,14 @@
 			"noBatches": "No fulfillment batch found",
 			"noBatchesHint": "Create the first missing repair or pickup batch to continue fulfillment.",
 			"createMissingBatch": "Create missing batch",
+			"notifications": {
+				"created": "Fulfillment created",
+				"createFailed": "Failed to create fulfillment",
+				"arrangementUpdated": "Fulfillment arrangement updated",
+				"arrangementUpdateFailed": "Failed to update fulfillment arrangement",
+				"markedAs": "Fulfillment marked as {status}",
+				"updateFailed": "Failed to update fulfillment"
+			},
 			"noSplitDeleteHint": "Batch deletion and splitting are not available yet. Completion validation is enforced by the backend.",
 			"bookCourier": "Book courier",
 			"pushToEasyParcel": "Push to EasyParcel",

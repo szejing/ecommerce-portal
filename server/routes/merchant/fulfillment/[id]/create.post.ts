@@ -3,7 +3,7 @@ import { Routes } from '#root/server/routes.server';
 
 export default defineEventHandler(async (event) => {
 	try {
-		const order_no = getRouterParam(event, 'order_no');
+		const order_no = getRouterParam(event, 'id');
 		if (!order_no) throw createError({ statusCode: 400, statusMessage: 'Order number is required' });
 		const body = await readBody(event);
 

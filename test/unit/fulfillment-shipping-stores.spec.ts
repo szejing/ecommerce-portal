@@ -18,12 +18,7 @@ describe('fulfillment/shipping stores', () => {
 		fulfillment: {
 			create: vi.fn(),
 			update: vi.fn(),
-			markProcessing: vi.fn(),
-			markPacked: vi.fn(),
-			markFulfilled: vi.fn(),
-			markShipped: vi.fn(),
-			markInTransit: vi.fn(),
-			markDelivered: vi.fn(),
+			updateStatus: vi.fn(),
 		},
 		shippingMethod: {
 			getMany: vi.fn(),
@@ -53,7 +48,7 @@ describe('fulfillment/shipping stores', () => {
 		expect(result?.id).toBe('f1');
 		expect(store.creating).toBe(false);
 		expect(apiMock.fulfillment.create).toHaveBeenCalledWith('O1', { merchant_id: 'm1' });
-		expect(successNotification).toHaveBeenCalled();
+		expect(successNotification).toHaveBeenCalledWith('components.fulfillment.notifications.created');
 	});
 
 	it('updates a batch arrangement and preserves explicit nullable clears', async () => {
@@ -87,36 +82,44 @@ describe('fulfillment/shipping stores', () => {
 		expect(result?.shipping_fee).toBe(12.5);
 		expect(store.updating).toBe(false);
 		expect(apiMock.fulfillment.update).toHaveBeenCalledWith('batch-uuid', { merchant_id: 'm1', ...payload });
-		expect(successNotification).toHaveBeenCalled();
+		expect(successNotification).toHaveBeenCalledWith('components.fulfillment.notifications.arrangementUpdated');
 	});
 
-	it.each([
-		['processing', 'markProcessing'],
-		['packed', 'markPacked'],
-		['fulfilled', 'markFulfilled'],
-		['shipped', 'markShipped'],
-		['in_transit', 'markInTransit'],
-		['delivered', 'markDelivered'],
-	] as const)('runs the %s action against the batch UUID', async (action, methodName) => {
-		apiMock.fulfillment[methodName].mockResolvedValue({
-			fulfillment: {
-				id: 'batch-uuid',
-				order_no: 'O1',
-				inv_no: 'I1',
-				batch_no: 1,
-				status: ['processing', 'packed', 'fulfilled'].includes(action) ? action : 'fulfilled',
-				shipment_status: ['shipped', 'in_transit', 'delivered'].includes(action) ? action : 'pending',
-			},
-		});
-		const store = useFulfillmentStore();
+	it.each(['processing', 'packed', 'fulfilled', 'shipped', 'in_transit', 'delivered'] as const)(
+		'runs the %s action against the batch UUID through one status endpoint',
+		async (action) => {
+			apiMock.fulfillment.updateStatus.mockResolvedValue({
+				fulfillment: {
+					id: 'batch-uuid',
+					order_no: 'O1',
+					inv_no: 'I1',
+					batch_no: 1,
+					status: ['processing', 'packed', 'fulfilled'].includes(action) ? action : 'fulfilled',
+					shipment_status: ['shipped', 'in_transit', 'delivered'].includes(action) ? action : 'pending',
+				},
+			});
+			const store = useFulfillmentStore();
 
-		const result = await store.runAction('batch-uuid', action);
+			const result = await store.runAction('batch-uuid', action);
 
-		expect(result?.id).toBe('batch-uuid');
-		expect(store.updating).toBe(false);
-		expect(apiMock.fulfillment[methodName]).toHaveBeenCalledWith('batch-uuid', { merchant_id: 'm1' });
-		expect(successNotification).toHaveBeenCalled();
-	});
+			expect(result?.id).toBe('batch-uuid');
+			expect(store.updating).toBe(false);
+			expect(apiMock.fulfillment.updateStatus).toHaveBeenCalledWith('batch-uuid', {
+				merchant_id: 'm1',
+				status: action,
+			});
+			expect(successNotification).toHaveBeenCalledWith('components.fulfillment.notifications.markedAs', {
+				status: {
+					processing: 'options.processing',
+					packed: 'options.packed',
+					fulfilled: 'options.fulfilled',
+					shipped: 'options.shipped',
+					in_transit: 'options.inTransit',
+					delivered: 'options.delivered',
+				}[action],
+			});
+		},
+	);
 
 	it('loads shipping methods into state with OData pagination', async () => {
 		apiMock.shippingMethod.getMany.mockResolvedValue({

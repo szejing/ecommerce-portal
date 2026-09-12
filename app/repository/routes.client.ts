@@ -255,12 +255,7 @@ const MerchantRoutes = {
 	Fulfillment: {
 		Create: (order_no: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${order_no}/create`,
 		Update: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}`,
-		MarkProcessing: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/processing`,
-		MarkPacked: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/packed`,
-		MarkFulfilled: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/fulfilled`,
-		MarkShipped: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/shipped`,
-		MarkInTransit: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/in-transit`,
-		MarkDelivered: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/delivered`,
+		UpdateStatus: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/status`,
 		Arrangement: {
 			List: () => `${prefix}/${API_PATH.MERCHANT}/fulfillment/arrangement`,
 			Export: () => `${prefix}/${API_PATH.MERCHANT}/fulfillment/arrangement/export`,

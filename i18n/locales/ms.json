@@ -1615,6 +1615,14 @@
 			"noBatches": "Tiada kelompok pemenuhan ditemui",
 			"noBatchesHint": "Cipta kelompok pembaikan atau ambil sendiri pertama yang tiada untuk meneruskan pemenuhan.",
 			"createMissingBatch": "Cipta kelompok yang tiada",
+			"notifications": {
+				"created": "Pemenuhan dicipta",
+				"createFailed": "Gagal mencipta pemenuhan",
+				"arrangementUpdated": "Susunan pemenuhan dikemas kini",
+				"arrangementUpdateFailed": "Gagal mengemas kini susunan pemenuhan",
+				"markedAs": "Pemenuhan ditanda sebagai {status}",
+				"updateFailed": "Gagal mengemas kini pemenuhan"
+			},
 			"noSplitDeleteHint": "Pemadaman dan pemisahan kelompok belum tersedia. Pengesahan pelengkapan dikuatkuasakan oleh bahagian backend.",
 			"bookCourier": "Tempah kurier",
 			"pushToEasyParcel": "Hantar ke EasyParcel",
