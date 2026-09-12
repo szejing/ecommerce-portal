@@ -1,6 +1,6 @@
 import { Fragment, h } from 'vue';
 import type { TableColumn } from '@nuxt/ui';
-import { getOrderStatusColor, OrderType, type BadgeColor } from 'yeppi-common';
+import { getOrderStatusColor, OrderItemStatus, OrderType, type BadgeColor } from 'yeppi-common';
 import { UBadge, UIcon, UTooltip } from '#components';
 import type { OrderHistory } from '~/utils/types/order-history';
 import { getSortableHeader, headerCell, moneyCell, tableCellMeta } from '../styles';
@@ -34,7 +34,7 @@ export function getOrderColumns(t: TranslateFn): TableColumn<OrderHistory>[] {
 
 				return h(Fragment, [
 					h('div', {
-						class: ['absolute inset-y-0 left-0 w-3 pointer-events-none', stripClass],
+						'class': ['absolute inset-y-0 left-0 w-3 pointer-events-none', stripClass],
 						'aria-hidden': 'true',
 					}),
 					h('span', { class: 'relative block text-center' }, row.index + 1),
@@ -51,8 +51,27 @@ export function getOrderColumns(t: TranslateFn): TableColumn<OrderHistory>[] {
 			accessorFn: (row) => (row.order_date_time ? new Date(row.order_date_time).getTime() : 0),
 			header: ({ column }) => getSortableHeader(column, t('table.orderNo')),
 			cell: ({ row }) => {
-				return h('div', { class: 'flex flex-col gap-1' }, [
+				const hasPreorder = (row.original.items ?? []).some((item) => !!item.is_preorder && item.status !== OrderItemStatus.VOIDED);
+				const orderNoRow = [
+					...(hasPreorder
+						? [
+								h(
+									UBadge,
+									{
+										color: 'warning',
+										variant: 'subtle',
+										size: 'sm',
+										class: 'whitespace-nowrap',
+									},
+									() => t('components.orderDetail.preorder'),
+								),
+							]
+						: []),
 					h('p', { class: 'font-medium text-default' }, row.original.order_no),
+				];
+
+				return h('div', { class: 'flex flex-col gap-1' }, [
+					h('div', { class: 'flex items-center gap-1.5 flex-wrap' }, orderNoRow),
 					h('p', { class: 'text-sm text-muted' }, row.original.order_date_time),
 				]);
 			},

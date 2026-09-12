@@ -17,8 +17,8 @@
 
 				<!-- Table Actions -->
 				<ZTableToolbar
-					:model-value="pageSize"
 					v-model:selected-column-keys="selectedColumnKeys"
+					:model-value="pageSize"
 					:page-size-options="options_page_size"
 					:export-enabled="true"
 					:exporting="exporting"
@@ -67,15 +67,7 @@
 							})
 						}}
 					</div>
-					<UPagination
-						:page="page"
-						:total="total"
-						:page-size="pageSize"
-						show-last
-						show-first
-						size="sm"
-						@update:page="orderStore.setPage"
-					/>
+					<UPagination :page="page" :total="total" :page-size="pageSize" show-last show-first size="sm" @update:page="orderStore.setPage" />
 				</div>
 			</div>
 		</div>
@@ -83,7 +75,7 @@
 </template>
 
 <script lang="ts" setup>
-import { OrderStatus } from 'yeppi-common';
+import type { OrderStatus } from 'yeppi-common';
 import { getOrderStatusColor, getOrderStatusOptions, options_page_size } from '~/utils/options';
 import { getOrderColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
