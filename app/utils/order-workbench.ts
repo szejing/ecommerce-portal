@@ -27,3 +27,12 @@ export function getOrderItemWorkload<T extends WorkbenchItem>(items: readonly T[
 		excludedLineCount: excludedItems.length,
 	};
 }
+
+export type WorkbenchShipmentAction = 'shipped' | 'in_transit' | 'delivered';
+
+export function fulfillmentActionForShipmentStatus(status: string): WorkbenchShipmentAction | undefined {
+	if (status === 'shipped' || status === 'in_transit' || status === 'delivered') {
+		return status;
+	}
+	return undefined;
+}

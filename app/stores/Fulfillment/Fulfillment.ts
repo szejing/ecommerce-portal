@@ -4,7 +4,7 @@ import { failedNotification, successNotification } from '../AppUi/AppUi';
 import type { UpdateFulfillmentReq } from '~/repository/modules/fulfillment/models/request/update-fulfillment.req';
 import type { FulfillmentBatch } from '~/utils/types/order-fulfillment-shipping';
 
-export type FulfillmentAction = 'processing' | 'packed' | 'fulfilled' | 'shipped' | 'delivered';
+export type FulfillmentAction = 'processing' | 'packed' | 'fulfilled' | 'shipped' | 'in_transit' | 'delivered';
 
 export const useFulfillmentStore = defineStore('fulfillmentStore', {
 	state: () => ({
@@ -73,6 +73,10 @@ export const useFulfillmentStore = defineStore('fulfillmentStore', {
 			return this.runAction(id, 'shipped');
 		},
 
+		async markInTransit(id: string): Promise<FulfillmentBatch | undefined> {
+			return this.runAction(id, 'in_transit');
+		},
+
 		async markDelivered(id: string): Promise<FulfillmentBatch | undefined> {
 			return this.runAction(id, 'delivered');
 		},
@@ -89,6 +93,7 @@ export const useFulfillmentStore = defineStore('fulfillmentStore', {
 				else if (next === 'packed') response = await $api.fulfillment.markPacked(id, body);
 				else if (next === 'fulfilled') response = await $api.fulfillment.markFulfilled(id, body);
 				else if (next === 'shipped') response = await $api.fulfillment.markShipped(id, body);
+				else if (next === 'in_transit') response = await $api.fulfillment.markInTransit(id, body);
 				else response = await $api.fulfillment.markDelivered(id, body);
 
 				this.lastFulfillment = response.fulfillment;

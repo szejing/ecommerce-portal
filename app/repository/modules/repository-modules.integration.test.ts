@@ -220,6 +220,7 @@ describe('FulfillmentModule', () => {
 		['packed', 'markPacked', 'MarkPacked'],
 		['fulfilled', 'markFulfilled', 'MarkFulfilled'],
 		['shipped', 'markShipped', 'MarkShipped'],
+		['in_transit', 'markInTransit', 'MarkInTransit'],
 		['delivered', 'markDelivered', 'MarkDelivered'],
 	] as const)('calls the %s action with the batch UUID', async (_label, methodName, routeName) => {
 		setMockFetch(async () => ({ fulfillment: { id: 'batch-uuid' } }));

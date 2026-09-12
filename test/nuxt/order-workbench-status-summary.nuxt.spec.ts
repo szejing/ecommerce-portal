@@ -122,15 +122,20 @@ describe('OrderWorkbenchStatusSummary', () => {
 	});
 
 	it('advances shipment status with next and complete shortcuts', async () => {
-		const wrapper = await mountSuspended(OrderWorkbenchStatusSummary, {
+		const pending = await mountSuspended(OrderWorkbenchStatusSummary, {
 			props: { order: order({ fulfillments: [fulfillment('packed', 'pending')] }) },
 		});
 
-		await wrapper.get('[data-testid="workbench-shipment-status-next"]').trigger('click');
-		expect(wrapper.emitted('update:shipmentStatus')?.[0]).toEqual(['shipped']);
+		await pending.get('[data-testid="workbench-shipment-status-next"]').trigger('click');
+		expect(pending.emitted('update:shipmentStatus')?.[0]).toEqual(['shipped']);
+		expect(pending.find('[data-testid="workbench-shipment-status-complete"]').exists()).toBe(false);
 
-		await wrapper.get('[data-testid="workbench-shipment-status-complete"]').trigger('click');
-		expect(wrapper.emitted('update:shipmentStatus')?.[1]).toEqual(['delivered']);
+		const shipped = await mountSuspended(OrderWorkbenchStatusSummary, {
+			props: { order: order({ fulfillments: [fulfillment('fulfilled', 'shipped')] }) },
+		});
+
+		await shipped.get('[data-testid="workbench-shipment-status-complete"]').trigger('click');
+		expect(shipped.emitted('update:shipmentStatus')?.[0]).toEqual(['delivered']);
 	});
 
 	it('keeps a read-only fulfillment badge when shipment statuses differ', async () => {

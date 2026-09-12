@@ -47,6 +47,8 @@ describe('order detail fulfillment owner', () => {
 		const mobile = source.slice(source.indexOf('<!-- Mobile:'));
 
 		expect(source).toContain('<OrderWorkbenchStatusSummary');
+		expect(source).toContain('@update:shipment-status="handleWorkbenchShipmentStatusChange"');
+		expect(source).toContain('fulfillmentStore.runAction(batch.id, action)');
 		expect(source).toContain(':aria-label="t(\'components.orderDetail.refresh\')"');
 		expect(source.indexOf('data-testid="order-attention"')).toBeLessThan(source.indexOf('<ZSectionOrderDetailItems'));
 		expect(source.indexOf('<ZSectionOrderDetailItems')).toBeLessThan(source.indexOf('<ZSectionOrderDetailCustomer'));

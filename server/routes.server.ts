@@ -244,6 +244,7 @@ export const Routes = {
 		MarkPacked: (id: string) => `fulfillment/${id}/packed`,
 		MarkFulfilled: (id: string) => `fulfillment/${id}/fulfilled`,
 		MarkShipped: (id: string) => `fulfillment/${id}/shipped`,
+		MarkInTransit: (id: string) => `fulfillment/${id}/in-transit`,
 		MarkDelivered: (id: string) => `fulfillment/${id}/delivered`,
 		Arrangement: {
 			List: () => 'fulfillment/arrangement',

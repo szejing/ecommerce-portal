@@ -1572,6 +1572,7 @@
 			"changeShipmentStatus": "Change shipment status",
 			"nextShipmentStatus": "Set shipment status to {status}",
 			"completeShipmentStatus": "Mark shipment as delivered",
+			"shipmentStatusUpdateUnsupported": "This shipment status cannot be set from here",
 			"paymentState": "Payment",
 			"fulfillmentState": "Fulfillment",
 			"manageOrder": "Manage order",

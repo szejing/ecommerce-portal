@@ -1571,6 +1571,7 @@
 			"changeShipmentStatus": "更改发货状态",
 			"nextShipmentStatus": "设置发货状态为{status}",
 			"completeShipmentStatus": "将发货标记为已送达",
+			"shipmentStatusUpdateUnsupported": "无法在此处设置该发货状态",
 			"paymentState": "付款",
 			"fulfillmentState": "履约",
 			"manageOrder": "管理订单",

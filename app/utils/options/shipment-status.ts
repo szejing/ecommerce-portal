@@ -32,10 +32,7 @@ export function getNextShipmentStatus(current: ShipmentStatusValue | string | un
 }
 
 export function canCompleteShipmentStatus(current: ShipmentStatusValue | string | undefined): boolean {
-	if (!current) {
-		return false;
-	}
-	return current !== ShipmentStatus.DELIVERED && current !== ShipmentStatus.FAILED;
+	return current === ShipmentStatus.SHIPPED || current === ShipmentStatus.IN_TRANSIT;
 }
 
 export const getShipmentStatusColor = (status: string): BadgeColor | undefined => {

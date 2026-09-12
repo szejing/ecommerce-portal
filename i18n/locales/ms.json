@@ -1571,6 +1571,7 @@
 			"changeShipmentStatus": "Tukar status penghantaran",
 			"nextShipmentStatus": "Tetapkan status penghantaran ke {status}",
 			"completeShipmentStatus": "Tandakan penghantaran sebagai dihantar",
+			"shipmentStatusUpdateUnsupported": "Status penghantaran ini tidak boleh ditetapkan dari sini",
 			"paymentState": "Pembayaran",
 			"fulfillmentState": "Pemenuhan",
 			"manageOrder": "Urus pesanan",

@@ -259,6 +259,7 @@ const MerchantRoutes = {
 		MarkPacked: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/packed`,
 		MarkFulfilled: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/fulfilled`,
 		MarkShipped: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/shipped`,
+		MarkInTransit: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/in-transit`,
 		MarkDelivered: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/delivered`,
 		Arrangement: {
 			List: () => `${prefix}/${API_PATH.MERCHANT}/fulfillment/arrangement`,

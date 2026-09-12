@@ -54,9 +54,10 @@
 				<OrderWorkbenchStatusSummary
 					v-if="orderForModal"
 					:order="orderForModal"
-					:updating="updating"
+					:updating="workbenchUpdating"
 					class="order-header-states"
 					@update:status="handleWorkbenchStatusChange"
+					@update:shipment-status="handleWorkbenchShipmentStatusChange"
 				/>
 				<p v-if="order?.last_updated" class="status-last-updated" :title="t('table.lastUpdated')">
 					{{ order.last_updated }}
@@ -130,7 +131,14 @@
 			>
 				<UDrawer v-model:open="isOrderActionsOpen" :title="t('components.orderDetail.orderActionsTitle')" direction="bottom">
 					<div class="mobile-actions-trigger-layout">
-						<OrderWorkbenchStatusSummary v-if="orderForModal" :order="orderForModal" compact :show-order="false" />
+						<OrderWorkbenchStatusSummary
+							v-if="orderForModal"
+							:order="orderForModal"
+							compact
+							:show-order="false"
+							:updating="workbenchUpdating"
+							@update:shipment-status="handleWorkbenchShipmentStatusChange"
+						/>
 						<UButton color="primary" :icon="ICONS.SETTINGS_ROUNDED" class="mobile-actions-open-trigger min-h-11" @click="isOrderActionsOpen = true">
 							{{ t('components.orderDetail.processOrder') }}
 						</UButton>
@@ -177,13 +185,18 @@ import { OrderResendEmailAction, OrderStatus, OrderType } from 'yeppi-common';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 import { ICONS } from '~/utils/icons';
 import type { OrderHistory } from '~/utils/types/order-history';
+import type { ShipmentStatusValue } from '~/utils/types/order-fulfillment-shipping';
+import { fulfillmentActionForShipmentStatus } from '~/utils/order-workbench';
 import { resolveOrderResendEmailAction } from '~/utils/resolve-order-resend-email-action';
 import { getFulfillmentMethodDescriptions } from '~/utils/fulfillment';
 import Activities from '~/components/ActivityLog/Activities.vue';
 import { useMediaQuery } from '@vueuse/core';
 
 const orderStore = useOrderStore();
+const fulfillmentStore = useFulfillmentStore();
 const { current: order, notFound: order_not_found, sessionLoading, updating, resendingEmail, refreshing, refreshCooldown } = storeToRefs(orderStore);
+const { updating: fulfillmentUpdating } = storeToRefs(fulfillmentStore);
+const workbenchUpdating = computed(() => updating.value || fulfillmentUpdating.value);
 
 const loading = computed(() => sessionLoading.value && !order.value);
 
@@ -353,12 +366,33 @@ const refresh_button_text = computed(() => {
 });
 
 const handleWorkbenchStatusChange = async (status: OrderStatus) => {
-	if (!order.value || status === order.value.status || updating.value) {
+	if (!order.value || status === order.value.status || workbenchUpdating.value) {
 		return;
 	}
 
 	new_order_status.value = status;
 	await handleUpdateOrderStatus();
+};
+
+const handleWorkbenchShipmentStatusChange = async (status: ShipmentStatusValue) => {
+	if (!order.value || workbenchUpdating.value) {
+		return;
+	}
+
+	const action = fulfillmentActionForShipmentStatus(status);
+	if (!action) {
+		failedNotification(t('components.orderDetail.shipmentStatusUpdateUnsupported'));
+		return;
+	}
+
+	try {
+		for (const batch of order.value.fulfillments ?? []) {
+			await fulfillmentStore.runAction(batch.id, action);
+		}
+		await getOrderDetails();
+	} catch {
+		await getOrderDetails();
+	}
 };
 
 const handleUpdateOrderStatus = async () => {

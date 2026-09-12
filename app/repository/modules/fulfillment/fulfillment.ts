@@ -107,6 +107,14 @@ class FulfillmentModule extends HttpFactory {
 		});
 	}
 
+	async markInTransit(id: string, body: FulfillmentActionReq): Promise<FulfillmentResp> {
+		return await this.call<FulfillmentResp>({
+			method: 'PATCH',
+			url: this.RESOURCE.MarkInTransit(encodeURIComponent(id)),
+			body,
+		});
+	}
+
 	async markDelivered(id: string, body: FulfillmentActionReq): Promise<FulfillmentResp> {
 		return await this.call<FulfillmentResp>({
 			method: 'PATCH',

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { OrderItemStatus } from 'yeppi-common';
-import { getOrderItemWorkload } from '../../app/utils/order-workbench';
+import { fulfillmentActionForShipmentStatus, getOrderItemWorkload } from '../../app/utils/order-workbench';
 
 describe('getOrderItemWorkload', () => {
 	it('counts only active lines and units as the fulfillment workload', () => {
@@ -26,5 +26,18 @@ describe('getOrderItemWorkload', () => {
 
 		expect(workload.activeLineCount).toBe(3);
 		expect(workload.activeUnitCount).toBe(1.5);
+	});
+});
+
+describe('fulfillmentActionForShipmentStatus', () => {
+	it('maps merchant-selectable shipment statuses onto fulfillment actions', () => {
+		expect(fulfillmentActionForShipmentStatus('shipped')).toBe('shipped');
+		expect(fulfillmentActionForShipmentStatus('in_transit')).toBe('in_transit');
+		expect(fulfillmentActionForShipmentStatus('delivered')).toBe('delivered');
+	});
+
+	it('rejects statuses the workbench cannot persist', () => {
+		expect(fulfillmentActionForShipmentStatus('pending')).toBeUndefined();
+		expect(fulfillmentActionForShipmentStatus('failed')).toBeUndefined();
 	});
 });

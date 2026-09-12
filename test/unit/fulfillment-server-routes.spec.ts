@@ -44,6 +44,7 @@ describe('Fulfillment server proxy routes', () => {
 		expect(Routes.Fulfillment.MarkPacked('batch-uuid')).toBe('fulfillment/batch-uuid/packed');
 		expect(Routes.Fulfillment.MarkFulfilled('batch-uuid')).toBe('fulfillment/batch-uuid/fulfilled');
 		expect(Routes.Fulfillment.MarkShipped('batch-uuid')).toBe('fulfillment/batch-uuid/shipped');
+		expect(Routes.Fulfillment.MarkInTransit('batch-uuid')).toBe('fulfillment/batch-uuid/in-transit');
 		expect(Routes.Fulfillment.MarkDelivered('batch-uuid')).toBe('fulfillment/batch-uuid/delivered');
 	});
 
@@ -57,6 +58,7 @@ describe('Fulfillment server proxy routes', () => {
 			'[order_no]/packed.patch.ts',
 			'[order_no]/fulfilled.patch.ts',
 			'[order_no]/shipped.patch.ts',
+			'[order_no]/in-transit.patch.ts',
 			'[order_no]/delivered.patch.ts',
 		];
 

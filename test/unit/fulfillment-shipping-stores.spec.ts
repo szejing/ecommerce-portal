@@ -22,6 +22,7 @@ describe('fulfillment/shipping stores', () => {
 			markPacked: vi.fn(),
 			markFulfilled: vi.fn(),
 			markShipped: vi.fn(),
+			markInTransit: vi.fn(),
 			markDelivered: vi.fn(),
 		},
 		shippingMethod: {
@@ -94,6 +95,7 @@ describe('fulfillment/shipping stores', () => {
 		['packed', 'markPacked'],
 		['fulfilled', 'markFulfilled'],
 		['shipped', 'markShipped'],
+		['in_transit', 'markInTransit'],
 		['delivered', 'markDelivered'],
 	] as const)('runs the %s action against the batch UUID', async (action, methodName) => {
 		apiMock.fulfillment[methodName].mockResolvedValue({
@@ -103,7 +105,7 @@ describe('fulfillment/shipping stores', () => {
 				inv_no: 'I1',
 				batch_no: 1,
 				status: ['processing', 'packed', 'fulfilled'].includes(action) ? action : 'fulfilled',
-				shipment_status: ['shipped', 'delivered'].includes(action) ? action : 'pending',
+				shipment_status: ['shipped', 'in_transit', 'delivered'].includes(action) ? action : 'pending',
 			},
 		});
 		const store = useFulfillmentStore();
