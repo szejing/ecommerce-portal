@@ -103,8 +103,8 @@ export function getOrderColumns(t: TranslateFn): TableColumn<OrderHistory>[] {
 			header: ({ column }) => getSortableHeader(column, t('table.customer')),
 			cell: ({ row }) => {
 				return h('div', { class: 'flex flex-col gap-1' }, [
-					h('p', { class: 'font-semibold text-highlighted' }, row.original.customer?.customer_no),
-					h('p', { class: 'text-sm text-muted' }, formatCustomerNameEmail(row.original.customer?.name, row.original.customer?.email_address)),
+					h('p', { class: 'text-sm text-muted' }, row.original.customer?.customer_no),
+					h('p', { class: 'font-semibold  text-highlighted' }, formatCustomerNameEmail(row.original.customer?.name, row.original.customer?.email_address)),
 				]);
 			},
 		},
