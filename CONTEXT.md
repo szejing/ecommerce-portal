@@ -24,6 +24,10 @@ _Avoid_: Shipment import, courier upload, Courier Booking
 The merchant's OAuth link of their EasyParcel account to CRM. Required before Courier Booking. Charges that merchant's EasyParcel wallet. Staff Connect or Disconnect on Configuration; they never type tokens.
 _Avoid_: API key, Fiuu setting, platform-owned EasyParcel account, pasting client_id/client_secret
 
+**Merchant Fiuu Account**:
+A store paying with its own Fiuu Merchant ID, VKey, and SKey on Configuration. Those fields stay hidden while the store uses the Platform Fiuu Account; an operator unhides them, then staff overwrite all three values.
+_Avoid_: editing platform keys as if they were defaults, EasyParcel Connection, empty Fiuu settings as a live fallback
+
 **Courier Booking**:
 The CRM workflow that quotes Standard EasyParcel services and submits one paid delivery Fulfillment. Distinct from Shipment Arrangement and from typing courier plus tracking by hand. Collection date defaults to today. AWB PDFs and the carrier tracking URL are shown when the carrier provides them. Courier Handover defaults from merchant settings and can be changed on that booking.
 _Avoid_: Shipment Arrangement, auto-book on paid, OnDemand, live checkout rates
