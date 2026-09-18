@@ -27,6 +27,13 @@ export const useMerchantInfoStore = defineStore('merchantInfoStore', {
 			);
 			return info?.getBoolean() ?? false;
 		},
+		isStoreHandleLocked(state): boolean {
+			const info = state.merchant.find(
+				(item) =>
+					item.group_code === GROUP_CODE.INFO && item.set_code === MERCHANT.STORE_HANDLE_LOCKED,
+			);
+			return info?.getBoolean() ?? false;
+		},
 		storeThemePrimaryColour(state): string | null {
 			const updated = state.updatedInfo.find(
 				(item) => item.group_code === GROUP_CODE.INFO && item.set_code === STORE_THEME_PRIMARY_COLOUR_SET_CODE,

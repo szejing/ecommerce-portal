@@ -95,4 +95,18 @@ describe('useMerchantInfoStore hide_store', () => {
 		});
 		expect(store.isStoreHidden).toBe(true);
 	});
+
+	it('isStoreHandleLocked reads StoreHandleLocked merchant_info', async () => {
+		const { useMerchantInfoStore } = await import('../../app/stores/MerchantInfo/MerchantInfo');
+		const store = useMerchantInfoStore();
+		store.merchant = [
+			new MerchantInfo({
+				group_code: GROUP_CODE.INFO,
+				set_code: MERCHANT.STORE_HANDLE_LOCKED,
+				set_value: 'true',
+			}),
+		];
+
+		expect(store.isStoreHandleLocked).toBe(true);
+	});
 });

@@ -80,6 +80,33 @@
 			<div class="rounded-xl border border-default bg-elevated/40 p-4 space-y-3">
 				<div class="min-w-0 space-y-1">
 					<p class="text-sm font-semibold text-gray-900 dark:text-white">
+						{{ t('pages.storeProfilePage.storeHandleLabel') }}
+					</p>
+					<p class="text-sm text-gray-600 dark:text-gray-400">
+						{{
+							storeHandleLocked
+								? t('pages.storeProfilePage.storeHandleLocked')
+								: t('pages.storeProfilePage.storeHandleDesc')
+						}}
+					</p>
+				</div>
+				<UFormField
+					:error="storeHandleError"
+					:help="storeHandlePreview"
+				>
+					<UInput
+						class="font-mono"
+						:model-value="storeHandle"
+						:disabled="storeHandleLocked"
+						:placeholder="'acme-tyres'"
+						@update:model-value="onStoreHandleInput"
+					/>
+				</UFormField>
+			</div>
+
+			<div class="rounded-xl border border-default bg-elevated/40 p-4 space-y-3">
+				<div class="min-w-0 space-y-1">
+					<p class="text-sm font-semibold text-gray-900 dark:text-white">
 						{{ t('pages.storeProfilePage.storeThemeLabel') }}
 					</p>
 					<p class="text-sm text-gray-600 dark:text-gray-400">
@@ -275,7 +302,8 @@
 
 <script lang="ts" setup>
 import { ZModalLoading } from '#components';
-import { getFormattedDate, GROUP_CODE, MERCHANT, Package } from 'yeppi-common';
+import { getFormattedDate, GROUP_CODE, MERCHANT, Package, validateStoreHandle, merchantStorePath } from 'yeppi-common';
+import { sanitizeStoreHandleInput } from '~/utils/store-handle-form';
 import { useDataStore } from '~/stores/Data/Data';
 import type { Country } from '~/utils/types/country';
 import { ICONS } from '~/utils/icons';
@@ -313,6 +341,21 @@ onMounted(() => {
 const isDirty = computed(() => updatedInfo.value.length > 0);
 
 const hideStore = computed(() => merchantInfoStore.isStoreHidden);
+const storeHandleLocked = computed(() => merchantInfoStore.isStoreHandleLocked);
+const storeHandleError = ref('');
+
+const STORE_HANDLE_SET_CODE = MERCHANT.STORE_HANDLE;
+
+const storeHandle = computed(() => getMerchantValue(GROUP_CODE.INFO, STORE_HANDLE_SET_CODE));
+const storeHandlePreview = computed(() =>
+	storeHandle.value ? merchantStorePath(storeHandle.value) : '/merchants/…',
+);
+
+const onStoreHandleInput = (value: string | undefined) => {
+	storeHandleError.value = '';
+	const next = sanitizeStoreHandleInput(value);
+	setMerchantValue(GROUP_CODE.INFO, STORE_HANDLE_SET_CODE, next);
+};
 
 const onHideStoreChange = async (value: boolean) => {
 	try {
@@ -344,6 +387,15 @@ const onCancel = () => {
 };
 
 const onSave = async () => {
+	const handleCheck = validateStoreHandle(storeHandle.value);
+	if (handleCheck.ok === false) {
+		storeHandleError.value =
+			handleCheck.reason === 'empty'
+				? t('pages.storeProfilePage.storeHandleRequired')
+				: t('pages.storeProfilePage.storeHandleInvalid');
+		return;
+	}
+	setMerchantValue(GROUP_CODE.INFO, STORE_HANDLE_SET_CODE, handleCheck.handle);
 	await merchantInfoStore.updateMerchantInfo();
 };
 
