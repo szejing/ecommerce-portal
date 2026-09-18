@@ -21,14 +21,22 @@ describe('resolveOrderResendEmailAction', () => {
 		).toBe(OrderResendEmailAction.ORDER_CONFIRMATION);
 	});
 
-	it('returns order-confirmation for cash pending orders', () => {
+	it('returns pending-payment for unpaid pending orders including cash', () => {
 		expect(
 			resolveOrderResendEmailAction({
 				status: OrderStatus.PENDING_PAYMENT,
 				payment_status: PaymentStatus.PENDING,
 				payment_method: 'CASH',
 			}),
-		).toBe(OrderResendEmailAction.ORDER_CONFIRMATION);
+		).toBe(OrderResendEmailAction.PENDING_PAYMENT);
+
+		expect(
+			resolveOrderResendEmailAction({
+				status: OrderStatus.PENDING_PAYMENT,
+				payment_status: PaymentStatus.PENDING,
+				payment_method: 'FIUUFPX',
+			}),
+		).toBe(OrderResendEmailAction.PENDING_PAYMENT);
 	});
 
 	it('returns invoice for processing with pending payment', () => {
@@ -122,8 +130,8 @@ describe('resolveOrderResendEmailAction', () => {
 		expect(
 			resolveOrderResendEmailAction({
 				status: OrderStatus.PENDING_PAYMENT,
-				payment_status: PaymentStatus.PENDING,
-				payment_method: 'FIUU',
+				payment_status: PaymentStatus.PARTIALLY_PAID,
+				payment_method: 'FIUUFPX',
 			}),
 		).toBeUndefined();
 	});
