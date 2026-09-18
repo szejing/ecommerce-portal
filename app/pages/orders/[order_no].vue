@@ -272,6 +272,8 @@ const resend_email_label = computed(() => {
 	switch (resend_email_action.value) {
 		case OrderResendEmailAction.ORDER_CONFIRMATION:
 			return 'order confirmation';
+		case OrderResendEmailAction.PENDING_PAYMENT:
+			return 'pending payment email';
 		case OrderResendEmailAction.INVOICE:
 			return 'invoice';
 		case OrderResendEmailAction.RECEIPT:

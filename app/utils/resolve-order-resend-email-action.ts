@@ -16,30 +16,21 @@ const hasTrackedFulfillment = (input: ResolveOrderResendEmailActionInput): boole
 			trackedShipmentStatuses.has(fulfillment.shipment_status) && String(fulfillment.tracking_no ?? '').trim().length > 0,
 	);
 
-const isCashPendingOrder = (input: ResolveOrderResendEmailActionInput): boolean => {
-	const paymentMethod = String(input.payment_method ?? '')
-		.trim()
-		.toUpperCase();
-
-	return (
-		paymentMethod === 'CASH' &&
-		(input.status === OrderStatus.PENDING_PAYMENT || input.status === OrderStatus.PROCESSING || input.status === OrderStatus.CONFIRMED) &&
-		input.payment_status === PaymentStatus.PENDING
-	);
-};
-
 /** Maps order status/payment to the customer email an admin can resend. */
 export function resolveOrderResendEmailAction(input: ResolveOrderResendEmailActionInput): OrderResendEmailAction | undefined {
 	if (hasTrackedFulfillment(input)) {
 		return OrderResendEmailAction.SHIPPED;
 	}
 
-	if (isCashPendingOrder(input)) {
+	if (input.status === OrderStatus.CONFIRMED) {
 		return OrderResendEmailAction.ORDER_CONFIRMATION;
 	}
 
-	if (input.status === OrderStatus.CONFIRMED) {
-		return OrderResendEmailAction.ORDER_CONFIRMATION;
+	if (
+		input.status === OrderStatus.PENDING_PAYMENT &&
+		input.payment_status === PaymentStatus.PENDING
+	) {
+		return OrderResendEmailAction.PENDING_PAYMENT;
 	}
 
 	if (input.status === OrderStatus.PROCESSING && input.payment_status === PaymentStatus.PENDING) {
