@@ -5,6 +5,7 @@ import type { Currency } from '~/utils/types/currency';
 import { dir } from '~/utils/constants/dir';
 import { GROUP_CODE, MERCHANT, type ErrorResponse } from 'yeppi-common';
 import { normalizeStoreThemePrimaryColour, STORE_THEME_PRIMARY_COLOUR_SET_CODE } from '~/utils/store-theme';
+import { cacheBustUrl } from '~/utils/cache-bust-url';
 
 const initial: MerchantInfo[] = [];
 
@@ -141,22 +142,21 @@ export const useMerchantInfoStore = defineStore('merchantInfoStore', {
 			try {
 				const { image } = await $api.image.upload(file, dir.merchant, 'merchant-thumbnail');
 				if (image?.url) {
+					// Fixed S3 key (thumbnail.webp) — bust CDN/browser cache so replace is visible
+					const url = cacheBustUrl(image.url);
 					await $api.merchantInfo.saveMany({
 						merchant_info: [
 							new MerchantInfo({
 								group_code: GROUP_CODE.INFO,
 								set_code: MERCHANT.THUMBNAIL,
-								set_value: image.url,
+								set_value: url,
 							}),
 						],
 					});
 
-					this.updateMerchantInfoByGroupAndSet(GROUP_CODE.INFO, MERCHANT.THUMBNAIL, image.url);
-					this.addToUpdatedInfo({
-						group_code: GROUP_CODE.INFO,
-						set_code: MERCHANT.THUMBNAIL,
-						set_value: image.url,
-					});
+					this.updateMerchantInfoByGroupAndSet(GROUP_CODE.INFO, MERCHANT.THUMBNAIL, url);
+					this.updatedInfo = this.updatedInfo.filter((info) => info.set_code !== MERCHANT.THUMBNAIL);
+					successNotification('Store thumbnail updated');
 				}
 			} catch (err: unknown | ErrorResponse) {
 				console.log(err);

@@ -7,9 +7,10 @@
 			v-model="files"
 			:multiple="multiple"
 			:accept="DROPZONE_ACCEPT"
+			:reset="true"
 			:disabled="disabled || (multiple && totalImageCount >= maxImages)"
 			:icon="ICONS.UPLOAD"
-			:label="multiple ? 'Drop files here or click to upload' : 'Drop a file here or click to upload'"
+			:label="uploadLabel"
 			description="Square images are recommended"
 			class="dropzone-upload"
 			:ui="{
@@ -21,8 +22,12 @@
 			}"
 			@update:model-value="handleFilesUpdate"
 		>
-			<template #default="{ open, files }">
-				<div v-if="previews.length > 0 || (currentImages != null && currentImages.length > 0)" class="custom-dropzone has-content" @click="open()">
+			<template #default="{ open }">
+				<div
+					class="custom-dropzone"
+					:class="{ 'has-content': hasContent }"
+					@click="!disabled && open()"
+				>
 					<!-- Previews section for new files -->
 					<div v-if="previews.length > 0" class="preview-section">
 						<div class="preview-grid">
@@ -49,6 +54,13 @@
 								</div>
 							</div>
 						</div>
+					</div>
+
+					<!-- Empty state: custom #default replaces UFileUpload's built-in dropzone, so keep a clickable affordance -->
+					<div v-else class="flex flex-col items-center justify-center text-center gap-2 min-h-[120px] p-4">
+						<UIcon :name="ICONS.UPLOAD" class="w-6 h-6 text-neutral-600" />
+						<p class="text-neutral-600 font-normal">{{ uploadLabel }}</p>
+						<p class="text-xs text-neutral-400">Square images are recommended</p>
 					</div>
 				</div>
 			</template>
@@ -94,6 +106,9 @@ const currentImages = ref([]);
 const isProcessing = ref(false);
 const isUpdatingProgrammatically = ref(false);
 const rejectedMessage = ref('');
+
+const uploadLabel = computed(() => (props.multiple ? 'Drop files here or click to upload' : 'Drop a file here or click to upload'));
+const hasContent = computed(() => previews.value.length > 0 || (currentImages.value?.length ?? 0) > 0);
 
 /** Returns true if file is an image (including HEIC/HEIF). */
 function isImageFile(file) {
@@ -214,6 +229,8 @@ const handleFilesUpdate = async (selectedFiles) => {
 	}
 
 	if (!props.multiple) {
+		// Replacing a single image: drop the prior URL preview so the new file owns the UI
+		currentImages.value = [];
 		files.value = validFiles[0];
 		await previewFiles([validFiles[0]]);
 		emit('files-selected', [validFiles[0]]);
@@ -284,7 +301,7 @@ const removeExistingImage = (index) => {
 	isUpdatingProgrammatically.value = true;
 
 	try {
-		// Remove from currentImages at the specified index
+		const removed = currentImages.value[index];
 		currentImages.value.splice(index, 1);
 
 		// Also handle removing preview images by index if they exist (for consistency)
@@ -306,10 +323,11 @@ const removeExistingImage = (index) => {
 			} else {
 				files.value = null;
 			}
+		} else if (!props.multiple) {
+			files.value = null;
 		}
 
-		// Emit the updated files to parent
-		emit('delete-image', currentImages.value[index]);
+		emit('delete-image', removed);
 	} finally {
 		// Always clear flag after update, even if there's an error
 		nextTick(() => {

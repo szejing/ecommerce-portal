@@ -86,7 +86,7 @@
 						{{ storeHandleLocked ? t('pages.storeProfilePage.storeHandleLocked') : t('pages.storeProfilePage.storeHandleDesc') }}
 					</p>
 				</div>
-				<UFormField :error="storeHandleError" :help="storeHandlePreview">
+				<UFormField :error="storeHandleError">
 					<UInput
 						class="font-mono"
 						:model-value="storeHandle"
@@ -94,6 +94,22 @@
 						:placeholder="'acme-tyres'"
 						@update:model-value="onStoreHandleInput"
 					/>
+					<template #help>
+						<div class="flex min-w-0 items-center gap-1.5">
+							<span class="min-w-0 truncate font-mono">{{ storeHandlePreview }}</span>
+							<UButton
+								data-testid="store-profile-copy-url"
+								color="neutral"
+								variant="ghost"
+								size="xs"
+								square
+								:icon="ICONS.CLIPBOARD"
+								:disabled="!storeHandleFullUrl"
+								:aria-label="t('pages.storeProfilePage.copyStoreUrl')"
+								@click="copyStoreUrl"
+							/>
+						</div>
+					</template>
 				</UFormField>
 			</div>
 
@@ -295,7 +311,7 @@
 
 <script lang="ts" setup>
 import { ZModalLoading } from '#components';
-import { getFormattedDate, GROUP_CODE, MERCHANT, Package, validateStoreHandle, merchantStorePath } from 'yeppi-common';
+import { APP_PLATFORM, getFormattedDate, GROUP_CODE, MERCHANT, Package, validateStoreHandle, merchantStorePath } from 'yeppi-common';
 import { sanitizeStoreHandleInput } from '~/utils/store-handle-form';
 import { useDataStore } from '~/stores/Data/Data';
 import type { Country } from '~/utils/types/country';
@@ -309,11 +325,13 @@ const { t } = useI18n();
 useHead({ title: () => `${t('common.appName')} - ${t('nav.storeProfile')}` });
 
 const overlay = useOverlay();
+const toast = useToast();
+const { platform } = usePlatformShell();
 const merchantInfoStore = useMerchantInfoStore();
 const dataStore = useDataStore();
 const loadingModal = overlay.create(ZModalLoading, { props: { key: 'loading' } });
 
-const { updatedInfo, updating, merchant } = storeToRefs(merchantInfoStore);
+const { updatedInfo, updating } = storeToRefs(merchantInfoStore);
 
 /** Shown until the merchant info request has finished (same as `merchantInfoStore.loading` after `getMerchantInfos`). */
 const isPageContentReady = ref(false);
@@ -340,12 +358,32 @@ const storeHandleError = ref('');
 const STORE_HANDLE_SET_CODE = MERCHANT.STORE_HANDLE;
 
 const storeHandle = computed(() => getMerchantValue(GROUP_CODE.INFO, STORE_HANDLE_SET_CODE));
-const storeHandlePreview = computed(() => (storeHandle.value ? merchantStorePath(storeHandle.value) : '/merchants/…'));
+
+/** Public storefront origin for the active Platform Shell (customer-facing Merchant Store URL). */
+const storefrontOrigin = computed(() => (platform.value === APP_PLATFORM.YEPPI ? 'https://yeppi.my' : 'https://wemotoo.com'));
+
+const storeHandleFullUrl = computed(() => (storeHandle.value ? `${storefrontOrigin.value}${merchantStorePath(storeHandle.value)}` : ''));
+
+const storeHandlePreview = computed(() => storeHandleFullUrl.value || `${storefrontOrigin.value}/merchants/…`);
 
 const onStoreHandleInput = (value: string | undefined) => {
 	storeHandleError.value = '';
 	const next = sanitizeStoreHandleInput(value);
 	setMerchantValue(GROUP_CODE.INFO, STORE_HANDLE_SET_CODE, next);
+};
+
+const copyStoreUrl = async () => {
+	const text = storeHandleFullUrl.value;
+	if (!text) {
+		toast.add({ title: t('pages.storeProfilePage.copyStoreUrlFailed'), color: 'warning' });
+		return;
+	}
+	try {
+		await navigator.clipboard.writeText(text);
+		toast.add({ title: t('pages.storeProfilePage.copyStoreUrlSuccess'), color: 'success' });
+	} catch {
+		toast.add({ title: t('pages.storeProfilePage.copyStoreUrlFailed'), color: 'error' });
+	}
 };
 
 const onHideStoreChange = async (value: boolean) => {
@@ -444,7 +482,7 @@ const onOperationOffDaysUpdate = (days: string[]) => {
 };
 
 const thumbnailExistingImages = computed(() => {
-	const url = merchant.value.find((m) => m.group_code === GROUP_CODE.INFO && m.set_code === MERCHANT.THUMBNAIL)?.getString();
+	const url = getMerchantValue(GROUP_CODE.INFO, MERCHANT.THUMBNAIL)?.trim();
 	return url ? [url] : [];
 });
 
@@ -458,6 +496,7 @@ const onThumbnailFilesSelected = async (selectedFiles: File[]) => {
 
 const onThumbnailDelete = () => {
 	setMerchantValue(GROUP_CODE.INFO, MERCHANT.THUMBNAIL, '');
+	thumbnailDropzoneKey.value += 1;
 };
 
 const merchantId = computed(() => merchantInfoStore.getMerchantInfo(GROUP_CODE.INFO, MERCHANT.ID)?.getString() ?? '—');
