@@ -439,18 +439,18 @@ const setMerchantValue = (groupCode: string, setCode: string, value: string) => 
 	});
 };
 
-const themeColour = computed(() => getMerchantValue(GROUP_CODE.INFO, STORE_THEME_PRIMARY_COLOUR_SET_CODE));
+// const themeColour = computed(() => getMerchantValue(GROUP_CODE.INFO, STORE_THEME_PRIMARY_COLOUR_SET_CODE));
 
-const onThemeColour = (value: string | undefined) => {
-	const raw = (value ?? '').trim();
-	if (!raw) {
-		setMerchantValue(GROUP_CODE.INFO, STORE_THEME_PRIMARY_COLOUR_SET_CODE, '');
-		return;
-	}
-	const normalised = normalizeStoreThemePrimaryColour(raw);
-	if (!normalised) return;
-	setMerchantValue(GROUP_CODE.INFO, STORE_THEME_PRIMARY_COLOUR_SET_CODE, normalised);
-};
+// const onThemeColour = (value: string | undefined) => {
+// 	const raw = (value ?? '').trim();
+// 	if (!raw) {
+// 		setMerchantValue(GROUP_CODE.INFO, STORE_THEME_PRIMARY_COLOUR_SET_CODE, '');
+// 		return;
+// 	}
+// 	const normalised = normalizeStoreThemePrimaryColour(raw);
+// 	if (!normalised) return;
+// 	setMerchantValue(GROUP_CODE.INFO, STORE_THEME_PRIMARY_COLOUR_SET_CODE, normalised);
+// };
 
 const addressCountry = computed((): Country | undefined => {
 	const iso2 = getMerchantValue(GROUP_CODE.ADDRESS, MERCHANT.ADDRESS_COUNTRY)?.trim();
