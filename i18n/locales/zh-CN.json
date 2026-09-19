@@ -778,7 +778,7 @@
 			"storeThemeClear": "清除",
 			"merchantInformation": "商户信息",
 			"thumbnail": "缩略图",
-			"thumbnailRecommendedSize": "建议：1:1 比例（例如 800x800px）",
+			"thumbnailRecommendedSize": "建议：1:1 比例（例如 800×800）。过大的照片会自动调整尺寸并压缩。",
 			"shortDescription": "简短描述",
 			"shortDescriptionDesc": "显示在客户店面上您的商店名称下方。最多 280 个字符。",
 			"shortDescriptionCounter": "{n} / 280",

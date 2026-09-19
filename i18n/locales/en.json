@@ -778,7 +778,7 @@
 			"storeThemeClear": "Clear",
 			"merchantInformation": "Merchant information",
 			"thumbnail": "Thumbnail",
-			"thumbnailRecommendedSize": "Recommended: 1:1 ratio (e.g., 800x800px)",
+			"thumbnailRecommendedSize": "Recommended: 1:1 ratio (e.g., 800×800). We resize and compress large photos automatically.",
 			"shortDescription": "Short description",
 			"shortDescriptionDesc": "Shown under your store name on the customer storefront. Max 280 characters.",
 			"shortDescriptionCounter": "{n} / 280",

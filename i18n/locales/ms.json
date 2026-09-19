@@ -777,7 +777,7 @@
 			"storeThemeClear": "Kosongkan",
 			"merchantInformation": "Maklumat peniaga",
 			"thumbnail": "Imej kecil",
-			"thumbnailRecommendedSize": "Disyorkan: nisbah 1:1 (cth., 800x800px)",
+			"thumbnailRecommendedSize": "Disyorkan: nisbah 1:1 (cth., 800×800). Kami saiz semula dan mampat foto besar secara automatik.",
 			"shortDescription": "Penerangan ringkas",
 			"shortDescriptionDesc": "Ditunjukkan di bawah nama kedai anda pada storefront pelanggan. Maksimum 280 aksara.",
 			"shortDescriptionCounter": "{n} / 280",
