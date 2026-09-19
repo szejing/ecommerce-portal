@@ -7,6 +7,7 @@ const UModalStub = defineComponent({
 	name: 'UModal',
 	props: {
 		title: { type: String, default: '' },
+		description: { type: String, default: undefined },
 		close: { type: [Boolean, Object], default: true },
 		ui: { type: Object, default: undefined },
 	},
@@ -14,6 +15,7 @@ const UModalStub = defineComponent({
 	template: `
 		<section data-testid="variant-detail-modal">
 			<h2>{{ title }}</h2>
+			<p v-if="description">{{ description }}</p>
 			<slot name="body" />
 			<slot name="footer" />
 		</section>
@@ -26,6 +28,7 @@ describe('ZInputProductVariantDetail', () => {
 			props: {
 				currencyCode: 'MYR',
 				otherSkus: ['OTHER'],
+				title: 'Red · M',
 				variant: {
 					product_code: 'TEE',
 					variant_code: 'TEE_Red_M',
@@ -47,6 +50,7 @@ describe('ZInputProductVariantDetail', () => {
 		await nextTick();
 
 		const text = wrapper.text();
+		expect(text).toContain('Red · M');
 		expect(text).toContain('TEE · TEE_Red_M');
 		expect(text).toContain('SKU');
 		expect(text).toContain('Barcode');

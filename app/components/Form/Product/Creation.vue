@@ -50,6 +50,7 @@
 						:state="new_product"
 						:code-disabled="false"
 						:show-long-description="showLongDescription"
+						:show-inventory="showSimpleProductInventory"
 						@update:thumbnail="updateThumbnail"
 						@update:images="updateImages"
 						@delete:thumbnail="deleteThumbnail"
@@ -69,13 +70,6 @@
 						@update:orig-sell-price="orig_sell_price = $event ?? 0"
 						@update:cost-price="cost_price = $event"
 						@update:sale-price="sale_price = $event"
-					/>
-
-					<!-- Simple-product inventory (no variants) -->
-					<ZInputProductInventory
-						v-if="!(new_product.variants && new_product.variants.length)"
-						:details="new_product as any"
-						@update:variant-detail="Object.assign(new_product, $event)"
 					/>
 
 					<!-- Section 4: Additional Info (only show for physical items) -->
@@ -117,8 +111,8 @@ import { ZModalConfirmation, ZModalLoading } from '#components';
 import type { FormErrorEvent } from '#ui/types';
 import type { ProductVariationInput } from '~/utils/types/product-variation';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
-import { GROUP_CODE, PRODUCT } from 'yeppi-common';
-import { normalizeSalePrice } from '~/utils/product-variant-list';
+import { GROUP_CODE, PRODUCT, ProductType } from 'yeppi-common';
+import { clearedProductInventory, normalizeSalePrice, productInventoryFromFirstVariant } from '~/utils/product-variant-list';
 
 const overlay = useOverlay();
 const formRef = ref();
@@ -127,9 +121,20 @@ const formRef = ref();
 const productStore = useProductStore();
 const { new_product, adding } = storeToRefs(productStore);
 const settingsStore = useSettingStore();
+const productTypeStore = useProductTypeStore();
 const showLongDescription = computed(
 	() => !settingsStore.getSetting(GROUP_CODE.PRODUCT, PRODUCT.HIDE_LONG_DESC)?.getBoolean(),
 );
+
+const isServiceProduct = computed(() => {
+	const kind = productTypeStore.prod_types.find((pt) => pt.id === new_product.value.type_id)?.value;
+	return kind === ProductType.SERVICE;
+});
+
+const showSimpleProductInventory = computed(
+	() => !isServiceProduct.value && !(new_product.value.variants && new_product.value.variants.length > 0),
+);
+
 const toast = useToast();
 
 // State
@@ -296,13 +301,11 @@ const reviewSummary = computed(() => ({
 			?.filter((v) => v.name?.trim())
 			.map((v) => ({
 				name: v.name,
-				values:
-					v.options
-						.map((o) => o.value)
-						.filter((val) => val?.trim())
-						.join('_') || '—',
+				values: v.options
+					.map((o) => o.value?.trim())
+					.filter((val): val is string => !!val),
 			}))
-			.filter((d) => d.values !== '—') ?? [],
+			.filter((d) => d.values.length > 0) ?? [],
 	variantsCount: new_product.value.variants?.length ?? 0,
 	hasThumbnail: !!new_product.value.thumbnail,
 	imagesCount: new_product.value.images?.length ?? 0,
@@ -382,6 +385,12 @@ const updateProductVariations = (value: ProductVariationInput[]) => {
 };
 
 const updateProductVariants = (value: ProductVariantInput[]) => {
+	const previous = new_product.value.variants ?? [];
+	if (previous.length > 0 && value.length === 0) {
+		Object.assign(new_product.value, productInventoryFromFirstVariant(previous));
+	} else if (value.length > 0) {
+		Object.assign(new_product.value, clearedProductInventory());
+	}
 	new_product.value.variants = value;
 	triggerAutoSave();
 };

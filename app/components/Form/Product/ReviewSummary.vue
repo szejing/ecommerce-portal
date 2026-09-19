@@ -67,7 +67,7 @@
 					<div class="flex justify-between items-center gap-2">
 						<dt class="text-muted shrink-0">{{ t('common.status') }}</dt>
 						<dd>
-							<UBadge :color="summary.isActive ? 'success' : 'error'" variant="soft" size="xs">
+							<UBadge :color="summary.isActive ? 'success' : 'error'" variant="soft" size="md">
 								{{ summary.isActive ? t('common.active') : t('common.inactive') }}
 							</UBadge>
 						</dd>
@@ -104,7 +104,7 @@
 						<dt class="text-muted">{{ t('components.productUpdate.categoriesLabel') }}</dt>
 						<dd class="font-medium text-default">
 							<span v-if="categoryDisplay" class="inline-flex flex-wrap gap-1">
-								<UBadge v-for="(label, i) in categoryLabels" :key="i" color="neutral" variant="soft" size="xs">
+								<UBadge v-for="(label, i) in categoryLabels" :key="i" color="neutral" variant="soft" size="md">
 									{{ label }}
 								</UBadge>
 							</span>
@@ -115,7 +115,7 @@
 						<dt class="text-muted">{{ t('components.productUpdate.tagsLabel') }}</dt>
 						<dd class="font-medium text-default">
 							<span v-if="tagDisplay" class="inline-flex flex-wrap gap-1">
-								<UBadge v-for="(label, i) in tagLabels" :key="i" color="neutral" variant="soft" size="xs">
+								<UBadge v-for="(label, i) in tagLabels" :key="i" color="neutral" variant="soft" size="md">
 									{{ label }}
 								</UBadge>
 							</span>
@@ -126,7 +126,7 @@
 						<dt class="text-muted">{{ t('components.productUpdate.brandsLabel') }}</dt>
 						<dd class="font-medium text-default">
 							<span v-if="brandDisplay" class="inline-flex flex-wrap gap-1">
-								<UBadge v-for="(label, i) in brandLabels" :key="i" color="neutral" variant="soft" size="xs">
+								<UBadge v-for="(label, i) in brandLabels" :key="i" color="neutral" variant="soft" size="sm">
 									{{ label }}
 								</UBadge>
 							</span>
@@ -136,21 +136,27 @@
 				</dl>
 			</section>
 
-			<!-- Variants: show variation names and option values (e.g. Color: red_blue) -->
+			<!-- Variants: variation name + option values as badges -->
 			<section class="rounded-xl bg-elevated/60 p-4 border border-default/10">
 				<h4 class="text-xs font-medium uppercase tracking-wider text-muted mb-3 flex items-center gap-2">
-					<UIcon :name="ICONS.LAYERS" class="w-4 h-4 text-primary-500" />
+					<UIcon :name="ICONS.LAYERS" class="w-4 h-4 text-primary-500" aria-hidden="true" />
 					{{ t('components.productUpdate.variantsSummaryTitle') }}
 				</h4>
-				<div v-if="variationDisplay" class="space-y-2.5 text-sm">
-					<div v-for="(line, i) in variationDescriptions" :key="i" class="flex justify-between gap-2 items-baseline">
-						<span class="text-muted shrink-0">{{ line.name }}</span>
-						<span class="font-medium text-default text-right break-all">{{ line.values }}</span>
+				<dl v-if="variationDisplay" class="space-y-2.5 text-sm">
+					<div v-for="(line, i) in variationDescriptions" :key="i" class="space-y-1">
+						<dt class="text-muted">{{ line.name }}</dt>
+						<dd class="font-medium text-default">
+							<span class="inline-flex flex-wrap gap-1">
+								<UBadge v-for="(value, j) in line.values" :key="j" color="neutral" variant="soft" size="sm" class="whitespace-nowrap">
+									{{ value }}
+								</UBadge>
+							</span>
+						</dd>
 					</div>
 					<p v-if="summary.variantsCount != null && summary.variantsCount > 0" class="text-xs text-muted pt-1">
 						{{ t('components.productUpdate.total') }}: {{ summary.variantsCount }}
 					</p>
-				</div>
+				</dl>
 				<div v-else class="text-sm">
 					<p class="text-muted">—</p>
 				</div>
@@ -175,8 +181,8 @@ export interface ProductReviewSummary {
 	tagLabels?: string[];
 	/** Brand labels to display (e.g. ["Acme", "BrandX"]). */
 	brandLabels?: string[];
-	/** Variation name + option values (e.g. [{ name: "Color", values: "red_blue" }]). */
-	variationDescriptions?: { name: string; values: string }[];
+	/** Variation name + option values (e.g. [{ name: "Color", values: ["red", "blue"] }]). */
+	variationDescriptions?: { name: string; values: string[] }[];
 	variantsCount?: number;
 	hasThumbnail: boolean;
 	imagesCount?: number;

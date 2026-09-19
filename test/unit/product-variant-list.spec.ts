@@ -3,13 +3,18 @@ import {
 	applyVariantDetailPayload,
 	applyVariantListInventoryToAll,
 	applyVariantListPricesToAll,
+	clearedProductInventory,
 	duplicateVariantSkuIndexes,
 	getValidProductOptions,
 	getValidProductVariations,
 	isDuplicateVariantSku,
 	normalizeSalePrice,
 	normalizeVariantSku,
+	productInventoryFromFirstVariant,
+	resolveApplyAllInventoryFromVariants,
 	resolveProductVariationId,
+	seedVariantInventoryFromProduct,
+	shouldOpenVariantDetailFromRowClick,
 } from '../../app/utils/product-variant-list';
 import type { ProductVariationInput } from '../../app/utils/types/product-variation';
 
@@ -161,6 +166,99 @@ describe('variant Apply-to-all and detail helpers', () => {
 			allow_preorder: true,
 			inventory_quantity: 4,
 			price_types: [{ orig_sell_price: 25, sale_price: undefined, cost_price: 12, currency_code: 'MYR' }],
+		});
+	});
+
+	it('resolves apply-all inventory bar from common values and indeterminate when mixed', () => {
+		expect(resolveApplyAllInventoryFromVariants([])).toEqual({
+			manage_inventory: false,
+			allow_preorder: false,
+			inventory_quantity: undefined,
+			manage_indeterminate: false,
+			allow_indeterminate: false,
+		});
+
+		expect(
+			resolveApplyAllInventoryFromVariants([
+				{ manage_inventory: true, allow_preorder: true, inventory_quantity: 5 },
+				{ manage_inventory: true, allow_preorder: true, inventory_quantity: 5 },
+			]),
+		).toEqual({
+			manage_inventory: true,
+			allow_preorder: true,
+			inventory_quantity: 5,
+			manage_indeterminate: false,
+			allow_indeterminate: false,
+		});
+
+		expect(
+			resolveApplyAllInventoryFromVariants([
+				{ manage_inventory: true, allow_preorder: false, inventory_quantity: 3 },
+				{ manage_inventory: false, allow_preorder: false, inventory_quantity: 0 },
+			]),
+		).toEqual({
+			manage_inventory: false,
+			allow_preorder: false,
+			inventory_quantity: undefined,
+			manage_indeterminate: true,
+			allow_indeterminate: false,
+		});
+
+		expect(
+			resolveApplyAllInventoryFromVariants([
+				{ manage_inventory: true, allow_preorder: true, inventory_quantity: 3 },
+				{ manage_inventory: true, allow_preorder: false, inventory_quantity: 7 },
+			]),
+		).toEqual({
+			manage_inventory: true,
+			allow_preorder: false,
+			inventory_quantity: undefined,
+			manage_indeterminate: false,
+			allow_indeterminate: true,
+		});
+	});
+
+	it('opens variant detail from row click only when target is not a control', () => {
+		const plainCell = { closest: () => null } as unknown as Element;
+		expect(shouldOpenVariantDetailFromRowClick(plainCell)).toBe(true);
+
+		const input = {
+			closest: (sel: string) => (sel.includes('input') ? input : null),
+		} as unknown as Element;
+		expect(shouldOpenVariantDetailFromRowClick(input)).toBe(false);
+
+		const button = {
+			closest: (sel: string) => (sel.includes('button') ? button : null),
+		} as unknown as Element;
+		expect(shouldOpenVariantDetailFromRowClick(button)).toBe(false);
+
+		expect(shouldOpenVariantDetailFromRowClick(null)).toBe(false);
+	});
+
+	it('seeds variant inventory from product and restores product inventory from first variant by rank', () => {
+		const variants = [
+			{ variant_rank: 2, manage_inventory: false, allow_preorder: false, inventory_quantity: 0 },
+			{ variant_rank: 0, manage_inventory: true, allow_preorder: true, inventory_quantity: 12 },
+			{ variant_rank: 1, manage_inventory: false, allow_preorder: false, inventory_quantity: 1 },
+		];
+
+		seedVariantInventoryFromProduct(variants, {
+			manage_inventory: true,
+			allow_preorder: true,
+			inventory_quantity: 9,
+		});
+		expect(variants.every((v) => v.manage_inventory && v.allow_preorder && v.inventory_quantity === 9)).toBe(true);
+
+		expect(productInventoryFromFirstVariant(variants)).toEqual({
+			manage_inventory: true,
+			allow_preorder: true,
+			inventory_quantity: 9,
+		});
+
+		expect(clearedProductInventory()).toEqual({
+			manage_inventory: false,
+			allow_preorder: false,
+			inventory_quantity: 0,
 		});
 	});
 });

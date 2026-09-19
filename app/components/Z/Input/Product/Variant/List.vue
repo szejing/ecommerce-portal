@@ -38,6 +38,7 @@
 					name="applyAllManageInventory"
 					:label="t('components.zInput.manageInventory')"
 					color="success"
+					:indeterminate="applyAll.manage_indeterminate"
 					@update:model-value="onApplyAllManageChange"
 				/>
 				<UCheckbox
@@ -45,10 +46,11 @@
 					name="applyAllAllowPreorder"
 					:label="t('components.zInput.allowPreorder')"
 					color="success"
-					:disabled="!applyAll.manage_inventory"
+					:disabled="!applyAll.manage_inventory && !applyAll.manage_indeterminate"
+					:indeterminate="applyAll.allow_indeterminate"
 				/>
 				<UInput
-					v-if="applyAll.manage_inventory"
+					v-if="applyAll.manage_inventory || applyAll.manage_indeterminate"
 					v-model="applyAll.inventory_quantity"
 					:placeholder="t('components.zInput.quantity')"
 					type="number"
@@ -91,7 +93,10 @@
 				</thead>
 				<tbody>
 					<template v-for="(row, rowIdx) in variantRows" :key="row.key">
-						<tr class="border-b border-neutral-100 last:border-b-0 hover:bg-neutral-50/50">
+						<tr
+							class="border-b border-neutral-100 last:border-b-0 hover:bg-neutral-50/50 cursor-pointer"
+							@click="onRowClick($event, rowIdx)"
+						>
 							<!-- Single variation -->
 							<template v-if="validVariations.length === 1">
 								<td class="px-3 py-2 text-neutral-900 font-medium">
@@ -167,6 +172,17 @@
 								/>
 								<span v-else class="text-neutral-400">—</span>
 							</td>
+
+							<td class="px-3 py-2 align-top">
+								<UButton
+									:icon="ICONS.PENCIL"
+									color="neutral"
+									variant="ghost"
+									size="xs"
+									:aria-label="t('components.variantList.edit')"
+									@click.stop="openVariantDetail(rowIdx)"
+								/>
+							</td>
 						</tr>
 					</template>
 				</tbody>
@@ -188,7 +204,10 @@ import {
 	getValidProductOptions,
 	getValidProductVariations,
 	normalizeSalePrice,
+	resolveApplyAllInventoryFromVariants,
 	resolveProductVariationId,
+	seedVariantInventoryFromProduct,
+	shouldOpenVariantDetailFromRowClick,
 } from '~/utils/product-variant-list';
 import { ICONS } from '~/utils/icons';
 import { successNotification } from '~/stores/AppUi/AppUi';
@@ -210,13 +229,26 @@ const applyAll = reactive({
 	manage_inventory: false,
 	allow_preorder: false,
 	inventory_quantity: undefined as number | undefined,
+	manage_indeterminate: false,
+	allow_indeterminate: false,
 });
 
 const onApplyAllManageChange = (value: boolean | 'indeterminate') => {
+	applyAll.manage_indeterminate = false;
 	if (value !== true) {
 		applyAll.allow_preorder = false;
+		applyAll.allow_indeterminate = false;
 		applyAll.inventory_quantity = undefined;
 	}
+};
+
+const syncApplyAllInventoryFromRows = () => {
+	const reflection = resolveApplyAllInventoryFromVariants(variantRows.value.map((row) => row.variant));
+	applyAll.manage_inventory = reflection.manage_inventory;
+	applyAll.allow_preorder = reflection.allow_preorder;
+	applyAll.inventory_quantity = reflection.inventory_quantity;
+	applyAll.manage_indeterminate = reflection.manage_indeterminate;
+	applyAll.allow_indeterminate = reflection.allow_indeterminate;
 };
 
 type VariantRow = {
@@ -256,7 +288,7 @@ const currencyCode = computed(() => {
 
 const createDefaultVariant = (name: string, options: ProductOptionInput[]): ProductVariantInput => {
 	const basePrice = props.product.price_types?.[0];
-	return {
+	const variant: ProductVariantInput = {
 		name,
 		variant_code: props.product.code ? `${props.product.code}_${name}` : name,
 		product_code: props.product.code,
@@ -271,11 +303,18 @@ const createDefaultVariant = (name: string, options: ProductOptionInput[]): Prod
 			},
 		],
 	};
+	seedVariantInventoryFromProduct([variant], {
+		manage_inventory: !!props.product.manage_inventory,
+		allow_preorder: !!props.product.allow_preorder,
+		inventory_quantity: Number(props.product.inventory_quantity ?? 0),
+	});
+	return variant;
 };
 
 const emitVariants = () => {
 	const variants = variantRows.value.map((row) => JSON.parse(JSON.stringify(row.variant)));
 	emit('update:variants', variants);
+	syncApplyAllInventoryFromRows();
 };
 
 const clearInvalidSale = (variant: ProductVariantInput) => {
@@ -290,11 +329,16 @@ const openVariantDetail = async (rowIdx: number) => {
 	if (!row) return;
 
 	const otherSkus = variantRows.value.filter((_, index) => index !== rowIdx).map((r) => r.variant.sku);
+	const title = row.optionLabels
+		.map((label) => label?.trim())
+		.filter((label): label is string => !!label)
+		.join(' · ');
 	const modal = overlay.create(ZInputProductVariantDetail);
 	const instance = modal.open({
 		variant: JSON.parse(JSON.stringify(row.variant)) as ProductVariantInput,
 		otherSkus,
 		currencyCode: currencyCode.value,
+		title,
 	});
 
 	const payload = await instance.result;
@@ -302,6 +346,11 @@ const openVariantDetail = async (rowIdx: number) => {
 
 	applyVariantDetailPayload(row.variant, payload);
 	emitVariants();
+};
+
+const onRowClick = (event: MouseEvent, rowIdx: number) => {
+	if (!shouldOpenVariantDetailFromRowClick(event.target)) return;
+	void openVariantDetail(rowIdx);
 };
 
 // Rebuild variant rows when variations change, preserving existing variant data.
@@ -379,6 +428,7 @@ watch(
 		}
 
 		variantRows.value = newRows;
+		syncApplyAllInventoryFromRows();
 		if (hasInitializedVariantRows.value) {
 			emitVariants();
 		} else {
@@ -392,6 +442,8 @@ const applyToAll = () => {
 	const variants = variantRows.value.map((row) => row.variant);
 	applyVariantListPricesToAll(variants, applyAll.orig, applyAll.sale);
 	applyVariantListInventoryToAll(variants, applyAll.manage_inventory, applyAll.allow_preorder, applyAll.inventory_quantity);
+	applyAll.manage_indeterminate = false;
+	applyAll.allow_indeterminate = false;
 	emitVariants();
 	successNotification(t('components.variantList.applyToAllSuccess'));
 };

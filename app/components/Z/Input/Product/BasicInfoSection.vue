@@ -77,6 +77,34 @@
 
 			<hr class="my-6" />
 
+			<!-- Simple Product inventory (goods only; hidden when Variants exist or Service) -->
+			<div v-if="showInventory" class="space-y-4">
+				<h3 class="text-lg font-semibold">{{ t('components.zInput.inventory') }}</h3>
+				<div class="flex flex-wrap items-center gap-4">
+					<UCheckbox
+						v-model="state.manage_inventory"
+						name="manageInventory"
+						:label="t('components.zInput.manageInventory')"
+						color="success"
+						@update:model-value="onManageInventoryChange"
+					/>
+					<UCheckbox
+						v-model="state.allow_preorder"
+						name="allowPreorder"
+						:label="t('components.zInput.allowPreorder')"
+						color="success"
+						:disabled="!state.manage_inventory"
+					/>
+				</div>
+				<div v-if="state.manage_inventory" class="max-w-xs">
+					<UFormField name="inventory_quantity" :label="t('components.zInput.quantity')">
+						<UInput v-model.number="state.inventory_quantity" type="number" :min="0" step="1" />
+					</UFormField>
+				</div>
+			</div>
+
+			<hr v-if="showInventory" class="my-6" />
+
 			<!-- Product Images -->
 			<div class="space-y-4">
 				<h3 class="text-lg font-semibold">{{ t('components.productUpdate.productImages') }}</h3>
@@ -137,6 +165,9 @@ export type ProductBasicInfoState = {
 	long_desc?: string | null;
 	thumbnail?: File | Image;
 	images?: File[] | Image[];
+	manage_inventory?: boolean;
+	allow_preorder?: boolean;
+	inventory_quantity?: number;
 };
 
 const props = withDefaults(
@@ -144,8 +175,9 @@ const props = withDefaults(
 		state: ProductBasicInfoState;
 		codeDisabled?: boolean;
 		showLongDescription?: boolean;
+		showInventory?: boolean;
 	}>(),
-	{ codeDisabled: false, showLongDescription: true },
+	{ codeDisabled: false, showLongDescription: true, showInventory: false },
 );
 
 const emit = defineEmits<{
@@ -156,6 +188,12 @@ const emit = defineEmits<{
 }>();
 
 const state = toRef(props, 'state');
+
+function onManageInventoryChange(value: boolean | 'indeterminate') {
+	if (value !== true) {
+		state.value.allow_preorder = false;
+	}
+}
 
 function onCodeInput(value: string | number | null | undefined) {
 	if (props.codeDisabled) return;

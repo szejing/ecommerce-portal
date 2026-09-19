@@ -15,6 +15,10 @@ export type ProductCreate = {
 	is_active?: boolean;
 	status?: ProductStatus;
 
+	manage_inventory?: boolean;
+	inventory_quantity?: number;
+	allow_preorder?: boolean;
+
 	// Relations (using codes/IDs)
 	brand_codes?: string[]; // optional
 	category_codes: string[] | undefined; // optional
@@ -43,6 +47,10 @@ export type ProductUpdate = {
 	is_giftcard?: boolean;
 	is_active?: boolean;
 	status?: ProductStatus;
+
+	manage_inventory?: boolean;
+	inventory_quantity?: number;
+	allow_preorder?: boolean;
 
 	// Relations (using codes/IDs)
 	brand_codes?: string[]; // optional

@@ -2,7 +2,7 @@
 	<ZPagePanel id="settings-store-profile" :title="t('nav.storeProfile')" back-to="/settings">
 		<template v-if="isPageContentReady" #navbar-right>
 			<UButton color="neutral" variant="ghost" @click="onCancel">{{ t('common.cancel') }}</UButton>
-			<UButton color="success" :loading="merchantInfoStore.loading" @click="onSave" :disabled="!isDirty">
+			<UButton color="success" :loading="merchantInfoStore.loading" :disabled="!isDirty" @click="onSave">
 				<UIcon :name="ICONS.SAVE" class="w-4 h-4" />
 				{{ t('common.save') }}
 			</UButton>
@@ -83,17 +83,10 @@
 						{{ t('pages.storeProfilePage.storeHandleLabel') }}
 					</p>
 					<p class="text-sm text-gray-600 dark:text-gray-400">
-						{{
-							storeHandleLocked
-								? t('pages.storeProfilePage.storeHandleLocked')
-								: t('pages.storeProfilePage.storeHandleDesc')
-						}}
+						{{ storeHandleLocked ? t('pages.storeProfilePage.storeHandleLocked') : t('pages.storeProfilePage.storeHandleDesc') }}
 					</p>
 				</div>
-				<UFormField
-					:error="storeHandleError"
-					:help="storeHandlePreview"
-				>
+				<UFormField :error="storeHandleError" :help="storeHandlePreview">
 					<UInput
 						class="font-mono"
 						:model-value="storeHandle"
@@ -104,7 +97,7 @@
 				</UFormField>
 			</div>
 
-			<div class="rounded-xl border border-default bg-elevated/40 p-4 space-y-3">
+			<!-- <div class="rounded-xl border border-default bg-elevated/40 p-4 space-y-3">
 				<div class="min-w-0 space-y-1">
 					<p class="text-sm font-semibold text-gray-900 dark:text-white">
 						{{ t('pages.storeProfilePage.storeThemeLabel') }}
@@ -128,7 +121,7 @@
 						{{ t('pages.storeProfilePage.storeThemeClear') }}
 					</UButton>
 				</div>
-			</div>
+			</div> -->
 
 			<div class="space-y-2">
 				<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('nav.storeProfile') }}</h2>
@@ -155,7 +148,7 @@
 					<span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 wrap-break-word leading-tight">
 						{{ t('pages.storeProfilePage.accountType') }}
 					</span>
-					<span class="text-lg font-semibold capitalize" :class="accountTypeTextClass">{{ accountType }}</span>
+					<span class="text-lg font-semibold" :class="accountTypeTextClass">{{ accountType }}</span>
 				</div>
 				<div class="flex min-w-0 flex-col gap-2.5 rounded-xl border p-4" :class="expiredDateCardBg">
 					<span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 wrap-break-word leading-tight">
@@ -174,8 +167,8 @@
 					<!-- Thumbnail -->
 					<UFormField :label="t('pages.storeProfilePage.thumbnail')" :description="t('pages.storeProfilePage.thumbnailRecommendedSize')">
 						<ZDropzone
-							class="max-w-full sm:max-w-50"
 							:key="thumbnailDropzoneKey"
+							class="max-w-full sm:max-w-50"
 							:existing-images="thumbnailExistingImages"
 							:multiple="false"
 							:disabled="merchantInfoStore.loading || merchantInfoStore.updating"
@@ -347,9 +340,7 @@ const storeHandleError = ref('');
 const STORE_HANDLE_SET_CODE = MERCHANT.STORE_HANDLE;
 
 const storeHandle = computed(() => getMerchantValue(GROUP_CODE.INFO, STORE_HANDLE_SET_CODE));
-const storeHandlePreview = computed(() =>
-	storeHandle.value ? merchantStorePath(storeHandle.value) : '/merchants/…',
-);
+const storeHandlePreview = computed(() => (storeHandle.value ? merchantStorePath(storeHandle.value) : '/merchants/…'));
 
 const onStoreHandleInput = (value: string | undefined) => {
 	storeHandleError.value = '';
@@ -389,10 +380,7 @@ const onCancel = () => {
 const onSave = async () => {
 	const handleCheck = validateStoreHandle(storeHandle.value);
 	if (handleCheck.ok === false) {
-		storeHandleError.value =
-			handleCheck.reason === 'empty'
-				? t('pages.storeProfilePage.storeHandleRequired')
-				: t('pages.storeProfilePage.storeHandleInvalid');
+		storeHandleError.value = handleCheck.reason === 'empty' ? t('pages.storeProfilePage.storeHandleRequired') : t('pages.storeProfilePage.storeHandleInvalid');
 		return;
 	}
 	setMerchantValue(GROUP_CODE.INFO, STORE_HANDLE_SET_CODE, handleCheck.handle);

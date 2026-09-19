@@ -1093,6 +1093,11 @@
 			"customer": "Pelanggan",
 			"both": "Kedua-dua"
 		},
+		"accountType": {
+			"seller": "Penjual",
+			"organizer": "Penganjur",
+			"vip": "VIP"
+		},
 		"reasonType": {
 			"returnExchange": "Pulangan & pertukaran",
 			"cancelOrder": "Batal pesanan"
@@ -2187,7 +2192,9 @@
 			"optionsLabel": "Pilihan",
 			"optionValuePlaceholder": "Input",
 			"addOptionPlaceholder": "Input",
-			"addVariation": "Tambah Variasi"
+			"addVariation": "Tambah Variasi",
+			"collapseToSimpleTitle": "Tukar kepada Produk Mudah?",
+			"collapseToSimpleMessage": "Inventori akan diambil dari Varian pertama (mengikut pangkat). Stok Varian lain akan dibuang."
 		},
 		"variantList": {
 			"title": "Senarai Variasi",

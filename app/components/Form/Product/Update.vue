@@ -45,6 +45,7 @@
 						:state="formState"
 						:code-disabled="true"
 						:show-long-description="showLongDescription"
+						:show-inventory="showSimpleProductInventory"
 						@update:thumbnail="updateThumbnail"
 						@update:images="updateImages"
 						@delete:thumbnail="deleteThumbnail"
@@ -64,12 +65,6 @@
 						@update:orig-sell-price="orig_sell_price = $event ?? 0"
 						@update:cost-price="cost_price = $event"
 						@update:sale-price="sale_price = $event"
-					/>
-
-					<ZInputProductInventory
-						v-if="!(formState.variants && formState.variants.length)"
-						:details="formState"
-						@update:variant-detail="Object.assign(formState, $event)"
 					/>
 
 					<!-- Section 4: Additional Info (only show for physical items) -->
@@ -109,7 +104,8 @@ import type { Image } from '~/utils/types/image';
 import type { FormErrorEvent } from '#ui/types';
 import type { ProductVariationInput } from '~/utils/types/product-variation';
 import { transformProductToUpdate as buildProductUpdate } from '~/utils/product-transform';
-import { GROUP_CODE, PRODUCT } from 'yeppi-common';
+import { GROUP_CODE, PRODUCT, ProductType } from 'yeppi-common';
+import { clearedProductInventory, productInventoryFromFirstVariant } from '~/utils/product-variant-list';
 
 const { t } = useI18n();
 const updateProductSchema = computed(() => createUpdateProductValidation(t));
@@ -135,6 +131,14 @@ const brands = ref<Brand[]>(props.product.brands ?? []);
 // Local form state typed as ProductUpdate
 const formState = ref<ProductUpdate>(transformProductToUpdate(props.product));
 
+const isServiceProduct = computed(() => {
+	const kind = productTypeStore.prod_types.find((pt) => pt.id === formState.value.type_id)?.value;
+	return kind === ProductType.SERVICE;
+});
+
+const showSimpleProductInventory = computed(
+	() => !isServiceProduct.value && !(formState.value.variants && formState.value.variants.length > 0),
+);
 // Watch for prop changes and update form state
 watch(
 	() => props.product,
@@ -325,13 +329,11 @@ const reviewSummary = computed(() => ({
 			?.filter((v) => v.name?.trim())
 			.map((v) => ({
 				name: v.name,
-				values:
-					v.options
-						.map((o) => o.value)
-						.filter((val) => val?.trim())
-						.join('_') || '—',
+				values: v.options
+					.map((o) => o.value?.trim())
+					.filter((val): val is string => !!val),
 			}))
-			.filter((d) => d.values !== '—') ?? [],
+			.filter((d) => d.values.length > 0) ?? [],
 	variantsCount: formState.value.variants?.length ?? 0,
 	hasThumbnail: !!formState.value.thumbnail,
 	imagesCount: formState.value.images?.length ?? 0,
@@ -371,6 +373,12 @@ const updateProductVariations = (value: ProductVariationInput[]) => {
 };
 
 const updateProductVariants = (value: ProductVariantInput[]) => {
+	const previous = formState.value.variants ?? [];
+	if (previous.length > 0 && value.length === 0) {
+		Object.assign(formState.value, productInventoryFromFirstVariant(previous));
+	} else if (value.length > 0) {
+		Object.assign(formState.value, clearedProductInventory());
+	}
 	formState.value.variants = value;
 };
 

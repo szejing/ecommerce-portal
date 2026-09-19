@@ -47,10 +47,13 @@
 </template>
 
 <script lang="ts" setup>
+import { ZModalConfirmation } from '#components';
 import type { ProductVariationInput } from '~/utils/types/product-variation';
+import { getValidProductVariations } from '~/utils/product-variant-list';
 import { ICONS } from '~/utils/icons';
 
 const { t } = useI18n();
+const overlay = useOverlay();
 
 const MAX_VARIATIONS = 2;
 
@@ -58,6 +61,10 @@ const props = defineProps({
 	variations: {
 		type: Array as PropType<ProductVariationInput[]>,
 		default: () => [],
+	},
+	variantCount: {
+		type: Number,
+		default: 0,
 	},
 });
 
@@ -68,6 +75,7 @@ const localVariations = ref<ProductVariationInput[]>(props.variations?.length ? 
 // Only sync from parent when external changes occur (e.g. loading saved data),
 // not when our own emit triggers a prop update.
 let emittedByUs = false;
+let collapseConfirmOpen = false;
 
 watch(
 	() => props.variations,
@@ -89,18 +97,57 @@ const setOptionValues = (vIdx: number, tags: string[]) => {
 	const variation = localVariations.value[vIdx];
 	if (!variation) return;
 	variation.options = tags.map((tag) => ({ value: tag }));
-	emitUpdate();
+	void emitUpdate();
 };
 
-const emitUpdate = () => {
-	emittedByUs = true;
-	// Emit all variations (including those with empty options) so the parent
-	// and variant list can see the full structure. The variant list will
-	// filter for valid ones on its own.
-	const output = localVariations.value.map((v) => ({
+const buildOutput = (): ProductVariationInput[] =>
+	localVariations.value.map((v) => ({
 		...v,
 		options: v.options.filter((o) => o.value.trim() !== ''),
 	}));
+
+const restoreFromProps = () => {
+	localVariations.value = props.variations?.length ? JSON.parse(JSON.stringify(props.variations)) : [];
+};
+
+const confirmCollapseToSimple = (): Promise<boolean> =>
+	new Promise((resolve) => {
+		const confirmModal = overlay.create(ZModalConfirmation, {
+			props: {
+				title: t('components.variations.collapseToSimpleTitle'),
+				message: t('components.variations.collapseToSimpleMessage'),
+				titleVariant: 'danger',
+				action: 'confirm',
+				onConfirm: () => {
+					confirmModal.close();
+					resolve(true);
+				},
+				onCancel: () => {
+					confirmModal.close();
+					resolve(false);
+				},
+			},
+		});
+		confirmModal.open();
+	});
+
+const emitUpdate = async () => {
+	const output = buildOutput();
+	const nextValid = getValidProductVariations(output);
+	const collapsing = props.variantCount > 0 && nextValid.length === 0;
+
+	if (collapsing) {
+		if (collapseConfirmOpen) return;
+		collapseConfirmOpen = true;
+		const confirmed = await confirmCollapseToSimple();
+		collapseConfirmOpen = false;
+		if (!confirmed) {
+			restoreFromProps();
+			return;
+		}
+	}
+
+	emittedByUs = true;
 	emit('update:variations', JSON.parse(JSON.stringify(output)));
 };
 
@@ -111,6 +158,6 @@ const addVariation = () => {
 
 const removeVariation = (vIdx: number) => {
 	localVariations.value.splice(vIdx, 1);
-	emitUpdate();
+	void emitUpdate();
 };
 </script>

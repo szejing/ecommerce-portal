@@ -16,7 +16,11 @@
 				/>
 
 				<!-- Variations Input -->
-				<ZInputProductVariations :variations="product.variations" @update:variations="updateProductVariations" />
+				<ZInputProductVariations
+					:variations="product.variations"
+					:variant-count="product.variants?.length ?? 0"
+					@update:variations="updateProductVariations"
+				/>
 
 				<!-- Variant List (auto-generated) -->
 				<ZInputProductVariantList

@@ -15,7 +15,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ICONS } from '~/utils/icons';
 const { t } = useI18n();
 // Uses global ICONS from app/utils/icons.ts (auto-imported)
 </script>

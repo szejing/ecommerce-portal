@@ -14,7 +14,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ICONS } from '~/utils/icons';
 const { t } = useI18n();
 defineProps<{
 	/** Icon name from ICONS (e.g. ICONS.LAYERS) */

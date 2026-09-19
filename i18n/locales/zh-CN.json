@@ -1093,6 +1093,11 @@
 			"customer": "客户",
 			"both": "全部"
 		},
+		"accountType": {
+			"seller": "卖家",
+			"organizer": "主办方",
+			"vip": "VIP"
+		},
 		"reasonType": {
 			"returnExchange": "退换货",
 			"cancelOrder": "取消订单"
@@ -2187,7 +2192,9 @@
 			"optionsLabel": "选项",
 			"optionValuePlaceholder": "输入",
 			"addOptionPlaceholder": "输入",
-			"addVariation": "添加变体"
+			"addVariation": "添加变体",
+			"collapseToSimpleTitle": "转换为简单商品？",
+			"collapseToSimpleMessage": "库存将取自第一个变体（按排序）。其他变体库存将被丢弃。"
 		},
 		"variantList": {
 			"title": "变体列表",

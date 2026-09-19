@@ -1094,6 +1094,11 @@
 			"customer": "Customer",
 			"both": "Both"
 		},
+		"accountType": {
+			"seller": "Seller",
+			"organizer": "Organizer",
+			"vip": "VIP"
+		},
 		"reasonType": {
 			"returnExchange": "Return & exchange",
 			"cancelOrder": "Cancel order"
@@ -2188,7 +2193,9 @@
 			"optionsLabel": "Options",
 			"optionValuePlaceholder": "Input",
 			"addOptionPlaceholder": "Input",
-			"addVariation": "Add Variation"
+			"addVariation": "Add Variation",
+			"collapseToSimpleTitle": "Convert to Simple Product?",
+			"collapseToSimpleMessage": "Inventory will be taken from the first Variant (by rank). Other Variant stock will be discarded."
 		},
 		"variantList": {
 			"title": "Variation List",

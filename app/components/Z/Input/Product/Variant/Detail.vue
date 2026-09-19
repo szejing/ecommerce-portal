@@ -1,8 +1,12 @@
 <template>
 	<UModal
 		:title="modalTitle"
+		:description="modalDescription"
 		:ui="{
 			content: 'w-full sm:max-w-lg',
+			header: 'items-start',
+			title: 'text-highlighted font-semibold text-pretty break-words pe-8',
+			description: 'mt-1 text-muted text-sm text-pretty break-all',
 		}"
 		:close="{ onClick: () => settle(undefined) }"
 		@update:open="onOpenChange"
@@ -68,30 +72,11 @@
 				<div class="space-y-3 pt-1 border-t border-default">
 					<p class="text-sm font-medium text-highlighted">{{ t('components.zInput.inventory') }}</p>
 					<div class="flex flex-wrap items-center gap-4">
-						<UCheckbox
-							v-model="draft.manage_inventory"
-							name="manageInventory"
-							:label="t('components.zInput.manageInventory')"
-							color="success"
-						/>
-						<UCheckbox
-							v-model="draft.allow_preorder"
-							name="allowPreorder"
-							:label="t('components.zInput.allowPreorder')"
-							color="success"
-						/>
+						<UCheckbox v-model="draft.manage_inventory" name="manageInventory" :label="t('components.zInput.manageInventory')" color="success" />
+						<UCheckbox v-model="draft.allow_preorder" name="allowPreorder" :label="t('components.zInput.allowPreorder')" color="success" />
 					</div>
-					<UFormField
-						v-if="draft.manage_inventory"
-						:label="t('components.zInput.quantity')"
-						name="inventory_quantity"
-					>
-						<UInput
-							v-model.number="draft.inventory_quantity"
-							type="number"
-							:min="0"
-							step="1"
-						/>
+					<UFormField v-if="draft.manage_inventory" :label="t('components.zInput.quantity')" name="inventory_quantity">
+						<UInput v-model.number="draft.inventory_quantity" type="number" :min="0" step="1" />
 					</UFormField>
 				</div>
 			</div>
@@ -117,17 +102,31 @@ const props = defineProps<{
 	variant: ProductVariantInput;
 	otherSkus: Array<string | null | undefined>;
 	currencyCode: string;
+	title?: string;
 }>();
 
 const emit = defineEmits<{
 	close: [payload: VariantDetailPayload | undefined];
 }>();
 
-const modalTitle = computed(() => {
-	const parts = [props.variant.product_code, props.variant.variant_code]
+const identityCodes = computed(() => {
+	return [props.variant.product_code, props.variant.variant_code]
 		.map((value) => value?.trim())
-		.filter((value): value is string => !!value);
-	return parts.join(' · ');
+		.filter((value): value is string => !!value)
+		.join(' · ');
+});
+
+/** Option labels first (e.g. Red · M); fall back to codes or edit label. */
+const modalTitle = computed(() => {
+	const displayName = props.title?.trim();
+	if (displayName) return displayName;
+	return identityCodes.value || t('components.variantList.edit');
+});
+
+/** Codes as secondary line when the title already shows option labels. */
+const modalDescription = computed(() => {
+	if (!props.title?.trim()) return undefined;
+	return identityCodes.value || undefined;
 });
 
 const draft = reactive({

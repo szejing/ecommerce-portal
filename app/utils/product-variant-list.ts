@@ -155,3 +155,106 @@ export function applyVariantDetailPayload(variant: VariantDetailTarget, payload:
 	priceType.sale_price = normalizeSalePrice(payload.sale_price);
 	priceType.cost_price = payload.cost_price;
 }
+
+export type ProductInventoryFields = {
+	manage_inventory: boolean;
+	allow_preorder: boolean;
+	inventory_quantity: number;
+};
+
+export type ApplyAllInventoryReflection = {
+	manage_inventory: boolean;
+	allow_preorder: boolean;
+	inventory_quantity: number | undefined;
+	manage_indeterminate: boolean;
+	allow_indeterminate: boolean;
+};
+
+/** Reflect common Variant inventory into the Apply-to-all bar; mixed → indeterminate / empty qty. */
+export function resolveApplyAllInventoryFromVariants(
+	variants: VariantInventoryApplyTarget[],
+): ApplyAllInventoryReflection {
+	if (!variants.length) {
+		return {
+			manage_inventory: false,
+			allow_preorder: false,
+			inventory_quantity: undefined,
+			manage_indeterminate: false,
+			allow_indeterminate: false,
+		};
+	}
+
+	const manageValues = variants.map((v) => !!v.manage_inventory);
+	const manageAllTrue = manageValues.every(Boolean);
+	const manageAllFalse = manageValues.every((v) => !v);
+	const manage_indeterminate = !manageAllTrue && !manageAllFalse;
+
+	const allowValues = variants.map((v) => !!v.allow_preorder);
+	const allowAllTrue = allowValues.every(Boolean);
+	const allowAllFalse = allowValues.every((v) => !v);
+	const allow_indeterminate = manageAllTrue && !allowAllTrue && !allowAllFalse;
+
+	let inventory_quantity: number | undefined;
+	if (manageAllTrue) {
+		const qtys = variants.map((v) => Number(v.inventory_quantity ?? 0));
+		const first = qtys[0];
+		inventory_quantity = qtys.every((q) => q === first) ? first : undefined;
+	}
+
+	return {
+		manage_inventory: manageAllTrue,
+		allow_preorder: manageAllTrue && allowAllTrue,
+		inventory_quantity,
+		manage_indeterminate,
+		allow_indeterminate,
+	};
+}
+
+const ROW_CLICK_BLOCKING_SELECTOR = 'input, textarea, select, button, a, label, [role="checkbox"], [role="button"], [contenteditable="true"]';
+
+/** Whole-row opens Detail only when the click did not start on an interactive control. */
+export function shouldOpenVariantDetailFromRowClick(target: EventTarget | null): boolean {
+	if (!target || typeof (target as Element).closest !== 'function') return false;
+	return !(target as Element).closest(ROW_CLICK_BLOCKING_SELECTOR);
+}
+
+export function clearedProductInventory(): ProductInventoryFields {
+	return {
+		manage_inventory: false,
+		allow_preorder: false,
+		inventory_quantity: 0,
+	};
+}
+
+type RankedInventoryVariant = VariantInventoryApplyTarget & {
+	variant_rank?: number | null;
+};
+
+/** Lowest variant_rank wins; ties keep first occurrence. */
+export function productInventoryFromFirstVariant(variants: RankedInventoryVariant[]): ProductInventoryFields {
+	if (!variants.length) return clearedProductInventory();
+
+	const sorted = [...variants].sort((a, b) => (a.variant_rank ?? 0) - (b.variant_rank ?? 0));
+	const first = sorted[0]!;
+	const manage = !!first.manage_inventory;
+	return {
+		manage_inventory: manage,
+		allow_preorder: manage && !!first.allow_preorder,
+		inventory_quantity: manage ? Number(first.inventory_quantity ?? 0) : 0,
+	};
+}
+
+export function seedVariantInventoryFromProduct(
+	variants: VariantInventoryApplyTarget[],
+	product: Partial<ProductInventoryFields>,
+): void {
+	const manage = !!product.manage_inventory;
+	const allow = manage && !!product.allow_preorder;
+	const qty = manage ? Number(product.inventory_quantity ?? 0) : 0;
+
+	for (const variant of variants) {
+		variant.manage_inventory = manage;
+		variant.allow_preorder = allow;
+		variant.inventory_quantity = qty;
+	}
+}
