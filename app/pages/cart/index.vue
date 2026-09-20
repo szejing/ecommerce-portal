@@ -6,7 +6,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ICONS } from '~/utils/icons';
 const links = [
 	{
 		label: 'Overview',
