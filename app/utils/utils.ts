@@ -53,5 +53,8 @@ export const formatAppointmentDateRange = (startDate: string | Date, endDate: st
 /** Format phone for display: "(dial_code) number" or "—" when missing. */
 export const formatCrmUserPhone = (user: CRMUser): string => {
 	const phone = user.phone_no?.trim() || '—';
-	return user.dial_code?.trim() ? `(${user.dial_code}) ${phone}` : phone;
+	const dial = user.dial_code?.trim();
+	if (!dial) return phone;
+	const displayDial = dial.startsWith('+') ? dial : `+${dial}`;
+	return `(${displayDial}) ${phone}`;
 };

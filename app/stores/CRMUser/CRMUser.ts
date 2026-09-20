@@ -23,7 +23,7 @@ const initialFilter: CrmUserFilter = {
 const initialEmptyCrmUser: CrmUserCreate = {
 	name: undefined as string | undefined,
 	email_address: undefined as string | undefined,
-	dial_code: '+60',
+	dial_code: '60',
 	phone_no: undefined as string | undefined,
 	role: UserRoles.MERCHANT_STAFF,
 	is_active: true,

@@ -106,7 +106,7 @@ describe('useDocumentTemplateStore editing session', () => {
 			role: UserRoles.MERCHANT_STAFF,
 			email_address: 'staff@example.test',
 			name: 'Staff',
-			dial_code: '+60',
+			dial_code: '60',
 			phone_no: '123456789',
 		};
 	});

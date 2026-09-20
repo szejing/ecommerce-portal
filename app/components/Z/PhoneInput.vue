@@ -14,13 +14,13 @@
 		>
 			<template #default="{ modelValue }">
 				<span class="text-sm">{{ dialCodeOptions.find((d) => d.value === modelValue)?.flag ?? '' }}</span>
-				<span class="text-sm">{{ modelValue }}</span>
+				<span v-if="modelValue" class="text-sm">+{{ modelValue }}</span>
 			</template>
 
 			<template #item="{ item }">
 				<div class="flex items-center gap-2">
 					<span class="text-sm">{{ item.flag }}</span>
-					<span class="text-sm">{{ item.country }} ({{ item.value }})</span>
+					<span class="text-sm">{{ item.country }} (+{{ item.value }})</span>
 				</div>
 			</template>
 		</USelectMenu>

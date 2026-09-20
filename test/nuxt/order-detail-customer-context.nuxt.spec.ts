@@ -7,7 +7,7 @@ const customer: CustomerModel = {
 	name: 'Aisyah',
 	customer_no: 'C0001',
 	email_address: 'aisyah@example.com',
-	dial_code: '+60',
+	dial_code: '60',
 	phone_no: '123456789',
 	shipping_address: {
 		address1: '12 Jalan Merdeka',

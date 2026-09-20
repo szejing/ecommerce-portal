@@ -118,7 +118,7 @@ describe('ZSettingTemplate', () => {
 			new MerchantInfo({
 				group_code: GROUP_CODE.CONTACT,
 				set_code: MERCHANT.DIAL_CODE,
-				set_value: '+60',
+				set_value: '60',
 			}),
 			new MerchantInfo({
 				group_code: GROUP_CODE.CONTACT,

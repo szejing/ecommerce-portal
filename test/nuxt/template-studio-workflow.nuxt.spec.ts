@@ -319,7 +319,7 @@ describe('Template Studio workflow', () => {
 			role: options.role ?? UserRoles.MERCHANT_ADMIN,
 			email_address: 'admin@example.test',
 			name: 'Jane Admin',
-			dial_code: '+60',
+			dial_code: '60',
 			phone_no: '123456789',
 		};
 		const selectedSummary = summary(channel);

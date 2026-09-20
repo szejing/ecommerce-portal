@@ -13,7 +13,7 @@ type OutletFilter = {
 const initialEmptyOutlet: OutletCreate = {
 	code: '',
 	description: '',
-	dial_code: '+60',
+	dial_code: '60',
 	phone_no: '',
 	address1: '',
 	address2: '',

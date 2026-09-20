@@ -90,7 +90,7 @@ const formRef = ref<{ submit: () => void } | null>(null);
 const emptyState = () => ({
 	code: '',
 	description: '',
-	dial_code: '+60',
+	dial_code: '60',
 	phone_no: '',
 	address1: '',
 	address2: '' as string | undefined,

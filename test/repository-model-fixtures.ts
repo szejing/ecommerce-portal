@@ -43,7 +43,7 @@ export const passwordResetPayload = {
 export const createCrmUserPayload = {
 	name: 'Alex',
 	email_address: 'alex@example.com',
-	dial_code: '+60',
+	dial_code: '60',
 	phone_no: '123456789',
 	role: UserRoles.MERCHANT_STAFF,
 	is_active: true,

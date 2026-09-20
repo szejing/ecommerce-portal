@@ -209,8 +209,11 @@ const pageTitle = computed(() => {
 const phoneDisplay = computed(() => {
 	const c = current_customer.value;
 	if (!c?.dial_code && !c?.phone_no) return '';
-	if (c?.dial_code && c?.phone_no) return `(${c.dial_code}) ${c.phone_no}`;
-	return c?.dial_code ? `(${c.dial_code})` : c.phone_no;
+	const dial = c?.dial_code?.trim()
+		? (c.dial_code.startsWith('+') ? c.dial_code : `+${c.dial_code}`)
+		: '';
+	if (dial && c?.phone_no) return `(${dial}) ${c.phone_no}`;
+	return dial ? `(${dial})` : c.phone_no;
 });
 
 const isVip = computed(() => (current_customer.value?.total_spent ?? 0) >= 1000);
