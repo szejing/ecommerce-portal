@@ -1,8 +1,7 @@
 <template>
-	<UModal :title="t('components.zModal.updateCustomer')" :ui="{ content: 'w-full sm:max-w-[60%] md:max-w-[40%] lg:max-w-[30%]' }">
+	<UModal :title="t('components.zModal.updateCustomer')" :ui="{ content: 'w-full sm:max-w-lg' }">
 		<template #body>
-			<UForm :schema="customerSchema" :state="state.customer" class="space-y-4" @submit="onSubmit">
-				<!-- *********************** General Info *********************** -->
+			<UForm id="update-order-customer" :schema="customerSchema" :state="state.customer" @submit="onSubmit">
 				<ZInputOrderDetailCustomer
 					v-model:name="state.customer.name"
 					v-model:email-address="state.customer.email_address"
@@ -10,13 +9,16 @@
 					v-model:shipping-address="state.customer.shipping_address"
 					v-model:billing-address="state.customer.billing_address"
 				/>
-				<!-- *********************** General Info *********************** -->
-
-				<div class="flex-jend gap-4">
-					<UButton color="neutral" variant="ghost" @click="onCancel">{{ t('common.cancel') }}</UButton>
-					<UButton color="primary" variant="solid" :loading="is_loading" :disabled="is_loading" type="submit">{{ t('components.zModal.update') }}</UButton>
-				</div>
 			</UForm>
+		</template>
+
+		<template #footer>
+			<div class="flex w-full justify-end gap-3">
+				<UButton color="neutral" variant="soft" @click="onCancel">{{ t('common.cancel') }}</UButton>
+				<UButton color="primary" variant="solid" type="submit" form="update-order-customer" :loading="is_loading" :disabled="is_loading">
+					{{ t('components.zModal.update') }}
+				</UButton>
+			</div>
 		</template>
 	</UModal>
 </template>
@@ -72,5 +74,3 @@ const onCancel = () => {
 	emit('cancel');
 };
 </script>
-
-<style scoped></style>

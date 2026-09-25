@@ -111,7 +111,7 @@ describe('ZSettingTemplate', () => {
 		expect(row.classes()).toContain('flex-row');
 	});
 
-	it('prefills an empty WhatsAppUrl text setting from Contact dial code and phone number once', async () => {
+	it('suggests a WhatsApp URL from Contact phone without marking the form dirty', async () => {
 		const settingStore = useSettingStore();
 		const merchantInfoStore = useMerchantInfoStore();
 		merchantInfoStore.merchant = [
@@ -127,7 +127,7 @@ describe('ZSettingTemplate', () => {
 			}),
 		];
 
-		await mountSuspended(ZSettingTemplate, {
+		const wrapper = await mountSuspended(ZSettingTemplate, {
 			props: {
 				templates: [
 					makeTemplate({
@@ -141,12 +141,37 @@ describe('ZSettingTemplate', () => {
 			},
 		});
 
-		expect(settingStore.updatedSettings).toHaveLength(1);
-		expect(settingStore.updatedSettings[0]).toMatchObject({
-			group_code: GROUP_CODE.SOCIALMEDIA,
-			set_code: 'WhatsAppUrl',
-			set_value: 'https://wa.me/60123456789',
+		expect(settingStore.updatedSettings).toHaveLength(0);
+		expect(wrapper.get('input').attributes('placeholder')).toBe('https://wa.me/60123456789');
+	});
+
+	it('does not mark a setting dirty when the control emits the saved value', async () => {
+		const settingStore = useSettingStore();
+		settingStore.settings = [
+			{
+				group_code: 'Email',
+				set_code: 'SendWelcome',
+				set_value: '1',
+			} as never,
+		];
+
+		const wrapper = await mountSuspended(ZSettingTemplate, {
+			props: {
+				templates: [
+					makeTemplate({
+						set_code: 'SendWelcome',
+						set_desc: 'Send welcome email',
+						input_type: InputType.BOOLEAN,
+						default_val: '1',
+					}),
+				],
+			},
 		});
+
+		wrapper.getComponent({ name: 'USwitch' }).vm.$emit('update:modelValue', true);
+		await wrapper.vm.$nextTick();
+
+		expect(settingStore.updatedSettings).toHaveLength(0);
 	});
 
 	it('renders Connect Now for disconnected OAUTH settings instead of a text field', async () => {

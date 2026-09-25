@@ -28,18 +28,6 @@ export default defineNuxtConfig({
 		],
 	],
 
-	i18n: {
-		locales: [
-			{ code: 'en', name: 'English', file: 'en.json' },
-			{ code: 'ms', name: 'Bahasa Melayu', file: 'ms.json' },
-			{ code: 'zh-CN', name: '简体中文', file: 'zh-CN.json' },
-		],
-		defaultLocale: 'en',
-		lazy: true,
-		langDir: 'locales',
-		strategy: 'no_prefix',
-	},
-
 	app: {
 		head: {
 			title: process.env.APP_PLATFORM === 'yeppi' ? 'Yeppi CRM' : 'Wemotoo CRM',
@@ -52,10 +40,6 @@ export default defineNuxtConfig({
 	},
 
 	css: ['~/assets/css/main.css'],
-
-	future: {
-		compatibilityVersion: 4,
-	},
 
 	colorMode: {
 		preference: 'light',
@@ -89,6 +73,10 @@ export default defineNuxtConfig({
 		},
 	},
 
+	alias: {
+		'#root': fileURLToPath(new URL('.', import.meta.url)),
+	},
+
 	routeRules: {
 		'/api**': {
 			// enable CORS
@@ -105,15 +93,15 @@ export default defineNuxtConfig({
 		},
 	},
 
+	future: {
+		compatibilityVersion: 4,
+	},
+
 	features: {
 		inlineStyles: false,
 	},
 
 	compatibilityDate: '2024-04-03',
-
-	alias: {
-		'#root': fileURLToPath(new URL('.', import.meta.url)),
-	},
 
 	nitro: {
 		compressPublicAssets: true,
@@ -165,5 +153,17 @@ export default defineNuxtConfig({
 				braceStyle: '1tbs',
 			},
 		},
+	},
+
+	i18n: {
+		locales: [
+			{ code: 'en', name: 'English', file: 'en.json' },
+			{ code: 'ms', name: 'Bahasa Melayu', file: 'ms.json' },
+			{ code: 'zh-CN', name: '简体中文', file: 'zh-CN.json' },
+		],
+		defaultLocale: 'en',
+		lazy: true,
+		langDir: 'locales',
+		strategy: 'no_prefix',
 	},
 });

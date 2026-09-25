@@ -148,7 +148,6 @@ const merchantInfoStore = useMerchantInfoStore();
 const { settings, updatedSettings, updating } = storeToRefs(settingsStore);
 
 const WHATSAPP_URL_PLACEHOLDER = 'https://wa.me/60xxxxxxxxx';
-const prefilledWhatsAppSetCodes = ref(new Set<string>());
 
 type SelectSettingItem = {
 	value: string | number;
@@ -268,11 +267,26 @@ const serializeSettingValue = (template: SettingTempl, value: string | number | 
 	return String(value);
 };
 
+const persistedSettingValue = (template: SettingTempl): string => {
+	const saved = settings.value.find(
+		(setting: Setting) => setting.group_code === template.group_code && setting.set_code === template.set_code,
+	);
+	return saved?.set_value ?? template.default_val ?? '';
+};
+
 const updateSettingValue = (template: SettingTempl, value: string | number | boolean | string[]) => {
+	const setValue = serializeSettingValue(template, value);
+	if (setValue === persistedSettingValue(template)) {
+		settingsStore.updatedSettings = settingsStore.updatedSettings.filter(
+			(setting) => !(setting.group_code === template.group_code && setting.set_code === template.set_code),
+		);
+		return;
+	}
+
 	const settingData = {
 		group_code: template.group_code,
 		set_code: template.set_code,
-		set_value: serializeSettingValue(template, value),
+		set_value: setValue,
 		value_type: template.input_type,
 	};
 	const updatedSetting = new Setting(settingData as unknown as Setting);
@@ -304,25 +318,6 @@ const handleFileChange = (template: SettingTempl, event: Event) => {
 	}
 };
 
-watchEffect(() => {
-	for (const template of templates.value) {
-		if (getInputType(template) !== InputTypeEnum.TEXT || !isWhatsAppUrlTemplate(template)) {
-			continue;
-		}
-
-		if (prefilledWhatsAppSetCodes.value.has(template.set_code) || getTextSettingValue(template).trim()) {
-			continue;
-		}
-
-		const candidate = getWhatsAppMeUrlCandidate();
-		if (!candidate) {
-			continue;
-		}
-
-		prefilledWhatsAppSetCodes.value.add(template.set_code);
-		updateSettingValue(template, candidate);
-	}
-});
 </script>
 
 <style scoped>

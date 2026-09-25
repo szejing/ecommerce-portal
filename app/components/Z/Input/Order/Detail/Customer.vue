@@ -1,47 +1,42 @@
 <template>
 	<div class="space-y-6">
-		<!-- Contact details -->
-		<UCard class="card">
-			<template #header>
-				<div class="flex items-center gap-2">
-					<UIcon :name="ICONS.CUSTOMER_GROUP_ROUNDED" class="w-5 h-5 text-muted" />
-					<h2 class="text-base font-semibold text-default">{{ t('components.orderDetail.customerInformation') }}</h2>
-				</div>
-			</template>
+		<div class="grid grid-cols-1 gap-4">
+			<UFormField v-slot="{ error }" :label="t('components.orderInput.customerName')" name="name" required>
+				<UInput
+					v-model="name"
+					autocomplete="name"
+					leading-icon="i-heroicons-user"
+					:trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined"
+					:placeholder="t('components.orderInput.customerNamePlaceholder')"
+				/>
+			</UFormField>
 
-			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-				<UFormField v-slot="{ error }" :label="t('components.orderInput.customerName')" name="customer_name" required>
-					<UInput v-model="name" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="t('components.orderInput.customerNamePlaceholder')" />
-				</UFormField>
+			<UFormField v-slot="{ error }" :label="t('components.orderDetail.emailAddress')" name="email_address" required>
+				<UInput
+					v-model="email_address"
+					type="email"
+					autocomplete="email"
+					leading-icon="i-heroicons-envelope"
+					:trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined"
+					:placeholder="t('components.orderInput.emailAddressPlaceholder')"
+				/>
+			</UFormField>
 
-				<UFormField v-slot="{ error }" :label="t('components.orderDetail.emailAddress')" name="email_address" required>
-					<UInput
-						v-model="email_address"
-						type="email"
-						autocomplete="email"
-						:trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined"
-						:placeholder="t('components.orderInput.emailAddressPlaceholder')"
-					/>
-				</UFormField>
+			<UFormField v-slot="{ error }" :label="t('components.orderDetail.phoneNo')" name="phone_no" required>
+				<UInput
+					v-model="phone_no"
+					type="tel"
+					autocomplete="tel"
+					leading-icon="i-heroicons-phone"
+					:trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined"
+					:placeholder="t('components.orderInput.phoneNoPlaceholder')"
+				/>
+			</UFormField>
+		</div>
 
-				<UFormField v-slot="{ error }" :label="t('components.orderDetail.phoneNo')" name="phone_no" required>
-					<UInput
-						v-model="phone_no"
-						type="tel"
-						autocomplete="tel"
-						:trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined"
-						:placeholder="t('components.orderInput.phoneNoPlaceholder')"
-					/>
-				</UFormField>
-			</div>
-		</UCard>
-
-		<!-- Addresses -->
 		<template v-if="shipping_address || billing_address">
-			<UCard v-if="shipping_address" class="card">
-				<template #header>
-					<h2 class="text-base font-semibold text-default">{{ t('components.orderInput.shippingAddress') }}</h2>
-				</template>
+			<section v-if="shipping_address" class="space-y-4 border-t border-default pt-6">
+				<h2 class="text-sm font-semibold text-highlighted">{{ t('components.orderInput.shippingAddress') }}</h2>
 				<ZInputAddress
 					v-model:address1="shipping_address.address1"
 					v-model:address2="shipping_address.address2"
@@ -50,22 +45,19 @@
 					v-model:postal-code="shipping_address.postal_code"
 					v-model:state-name="shipping_address.state"
 					v-model:country-code="shipping_address.country_code"
-					class="mt-1"
 				/>
-			</UCard>
+			</section>
 
-			<UCard v-if="billing_address" class="card">
-				<template #header>
-					<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-						<h2 class="text-base font-semibold text-default">{{ t('components.orderInput.billingAddress') }}</h2>
-						<UCheckbox
-							v-model="same_as_shipping_address"
-							:ui="{ label: 'text-sm font-normal text-muted' }"
-							:label="t('components.orderInput.sameAsShippingAddress')"
-							@change="onChangeSameAsShippingAddress"
-						/>
-					</div>
-				</template>
+			<section v-if="billing_address" class="space-y-4 border-t border-default pt-6">
+				<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+					<h2 class="text-sm font-semibold text-highlighted">{{ t('components.orderInput.billingAddress') }}</h2>
+					<UCheckbox
+						v-model="same_as_shipping_address"
+						:ui="{ label: 'text-sm font-normal text-muted' }"
+						:label="t('components.orderInput.sameAsShippingAddress')"
+						@change="onChangeSameAsShippingAddress"
+					/>
+				</div>
 				<ZInputAddress
 					v-model:address1="billing_address.address1"
 					v-model:address2="billing_address.address2"
@@ -74,9 +66,8 @@
 					v-model:postal-code="billing_address.postal_code"
 					v-model:state-name="billing_address.state"
 					v-model:country-code="billing_address.country_code"
-					class="mt-1"
 				/>
-			</UCard>
+			</section>
 		</template>
 	</div>
 </template>
@@ -149,15 +140,3 @@ const onChangeSameAsShippingAddress = () => {
 	}
 };
 </script>
-
-<style scoped>
-/* Cards */
-.card {
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-	transition: box-shadow 0.2s ease;
-}
-
-.card:hover {
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-</style>

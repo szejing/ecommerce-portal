@@ -25,38 +25,45 @@ const customer: CustomerModel = {
 	},
 };
 
-const toggleSelector = '[aria-label="Show or hide customer details"]';
-
 describe('OrderDetailCustomer context', () => {
 	it('labels pickup as Customer and delivery as Ship to', async () => {
-		const pickup = await mountSuspended(OrderDetailCustomer, { props: { customer, showAddresses: false } });
-		const delivery = await mountSuspended(OrderDetailCustomer, { props: { customer, showAddresses: true } });
+		const pickup = await mountSuspended(OrderDetailCustomer, { props: { customer, showAddresses: false, orderNo: 'O1' } });
+		const delivery = await mountSuspended(OrderDetailCustomer, { props: { customer, showAddresses: true, orderNo: 'O1' } });
 
 		expect(pickup.get('h2').text()).toContain('Customer');
 		expect(delivery.get('h2').text()).toContain('Ship to');
-		expect(pickup.text()).toContain('Aisyah · 123456789');
+		expect(pickup.text()).toContain('+60 123456789');
+		expect(pickup.find('[aria-label="Edit customer"]').exists()).toBe(true);
 	});
 
-	it('keeps details collapsed until the header toggle is opened', async () => {
-		const wrapper = await mountSuspended(OrderDetailCustomer, { props: { customer, showAddresses: true } });
+	it('shows contact and addresses without a collapse toggle', async () => {
+		const wrapper = await mountSuspended(OrderDetailCustomer, { props: { customer, showAddresses: true, orderNo: 'O1' } });
 
-		expect(wrapper.text()).not.toContain('C0001');
-		expect(wrapper.text()).not.toContain('12 Jalan Merdeka');
-
-		await wrapper.get(toggleSelector).trigger('click');
-
+		expect(wrapper.find('[aria-label="Show or hide customer details"]').exists()).toBe(false);
 		expect(wrapper.text()).toContain('C0001');
+		expect(wrapper.text()).toContain('aisyah@example.com');
 		expect(wrapper.text()).toContain('12 Jalan Merdeka');
 		expect(wrapper.find('[aria-label="Copy address"]').exists()).toBe(true);
+		expect(wrapper.find('[aria-label="Copy billing address"]').exists()).toBe(true);
 	});
 
 	it('keeps address actions out of pickup customer context', async () => {
-		const wrapper = await mountSuspended(OrderDetailCustomer, { props: { customer, showAddresses: false } });
-
-		await wrapper.get(toggleSelector).trigger('click');
+		const wrapper = await mountSuspended(OrderDetailCustomer, { props: { customer, showAddresses: false, orderNo: 'O1' } });
 
 		expect(wrapper.text()).toContain('Aisyah');
 		expect(wrapper.text()).not.toContain('12 Jalan Merdeka');
 		expect(wrapper.find('[aria-label="Copy address"]').exists()).toBe(false);
+	});
+
+	it('marks missing contact so staff can see what to correct', async () => {
+		const incomplete: CustomerModel = {
+			...customer,
+			email_address: '',
+			phone_no: '',
+		};
+		const wrapper = await mountSuspended(OrderDetailCustomer, { props: { customer: incomplete, showAddresses: false, orderNo: 'O1' } });
+
+		expect(wrapper.text()).toContain('Not set');
+		expect(wrapper.find('[aria-label="Edit customer"]').exists()).toBe(true);
 	});
 });
