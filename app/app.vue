@@ -19,6 +19,7 @@ const appUiStore = useAppUiStore();
 const { toastNotification, modal } = storeToRefs(appUiStore);
 
 const colorMode = useColorMode();
+const { platform, faviconIco, faviconPng, appleTouchIcon } = usePlatformShell();
 
 const color = computed(() => (colorMode.value === 'dark' ? '#1b1718' : 'white'));
 
@@ -28,9 +29,14 @@ useHead({
 		{ name: 'viewport', content: 'width=device-width, initial-scale=1' },
 		{ key: 'theme-color', name: 'theme-color', content: color },
 	],
-	link: [{ rel: 'icon', href: '/favicon.ico' }],
+	link: [
+		{ key: 'icon-ico', rel: 'icon', type: 'image/x-icon', href: faviconIco },
+		{ key: 'icon-png', rel: 'icon', type: 'image/png', href: faviconPng },
+		{ key: 'apple-touch-icon', rel: 'apple-touch-icon', href: appleTouchIcon },
+	],
 	htmlAttrs: {
-		lang: 'en',
+		'lang': 'en',
+		'data-platform': platform,
 	},
 });
 

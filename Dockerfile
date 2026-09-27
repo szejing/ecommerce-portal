@@ -125,7 +125,8 @@ COPY --from=builder /app/.output/ ./.output/
 # Copy package.json (useful for debugging/env checks)
 COPY --from=builder /app/package.json ./
 
-# Copy selected environment file (default .env.dev; override via --build-arg ENV_FILE=...)
+# Copy selected environment file (default .env.dev; override via --build-arg ENV_FILE=...).
+# Platform Shell is NOT selected by bake: set NUXT_PUBLIC_APP_PLATFORM on the container (compose / VPS env).
 ARG ENV_FILE=.env.dev
 COPY ${ENV_FILE} ./
 

@@ -1,6 +1,6 @@
 <template>
 	<div class="h-screen flex justify-center">
-		<div class="hidden sm:flex w-full h-full bg-main flex-col items-center justify-center">
+		<div class="platform-shell-hero hidden sm:flex w-full h-full flex-col items-center justify-center">
 			<img class="my-2 text-center mx-auto w-100" :src="logoSrc" :alt="logoAlt" @click="navigateTo('/')" />
 		</div>
 		<div class="w-full sm:w-[60%] min-h-screen px-10 flex flex-col relative">

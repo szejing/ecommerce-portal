@@ -74,6 +74,30 @@ html {
 	scroll-behavior: smooth;
 }
 
+/* Yeppi Platform Shell primary (storefront orange); secondary stays Wemotoo blue */
+html[data-platform='yeppi'] {
+	--color-main-50: #fff7ed;
+	--color-main-100: #ffedd5;
+	--color-main-200: #fed7aa;
+	--color-main-300: #fdba74;
+	--color-main-400: #fb923c;
+	--color-main-500: #ff7a00;
+	--color-main-600: #f15a00;
+	--color-main-700: #c2410c;
+	--color-main-800: #9a3412;
+	--color-main-900: #7c2d12;
+	--color-main: #ff6900;
+}
+
+/* Auth hero: Yeppi wordmark is orange-on-transparent — use ink, not main */
+.platform-shell-hero {
+	background-color: var(--color-main);
+}
+
+html[data-platform='yeppi'] .platform-shell-hero {
+	background-color: #21170f;
+}
+
 :target {
 	scroll-margin-top: 4rem;
 }

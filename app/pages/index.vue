@@ -14,7 +14,7 @@ import type { Range } from '~/utils/interface';
 
 const { t } = useI18n();
 
-useHead({ title: 'Wemotoo CRM' });
+useHead({ title: 'Wemotoo Portal' });
 
 const summOrderStore = useSummOrderStore();
 const orderStore = useOrderStore();

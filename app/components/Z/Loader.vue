@@ -11,10 +11,12 @@
 		}"
 		:duration="1000"
 	>
-		<NuxtImg src="/logo/logo.png" alt="logo" class="w-100" />
+		<NuxtImg :src="logoSrc" :alt="logoAlt" class="w-100" />
 	</div>
 </template>
 
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+const { logoSrc, logoAlt } = usePlatformShell();
+</script>
 
 <style scoped></style>

@@ -4,6 +4,10 @@ The merchant-facing context for managing commerce operations and the documents t
 
 ## Language
 
+**Platform Shell**:
+The same CRM portal product presented for one Platform — app name, logo, favicon, primary chrome colour, CRM hostname, and API `x-platform`. One codebase and one image; Platform is selected at container/dev start via `NUXT_PUBLIC_APP_PLATFORM` (`wemotoo` | `yeppi`). Distinct from merchant Store Theme.
+_Avoid_: second portal repo, storefront Platform Shell, Store Theme, Document Brand, mutating useRuntimeConfig, baking a brand into the image
+
 **Document Template**:
 A merchant-customizable definition for one transactional email or PDF, made from catalog-approved fields, blocks, Template Tokens, and revisions.
 _Avoid_: Template

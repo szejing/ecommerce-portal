@@ -1,7 +1,7 @@
 <template>
 	<div class="h-screen flex justify-center items-center">
-		<div class="hidden sm:flex w-full h-full bg-main flex-col items-center justify-center">
-			<img class="my-2 text-center mx-auto w-100" src="/logo/logo.png" alt="logo" @click="navigateTo('/')" />
+		<div class="platform-shell-hero hidden sm:flex w-full h-full flex-col items-center justify-center">
+			<img class="my-2 text-center mx-auto w-100" :src="logoSrc" :alt="logoAlt" @click="navigateTo('/')" />
 		</div>
 		<div class="w-full sm:w-[60%] px-10">
 			<div v-if="token" class="max-w-md mx-auto">
@@ -28,7 +28,11 @@
 <script lang="ts" setup>
 definePageMeta({ layout: 'auth', middleware: 'validate-password-reset-token' });
 
-useHead({ title: 'Wemotoo CRM - Reset Password' });
+const { appName, logoSrc, logoAlt } = usePlatformShell();
+
+useHead({
+	title: computed(() => `${appName.value} - Reset Password`),
+});
 
 const route = useRoute();
 const token = computed(() => {

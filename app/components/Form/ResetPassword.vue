@@ -4,7 +4,7 @@
 			<template #header>
 				<div>
 					<div class="flex sm:hidden w-full">
-						<NuxtImg class="my-2 mx-auto w-full cursor-pointer rounded-sm" src="/logo/logo.png" alt="logo" />
+						<NuxtImg class="my-2 mx-auto w-full cursor-pointer rounded-sm" :src="logoSrc" :alt="logoAlt" />
 					</div>
 					<h1 class="text-center">{{ t('auth.resetPasswordTitle') }}</h1>
 					<p class="text-center text-sm text-muted mt-1">{{ t('auth.resetPasswordDesc') }}</p>
@@ -84,6 +84,7 @@ import type { z } from 'zod';
 import { useAuthStore } from '~/stores';
 
 const { t } = useI18n();
+const { logoSrc, logoAlt } = usePlatformShell();
 const resetPasswordSchema = computed(() => ResetPasswordValidation(t));
 
 type Schema = z.infer<ReturnType<typeof ResetPasswordValidation>>;

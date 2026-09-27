@@ -4,7 +4,7 @@
 			<template #header>
 				<div>
 					<div class="flex sm:hidden w-full">
-						<NuxtImg class="my-2 mx-auto w-full cursor-pointer rounded-sm" src="/logo/logo.png" alt="logo" />
+						<NuxtImg class="my-2 mx-auto w-full cursor-pointer rounded-sm" :src="logoSrc" :alt="logoAlt" />
 					</div>
 					<h1 class="text-center">{{ t('auth.loginTitle') }}</h1>
 				</div>
@@ -62,13 +62,13 @@ import { LoginValidation } from '~/utils/schema';
 import type { FormSubmitEvent, FormErrorEvent } from '#ui/types';
 import type { z } from 'zod';
 import { useAuthStore } from '~/stores';
+import { WMID_STORAGE_KEY } from '~/utils/auth/merchant-id';
 
 const { t } = useI18n();
+const { logoSrc, logoAlt } = usePlatformShell();
 const loginSchema = computed(() => LoginValidation(t));
 
 type Schema = z.infer<ReturnType<typeof LoginValidation>>;
-
-import { WMID_STORAGE_KEY } from '~/utils/auth/merchant-id';
 
 const LOGIN_EMAIL_KEY = 'wemotoo-login-email';
 

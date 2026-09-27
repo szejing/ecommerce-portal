@@ -19,21 +19,27 @@ describe('resolvePortalAppPlatform', () => {
 });
 
 describe('resolvePlatformShellBrand', () => {
-	it('uses Yeppi CRM chrome for yeppi platform', () => {
+	it('uses Yeppi Portal chrome for yeppi platform', () => {
 		expect(resolvePlatformShellBrand('yeppi')).toEqual({
 			platform: APP_PLATFORM.YEPPI,
-			appName: 'Yeppi CRM',
-			logoSrc: '/logo/logo.png',
-			logoAlt: 'Yeppi CRM',
+			appName: 'Yeppi Portal',
+			logoSrc: '/logo/yeppi-wordmark.png',
+			logoAlt: 'Yeppi Portal',
+			faviconIco: '/favicon-yeppi.ico',
+			faviconPng: '/favicon-yeppi.png',
+			appleTouchIcon: '/apple-touch-icon-yeppi.png',
 		});
 	});
 
-	it('uses Wemotoo CRM chrome by default', () => {
+	it('uses Wemotoo Portal chrome by default', () => {
 		expect(resolvePlatformShellBrand()).toEqual({
 			platform: APP_PLATFORM.WEMOTOO,
-			appName: 'Wemotoo CRM',
+			appName: 'Wemotoo Portal',
 			logoSrc: '/logo/logo.png',
-			logoAlt: 'Wemotoo CRM',
+			logoAlt: 'Wemotoo Portal',
+			faviconIco: '/favicon.ico',
+			faviconPng: '/favicon.ico',
+			appleTouchIcon: '/favicon.ico',
 		});
 	});
 });

@@ -15,7 +15,7 @@ const links = [
 	},
 ];
 
-useHead({ title: 'Wemotoo CRM - Merchant Info' });
+useHead({ title: 'Wemotoo Portal - Merchant Info' });
 </script>
 
 <style scoped></style>

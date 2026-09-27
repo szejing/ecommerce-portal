@@ -10,10 +10,7 @@ const X_PLATFORM_HEADER = commonPlatform.X_PLATFORM_HEADER ?? 'x-platform';
 
 function resolveRequestAppPlatform(event: any): string {
 	const config = useRuntimeConfig(event);
-	return resolvePortalAppPlatform(
-		(config.appPlatform as string | undefined) ??
-			(config.public?.appPlatform as string | undefined),
-	);
+	return resolvePortalAppPlatform(config.public?.appPlatform as string | undefined);
 }
 
 const API_PATH_PREFIX = '/api';

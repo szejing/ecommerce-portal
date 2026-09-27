@@ -9,9 +9,12 @@ export type PlatformShellBrand = {
 	appName: string;
 	logoSrc: string;
 	logoAlt: string;
+	faviconIco: string;
+	faviconPng: string;
+	appleTouchIcon: string;
 };
 
-/** Pure Platform Shell brand resolution for CRM chrome (login title, logo alt). */
+/** Pure Platform Shell brand resolution for CRM chrome (login, favicon, logo alt). */
 export function resolvePlatformShellBrand(
 	appPlatform?: string | null,
 ): PlatformShellBrand {
@@ -20,17 +23,23 @@ export function resolvePlatformShellBrand(
 	if (platform === APP_PLATFORM.YEPPI) {
 		return {
 			platform,
-			appName: 'Yeppi CRM',
-			logoSrc: '/logo/logo.png',
-			logoAlt: 'Yeppi CRM',
+			appName: 'Yeppi Portal',
+			logoSrc: '/logo/yeppi-wordmark.png',
+			logoAlt: 'Yeppi Portal',
+			faviconIco: '/favicon-yeppi.ico',
+			faviconPng: '/favicon-yeppi.png',
+			appleTouchIcon: '/apple-touch-icon-yeppi.png',
 		};
 	}
 
 	return {
 		platform,
-		appName: 'Wemotoo CRM',
+		appName: 'Wemotoo Portal',
 		logoSrc: '/logo/logo.png',
-		logoAlt: 'Wemotoo CRM',
+		logoAlt: 'Wemotoo Portal',
+		faviconIco: '/favicon.ico',
+		faviconPng: '/favicon.ico',
+		appleTouchIcon: '/favicon.ico',
 	};
 }
 
