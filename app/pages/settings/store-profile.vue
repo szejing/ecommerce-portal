@@ -505,9 +505,9 @@ const accountType = computed<string>(() => accountTypeLabel(accountTypeRaw.value
 
 const accountTypeBadgeColor = computed(() => {
 	const v = accountTypeRaw.value;
-	if (v === Package.SELLER) return 'neutral';
-	if (v === Package.ORGANIZER) return 'primary';
-	if (v === Package.VIP) return 'success';
+	if (v === Package.ECOMMERCE) return 'neutral';
+	if (v === Package.EVENTS) return 'primary';
+	if (v === Package.FULL) return 'success';
 	return 'neutral';
 });
 const accountTypeCardBg = computed(() => {

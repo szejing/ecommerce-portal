@@ -1097,9 +1097,9 @@
 			"both": "全部"
 		},
 		"accountType": {
-			"seller": "卖家",
-			"organizer": "主办方",
-			"vip": "VIP"
+			"ecommerce": "电商",
+			"events": "活动",
+			"full": "完整"
 		},
 		"reasonType": {
 			"returnExchange": "退换货",

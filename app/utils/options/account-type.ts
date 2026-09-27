@@ -3,9 +3,9 @@ import { Package } from 'yeppi-common';
 type TranslateFn = (key: string) => string;
 
 const accountTypeLabels: Record<string, string> = {
-	[Package.SELLER]: 'options.accountType.seller',
-	[Package.ORGANIZER]: 'options.accountType.organizer',
-	[Package.VIP]: 'options.accountType.vip',
+	[Package.ECOMMERCE]: 'options.accountType.ecommerce',
+	[Package.EVENTS]: 'options.accountType.events',
+	[Package.FULL]: 'options.accountType.full',
 };
 
 export const accountTypeLabel = (accountType: Package, t: TranslateFn): string => {

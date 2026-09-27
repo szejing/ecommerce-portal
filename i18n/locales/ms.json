@@ -1097,9 +1097,9 @@
 			"both": "Kedua-dua"
 		},
 		"accountType": {
-			"seller": "Penjual",
-			"organizer": "Penganjur",
-			"vip": "VIP"
+			"ecommerce": "E-dagang",
+			"events": "Acara",
+			"full": "Penuh"
 		},
 		"reasonType": {
 			"returnExchange": "Pulangan & pertukaran",

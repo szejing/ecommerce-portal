@@ -1098,9 +1098,9 @@
 			"both": "Both"
 		},
 		"accountType": {
-			"seller": "Seller",
-			"organizer": "Organizer",
-			"vip": "VIP"
+			"ecommerce": "Ecommerce",
+			"events": "Events",
+			"full": "Full"
 		},
 		"reasonType": {
 			"returnExchange": "Return & exchange",

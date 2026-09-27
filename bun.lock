@@ -2832,7 +2832,7 @@
 
     "yargs-parser": ["yargs-parser@22.0.0", "", {}, "sha512-rwu/ClNdSMpkSrUb+d6BRsSkLUq1fmfsY6TOpYzTwvwkg1/NRG85KBy3kq++A8LKQwX6lsu+aWad+2khvuXrqw=="],
 
-    "yeppi-common": ["yeppi-common@github:szejing/yeppi-common#e0024fe", { "dependencies": { "@types/node": "^25.9.3", "date-fns": "^4.1.0" }, "peerDependencies": { "typescript": "^6.0.3" } }, "szejing-yeppi-common-e0024fe", "sha512-MOUVSrrOQwy1+vtnptjXw0e0WpZiShB9K6hfTYkRQUofxzSBRdKA//IU5ETEYU6S1Lz5pKe+kopOGp9JkTAJyg=="],
+    "yeppi-common": ["yeppi-common@github:szejing/yeppi-common#d9acd8d", { "dependencies": { "@types/node": "^25.9.3", "date-fns": "^4.1.0" }, "peerDependencies": { "typescript": "^6.0.3" } }, "szejing-yeppi-common-d9acd8d", "sha512-ta8ZUshRlaXRRH7jmiI+/CJtEWgfyPf1JdLlMBNgs5JZRA5YC2TxfD27aMSQQ/iYXIov4Q2+WSBuJ+SBE5mQWw=="],
 
     "yjs": ["yjs@13.6.32", "", { "dependencies": { "lib0": "^0.2.99" } }, "sha512-lfiJIIC4Xayt5ItynE407ehlE03pCjeOc4hkR4yxxvvNJ4kuiN25B0g+Qp8XagYz361LLL7DCzR5bvFJ81QKtQ=="],
 
