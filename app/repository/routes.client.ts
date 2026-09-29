@@ -264,6 +264,8 @@ const MerchantRoutes = {
 		},
 		CourierBooking: {
 			Context: () => `${prefix}/${API_PATH.MERCHANT}/fulfillment/courier-booking/context`,
+			DropoffPoints: () => `${prefix}/${API_PATH.MERCHANT}/fulfillment/courier-booking/dropoff-points`,
+			DropoffPoint: () => `${prefix}/${API_PATH.MERCHANT}/fulfillment/courier-booking/dropoff-point`,
 			Quote: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/courier-booking/quote`,
 			Submit: (id: string) => `${prefix}/${API_PATH.MERCHANT}/fulfillment/${id}/courier-booking/submit`,
 		},

@@ -8,6 +8,8 @@ describe('courier handover setting options', () => {
 			{ value: CourierHandover.PICKUP, label: 'Pickup' },
 			{ value: CourierHandover.DROP_OFF, label: 'Drop-off' },
 		]);
+		// Segment/provider name is not the SELECT data_source (see easyparcel_settings.sql)
+		expect(getCourierHandoverItems('EasyParcel')).toEqual([]);
 		expect(getCourierHandoverItems('OrderCompletionValidation')).toEqual([]);
 		expect(InputType.OAUTH).toBe(8);
 	});

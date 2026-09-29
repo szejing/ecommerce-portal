@@ -249,6 +249,8 @@ export const Routes = {
 		},
 		CourierBooking: {
 			Context: () => 'fulfillment/courier-booking/context',
+			DropoffPoints: () => 'fulfillment/courier-booking/dropoff-points',
+			DropoffPoint: () => 'fulfillment/courier-booking/dropoff-point',
 			Quote: (id: string) => `fulfillment/${id}/courier-booking/quote`,
 			Submit: (id: string) => `fulfillment/${id}/courier-booking/submit`,
 		},

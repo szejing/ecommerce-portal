@@ -1659,7 +1659,11 @@
 				"lengthCm": "长度（厘米）",
 				"collectionDate": "领取日期",
 				"handover": "快递交接",
-				"dropoffPoint": "下车点 ID",
+				"dropoffPoint": "投寄点",
+				"selectDropoffPoint": "选择附近投寄点",
+				"dropoffAddressIncomplete": "请先完善店铺资料地址（城市、邮编、州属、国家）以列出附近投寄点。",
+				"dropoffCourierMissing": "所选服务没有 EasyParcel courier id，无法列出投寄点。",
+				"dropoffEmpty": "该快递在店铺地址附近没有找到投寄点。",
 				"fetchQuotes": "获取报价",
 				"walletBalance": "钱包余额：{amount} {currency}",
 				"selectService": "选择EasyParcel服务"

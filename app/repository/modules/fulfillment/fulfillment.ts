@@ -15,12 +15,14 @@ import type {
 } from '~/utils/types/shipment-arrangement';
 import type {
 	CourierBookingContext,
+	CourierBookingDropoffPointsResponse,
 	CourierBookingQuoteResponse,
 	CourierBookingSubmitResponse,
 } from '~/utils/types/courier-booking';
 
 class FulfillmentModule extends HttpFactory {
 	private readonly RESOURCE = MerchantRoutes.Fulfillment;
+
 
 	async getShipmentArrangement(query: ShipmentArrangementQuery): Promise<ShipmentArrangementListResponse> {
 		return await this.call<ShipmentArrangementListResponse>({
@@ -89,6 +91,28 @@ class FulfillmentModule extends HttpFactory {
 			method: 'GET',
 			url: this.RESOURCE.CourierBooking.Context(),
 			query: { merchant_id },
+		});
+	}
+
+	async listCourierDropoffPoints(
+		merchant_id: string,
+		courier_id: string,
+	): Promise<CourierBookingDropoffPointsResponse> {
+		return await this.call<CourierBookingDropoffPointsResponse>({
+			method: 'POST',
+			url: this.RESOURCE.CourierBooking.DropoffPoints(),
+			body: { merchant_id, courier_id },
+		});
+	}
+
+	async saveCourierDropoffPoint(
+		merchant_id: string,
+		dropoff_point_id: string,
+	): Promise<{ dropoff_point_id: string }> {
+		return await this.call<{ dropoff_point_id: string }>({
+			method: 'POST',
+			url: this.RESOURCE.CourierBooking.DropoffPoint(),
+			body: { merchant_id, dropoff_point_id },
 		});
 	}
 

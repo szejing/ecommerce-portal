@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { useStorage } from '@vueuse/core';
 import { startOfDay } from 'date-fns';
-import type { CourierHandover } from 'yeppi-common';
-import { getFormattedDate, KEY } from 'yeppi-common';
+import { CourierHandover, getFormattedDate, KEY } from 'yeppi-common';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 import { COURIER_BOOKING_LAST_SERVICE_STORAGE_KEY, pickCourierServiceId } from '~/utils/courier-booking-last-service';
-import { getCourierHandoverItems } from '~/utils/options/courier-handover';
+import { courierHandoverDataSource, getCourierHandoverItems } from '~/utils/options/courier-handover';
 import type {
 	CourierBookingContext,
+	CourierBookingDropoffPoint,
 	CourierBookingQuote,
 	CourierBookingTarget,
+} from '~/utils/types/courier-booking';
+import {
+	formatCourierDropoffPointLabel,
+	hasCompleteCourierBookingSenderAddress,
 } from '~/utils/types/courier-booking';
 
 const { t } = useI18n();
@@ -22,13 +26,17 @@ const props = defineProps<{
 
 const emit = defineEmits<{
 	'after:leave': [];
-	close: [booked?: boolean];
+	'close': [booked?: boolean];
 }>();
 
 const saving = ref(false);
 const quoting = ref(false);
+const loadingDropoffPoints = ref(false);
+const savingDropoffPoint = ref(false);
+const dropoffPointsError = ref('');
 const context = ref<CourierBookingContext>();
 const quotes = ref<CourierBookingQuote[]>([]);
+const dropoffPoints = ref<CourierBookingDropoffPoint[]>([]);
 const wallet = ref<{ balance: number; currency: string }>();
 const selectedServiceId = ref<string>();
 const lastServiceId = useStorage(COURIER_BOOKING_LAST_SERVICE_STORAGE_KEY, '');
@@ -42,22 +50,41 @@ const parcel = reactive({
 });
 const collectionDate = ref<Date>(startOfDay(new Date()));
 const collectionDatePopoverOpen = ref(false);
-const handover = ref<CourierHandover>('PICKUP');
+const handover = ref<CourierHandover>(CourierHandover.PICKUP);
 const dropoffPointId = ref('');
 const collectionDateMin = computed(() => startOfDay(new Date()));
 const collectionDateLabel = computed(() => getFormattedDate(collectionDate.value, 'dd-MM-yyyy'));
 
 const activeTarget = computed(() => props.targets[queueIndex.value]);
-const handoverOptions = computed(() => getCourierHandoverItems('EasyParcel'));
+const handoverOptions = getCourierHandoverItems(courierHandoverDataSource).map((item) => ({ ...item }));
+const selectedQuote = computed(() => quotes.value.find((quote) => quote.service_id === selectedServiceId.value));
+const storeAddressComplete = computed(() => hasCompleteCourierBookingSenderAddress(context.value?.sender));
+const showDropoffPicker = computed(
+	() => handover.value === CourierHandover.DROP_OFF && Boolean(selectedServiceId.value),
+);
+const dropoffPointOptions = computed(() =>
+	dropoffPoints.value.map((point) => ({
+		value: point.point_id,
+		label: formatCourierDropoffPointLabel(point),
+	})),
+);
 const canQuote = computed(() =>
 	[parcel.weight_kg, parcel.width_cm, parcel.height_cm, parcel.length_cm].every((value) => Number(value) > 0),
 );
-const canSubmit = computed(() => Boolean(selectedServiceId.value && collectionDate.value && context.value?.sender));
+const canSubmit = computed(() => {
+	if (!selectedServiceId.value || !collectionDate.value || !context.value?.sender) return false;
+	if (handover.value === CourierHandover.DROP_OFF) {
+		return Boolean(dropoffPointId.value.trim()) && storeAddressComplete.value;
+	}
+	return true;
+});
 
 const resetQuoteState = () => {
 	quotes.value = [];
 	wallet.value = undefined;
 	selectedServiceId.value = undefined;
+	dropoffPoints.value = [];
+	dropoffPointsError.value = '';
 };
 
 const rememberServiceId = (serviceId?: string) => {
@@ -87,7 +114,6 @@ const fetchQuotes = async () => {
 				length_cm: Number(parcel.length_cm),
 			},
 			handover: handover.value,
-			dropoff_point_id: dropoffPointId.value.trim() || null,
 		});
 		quotes.value = response.quotes;
 		wallet.value = response.wallet;
@@ -96,6 +122,64 @@ const fetchQuotes = async () => {
 		failedNotification(error instanceof Error ? error.message : String(error));
 	} finally {
 		quoting.value = false;
+	}
+};
+
+const fetchDropoffPoints = async () => {
+	if (handover.value !== CourierHandover.DROP_OFF) {
+		dropoffPoints.value = [];
+		dropoffPointsError.value = '';
+		return;
+	}
+	if (!storeAddressComplete.value) {
+		dropoffPoints.value = [];
+		dropoffPointsError.value = t('components.fulfillment.courierBooking.dropoffAddressIncomplete');
+		return;
+	}
+	const courierId = selectedQuote.value?.courier_id?.trim();
+	if (!courierId) {
+		dropoffPoints.value = [];
+		dropoffPointsError.value = t('components.fulfillment.courierBooking.dropoffCourierMissing');
+		return;
+	}
+
+	loadingDropoffPoints.value = true;
+	dropoffPointsError.value = '';
+	try {
+		const merchant_id = String(useCookie(KEY.X_MERCHANT_ID).value ?? '');
+		const response = await useNuxtApp().$api.fulfillment.listCourierDropoffPoints(merchant_id, courierId);
+		dropoffPoints.value = response.points;
+		if (!dropoffPoints.value.some((point) => point.point_id === dropoffPointId.value)) {
+			dropoffPointId.value = '';
+		}
+		if (!dropoffPoints.value.length) {
+			dropoffPointsError.value = t('components.fulfillment.courierBooking.dropoffEmpty');
+		}
+	} catch (error) {
+		dropoffPoints.value = [];
+		dropoffPointsError.value = error instanceof Error ? error.message : String(error);
+	} finally {
+		loadingDropoffPoints.value = false;
+	}
+};
+
+const onDropoffPointSelected = async (pointId?: string | null) => {
+	const nextId = (pointId ?? '').trim();
+	const previousId = dropoffPointId.value;
+	dropoffPointId.value = nextId;
+	if (!nextId) return;
+	savingDropoffPoint.value = true;
+	try {
+		const merchant_id = String(useCookie(KEY.X_MERCHANT_ID).value ?? '');
+		await useNuxtApp().$api.fulfillment.saveCourierDropoffPoint(merchant_id, nextId);
+		if (context.value) {
+			context.value = { ...context.value, dropoff_point_id: nextId };
+		}
+	} catch (error) {
+		dropoffPointId.value = previousId;
+		failedNotification(error instanceof Error ? error.message : String(error));
+	} finally {
+		savingDropoffPoint.value = false;
 	}
 };
 
@@ -113,7 +197,8 @@ const submitBooking = async () => {
 				length_cm: Number(parcel.length_cm),
 			},
 			handover: handover.value,
-			dropoff_point_id: dropoffPointId.value.trim() || null,
+			dropoff_point_id:
+				handover.value === CourierHandover.DROP_OFF ? dropoffPointId.value.trim() || null : null,
 			service_id: selectedServiceId.value as string,
 			collection_date: getFormattedDate(collectionDate.value, 'yyyy-MM-dd'),
 			sender: context.value.sender,
@@ -162,6 +247,26 @@ watch(() => props.targets, () => {
 	resetQuoteState();
 });
 
+watch(handover, (next) => {
+	if (next !== CourierHandover.DROP_OFF) {
+		dropoffPoints.value = [];
+		dropoffPointsError.value = '';
+	}
+});
+
+watch(
+	() => ({
+		open: open.value,
+		handover: handover.value,
+		serviceId: selectedServiceId.value,
+		courierId: selectedQuote.value?.courier_id,
+	}),
+	(state) => {
+		if (!state.open || state.handover !== CourierHandover.DROP_OFF || !state.serviceId) return;
+		fetchDropoffPoints();
+	},
+);
+
 watchDebounced(
 	() => ({
 		open: open.value,
@@ -172,7 +277,6 @@ watchDebounced(
 		height_cm: parcel.height_cm,
 		length_cm: parcel.length_cm,
 		handover: handover.value,
-		dropoffPointId: dropoffPointId.value,
 	}),
 	(state) => {
 		if (!state.open || !state.canQuote || !state.fulfillmentId || quoting.value || saving.value) return;
@@ -252,11 +356,6 @@ watchDebounced(
 					</label>
 				</div>
 
-				<label v-if="handover === 'DROP_OFF'" class="block space-y-1 text-sm">
-					<span>{{ t('components.fulfillment.courierBooking.dropoffPoint') }}</span>
-					<UInput v-model="dropoffPointId" data-testid="courier-booking-dropoff-point" />
-				</label>
-
 				<USelectMenu
 					v-if="quotes.length"
 					v-model="selectedServiceId"
@@ -272,6 +371,31 @@ watchDebounced(
 					data-testid="courier-booking-service"
 					@update:model-value="rememberServiceId"
 				/>
+
+				<div v-if="showDropoffPicker" class="space-y-1">
+					<label class="block space-y-1 text-sm">
+						<span>{{ t('components.fulfillment.courierBooking.dropoffPoint') }}</span>
+						<USelectMenu
+							:model-value="dropoffPointId || undefined"
+							:items="dropoffPointOptions"
+							value-key="value"
+							:loading="loadingDropoffPoints || savingDropoffPoint"
+							:disabled="loadingDropoffPoints || !dropoffPointOptions.length"
+							:placeholder="t('components.fulfillment.courierBooking.selectDropoffPoint')"
+							class="w-full"
+							data-testid="courier-booking-dropoff-point"
+							@update:model-value="onDropoffPointSelected"
+						/>
+					</label>
+					<p
+						v-if="dropoffPointsError"
+						class="text-sm text-error"
+						role="alert"
+						data-testid="courier-booking-dropoff-error"
+					>
+						{{ dropoffPointsError }}
+					</p>
+				</div>
 			</div>
 		</template>
 
@@ -301,7 +425,7 @@ watchDebounced(
 						color="primary"
 						icon="i-lucide-truck"
 						:loading="saving"
-						:disabled="!canSubmit || quoting"
+						:disabled="!canSubmit || quoting || loadingDropoffPoints"
 						data-testid="courier-booking-submit"
 						@click="submitBooking"
 					>

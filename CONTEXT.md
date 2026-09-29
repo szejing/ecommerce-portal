@@ -40,6 +40,10 @@ _Avoid_: Shipment Arrangement, auto-book on paid, OnDemand, live checkout rates
 The merchant default for how a booked parcel meets the carrier (courier collects vs merchant drop-off). Edited on Configuration under Shipping → EasyParcel, and updated from a booking (handover plus last drop-off point). Not customer store pickup, and not `/settings/shipping` methods, zones, or couriers.
 _Avoid_: Order type pickup, shipping method, EasyParcel service_id as a setting
 
+**Drop-off Point**:
+An EasyParcel shop location (`point_id`) for Courier Handover drop-off. After staff pick a drop-off service, Courier Booking lists nearby points from the Store Profile address for that quote's EasyParcel `courier_id`; choosing one saves `DropoffPoint` as the merchant default. Configuration still shows the last ID as text.
+_Avoid_: free-typed ID as the only booking UX, treating service_id as the point id
+
 **Order History**:
 The merchant-facing collection of orders and converted sales, and the loaded record for one of those entries.
 _Avoid_: Orders list, sales list, bill detail

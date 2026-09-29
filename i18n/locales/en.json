@@ -1660,7 +1660,11 @@
 				"lengthCm": "Length (cm)",
 				"collectionDate": "Collection date",
 				"handover": "Courier handover",
-				"dropoffPoint": "Drop-off point ID",
+				"dropoffPoint": "Drop-off point",
+				"selectDropoffPoint": "Select nearby drop-off point",
+				"dropoffAddressIncomplete": "Complete Store Profile address (city, postcode, state, country) to list nearby drop-off points.",
+				"dropoffCourierMissing": "Selected service has no EasyParcel courier id for drop-off points.",
+				"dropoffEmpty": "No drop-off points found near the store address for this courier.",
 				"fetchQuotes": "Get quotes",
 				"walletBalance": "Wallet balance: {amount} {currency}",
 				"selectService": "Select EasyParcel service"

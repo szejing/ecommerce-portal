@@ -1659,7 +1659,11 @@
 				"lengthCm": "Panjang (cm)",
 				"collectionDate": "Tarikh pengambilan",
 				"handover": "Serahan kurier",
-				"dropoffPoint": "ID titik serahan",
+				"dropoffPoint": "Titik serahan",
+				"selectDropoffPoint": "Pilih titik serahan berdekatan",
+				"dropoffAddressIncomplete": "Lengkapkan alamat Profil Kedai (bandar, poskod, negeri, negara) untuk senarai titik serahan berdekatan.",
+				"dropoffCourierMissing": "Perkhidmatan dipilih tiada courier id EasyParcel untuk titik serahan.",
+				"dropoffEmpty": "Tiada titik serahan berdekatan alamat kedai untuk kurier ini.",
 				"fetchQuotes": "Dapatkan sebut harga",
 				"walletBalance": "Baki dompet: {amount} {currency}",
 				"selectService": "Pilih perkhidmatan EasyParcel"
