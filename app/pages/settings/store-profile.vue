@@ -217,13 +217,30 @@
 								</p>
 							</UFormField>
 						</div>
-						<UFormField :label="t('pages.storeProfilePage.companyEmail')">
-							<UInput
-								type="email"
-								:model-value="getMerchantValue(GROUP_CODE.INFO, MERCHANT.COMPANY_EMAIL_ADDRESS)"
-								@update:model-value="(v) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.COMPANY_EMAIL_ADDRESS, v)"
-							/>
-						</UFormField>
+						<div class="sm:col-span-2 space-y-3">
+							<div class="flex items-start justify-between gap-4 rounded-lg border border-default p-3">
+								<div class="min-w-0 space-y-1">
+									<p class="text-sm font-semibold text-gray-900 dark:text-white">
+										{{ t('pages.storeProfilePage.hideEmailLabel') }}
+									</p>
+									<p class="text-sm text-gray-600 dark:text-gray-400">
+										{{ t('pages.storeProfilePage.hideEmailDesc') }}
+									</p>
+								</div>
+								<USwitch
+									:model-value="merchantInfoStore.isStoreEmailHidden"
+									color="error"
+									@update:model-value="(value: boolean) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.HIDE_STORE_EMAIL, value ? 'true' : 'false')"
+								/>
+							</div>
+							<UFormField :label="t('pages.storeProfilePage.companyEmail')">
+								<UInput
+									type="email"
+									:model-value="getMerchantValue(GROUP_CODE.INFO, MERCHANT.COMPANY_EMAIL_ADDRESS)"
+									@update:model-value="(v) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.COMPANY_EMAIL_ADDRESS, v)"
+								/>
+							</UFormField>
+						</div>
 						<UFormField :label="t('pages.storeProfilePage.companyWebsite')" class="sm:col-span-2">
 							<UInput
 								:model-value="getMerchantValue(GROUP_CODE.INFO, MERCHANT.COMPANY_WEBSITE)"
@@ -249,6 +266,21 @@
 					<!-- Address -->
 					<div class="space-y-4">
 						<h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ t('common.address') }}</h4>
+						<div class="flex items-start justify-between gap-4 rounded-lg border border-default p-3">
+							<div class="min-w-0 space-y-1">
+								<p class="text-sm font-semibold text-gray-900 dark:text-white">
+									{{ t('pages.storeProfilePage.hideAddressLabel') }}
+								</p>
+								<p class="text-sm text-gray-600 dark:text-gray-400">
+									{{ t('pages.storeProfilePage.hideAddressDesc') }}
+								</p>
+							</div>
+							<USwitch
+								:model-value="merchantInfoStore.isStoreAddressHidden"
+								color="error"
+								@update:model-value="(value: boolean) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.HIDE_STORE_ADDRESS, value ? 'true' : 'false')"
+							/>
+						</div>
 						<div class="grid gap-4 sm:grid-cols-2">
 							<UFormField :label="t('pages.storeProfilePage.addressLine1')">
 								<UInput

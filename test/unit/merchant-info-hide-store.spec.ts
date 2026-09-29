@@ -68,6 +68,43 @@ describe('useMerchantInfoStore hide_store', () => {
 		expect(successNotification).toHaveBeenCalled();
 	});
 
+	it('treats a missing HideStoreAddress row as shown and a true row as hidden', async () => {
+		const { useMerchantInfoStore } = await import('../../app/stores/MerchantInfo/MerchantInfo');
+		const store = useMerchantInfoStore();
+		expect(store.isStoreAddressHidden).toBe(false);
+
+		store.merchant = [
+			new MerchantInfo({
+				group_code: GROUP_CODE.INFO,
+				set_code: MERCHANT.HIDE_STORE_ADDRESS,
+				set_value: 'true',
+			}),
+		];
+		expect(store.isStoreAddressHidden).toBe(true);
+
+		store.addToUpdatedInfo({
+			group_code: GROUP_CODE.INFO,
+			set_code: MERCHANT.HIDE_STORE_ADDRESS,
+			set_value: 'false',
+		});
+		expect(store.isStoreAddressHidden).toBe(false);
+	});
+
+	it('treats a missing HideStoreEmail row as shown and a true row as hidden', async () => {
+		const { useMerchantInfoStore } = await import('../../app/stores/MerchantInfo/MerchantInfo');
+		const store = useMerchantInfoStore();
+		expect(store.isStoreEmailHidden).toBe(false);
+
+		store.merchant = [
+			new MerchantInfo({
+				group_code: GROUP_CODE.INFO,
+				set_code: MERCHANT.HIDE_STORE_EMAIL,
+				set_value: 'true',
+			}),
+		];
+		expect(store.isStoreEmailHidden).toBe(true);
+	});
+
 	it('setHideStore posts HideStore=true when hiding', async () => {
 		saveMany.mockResolvedValue({
 			data: [

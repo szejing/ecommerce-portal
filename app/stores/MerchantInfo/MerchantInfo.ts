@@ -11,6 +11,18 @@ const initial: MerchantInfo[] = [];
 
 type MerchantInfoUpdate = { group_code: string; set_code: string; set_value: string };
 
+function hiddenMerchantFlag(
+	state: { merchant: MerchantInfo[]; updatedInfo: MerchantInfoUpdate[] },
+	setCode: string,
+): boolean {
+	const updated = state.updatedInfo.find(
+		(item) => item.group_code === GROUP_CODE.INFO && item.set_code === setCode,
+	);
+	if (updated) return updated.set_value === 'true' || updated.set_value === '1';
+	const info = state.merchant.find((item) => item.group_code === GROUP_CODE.INFO && item.set_code === setCode);
+	return info?.getBoolean() ?? false;
+}
+
 export const useMerchantInfoStore = defineStore('merchantInfoStore', {
 	state: () => ({
 		loading: false as boolean,
@@ -27,6 +39,12 @@ export const useMerchantInfoStore = defineStore('merchantInfoStore', {
 				(item) => item.group_code === GROUP_CODE.INFO && item.set_code === MERCHANT.HIDE_STORE,
 			);
 			return info?.getBoolean() ?? false;
+		},
+		isStoreAddressHidden(state): boolean {
+			return hiddenMerchantFlag(state, MERCHANT.HIDE_STORE_ADDRESS);
+		},
+		isStoreEmailHidden(state): boolean {
+			return hiddenMerchantFlag(state, MERCHANT.HIDE_STORE_EMAIL);
 		},
 		isStoreHandleLocked(state): boolean {
 			const info = state.merchant.find(
