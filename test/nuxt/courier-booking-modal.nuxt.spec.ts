@@ -48,6 +48,8 @@ const setupState = (wrapper: Awaited<ReturnType<typeof mountSuspended>>) =>
 			dropoffPoints: Array<{ point_id: string; name: string }>;
 			parcel: { weight_kg: string; width_cm: string; height_cm: string; length_cm: string };
 			selectedServiceId: string | undefined;
+			context: CourierBookingContext | undefined;
+			canSubmit: boolean;
 			fetchQuotes: () => Promise<void>;
 			fetchDropoffPoints: () => Promise<void>;
 			onDropoffPointSelected: (pointId?: string | null) => Promise<void>;
@@ -109,6 +111,47 @@ describe('CourierBookingModal', () => {
 		localStorage.removeItem(COURIER_BOOKING_LAST_SERVICE_STORAGE_KEY);
 	});
 
+	it('loads booking context when opened already true (useOverlay mount pattern)', async () => {
+		const contextSpy = vi.spyOn(useNuxtApp().$api.fulfillment, 'getCourierBookingContext').mockResolvedValue({
+			...context(),
+			handover: 'PICKUP',
+		});
+		vi.spyOn(useNuxtApp().$api.fulfillment, 'quoteCourierBooking').mockResolvedValue({
+			quotes: quotes(),
+			wallet: { balance: 10, currency: 'MYR' },
+		});
+
+		const wrapper = await mountSuspended(CourierBookingModal, {
+			props: {
+				open: true,
+				targets: [{ fulfillmentId: 'f1', orderNo: 'ORD-1', batchNo: 1 }],
+			},
+			global: {
+				stubs: {
+					UModal: UModalStub,
+					UPopover: UPopoverStub,
+				},
+			},
+		});
+		await flushPromises();
+		await nextTick();
+
+		const state = setupState(wrapper);
+		expect(contextSpy).toHaveBeenCalled();
+		expect(state.handover).toBe('PICKUP');
+		expect(state.context?.sender).toEqual(context().sender);
+
+		state.parcel.weight_kg = '1';
+		state.parcel.width_cm = '10';
+		state.parcel.height_cm = '10';
+		state.parcel.length_cm = '10';
+		await state.fetchQuotes();
+		await flushPromises();
+
+		expect(state.selectedServiceId).toBe('svc-1');
+		expect(state.canSubmit).toBe(true);
+	});
+
 	it('seeds handover from merchant CourierHandover setting via booking context', async () => {
 		const wrapper = await mountModal({
 			...context(),
@@ -152,6 +195,59 @@ describe('CourierBookingModal', () => {
 
 		expect(useNuxtApp().$api.fulfillment.saveCourierDropoffPoint).toHaveBeenCalledWith(expect.any(String), 'point-2');
 		expect(state.dropoffPointId).toBe('point-2');
+	});
+
+	it('lists drop-off points from quotes even when booking context sender is not ready yet', async () => {
+		let resolveContext!: (value: CourierBookingContext) => void;
+		const contextPromise = new Promise<CourierBookingContext>((resolve) => {
+			resolveContext = resolve;
+		});
+		vi.spyOn(useNuxtApp().$api.fulfillment, 'getCourierBookingContext').mockReturnValue(contextPromise);
+		vi.spyOn(useNuxtApp().$api.fulfillment, 'quoteCourierBooking').mockResolvedValue({
+			quotes: quotes(),
+			wallet: { balance: 10, currency: 'MYR' },
+		});
+		const listSpy = vi.spyOn(useNuxtApp().$api.fulfillment, 'listCourierDropoffPoints').mockResolvedValue({
+			points: [{ point_id: 'point-1', name: 'Pos Malaysia KL' }],
+		});
+
+		const wrapper = await mountSuspended(CourierBookingModal, {
+			props: {
+				open: false,
+				targets: [{ fulfillmentId: 'f1', orderNo: 'ORD-1', batchNo: 1 }],
+			},
+			global: {
+				stubs: {
+					UModal: UModalStub,
+					UPopover: UPopoverStub,
+				},
+			},
+		});
+		const state = setupState(wrapper);
+		state.parcel.weight_kg = '1';
+		state.parcel.width_cm = '10';
+		state.parcel.height_cm = '10';
+		state.parcel.length_cm = '10';
+		state.handover = 'DROP_OFF';
+
+		await wrapper.setProps({ open: true });
+		await nextTick();
+
+		await state.fetchQuotes();
+		await flushPromises();
+		await nextTick();
+		await flushPromises();
+
+		expect(listSpy).toHaveBeenCalledWith(expect.any(String), 'EP-CR01');
+		expect(state.dropoffPoints.map((point) => point.point_id)).toEqual(['point-1']);
+		expect(wrapper.find('[data-testid="courier-booking-dropoff-error"]').exists()).toBe(false);
+
+		resolveContext({
+			...context(),
+			handover: 'DROP_OFF',
+			dropoff_point_id: null,
+		});
+		await flushPromises();
 	});
 
 	it('uses ZDatePicker for collection date and defaults to today', async () => {

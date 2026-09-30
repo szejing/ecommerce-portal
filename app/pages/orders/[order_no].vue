@@ -129,51 +129,57 @@
 				v-if="record !== undefined && !isLgUp"
 				class="mobile-actions-bar fixed inset-x-0 bottom-0 z-40 border-t border-default bg-default/95 px-4 pt-3 backdrop-blur-md pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]"
 			>
-				<UDrawer v-model:open="isOrderActionsOpen" :title="t('components.orderDetail.orderActionsTitle')" direction="bottom">
-					<div class="mobile-actions-trigger-layout">
-						<OrderWorkbenchStatusSummary
-							v-if="orderForModal"
-							:order="orderForModal"
-							compact
-							:show-order="false"
-							:updating="workbenchUpdating"
-							@update:shipment-status="handleWorkbenchShipmentStatusChange"
-						/>
-						<UButton color="primary" :icon="ICONS.SETTINGS_ROUNDED" class="mobile-actions-open-trigger min-h-11" @click="isOrderActionsOpen = true">
+				<div class="mobile-actions-trigger-layout">
+					<OrderWorkbenchStatusSummary
+						v-if="orderForModal"
+						:order="orderForModal"
+						compact
+						:show-order="false"
+						:updating="workbenchUpdating"
+						@update:shipment-status="handleWorkbenchShipmentStatusChange"
+					/>
+					<!-- Default slot is the open trigger; do not also set open in @click (double-toggles shut). -->
+					<UDrawer
+						v-model:open="isOrderActionsOpen"
+						:title="t('components.orderDetail.orderActionsTitle')"
+						direction="bottom"
+						handle-only
+					>
+						<UButton color="primary" :icon="ICONS.SETTINGS_ROUNDED" class="mobile-actions-open-trigger min-h-11">
 							{{ t('components.orderDetail.processOrder') }}
 						</UButton>
-					</div>
-					<template #body>
-						<div class="mobile-actions-drawer-body max-h-[min(82dvh,48rem)] space-y-4 overflow-y-auto overscroll-contain px-0.5 pb-4">
-							<ZSectionOrderDetailPayment :order="orderForModal" @refresh="refreshOrder" />
+						<template #body>
+							<div class="mobile-actions-drawer-body max-h-[min(82dvh,48rem)] space-y-4 overflow-y-auto overscroll-contain px-0.5 pb-4">
+								<ZSectionOrderDetailPayment :order="orderForModal" @refresh="refreshOrder" />
 
-							<FulfillmentBatchList
-								v-if="orderForModal && (record?.order_type ?? OrderType.PICKUP) === OrderType.DELIVERY"
-								:order="orderForModal"
-								:owner-type="ownerType"
-								@refresh="getOrderDetails"
-							/>
+								<FulfillmentBatchList
+									v-if="orderForModal && (record?.order_type ?? OrderType.PICKUP) === OrderType.DELIVERY"
+									:order="orderForModal"
+									:owner-type="ownerType"
+									@refresh="getOrderDetails"
+								/>
 
-							<ZSectionOrderDetailOrderStatus
-								v-model:status="new_order_status"
-								:current-status="order?.status"
-								:updating="updating"
-								@submit="handleUpdateOrderStatus"
-							/>
+								<ZSectionOrderDetailOrderStatus
+									v-model:status="new_order_status"
+									:current-status="order?.status"
+									:updating="updating"
+									@submit="handleUpdateOrderStatus"
+								/>
 
-							<ZSectionOrderDetailCustomerEmail
-								v-if="resend_email_action"
-								:description="resend_email_description"
-								:resend-email-label="can_resend_status_email ? resend_email_label : undefined"
-								:customer-email-address="resend_email_customer_address"
-								:button-text="resend_email_button_text"
-								:disabled="!can_resend_status_email"
-								:loading="is_resending_email"
-								@resend="handleResendCurrentStatusEmail"
-							/>
-						</div>
-					</template>
-				</UDrawer>
+								<ZSectionOrderDetailCustomerEmail
+									v-if="resend_email_action"
+									:description="resend_email_description"
+									:resend-email-label="can_resend_status_email ? resend_email_label : undefined"
+									:customer-email-address="resend_email_customer_address"
+									:button-text="resend_email_button_text"
+									:disabled="!can_resend_status_email"
+									:loading="is_resending_email"
+									@resend="handleResendCurrentStatusEmail"
+								/>
+							</div>
+						</template>
+					</UDrawer>
+				</div>
 			</div>
 		</div>
 	</ZPagePanel>

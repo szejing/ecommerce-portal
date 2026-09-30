@@ -5,16 +5,8 @@ import { CourierHandover, getFormattedDate, KEY } from 'yeppi-common';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 import { COURIER_BOOKING_LAST_SERVICE_STORAGE_KEY, pickCourierServiceId } from '~/utils/courier-booking-last-service';
 import { courierHandoverDataSource, getCourierHandoverItems } from '~/utils/options/courier-handover';
-import type {
-	CourierBookingContext,
-	CourierBookingDropoffPoint,
-	CourierBookingQuote,
-	CourierBookingTarget,
-} from '~/utils/types/courier-booking';
-import {
-	formatCourierDropoffPointLabel,
-	hasCompleteCourierBookingSenderAddress,
-} from '~/utils/types/courier-booking';
+import type { CourierBookingContext, CourierBookingDropoffPoint, CourierBookingQuote, CourierBookingTarget } from '~/utils/types/courier-booking';
+import { formatCourierDropoffPointLabel, hasCompleteCourierBookingSenderAddress } from '~/utils/types/courier-booking';
 
 const { t } = useI18n();
 
@@ -59,18 +51,14 @@ const activeTarget = computed(() => props.targets[queueIndex.value]);
 const handoverOptions = getCourierHandoverItems(courierHandoverDataSource).map((item) => ({ ...item }));
 const selectedQuote = computed(() => quotes.value.find((quote) => quote.service_id === selectedServiceId.value));
 const storeAddressComplete = computed(() => hasCompleteCourierBookingSenderAddress(context.value?.sender));
-const showDropoffPicker = computed(
-	() => handover.value === CourierHandover.DROP_OFF && Boolean(selectedServiceId.value),
-);
+const showDropoffPicker = computed(() => handover.value === CourierHandover.DROP_OFF && Boolean(selectedServiceId.value));
 const dropoffPointOptions = computed(() =>
 	dropoffPoints.value.map((point) => ({
 		value: point.point_id,
 		label: formatCourierDropoffPointLabel(point),
 	})),
 );
-const canQuote = computed(() =>
-	[parcel.weight_kg, parcel.width_cm, parcel.height_cm, parcel.length_cm].every((value) => Number(value) > 0),
-);
+const canQuote = computed(() => [parcel.weight_kg, parcel.width_cm, parcel.height_cm, parcel.length_cm].every((value) => Number(value) > 0));
 const canSubmit = computed(() => {
 	if (!selectedServiceId.value || !collectionDate.value || !context.value?.sender) return false;
 	if (handover.value === CourierHandover.DROP_OFF) {
@@ -131,11 +119,6 @@ const fetchDropoffPoints = async () => {
 		dropoffPointsError.value = '';
 		return;
 	}
-	if (!storeAddressComplete.value) {
-		dropoffPoints.value = [];
-		dropoffPointsError.value = t('components.fulfillment.courierBooking.dropoffAddressIncomplete');
-		return;
-	}
 	const courierId = selectedQuote.value?.courier_id?.trim();
 	if (!courierId) {
 		dropoffPoints.value = [];
@@ -143,6 +126,8 @@ const fetchDropoffPoints = async () => {
 		return;
 	}
 
+	// List via API — backend resolveSender is the source of truth (same as quote).
+	// Do not gate on portal context.sender; that race showed a false incomplete-address error.
 	loadingDropoffPoints.value = true;
 	dropoffPointsError.value = '';
 	try {
@@ -197,8 +182,7 @@ const submitBooking = async () => {
 				length_cm: Number(parcel.length_cm),
 			},
 			handover: handover.value,
-			dropoff_point_id:
-				handover.value === CourierHandover.DROP_OFF ? dropoffPointId.value.trim() || null : null,
+			dropoff_point_id: handover.value === CourierHandover.DROP_OFF ? dropoffPointId.value.trim() || null : null,
 			service_id: selectedServiceId.value as string,
 			collection_date: getFormattedDate(collectionDate.value, 'yyyy-MM-dd'),
 			sender: context.value.sender,
@@ -208,11 +192,13 @@ const submitBooking = async () => {
 		if (queueIndex.value < props.targets.length - 1) {
 			queueIndex.value += 1;
 			resetQuoteState();
-			successNotification(t('components.fulfillment.courierBooking.queuedNext', {
-				orderNo: activeTarget.value.orderNo,
-				current: queueIndex.value + 1,
-				total: props.targets.length,
-			}));
+			successNotification(
+				t('components.fulfillment.courierBooking.queuedNext', {
+					orderNo: activeTarget.value.orderNo,
+					current: queueIndex.value + 1,
+					total: props.targets.length,
+				}),
+			);
 			return;
 		}
 
@@ -229,6 +215,7 @@ watch(open, async (isOpen) => {
 	if (!isOpen) {
 		queueIndex.value = 0;
 		resetQuoteState();
+		context.value = undefined;
 		return;
 	}
 	queueIndex.value = 0;
@@ -240,12 +227,15 @@ watch(open, async (isOpen) => {
 		failedNotification(error instanceof Error ? error.message : String(error));
 		emit('close', false);
 	}
-});
+}, { immediate: true });
 
-watch(() => props.targets, () => {
-	queueIndex.value = 0;
-	resetQuoteState();
-});
+watch(
+	() => props.targets,
+	() => {
+		queueIndex.value = 0;
+		resetQuoteState();
+	},
+);
 
 watch(handover, (next) => {
 	if (next !== CourierHandover.DROP_OFF) {
@@ -262,7 +252,7 @@ watch(
 		courierId: selectedQuote.value?.courier_id,
 	}),
 	(state) => {
-		if (!state.open || state.handover !== CourierHandover.DROP_OFF || !state.serviceId) return;
+		if (!state.open || state.handover !== CourierHandover.DROP_OFF || !state.serviceId || !state.courierId) return;
 		fetchDropoffPoints();
 	},
 );
@@ -290,7 +280,9 @@ watchDebounced(
 	<UModal
 		v-model:open="open"
 		:title="t('components.fulfillment.courierBooking.title')"
-		:description="activeTarget ? t('components.fulfillment.courierBooking.description', { orderNo: activeTarget.orderNo, batchNo: activeTarget.batchNo }) : undefined"
+		:description="
+			activeTarget ? t('components.fulfillment.courierBooking.description', { orderNo: activeTarget.orderNo, batchNo: activeTarget.batchNo }) : undefined
+		"
 		@after:leave="emit('after:leave')"
 	>
 		<template #body>
@@ -334,37 +326,26 @@ watchDebounced(
 							</UButton>
 							<template #content>
 								<div class="p-2">
-									<ZDatePicker
-										v-model="collectionDate"
-										:min-date="collectionDateMin"
-										@close="collectionDatePopoverOpen = false"
-									/>
+									<ZDatePicker v-model="collectionDate" :min-date="collectionDateMin" @close="collectionDatePopoverOpen = false" />
 								</div>
 							</template>
 						</UPopover>
 					</label>
 					<label class="space-y-1 text-sm">
 						<span>{{ t('components.fulfillment.courierBooking.handover') }}</span>
-						<USelect
-							v-model="handover"
-							:items="handoverOptions"
-							value-key="value"
-							label-key="label"
-							class="w-full"
-							data-testid="courier-booking-handover"
-						/>
+						<USelect v-model="handover" :items="handoverOptions" value-key="value" label-key="label" class="w-full" data-testid="courier-booking-handover" />
 					</label>
 				</div>
 
 				<USelectMenu
 					v-if="quotes.length"
 					v-model="selectedServiceId"
-					:items="quotes.map((quote) => ({
-						value: quote.service_id,
-						label: quote.service_name
-							? `${quote.service_name}${quote.price != null ? ` — ${quote.price}` : ''}`
-							: quote.service_id,
-					}))"
+					:items="
+						quotes.map((quote) => ({
+							value: quote.service_id,
+							label: quote.service_name ? `${quote.service_name}${quote.price != null ? ` — ${quote.price}` : ''}` : quote.service_id,
+						}))
+					"
 					value-key="value"
 					:placeholder="t('components.fulfillment.courierBooking.selectService')"
 					class="w-full"
@@ -387,12 +368,7 @@ watchDebounced(
 							@update:model-value="onDropoffPointSelected"
 						/>
 					</label>
-					<p
-						v-if="dropoffPointsError"
-						class="text-sm text-error"
-						role="alert"
-						data-testid="courier-booking-dropoff-error"
-					>
+					<p v-if="dropoffPointsError" class="text-sm text-error" role="alert" data-testid="courier-booking-dropoff-error">
 						{{ dropoffPointsError }}
 					</p>
 				</div>

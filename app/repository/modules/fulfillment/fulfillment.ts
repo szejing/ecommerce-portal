@@ -23,7 +23,6 @@ import type {
 class FulfillmentModule extends HttpFactory {
 	private readonly RESOURCE = MerchantRoutes.Fulfillment;
 
-
 	async getShipmentArrangement(query: ShipmentArrangementQuery): Promise<ShipmentArrangementListResponse> {
 		return await this.call<ShipmentArrangementListResponse>({
 			method: 'GET',
@@ -94,10 +93,7 @@ class FulfillmentModule extends HttpFactory {
 		});
 	}
 
-	async listCourierDropoffPoints(
-		merchant_id: string,
-		courier_id: string,
-	): Promise<CourierBookingDropoffPointsResponse> {
+	async listCourierDropoffPoints(merchant_id: string, courier_id: string): Promise<CourierBookingDropoffPointsResponse> {
 		return await this.call<CourierBookingDropoffPointsResponse>({
 			method: 'POST',
 			url: this.RESOURCE.CourierBooking.DropoffPoints(),
@@ -105,10 +101,7 @@ class FulfillmentModule extends HttpFactory {
 		});
 	}
 
-	async saveCourierDropoffPoint(
-		merchant_id: string,
-		dropoff_point_id: string,
-	): Promise<{ dropoff_point_id: string }> {
+	async saveCourierDropoffPoint(merchant_id: string, dropoff_point_id: string): Promise<{ dropoff_point_id: string }> {
 		return await this.call<{ dropoff_point_id: string }>({
 			method: 'POST',
 			url: this.RESOURCE.CourierBooking.DropoffPoint(),
