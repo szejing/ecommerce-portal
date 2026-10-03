@@ -14,7 +14,10 @@ export function transformProductToUpdate(
 	}
 	const type_id = merchantTypeIdForKind(product.type, prodTypes);
 
-	return {
+  return {
+    composition: product.composition ?? 'single',
+    combo_components: product.combo_components ?? [],
+    expected_inventory_quantity: product.inventory_quantity ?? 0,
 		code: product.code,
 		slug: product.slug,
 		name: product.name,
@@ -80,7 +83,8 @@ export function transformProductToUpdate(
 					upc: variant.upc,
 					barcode: variant.barcode,
 					hs_code: variant.hs_code,
-					inventory_quantity: variant.inventory_quantity,
+          inventory_quantity: variant.inventory_quantity,
+          expected_inventory_quantity: variant.inventory_quantity ?? 0,
 					allow_preorder: variant.allow_preorder,
 					manage_inventory: variant.manage_inventory,
 					weight: variant.weight,

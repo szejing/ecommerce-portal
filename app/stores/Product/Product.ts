@@ -49,6 +49,7 @@ const initialEmptyProductFilter: ProductFilter = {
 };
 
 const initialEmptyProduct: ProductCreate = {
+  composition: 'single', combo_components: [],
 	code: undefined,
 	name: '',
 	short_desc: undefined,
@@ -341,7 +342,13 @@ export const useProductStore = defineStore('productStore', {
 				}
 
 				// Build payload with only defined fields (partial update: omit = no change)
-				const body: Record<string, unknown> = {};
+        const body: Record<string, unknown> = {};
+        if (product.composition !== undefined) body.composition = product.composition;
+        if (product.combo_components !== undefined) body.combo_components = product.combo_components;
+        if (product.manage_inventory !== undefined) body.manage_inventory = product.manage_inventory;
+        if (product.allow_preorder !== undefined) body.allow_preorder = product.allow_preorder;
+        if (product.inventory_quantity !== undefined) body.inventory_quantity = product.inventory_quantity;
+        if (product.expected_inventory_quantity !== undefined) body.expected_inventory_quantity = product.expected_inventory_quantity;
 				if (product.slug !== undefined) body.slug = product.slug;
 				if (product.name !== undefined) body.name = product.name;
 				if (product.short_desc !== undefined) body.short_desc = product.short_desc;

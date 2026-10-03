@@ -1,10 +1,12 @@
 import type { ProductStatus } from 'yeppi-common';
 import type { PriceInput } from '../price';
-import type { ProductVariantInput } from '../product';
+import type { ProductVariantInput, ComboComponent } from '../product';
 import type { Image } from '../image';
 import type { ProductVariationInput } from '../product-variation';
 
 export type ProductCreate = {
+  composition?: 'single' | 'fixed_combo';
+  combo_components?: ComboComponent[];
 	code?: string;
 	slug?: string;
 	name?: string;
@@ -38,6 +40,9 @@ export type ProductCreate = {
 };
 
 export type ProductUpdate = {
+  composition?: 'single' | 'fixed_combo';
+  combo_components?: ComboComponent[];
+  expected_inventory_quantity?: number;
 	code?: string;
 	slug?: string;
 	name?: string;

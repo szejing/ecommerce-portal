@@ -106,7 +106,7 @@ const shouldShowService = computed(() => {
 const product_additional_info = computed(() => {
 	const tabs = [];
 
-	tabs.push({
+  if (product.value.composition !== 'fixed_combo') tabs.push({
 		label: t('components.productUpdate.variationsTab'),
 		slot: 'variations',
 		icon: ICONS.LAYERS,

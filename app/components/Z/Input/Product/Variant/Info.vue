@@ -21,7 +21,7 @@
 			</div>
 
 			<div v-if="variantDetail.manage_inventory" class="section-grid-basic-details">
-				<UFormField v-slot="{ error }" :label="t('components.zInput.quantity')" name="quantity">
+        <UFormField v-slot="{ error }" label="Available Quantity" name="quantity">
 					<UInput
 						v-model.number="variantDetail.inventory_quantity"
 						:trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined"

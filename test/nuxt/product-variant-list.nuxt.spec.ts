@@ -61,7 +61,7 @@ describe('ZInputProductVariantList', () => {
 		expect(wrapper.findAll('button[aria-label="Edit variant"]')).toHaveLength(2);
 	});
 
-	it('shows On Hand Quantity in Apply bar only when Manage Inventory is on', async () => {
+	it('shows Available Quantity in Apply bar only when Manage Inventory is on', async () => {
 		const wrapper = await mountSuspended(ZInputProductVariantList, {
 			props: {
 				product: baseProduct(),
@@ -80,13 +80,13 @@ describe('ZInputProductVariantList', () => {
 		await manageCheckbox!.vm.$emit('update:modelValue', true);
 		await nextTick();
 
-		expect(wrapper.find('input[placeholder="Quantity"]').exists()).toBe(true);
+		expect(wrapper.find('input[placeholder="Available Quantity"]').exists()).toBe(true);
 		expect(allowCheckbox?.props('disabled')).toBe(false);
 
 		await manageCheckbox!.vm.$emit('update:modelValue', false);
 		await nextTick();
 
-		expect(wrapper.find('input[placeholder="Quantity"]').exists()).toBe(false);
+		expect(wrapper.find('input[placeholder="Available Quantity"]').exists()).toBe(false);
 		expect(allowCheckbox?.props('disabled')).toBe(true);
 	});
 
@@ -116,7 +116,7 @@ describe('ZInputProductVariantList', () => {
 
 		await nextTick();
 
-		expect(wrapper.text()).toContain('Stock');
+		expect(wrapper.text()).toContain('Available Quantity');
 		expect(wrapper.find('input[placeholder="Stock"]').exists()).toBe(true);
 		expect(wrapper.find('input[placeholder="Stock"]').element).toHaveProperty('value', '4');
 	});

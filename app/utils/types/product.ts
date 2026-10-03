@@ -28,6 +28,7 @@ import type { ProductOptionInput } from './product-option';
 // };
 
 export type ProductVariantInput = {
+  expected_inventory_quantity?: number;
 	variant_code?: string;
 	product_code?: string;
 	name?: string;
@@ -59,6 +60,9 @@ export type ProductVariantInput = {
 // - options: scoped options for this product only (e.g. [L, XL, XXL], not the full global list)
 
 export type Product = {
+  composition?: 'single' | 'fixed_combo';
+  combo_components?: ComboComponent[];
+  combo_available_quantity?: number | null;
 	code?: string;
 	slug?: string;
 	name?: string;
@@ -95,3 +99,5 @@ export type Product = {
 
 	metadata?: Record<string, unknown>;
 };
+
+export type ComboComponent = { product_code: string; variant_code?: string | null; quantity: number };

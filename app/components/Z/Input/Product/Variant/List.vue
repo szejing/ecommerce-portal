@@ -52,13 +52,13 @@
 				<UInput
 					v-if="applyAll.manage_inventory || applyAll.manage_indeterminate"
 					v-model="applyAll.inventory_quantity"
-					:placeholder="t('components.zInput.quantity')"
+          placeholder="Available Quantity"
 					type="number"
 					size="sm"
 					class="max-w-36"
 					:min="0"
 					step="1"
-					:aria-label="t('components.zInput.quantity')"
+          aria-label="Available Quantity"
 				/>
 				<UButton color="primary" variant="soft" size="sm" @click="applyToAll">
 					{{ t('components.variantList.applyToAll') }}
@@ -84,7 +84,7 @@
 							{{ t('components.variantList.salePrice') }}
 						</th>
 						<th v-if="showStockColumn" class="text-left px-3 py-2 text-xs font-semibold text-neutral-700">
-							{{ t('components.variantList.stock') }}
+              Available Quantity
 						</th>
 						<th class="w-12 px-3 py-2">
 							<span class="sr-only">{{ t('components.variantList.edit') }}</span>
@@ -167,7 +167,7 @@
 									:min="0"
 									step="1"
 									:placeholder="t('components.variantList.stockPlaceholder')"
-									:aria-label="t('components.variantList.stock')"
+                aria-label="Available Quantity"
 									@update:model-value="emitVariants"
 								/>
 								<span v-else class="text-neutral-400">—</span>

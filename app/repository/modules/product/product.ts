@@ -12,6 +12,12 @@ import { parseImportStreamEvent, splitNdjsonLines, type ImportProgress } from '~
 
 const PRODUCT_IMPORT_ALLOWED_EXTENSIONS = ['.csv', '.xlsx'] as const;
 
+export type StockSummary = {
+	available_quantity: number;
+	reserved_quantity: number;
+	movements: Array<{ id: string; created_at: string; quantity_delta: number; balance_after: number; reason: string; order_no?: string }>;
+};
+
 export const PRODUCT_IMPORT_ACCEPT = '.csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 export const PRODUCT_IMPORT_STREAM_ACCEPT = 'application/x-ndjson';
 export const PRODUCT_IMPORT_FORMAT_ERROR_MESSAGE = 'Unsupported product import file format. Allowed: CSV, XLSX';
@@ -165,6 +171,14 @@ async function consumeProductImportStream(
 
 class ProductModule extends HttpFactory {
 	private RESOURCE = MerchantRoutes.Products;
+
+	async stockSummary(code: string, variantCode = ''): Promise<StockSummary> {
+		return this.call<StockSummary>({ method: 'GET', url: this.RESOURCE.Stock(code), query: { variant_code: variantCode } });
+	}
+
+	async addStock(code: string, input: { variant_code: string; quantity: number; reason: 'stock_receipt' | 'returned_goods'; operation_key: string; order_no?: string }): Promise<StockSummary> {
+		return this.call<StockSummary>({ method: 'POST', url: this.RESOURCE.Stock(code), body: input });
+	}
 
 	async getMany(query: BaseODataReq): Promise<BaseODataResp<Product>> {
 		return await this.call<BaseODataResp<Product>>({

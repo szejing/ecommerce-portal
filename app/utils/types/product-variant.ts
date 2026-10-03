@@ -3,6 +3,7 @@ import type { Price, PriceInput } from './price';
 
 // Input type for create/update operations
 export type ProductVariantInput = {
+  expected_inventory_quantity?: number;
 	variant_code?: string;
 	product_code?: string;
 	name?: string;

@@ -48,6 +48,8 @@ const Variant = z.object({
 });
 
 const createProductBase = z.object({
+  composition: z.enum(['single', 'fixed_combo']).optional(),
+  combo_components: z.array(z.object({ product_code: z.string().min(1), variant_code: z.string().nullish(), quantity: z.number().int().min(1) })).optional(),
 	code: z.string().optional(),
 	name: z.string({ message: 'Name is required' }).min(1, 'Name is required'),
 	short_desc: z
@@ -79,6 +81,7 @@ const VARIANT_PRICE_REQUIRED_MSG = 'Price is required for this variant';
 const VARIANT_SKU_DUPLICATE_MSG = 'This SKU is already used by another variant';
 
 export const CreateProductValidation = createProductBase.superRefine((data, ctx) => {
+  if (data.composition === 'fixed_combo' && (!data.combo_components?.length || data.variants?.length || data.variations?.length)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Select components without combo variants', path: ['combo_components'] });
 	const variants = data.variants ?? [];
 	for (let i = 0; i < variants.length; i++) {
 		const pt = variants[i]?.price_types?.[0];
