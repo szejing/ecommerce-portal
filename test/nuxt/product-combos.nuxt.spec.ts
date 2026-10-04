@@ -2,10 +2,12 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime';
 import { useNuxtApp, useRouter } from '#imports';
 import { ProductStatus, ProductType } from 'yeppi-common';
+import { USelect } from '#components';
 import ComboListing from '~/pages/products/combos/index.vue';
 import CreatePage from '~/components/Form/Product/CreatePage.vue';
 import DetailPage from '~/components/Form/Product/DetailPage.vue';
 import BasicInfo from '~/components/Z/Input/Product/BasicInfoSection.vue';
+import ComboComponents from '~/components/Z/Input/Product/ComboComponents.vue';
 import { useProductStore } from '~/stores/Product/Product';
 import { useProductTypeStore } from '~/stores/ProductType/ProductType';
 import { useAppUiStore } from '~/stores/AppUi/AppUi';
@@ -35,7 +37,7 @@ describe('portal combo workspace', () => {
   });
 
   it('renders existing combo thumbnails, contents, availability and configuration links', async () => {
-    const getMany = vi.spyOn(useNuxtApp().$api.product, 'getMany').mockResolvedValue({ data: [combo], '@odata.count': 1 });
+    const getMany = vi.spyOn(useNuxtApp().$api.product, 'getMany').mockResolvedValue({ data: [combo], value: [combo], count: 1, '@odata.count': 1 });
     const wrapper = await mountSuspended(ComboListing, { global: { stubs: { ZPagePanel: pageStub, UTooltip: { template: '<span><slot /></span>' } } } });
     expect(getMany).toHaveBeenCalledWith(expect.objectContaining({ $filter: "composition eq 'fixed_combo'" }));
     expect(wrapper.text()).toContain('Burger meal');
@@ -78,6 +80,15 @@ describe('portal combo workspace', () => {
       global: { stubs: { UTooltip: { template: '<span><slot /></span>' }, ZDropzone: true, ZInputProductComboComponents: { template: '<div data-test="combo-components" />' }, ZInputProductLongDescriptionEditor: true } },
     });
     expect(wrapper.find('[data-test="combo-components"]').exists()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it('uses a nonempty all-categories option when configuring ingredients', async () => {
+    const wrapper = await mountSuspended(ComboComponents, {
+      props: { modelValue: [] },
+      global: { stubs: { UModal: { template: '<section><slot name="body" /><slot name="footer" /></section>' } } },
+    });
+    expect(wrapper.findComponent(USelect).props()).toMatchObject({ items: [{ label: 'All categories', value: 'all' }] });
     wrapper.unmount();
   });
 });

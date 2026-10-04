@@ -57,7 +57,7 @@ const props = defineProps<{ productCode?: string }>();
 const { $api } = useNuxtApp();
 const open = ref(false);
 const search = ref('');
-const category = ref('');
+const category = ref('all');
 const page = ref(1);
 const total = ref(0);
 const products = ref<Product[]>([]);
@@ -67,7 +67,7 @@ const variantCode = ref<string>();
 const loading = ref(false);
 const error = ref('');
 let generation = 0;
-const categoryItems = computed(() => [{ label: 'All categories', value: '' }, ...Array.from(new Map([...names.values()].flatMap(p => p.categories ?? []).map(c => [c.code, { label: c.description ?? c.code ?? '', value: c.code ?? '' }])).values())]);
+const categoryItems = computed(() => [{ label: 'All categories', value: 'all' }, ...Array.from(new Map([...names.values()].flatMap(p => p.categories ?? []).filter(c => !!c.code).map(c => [c.code, { label: c.description ?? c.code ?? '', value: c.code ?? '' }])).values())]);
 const choices = computed(() => products.value.filter(p => p.code !== props.productCode && p.is_active !== false && p.type === ProductType.ITEM && p.composition !== 'fixed_combo'));
 const availability = computed(() => {
   if (!components.value.length) return 0;
@@ -86,7 +86,7 @@ async function load() {
   loading.value = true;
   error.value = '';
   try {
-    const response = await $api.product.getMany({ $top: 25, $skip: (page.value - 1) * 25, $count: true, $search: search.value.trim(), $expand: 'type,variants,thumbnail,categories', $filter: `is_active eq true${category.value ? ` and categories/code eq '${category.value.replaceAll("'", "''")}'` : ''}` });
+    const response = await $api.product.getMany({ $top: 25, $skip: (page.value - 1) * 25, $count: true, $search: search.value.trim(), $expand: 'type,variants,thumbnail,categories', $filter: `is_active eq true${category.value !== 'all' ? ` and categories/code eq '${category.value.replaceAll("'", "''")}'` : ''}` });
     if (current !== generation) return;
     products.value = response.data ?? response.value ?? [];
     total.value = response['@odata.count'] ?? response.count ?? 0;
