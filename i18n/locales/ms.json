@@ -1,4 +1,23 @@
 {
+	"combo": {
+		"title": "Kombo",
+		"create": "Cipta kombo",
+		"detail": "Butiran kombo",
+		"update": "Kemas kini kombo",
+		"configure": "Konfigurasi kombo",
+		"search": "Cari kombo",
+		"allStatuses": "Semua status",
+		"components": "Komponen",
+		"available": "Kuantiti tersedia",
+		"unlimited": "Tanpa had",
+		"unavailable": "Tidak tersedia",
+		"published": "Diterbitkan",
+		"hidden": "Tersembunyi",
+		"archived": "Diarkibkan",
+		"loadFailed": "Tidak dapat memuatkan kombo",
+		"empty": "Tiada kombo dijumpai",
+		"count": "{count} kombo"
+	},
 	"error": {
 		"pageTitle": "Sesuatu tidak kena",
 		"goBackHome": "Kembali ke laman utama",

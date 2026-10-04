@@ -54,6 +54,7 @@ const default_navigations = [
 				value: 'products',
 				children: [
 					{ label: 'nav.all_products', to: '/products/listing' },
+					{ label: 'combo.title', icon: 'i-lucide-boxes', to: '/products/combos' },
 					{ label: 'nav.categories', to: '/products/categories' },
 					{ label: 'nav.brands', to: '/products/brands' },
 					{ label: 'nav.tags', to: '/products/tags' },

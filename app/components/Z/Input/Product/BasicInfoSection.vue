@@ -28,10 +28,10 @@
 					</UFormField>
 				</div>
 
-        <UFormField name="type_id" :label="t('components.productUpdate.productType')" required>
+        <UFormField v-if="!comboOnly" name="type_id" :label="t('components.productUpdate.productType')" required>
 					<ZSelectMenuProductType v-model:type-id="state.type_id" />
         </UFormField>
-        <UFormField v-if="isGoods" label="Composition" name="composition">
+        <UFormField v-if="isGoods && !comboOnly" label="Composition" name="composition">
           <USelect v-model="state.composition" :items="[{ label: 'Single item', value: 'single' }, { label: 'Fixed combo', value: 'fixed_combo' }]" :disabled="!!state.variants?.length" class="w-full sm:w-64" @update:model-value="onCompositionChange" />
         </UFormField>
         <ZInputProductComboComponents v-if="isGoods && state.composition === 'fixed_combo'" v-model="state.combo_components" :product-code="state.code" />
@@ -187,8 +187,9 @@ const props = withDefaults(
 		codeDisabled?: boolean;
 		showLongDescription?: boolean;
 		showInventory?: boolean;
+		comboOnly?: boolean;
 	}>(),
-	{ codeDisabled: false, showLongDescription: true, showInventory: false },
+	{ codeDisabled: false, showLongDescription: true, showInventory: false, comboOnly: false },
 );
 
 const emit = defineEmits<{
@@ -200,7 +201,7 @@ const emit = defineEmits<{
 
 const state = toRef(props, 'state');
 const productTypeStore = useProductTypeStore();
-const isGoods = computed(() => productTypeStore.prod_types.find((type) => type.id === state.value.type_id)?.value === ProductType.ITEM);
+const isGoods = computed(() => props.comboOnly || productTypeStore.prod_types.find((type) => type.id === state.value.type_id)?.value === ProductType.ITEM);
 const published = computed({
   get: () => state.value.status === ProductStatus.PUBLISHED && state.value.is_active !== false,
   set: (value: boolean) => { state.value.status = value ? ProductStatus.PUBLISHED : ProductStatus.DRAFT; if (value) state.value.is_active = true; },

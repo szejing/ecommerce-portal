@@ -11,4 +11,8 @@ describe('product route helpers', () => {
 		expect(productRouteSegment({ code: 'PROD-1' })).toBe('PROD-1');
 		expect(productDetailPath({ code: 'PROD-1' })).toBe('/products/PROD-1');
 	});
+
+	it('opens fixed combos in their dedicated configuration route', () => {
+		expect(productDetailPath({ code: 'MEAL', slug: 'meal-a', composition: 'fixed_combo' } as Parameters<typeof productDetailPath>[0])).toBe('/products/combos/meal-a');
+	});
 });

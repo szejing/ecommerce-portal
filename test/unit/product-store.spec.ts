@@ -97,6 +97,22 @@ describe('useProductStore', () => {
 		expect(getMany.mock.calls[0]?.[0].$expand).not.toMatch(/brands|categories|collection|images|tags|variations/);
 	});
 
+	it('initializes a fresh fixed combo without parent stock or variants', () => {
+		const store = useProductStore();
+		store.new_product.name = 'Old draft';
+		(store as any).startNewCombo(7);
+		expect(store.new_product).toMatchObject({ name: '', type_id: 7, composition: 'fixed_combo', combo_components: [], variants: [], variations: [], inventory_quantity: 0, manage_inventory: false, allow_preorder: false });
+	});
+
+	it('queries only fixed combos with independent search, paging and status', async () => {
+		const store = useProductStore();
+		getMany.mockResolvedValue({ data: [product('MEAL')], '@odata.count': 12 });
+		const result = await (store as any).getCombos({ page: 2, pageSize: 10, search: '  Meal  ', status: ProductStatus.DRAFT });
+		expect(getMany).toHaveBeenCalledWith(expect.objectContaining({ $filter: `composition eq 'fixed_combo' and status eq '${ProductStatus.DRAFT}'`, $top: 10, $skip: 10, $search: 'Meal', $count: true }));
+		expect(result).toEqual({ items: [product('MEAL')], total: 12 });
+		expect(store.products).toEqual([]);
+	});
+
 	it('does not let an older listing request replace rows', async () => {
 		const first = deferred<{ data: Product[]; '@odata.count': number }>();
 		const second = deferred<{ data: Product[]; '@odata.count': number }>();

@@ -33,7 +33,7 @@ const productGroups = computed(() => [
 		description: t('pages.servicesProductsDesc'),
 		icon: ICONS.LIST,
 		color: 'teal' as const,
-		items: [{ label: t('pages.servicesProducts'), to: '/products/listing' }],
+		items: [{ label: t('pages.servicesProducts'), to: '/products/listing' }, { label: t('combo.title'), to: '/products/combos' }],
 	},
 	{
 		title: t('pages.productAttributes'),

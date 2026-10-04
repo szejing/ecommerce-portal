@@ -46,6 +46,7 @@
 						:code-disabled="true"
 						:show-long-description="showLongDescription"
 						:show-inventory="showSimpleProductInventory"
+						:combo-only="comboOnly"
 						@update:thumbnail="updateThumbnail"
 						@update:images="updateImages"
 						@delete:thumbnail="deleteThumbnail"
@@ -112,6 +113,8 @@ const updateProductSchema = computed(() => createUpdateProductValidation(t));
 const formRef = ref();
 
 const props = defineProps({
+	comboOnly: { type: Boolean, default: false },
+	returnTo: { type: String, default: undefined },
 	product: {
 		type: Object as PropType<Product>,
 		required: true,
@@ -448,7 +451,7 @@ const doUpdateProduct = async () => {
 			// const product = await productStore.getProduct(formState.value.code!);
 			// productStore.current_product = product;
 
-			navigateTo(`/products/listing`);
+			navigateTo(props.returnTo ?? '/products/listing');
 		}
 	} catch (error) {
 		console.error(error);

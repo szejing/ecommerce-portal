@@ -9,6 +9,7 @@ import type { BaseODataReq } from '~/repository/base/base.req';
 import type { ImageReq } from '~/repository/modules/image/models/request/image.req';
 import type { ProductImportStreamResult, ProductImportTemplateType } from '~/repository/modules/product/product';
 import { resolveProductImportStoppedSummary, resolveProductImportSummary } from '~/utils/product-import-feedback';
+import { comboListingQuery, type ComboListingFilter } from '~/utils/combo-listing';
 
 export const PRODUCT_FILTER_DEBOUNCE_MS = 500;
 
@@ -126,6 +127,17 @@ export const useProductStore = defineStore('productStore', {
 	actions: {
 		resetNewProduct() {
 			this.new_product = structuredClone(initialEmptyProduct);
+		},
+
+		startNewCombo(typeId: number) {
+			this.resetNewProduct();
+			Object.assign(this.new_product, { type_id: typeId, composition: 'fixed_combo', manage_inventory: false, allow_preorder: false, inventory_quantity: 0 });
+		},
+
+		async getCombos(filter: ComboListingFilter): Promise<{ items: Product[]; total: number }> {
+			const { $api } = useNuxtApp();
+			const response = await $api.product.getMany(comboListingQuery(filter));
+			return { items: response.data ?? response.value ?? [], total: response['@odata.count'] ?? response.count ?? 0 };
 		},
 
 		setSearch(search: string) {

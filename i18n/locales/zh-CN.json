@@ -1,4 +1,23 @@
 {
+	"combo": {
+		"title": "套餐",
+		"create": "创建套餐",
+		"detail": "套餐详情",
+		"update": "更新套餐",
+		"configure": "配置套餐",
+		"search": "搜索套餐",
+		"allStatuses": "所有状态",
+		"components": "组成商品",
+		"available": "可售数量",
+		"unlimited": "不限量",
+		"unavailable": "不可售",
+		"published": "已发布",
+		"hidden": "已隐藏",
+		"archived": "已归档",
+		"loadFailed": "无法加载套餐",
+		"empty": "未找到套餐",
+		"count": "{count} 个套餐"
+	},
 	"error": {
 		"pageTitle": "出了点问题",
 		"goBackHome": "返回首页",

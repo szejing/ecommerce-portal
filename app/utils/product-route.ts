@@ -1,6 +1,7 @@
 type ProductRouteSource = {
 	code?: string | null;
 	slug?: string | null;
+	composition?: 'single' | 'fixed_combo';
 };
 
 export function productRouteSegment(product: ProductRouteSource): string {
@@ -8,5 +9,6 @@ export function productRouteSegment(product: ProductRouteSource): string {
 }
 
 export function productDetailPath(product: ProductRouteSource): string {
-	return `/products/${encodeURIComponent(productRouteSegment(product))}`;
+	const prefix = product.composition === 'fixed_combo' ? '/products/combos' : '/products';
+	return `${prefix}/${encodeURIComponent(productRouteSegment(product))}`;
 }

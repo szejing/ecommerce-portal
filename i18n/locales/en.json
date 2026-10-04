@@ -1,4 +1,23 @@
 {
+	"combo": {
+		"title": "Combos",
+		"create": "Create combo",
+		"detail": "Combo details",
+		"update": "Update combo",
+		"configure": "Configure combo",
+		"search": "Search combos",
+		"allStatuses": "All statuses",
+		"components": "Components",
+		"available": "Available Quantity",
+		"unlimited": "Unlimited",
+		"unavailable": "Unavailable",
+		"published": "Published",
+		"hidden": "Hidden",
+		"archived": "Archived",
+		"loadFailed": "Unable to load combos",
+		"empty": "No combos found",
+		"count": "{count} combos"
+	},
 	"error": {
 		"pageTitle": "Something went wrong",
 		"goBackHome": "Go back home",

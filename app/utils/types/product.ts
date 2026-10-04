@@ -62,6 +62,7 @@ export type ProductVariantInput = {
 export type Product = {
   composition?: 'single' | 'fixed_combo';
   combo_components?: ComboComponent[];
+  combo_component_details?: (ComboComponent & { product_name: string; variant_name?: string })[];
   combo_available_quantity?: number | null;
 	code?: string;
 	slug?: string;
