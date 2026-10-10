@@ -2184,7 +2184,8 @@
 			"sellerSku": "Seller SKU",
 			"searchVariant": "Search variant",
 			"variantLoadFailed": "Could not load product variants.",
-			"variantPriceMissing": "This variant has no catalog price. Pick another variant."
+			"variantPriceMissing": "This variant has no catalog price. Pick another variant.",
+			"includes": "Includes"
 		},
 		"zInput": {
 			"address1": "Address 1",

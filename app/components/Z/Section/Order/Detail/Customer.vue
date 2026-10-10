@@ -20,7 +20,7 @@
 			</div>
 		</template>
 
-		<dl class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+		<dl class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
 			<div v-for="field in contactFields" :key="field.key" class="min-w-0">
 				<dt class="text-xs font-medium text-muted">{{ field.label }}</dt>
 				<dd class="mt-1 text-sm font-semibold break-all">
@@ -149,6 +149,13 @@ const contactFields = computed(() => {
 	const email = customer?.email_address?.trim() ?? '';
 	const phone = displayPhone.value;
 	const fields = [
+		{ key: 'customer_no', label: t('components.orderDetail.customerNo'), value: customer?.customer_no?.trim() ?? '' },
+		{
+			key: 'email',
+			label: t('components.orderDetail.emailAddress'),
+			value: email,
+			href: email ? `mailto:${email}` : undefined,
+		},
 		{ key: 'name', label: t('common.name'), value: customer?.name?.trim() ?? '' },
 		{
 			key: 'phone',
@@ -156,13 +163,6 @@ const contactFields = computed(() => {
 			value: phone,
 			href: phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : undefined,
 		},
-		{
-			key: 'email',
-			label: t('components.orderDetail.emailAddress'),
-			value: email,
-			href: email ? `mailto:${email}` : undefined,
-		},
-		{ key: 'customer_no', label: t('components.orderDetail.customerNo'), value: customer?.customer_no?.trim() ?? '' },
 	];
 	if (customer?.ref_no1?.trim()) {
 		fields.push({ key: 'ref_no1', label: t('components.orderDetail.refNo1'), value: customer.ref_no1.trim() });

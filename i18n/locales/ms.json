@@ -2183,7 +2183,8 @@
 			"sellerSku": "SKU Penjual",
 			"searchVariant": "Cari varian",
 			"variantLoadFailed": "Tidak dapat memuatkan varian produk.",
-			"variantPriceMissing": "Varian ini tiada harga katalog. Pilih varian lain."
+			"variantPriceMissing": "Varian ini tiada harga katalog. Pilih varian lain.",
+			"includes": "Termasuk"
 		},
 		"zInput": {
 			"address1": "Alamat 1",

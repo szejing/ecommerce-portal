@@ -2183,7 +2183,8 @@
 			"sellerSku": "卖家 SKU",
 			"searchVariant": "搜索变体",
 			"variantLoadFailed": "无法加载产品变体。",
-			"variantPriceMissing": "此变体没有商品目录价格。请选择其他变体。"
+			"variantPriceMissing": "此变体没有商品目录价格。请选择其他变体。",
+			"includes": "包含"
 		},
 		"zInput": {
 			"address1": "地址 1",

@@ -12,8 +12,8 @@ export function getOrderDetailItemColumns(t: TranslateFn): TableColumn<ItemModel
 			header: t('components.orderDetail.item'),
 			meta: {
 				class: {
-					th: 'text-left min-w-0',
-					td: 'text-left min-w-0 whitespace-normal',
+					th: 'text-left w-full min-w-0',
+					td: 'text-left w-full min-w-0 whitespace-normal break-words',
 				},
 			},
 		},
@@ -23,8 +23,8 @@ export function getOrderDetailItemColumns(t: TranslateFn): TableColumn<ItemModel
 			header: t('components.orderDetail.unitPrice'),
 			meta: {
 				class: {
-					th: `${TABLE_ALIGN_RIGHT} w-28`,
-					td: `${TABLE_ALIGN_RIGHT} w-28 whitespace-nowrap`,
+					th: `${TABLE_ALIGN_RIGHT} w-24`,
+					td: `${TABLE_ALIGN_RIGHT} w-24 whitespace-nowrap`,
 				},
 			},
 		},
@@ -33,8 +33,8 @@ export function getOrderDetailItemColumns(t: TranslateFn): TableColumn<ItemModel
 			header: t('components.orderDetail.qty'),
 			meta: {
 				class: {
-					th: `${TABLE_ALIGN_RIGHT} w-16`,
-					td: `${TABLE_ALIGN_RIGHT} w-16 whitespace-nowrap`,
+					th: `${TABLE_ALIGN_RIGHT} w-14`,
+					td: `${TABLE_ALIGN_RIGHT} w-14 whitespace-nowrap`,
 				},
 			},
 		},
@@ -44,8 +44,8 @@ export function getOrderDetailItemColumns(t: TranslateFn): TableColumn<ItemModel
 			header: t('components.orderDetail.price'),
 			meta: {
 				class: {
-					th: `${TABLE_ALIGN_RIGHT} w-28`,
-					td: `${TABLE_ALIGN_RIGHT} w-28 whitespace-nowrap`,
+					th: `${TABLE_ALIGN_RIGHT} w-24`,
+					td: `${TABLE_ALIGN_RIGHT} w-24 whitespace-nowrap`,
 				},
 			},
 		},
