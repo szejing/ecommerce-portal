@@ -1,24 +1,22 @@
 <template>
-	<UCard>
-		<template #header>
-			<div class="flex items-center justify-between gap-3">
-				<h2 class="flex min-w-0 items-center gap-2 text-base font-semibold text-highlighted">
-					<UIcon :name="showAddresses ? 'i-heroicons-map-pin' : ICONS.CUSTOMER_GROUP_ROUNDED" class="size-5 shrink-0" aria-hidden="true" />
-					<span class="truncate">{{ customerContextTitle }}</span>
-				</h2>
-				<UButton
-					v-if="canEdit"
-					variant="soft"
-					size="sm"
-					icon="i-heroicons-pencil-square"
-					class="shrink-0"
-					:aria-label="t('components.orderDetail.editCustomer')"
-					@click="editCustomerDetail"
-				>
-					{{ t('components.orderDetail.edit') }}
-				</UButton>
-			</div>
-		</template>
+	<section class="space-y-4">
+		<div class="flex items-center justify-between gap-3">
+			<h2 class="flex min-w-0 items-center gap-2 text-base font-semibold text-highlighted">
+				<UIcon :name="showAddresses ? 'i-heroicons-map-pin' : ICONS.CUSTOMER_GROUP_ROUNDED" class="size-5 shrink-0" aria-hidden="true" />
+				<span class="truncate">{{ customerContextTitle }}</span>
+			</h2>
+			<UButton
+				v-if="canEdit"
+				variant="soft"
+				size="sm"
+				icon="i-heroicons-pencil-square"
+				class="shrink-0"
+				:aria-label="t('components.orderDetail.editCustomer')"
+				@click="editCustomerDetail"
+			>
+				{{ t('components.orderDetail.edit') }}
+			</UButton>
+		</div>
 
 		<dl class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
 			<div v-for="field in contactFields" :key="field.key" class="min-w-0">
@@ -37,7 +35,7 @@
 			</div>
 		</dl>
 
-		<div v-if="showAddresses" class="mt-6 grid gap-4 sm:grid-cols-2">
+		<div v-if="showAddresses" class="grid gap-4 sm:grid-cols-2">
 			<section class="flex min-w-0 flex-col gap-2">
 				<div class="flex items-center justify-between gap-2">
 					<h3 class="text-xs font-medium text-muted">{{ t('components.orderDetail.shippingAddress') }}</h3>
@@ -88,7 +86,7 @@
 				</p>
 			</section>
 		</div>
-	</UCard>
+	</section>
 </template>
 
 <script lang="ts" setup>

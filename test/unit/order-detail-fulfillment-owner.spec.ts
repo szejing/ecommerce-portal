@@ -51,10 +51,31 @@ describe('order detail fulfillment owner', () => {
 		expect(source).toContain('fulfillmentStore.runAction(batch.id, action)');
 		expect(source).toContain(':aria-label="t(\'components.orderDetail.refresh\')"');
 		expect(source.indexOf('data-testid="order-attention"')).toBeLessThan(source.indexOf('<ZSectionOrderDetailItems'));
-		expect(source.indexOf('<ZSectionOrderDetailItems')).toBeLessThan(source.indexOf('<ZSectionOrderDetailCustomer'));
 		expect(desktop.indexOf('<ZSectionOrderDetailPayment')).toBeLessThan(desktop.indexOf('<FulfillmentBatchList'));
 		expect(desktop.indexOf('<FulfillmentBatchList')).toBeLessThan(desktop.indexOf('<ZSectionOrderDetailOrderStatus'));
 		expect(mobile.indexOf('<ZSectionOrderDetailPayment')).toBeLessThan(mobile.indexOf('<FulfillmentBatchList'));
 		expect(mobile.indexOf('<FulfillmentBatchList')).toBeLessThan(mobile.indexOf('<ZSectionOrderDetailOrderStatus'));
+	});
+
+	it('places the customer card in the header section before order items', () => {
+		const source = readFileSync(resolve(process.cwd(), 'app/pages/orders/[order_no].vue'), 'utf8');
+		const headerEnd = source.indexOf('<!-- Main Grid Layout -->');
+		const header = source.slice(source.indexOf('<!-- Header Section -->'), headerEnd);
+		const mainColumn = source.slice(headerEnd, source.indexOf('<!-- Sidebar (desktop) -->'));
+		const customerCardMatches = source.match(/<ZSectionOrderDetailCustomer[\s\n]/g) ?? [];
+
+		expect(header).toContain('<ZSectionOrderDetailCustomer');
+		expect(header).toContain('class="order-header-customer"');
+		expect(header).toContain('class="order-header-divider"');
+		expect(header).toContain(':show-addresses="(record?.order_type ?? OrderType.PICKUP) === OrderType.DELIVERY"');
+		expect(header).toContain('@refresh="refreshOrder"');
+		expect(header.indexOf('order-header-right')).toBeLessThan(header.indexOf('status-last-updated'));
+		expect(header.indexOf('status-last-updated')).toBeLessThan(header.indexOf('order-header-states'));
+		expect(header.indexOf('order-header-divider')).toBeLessThan(header.indexOf('<ZSectionOrderDetailCustomer'));
+		expect(mainColumn).not.toMatch(/<ZSectionOrderDetailCustomer[\s\n]/);
+		expect(customerCardMatches).toHaveLength(1);
+		expect(source.indexOf('<ZSectionOrderDetailCustomer')).toBeLessThan(source.indexOf('<ZSectionOrderDetailItems'));
+		expect(source).toContain('.order-header-customer');
+		expect(source).toMatch(/\.order-header-customer\s*\{[\s\S]*?grid-column:\s*1\s*\/\s*-1/);
 	});
 });
