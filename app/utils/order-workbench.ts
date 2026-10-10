@@ -1,8 +1,9 @@
-import { OrderItemStatus } from 'yeppi-common';
+import { LineType, OrderItemStatus } from 'yeppi-common';
 
 type WorkbenchItem = {
 	status: OrderItemStatus;
 	qty: number;
+	line_type?: LineType;
 };
 
 export function getOrderItemWorkload<T extends WorkbenchItem>(items: readonly T[]) {
@@ -11,6 +12,7 @@ export function getOrderItemWorkload<T extends WorkbenchItem>(items: readonly T[
 	let activeUnitCount = 0;
 
 	for (const item of items) {
+		if (item.line_type === LineType.COMBO_ITEM) continue;
 		if (item.status === OrderItemStatus.ACTIVE) {
 			activeItems.push(item);
 			activeUnitCount += Number.isFinite(item.qty) ? Math.max(0, item.qty) : 0;

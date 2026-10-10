@@ -15,6 +15,64 @@ const baseUpdate = {
 	type_id: 1,
 };
 
+describe('Fixed combo component validation', () => {
+	it('rejects a published fixed combo with fewer than two component units on create', () => {
+		const result = CreateProductValidation.safeParse({
+			name: 'Meal',
+			short_desc: 'Combo',
+			status: 'published',
+			is_active: true,
+			composition: 'fixed_combo',
+			combo_components: [{ product_code: 'COKE', quantity: 1 }],
+			price_types: [{ currency_code: 'MYR', orig_sell_price: 10 }],
+			type_id: 1,
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it('allows a draft fixed combo with fewer than two component units', () => {
+		const result = CreateProductValidation.safeParse({
+			name: 'Meal',
+			short_desc: 'Combo',
+			status: 'draft',
+			is_active: true,
+			composition: 'fixed_combo',
+			combo_components: [{ product_code: 'COKE', quantity: 1 }],
+			price_types: [{ currency_code: 'MYR', orig_sell_price: 10 }],
+			type_id: 1,
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('accepts two units as one row qty 2 or two rows of qty 1', () => {
+		const oneRow = CreateProductValidation.safeParse({
+			name: 'Meal',
+			short_desc: 'Combo',
+			status: 'published',
+			is_active: true,
+			composition: 'fixed_combo',
+			combo_components: [{ product_code: 'COKE', quantity: 2 }],
+			price_types: [{ currency_code: 'MYR', orig_sell_price: 10 }],
+			type_id: 1,
+		});
+		const twoRows = CreateProductValidation.safeParse({
+			name: 'Meal',
+			short_desc: 'Combo',
+			status: 'published',
+			is_active: true,
+			composition: 'fixed_combo',
+			combo_components: [
+				{ product_code: 'POPCORN', quantity: 1 },
+				{ product_code: 'COKE', quantity: 1 },
+			],
+			price_types: [{ currency_code: 'MYR', orig_sell_price: 10 }],
+			type_id: 1,
+		});
+		expect(oneRow.success).toBe(true);
+		expect(twoRows.success).toBe(true);
+	});
+});
+
 describe('Product description validation', () => {
 	it('rejects a Product Short Description longer than 250 characters on update', () => {
 		const schema = createUpdateProductValidation(t);

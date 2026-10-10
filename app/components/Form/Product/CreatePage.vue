@@ -1,7 +1,7 @@
 <template>
-	<ZPagePanel id="product-create" :title="t(comboOnly ? 'combo.create' : 'pages.addNewProduct')" :back-to="backTo" grow>
+	<ZPagePanel id="product-create" :title="t('pages.addNewProduct')" back-to="/products" grow>
 		<div class="container w-full mx-auto">
-			<FormProductCreation ref="formRef" :combo-only="comboOnly" :return-to="comboOnly ? backTo : undefined" />
+			<FormProductCreation ref="formRef" />
 		</div>
 
 		<template #footer>
@@ -19,7 +19,7 @@
 
 							<UButton color="success" variant="solid" size="lg" :loading="adding" @click="() => onSubmit()">
 								<UIcon :name="ICONS.CHECK_ROUNDED" />
-								{{ t(comboOnly ? 'combo.create' : 'pages.createProductButton') }}
+								{{ t('pages.createProductButton') }}
 							</UButton>
 						</div>
 					</div>
@@ -28,7 +28,7 @@
 					<div class="md:hidden flex flex-col gap-2">
 						<UButton color="success" size="md" class="w-full" :loading="adding" @click="() => onSubmit()">
 							<UIcon :name="ICONS.CHECK_ROUNDED" class="w-4 h-4" />
-							<span class="text-sm">{{ t(comboOnly ? 'combo.create' : 'pages.createProductButton') }}</span>
+							<span class="text-sm">{{ t('pages.createProductButton') }}</span>
 						</UButton>
 						<div class="flex gap-2">
 							<UButton color="neutral" variant="soft" size="sm" class="flex-1" :loading="adding" @click="() => saveDraft()">
@@ -49,24 +49,13 @@
 <script lang="ts" setup>
 import { ICONS } from '~/utils/icons';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
-import { ProductType } from 'yeppi-common';
-
-const props = withDefaults(defineProps<{ comboOnly?: boolean }>(), { comboOnly: false });
-const backTo = computed(() => props.comboOnly ? '/products/combos' : '/products');
 
 const productStore = useProductStore();
 const { adding, new_product } = storeToRefs(productStore);
-if (props.comboOnly) {
-	const typeStore = useProductTypeStore();
-	productStore.startNewCombo(typeStore.prod_types.find(type => type.value === ProductType.ITEM)?.id ?? 1);
-	watch(() => typeStore.prod_types.find(type => type.value === ProductType.ITEM)?.id, (id) => {
-		if (id !== undefined) new_product.value.type_id = id;
-	});
-}
 const formRef = ref<{ submit: () => void } | null>(null);
 
 const { t } = useI18n();
-useHead({ title: () => t(props.comboOnly ? 'combo.create' : 'pages.createProductTitle') });
+useHead({ title: () => t('pages.createProductTitle') });
 
 const isDirty = computed(() => {
 	const p = new_product.value;
@@ -91,9 +80,6 @@ const onSubmit = () => {
 };
 
 const goBack = () => {
-	if (props.comboOnly) navigateTo(backTo.value);
-	else useRouter().back();
+	useRouter().back();
 };
 </script>
-
-<style scoped></style>

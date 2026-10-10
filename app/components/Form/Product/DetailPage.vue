@@ -1,8 +1,8 @@
 <template>
-	<ZPagePanel id="product-detail" :title="`${t(comboOnly ? 'combo.detail' : 'pages.productDetail')} #${current_product?.code ?? slug}`" :back-to="backTo" grow>
+	<ZPagePanel id="product-detail" :title="`${t('pages.productDetail')} #${current_product?.code ?? slug}`" back-to="/products" grow>
 		<div class="container w-full mx-auto">
 			<FormProductUpdateLoading v-if="isLoading" />
-			<FormProductUpdate v-else-if="current_product" ref="formRef" :product="current_product" :combo-only="comboOnly" :return-to="comboOnly ? backTo : undefined" />
+			<FormProductUpdate v-else-if="current_product" ref="formRef" :product="current_product" />
 		</div>
 
 		<template #footer>
@@ -20,7 +20,7 @@
 
 							<UButton color="success" variant="solid" size="lg" :loading="updating" class="cursor-pointer" @click="updateProduct">
 								<UIcon :name="ICONS.CHECK_ROUNDED" />
-								{{ t(comboOnly ? 'combo.update' : 'pages.updateProduct') }}
+								{{ t('pages.updateProduct') }}
 							</UButton>
 						</div>
 					</div>
@@ -29,7 +29,7 @@
 					<div class="md:hidden flex flex-col gap-2">
 						<UButton color="success" size="md" class="w-full opacity-50 hover:opacity-100 cursor-pointer" :loading="updating" @click="updateProduct">
 							<UIcon :name="ICONS.CHECK_ROUNDED" />
-							<span class="text-sm">{{ t(comboOnly ? 'combo.update' : 'pages.updateProduct') }}</span>
+							<span class="text-sm">{{ t('pages.updateProduct') }}</span>
 						</UButton>
 						<div class="flex gap-2">
 							<UButton
@@ -57,11 +57,7 @@
 <script lang="ts" setup>
 import { ZModalConfirmation } from '#components';
 import { ICONS } from '~/utils/icons';
-import { productRouteSegment } from '~/utils/product-route';
-
-const props = withDefaults(defineProps<{ comboOnly?: boolean }>(), { comboOnly: false });
-const backTo = computed(() => props.comboOnly ? '/products/combos' : '/products');
-const listingTo = computed(() => props.comboOnly ? '/products/combos' : '/products/listing');
+import { productDetailPath, productRouteSegment } from '~/utils/product-route';
 
 const route = useRoute();
 const slug = route.params.slug as string;
@@ -69,8 +65,7 @@ const slug = route.params.slug as string;
 const overlay = useOverlay();
 const productStore = useProductStore();
 const { updating, current_product } = storeToRefs(productStore);
-if (current_product.value && (productRouteSegment(current_product.value) !== slug ||
-	(props.comboOnly && current_product.value.composition !== 'fixed_combo'))) current_product.value = undefined;
+if (current_product.value && productRouteSegment(current_product.value) !== slug) current_product.value = undefined;
 const formRef = ref<{ submit: () => void } | null>(null);
 
 const isLoading = ref(!current_product.value);
@@ -86,12 +81,18 @@ onBeforeMount(async () => {
 	if (!current_product.value) {
 		const product = await productStore.getProductBySlug(slug);
 
-		if (product && (!props.comboOnly || product.composition === 'fixed_combo')) {
+		if (product) {
+			if (product.composition === 'fixed_combo') {
+				await navigateTo(productDetailPath(product));
+				return;
+			}
 			productStore.current_product = product;
 		} else {
-			await navigateTo(listingTo.value);
+			await navigateTo('/products/listing');
 		}
 		isLoading.value = false;
+	} else if (current_product.value.composition === 'fixed_combo') {
+		await navigateTo(productDetailPath(current_product.value));
 	} else {
 		isLoading.value = false;
 	}
@@ -102,8 +103,7 @@ const updateProduct = () => {
 };
 
 const cancel = () => {
-	if (props.comboOnly) navigateTo(listingTo.value);
-	else useRouter().back();
+	useRouter().back();
 };
 
 const deleteProduct = async () => {
@@ -114,7 +114,7 @@ const deleteProduct = async () => {
 			onConfirm: async () => {
 				await productStore.deleteProduct(current_product.value!.code!);
 				confirmModal.close();
-				navigateTo(listingTo.value);
+				navigateTo('/products/listing');
 			},
 			onCancel: () => {
 				confirmModal.close();
@@ -125,5 +125,3 @@ const deleteProduct = async () => {
 	confirmModal.open();
 };
 </script>
-
-<style scoped></style>

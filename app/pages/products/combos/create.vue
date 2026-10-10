@@ -1,3 +1,3 @@
 <template>
-	<FormProductCreatePage combo-only />
+	<FormComboCreatePage />
 </template>

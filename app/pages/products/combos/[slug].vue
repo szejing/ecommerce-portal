@@ -1,5 +1,5 @@
 <template>
-	<FormProductDetailPage :key="String(route.params.slug)" combo-only />
+	<FormComboDetailPage :key="String(route.params.slug)" />
 </template>
 
 <script setup lang="ts">

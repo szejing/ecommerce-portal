@@ -46,6 +46,9 @@
 								:variant-text="variantLineText(item)"
 								:is-voided="item.status === OrderItemStatus.VOIDED"
 							/>
+							<ul v-if="comboItems(item).length" class="text-xs text-muted">
+								<li v-for="child in comboItems(item)" :key="child.item_line">{{ child.qty }} × {{ child.prod_name }}</li>
+							</ul>
 							<div class="flex flex-wrap items-center gap-1.5">
 								<UBadge
 									v-if="showsPreorderLine(item)"
@@ -130,6 +133,9 @@
 							:variant-text="variantLineText(row.original)"
 							:is-voided="row.original.status === OrderItemStatus.VOIDED"
 						/>
+						<ul v-if="comboItems(row.original).length" class="text-xs text-muted">
+							<li v-for="child in comboItems(row.original)" :key="child.item_line">{{ child.qty }} × {{ child.prod_name }}</li>
+						</ul>
 						<div class="flex flex-wrap items-center gap-1.5">
 							<UBadge
 								v-if="showsPreorderLine(row.original)"
@@ -225,7 +231,7 @@
 <script lang="ts" setup>
 import type { TableMeta, Row } from '@tanstack/vue-table';
 import { ZModalInformation, ZModalOrderDetailItem } from '#components';
-import { OrderItemStatus, OrderStatus, OrderType, formatCurrency, GROUP_CODE, PRODUCT } from 'yeppi-common';
+import { LineType, OrderItemStatus, OrderStatus, OrderType, formatCurrency, GROUP_CODE, PRODUCT } from 'yeppi-common';
 import { ICONS } from '~/utils/icons';
 import type { ItemModel } from '~/utils/models/item.model';
 import type { OrderHistory } from '~/utils/types/order-history';
@@ -260,6 +266,13 @@ const variantLineText = (item: ItemModel) => formatVariantLineIdentity(item, var
 const itemStatusLabel = (status: OrderItemStatus) => getOrderItemStatusOptions(t).find((option) => option.value === status)?.label ?? status;
 
 const showsPreorderLine = (item: ItemModel) => !!item.is_preorder && item.status !== OrderItemStatus.VOIDED;
+
+const comboItems = (item: ItemModel) => {
+	if (item.line_type !== LineType.COMBO_HEADER) return [];
+	return (props.order.items ?? []).filter(
+		(child) => child.line_type === LineType.COMBO_ITEM && child.parent_item_line === item.item_line,
+	);
+};
 
 const itemSurfaceClass = (item: ItemModel) => {
 	if (showsPreorderLine(item)) return 'bg-warning/10';

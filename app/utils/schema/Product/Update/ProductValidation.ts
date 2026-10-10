@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PRODUCT_SHORT_DESC_MAX } from 'yeppi-common';
+import { totalComboComponentUnits } from '~/utils/combo-pricing';
 import { duplicateVariantSkuIndexes } from '~/utils/product-variant-list';
 
 export type TranslateFn = (key: string) => string;
@@ -76,7 +77,13 @@ export const createUpdateProductValidation = (t: TranslateFn) => {
 		type_id: z.number().default(1),
 	});
   return base.superRefine((data, ctx) => {
-    if (data.composition === 'fixed_combo' && (!data.combo_components?.length || data.variants?.length || data.variations?.length)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Select components without combo variants', path: ['combo_components'] });
+	if (data.composition === 'fixed_combo') {
+		if (data.variants?.length || data.variations?.length) {
+			ctx.addIssue({ code: z.ZodIssueCode.custom, message: t('validation.product.comboComponentsNoVariants'), path: ['combo_components'] });
+		} else if (data.status === 'published' && totalComboComponentUnits(data.combo_components) < 2) {
+			ctx.addIssue({ code: z.ZodIssueCode.custom, message: t('validation.product.comboMinUnits'), path: ['combo_components'] });
+		}
+	}
 		const variants = data.variants ?? [];
 		for (let i = 0; i < variants.length; i++) {
 			const pt = variants[i]?.price_types?.[0];

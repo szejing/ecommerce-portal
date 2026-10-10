@@ -51,7 +51,6 @@
 						:code-disabled="false"
 						:show-long-description="showLongDescription"
 						:show-inventory="showSimpleProductInventory"
-						:combo-only="comboOnly"
 						@update:thumbnail="updateThumbnail"
 						@update:images="updateImages"
 						@delete:thumbnail="deleteThumbnail"
@@ -116,7 +115,7 @@ import { GROUP_CODE, PRODUCT, ProductType } from 'yeppi-common';
 import { clearedProductInventory, normalizeSalePrice, productInventoryFromFirstVariant } from '~/utils/product-variant-list';
 
 const overlay = useOverlay();
-const props = defineProps<{ comboOnly?: boolean; returnTo?: string }>();
+const props = defineProps<{ returnTo?: string }>();
 const formRef = ref();
 
 // Store

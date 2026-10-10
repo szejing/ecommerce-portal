@@ -24,17 +24,13 @@
 						<ZSelectMenuProductStatus v-model:status="state.status" />
 					</UFormField> -->
 					<UFormField>
-            <USwitch v-model="published" :label="t(published ? 'components.productUpdate.showInStore' : 'components.productUpdate.hideInStore')" />
+						<USwitch v-model="published" :label="t(published ? 'components.productUpdate.showInStore' : 'components.productUpdate.hideInStore')" />
 					</UFormField>
 				</div>
 
-        <UFormField v-if="!comboOnly" name="type_id" :label="t('components.productUpdate.productType')" required>
+				<UFormField name="type_id" :label="t('components.productUpdate.productType')" required>
 					<ZSelectMenuProductType v-model:type-id="state.type_id" />
-        </UFormField>
-        <UFormField v-if="isGoods && !comboOnly" label="Composition" name="composition">
-          <USelect v-model="state.composition" :items="[{ label: 'Single item', value: 'single' }, { label: 'Fixed combo', value: 'fixed_combo' }]" :disabled="!!state.variants?.length" class="w-full sm:w-64" @update:model-value="onCompositionChange" />
-        </UFormField>
-        <ZInputProductComboComponents v-if="isGoods && state.composition === 'fixed_combo'" v-model="state.combo_components" :product-code="state.code" />
+				</UFormField>
 
 				<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 					<UFormField name="code" :label="t('components.productUpdate.productCode')">
@@ -54,11 +50,7 @@
 
 				<UFormField name="short_desc" :label="t('components.productUpdate.shortDescription')" required>
 					<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.briefDescription') }}</p>
-					<UInput
-						v-model="state.short_desc"
-						:maxlength="PRODUCT_SHORT_DESC_MAX"
-						:placeholder="t('components.productUpdate.shortDescPlaceholder')"
-					/>
+					<UInput v-model="state.short_desc" :maxlength="PRODUCT_SHORT_DESC_MAX" :placeholder="t('components.productUpdate.shortDescPlaceholder')" />
 					<p class="mt-1 text-xs text-muted text-right">
 						{{
 							t('components.productUpdate.shortDescCounter', {
@@ -82,7 +74,7 @@
 			<hr class="my-6" />
 
 			<!-- Simple Product inventory (goods only; hidden when Variants exist or Service) -->
-      <div v-if="showInventory && state.composition !== 'fixed_combo'" class="space-y-4">
+			<div v-if="showInventory" class="space-y-4">
 				<h3 class="text-lg font-semibold">{{ t('components.zInput.inventory') }}</h3>
 				<div class="flex flex-wrap items-center gap-4">
 					<UCheckbox
@@ -101,7 +93,7 @@
 					/>
 				</div>
 				<div v-if="state.manage_inventory" class="max-w-xs">
-          <UFormField name="inventory_quantity" label="Available Quantity">
+					<UFormField name="inventory_quantity" label="Available Quantity">
 						<UInput v-model.number="state.inventory_quantity" type="number" :min="0" step="1" />
 					</UFormField>
 					<ZInputProductStockAddition v-if="codeDisabled && state.code" :product-code="state.code" class="mt-3" @received="updateStockBalance" />
@@ -154,18 +146,15 @@
 </template>
 
 <script lang="ts" setup>
-import { PRODUCT_GALLERY_MAX, PRODUCT_SHORT_DESC_MAX, ProductStatus, ProductType } from 'yeppi-common';
-import type { ComboComponent } from '~/utils/types/product';
+import { PRODUCT_GALLERY_MAX, PRODUCT_SHORT_DESC_MAX, ProductStatus } from 'yeppi-common';
 import type { Image } from '~/utils/types/image';
 import { ICONS } from '~/utils/icons';
 
 const { t } = useI18n();
 
 export type ProductBasicInfoState = {
-  composition?: 'single' | 'fixed_combo';
-  combo_components?: ComboComponent[];
-  variants?: unknown[];
-  variations?: unknown[];
+	variants?: unknown[];
+	variations?: unknown[];
 	status?: ProductStatus;
 	is_active?: boolean;
 	type_id?: number;
@@ -187,9 +176,8 @@ const props = withDefaults(
 		codeDisabled?: boolean;
 		showLongDescription?: boolean;
 		showInventory?: boolean;
-		comboOnly?: boolean;
 	}>(),
-	{ codeDisabled: false, showLongDescription: true, showInventory: false, comboOnly: false },
+	{ codeDisabled: false, showLongDescription: true, showInventory: false },
 );
 
 const emit = defineEmits<{
@@ -200,18 +188,16 @@ const emit = defineEmits<{
 }>();
 
 const state = toRef(props, 'state');
-const productTypeStore = useProductTypeStore();
-const isGoods = computed(() => props.comboOnly || productTypeStore.prod_types.find((type) => type.id === state.value.type_id)?.value === ProductType.ITEM);
 const published = computed({
-  get: () => state.value.status === ProductStatus.PUBLISHED && state.value.is_active !== false,
-  set: (value: boolean) => { state.value.status = value ? ProductStatus.PUBLISHED : ProductStatus.DRAFT; if (value) state.value.is_active = true; },
+	get: () => state.value.status === ProductStatus.PUBLISHED && state.value.is_active !== false,
+	set: (value: boolean) => {
+		state.value.status = value ? ProductStatus.PUBLISHED : ProductStatus.DRAFT;
+		if (value) state.value.is_active = true;
+	},
 });
-function onCompositionChange(value: string) {
-  if (value === 'fixed_combo') { state.value.manage_inventory = false; state.value.allow_preorder = false; state.value.inventory_quantity = 0; state.value.variations = []; }
-}
 function updateStockBalance(quantity: number) {
-  state.value.inventory_quantity = quantity;
-  state.value.expected_inventory_quantity = quantity;
+	state.value.inventory_quantity = quantity;
+	state.value.expected_inventory_quantity = quantity;
 }
 
 function onManageInventoryChange(value: boolean | 'indeterminate') {

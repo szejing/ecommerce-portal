@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LineType } from 'yeppi-common';
 import { UpdateAppointmentValidation } from '../../Appointment/Update/AppointmentValidation';
 
 type TranslateFn = (key: string) => string;
@@ -9,6 +10,7 @@ export function UpdateOrderItemValidation(t: TranslateFn) {
 		item_line: z.number(),
 		status: z.string({ message: t('validation.order.itemStatusRequired') }),
 		parent_item_line: z.number(),
+		line_type: z.nativeEnum(LineType).optional(),
 		prod_code: z.string({ message: t('validation.order.prodCodeRequired') }),
 		prod_name: z.string({ message: t('validation.order.prodNameRequired') }),
 		prod_variant_code: z.string().optional().nullable(),
