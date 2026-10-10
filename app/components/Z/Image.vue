@@ -5,16 +5,19 @@
 		:style="fill ? undefined : { width: `${width}px`, height: `${height}px` }">
 		<div
 			class="absolute inset-0 scale-110 bg-cover bg-center opacity-60 blur-lg"
-			:style="{ backgroundImage: `url(${src})` }" />
+			:style="{ backgroundImage: `url(${displaySrc})` }" />
 		<img
-			:src="src"
+			:src="displaySrc"
 			:alt="alt"
-			class="relative z-10 block h-full w-full object-contain" />
+			class="relative z-10 block h-full w-full object-contain"
+			@error="onImageError" />
 	</div>
 </template>
 
 <script lang="ts" setup>
-withDefaults(
+const IMAGE_FALLBACK = '/svg/product-holder.svg';
+
+const props = withDefaults(
 	defineProps<{
 		src: string;
 		alt?: string;
@@ -30,4 +33,18 @@ withDefaults(
 		fill: false,
 	},
 );
+
+const displaySrc = ref(props.src || IMAGE_FALLBACK);
+
+watch(
+	() => props.src,
+	(url) => {
+		displaySrc.value = url || IMAGE_FALLBACK;
+	},
+);
+
+const onImageError = () => {
+	if (displaySrc.value === IMAGE_FALLBACK) return;
+	displaySrc.value = IMAGE_FALLBACK;
+};
 </script>
