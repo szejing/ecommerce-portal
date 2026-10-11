@@ -38,14 +38,18 @@ describe('portal combo workspace', () => {
     expect(useAppUiStore().navigations.flatMap(group => group.links).find(link => link.to === '/products')?.children).toContainEqual(expect.objectContaining({ to: '/products/combos' }));
   });
 
-  it('renders existing combo thumbnails, contents, availability and configuration links', async () => {
+  it('renders existing combo thumbnails, contents and availability in the products listing shell', async () => {
     const getMany = vi.spyOn(useNuxtApp().$api.product, 'getMany').mockResolvedValue({ data: [combo], value: [combo], count: 1, '@odata.count': 1 });
-    const wrapper = await mountSuspended(ComboListing, { global: { stubs: { ZPagePanel: pageStub, UTooltip: { template: '<span><slot /></span>' } } } });
+    const wrapper = await mountSuspended(ComboListing, { global: { stubs: { ZPagePanel: pageStub } } });
+    await flushPromises();
     expect(getMany).toHaveBeenCalledWith(expect.objectContaining({ $filter: "composition eq 'fixed_combo'" }));
     expect(wrapper.text()).toContain('Burger meal');
     expect(wrapper.text()).toContain('2 x Coke');
     expect(wrapper.find('img[src="/meal.webp"]').exists()).toBe(true);
-    expect(wrapper.find('a[href="/products/combos/meal"]').exists()).toBe(true);
+    expect(wrapper.findComponent({ name: 'ZSectionFilterCombos' }).exists()).toBe(true);
+    expect(wrapper.findComponent({ name: 'ZTableToolbar' }).exists()).toBe(true);
+    expect(useProductStore().combos).toHaveLength(1);
+    expect(useProductStore().total_combos).toBe(1);
     wrapper.unmount();
   });
 

@@ -20,6 +20,7 @@ export type ProductRefreshOutcome = { status: 'completed' } | { status: 'stale' 
 export type ProductMutationOutcome = { status: 'completed'; product: Product } | { status: 'failed'; failure: ProductFailure };
 
 let productFilterTimer: ReturnType<typeof setTimeout> | undefined;
+let comboFilterTimer: ReturnType<typeof setTimeout> | undefined;
 let productImportController: AbortController | undefined;
 let productImportElapsedTimer: ReturnType<typeof setInterval> | undefined;
 
@@ -37,7 +38,16 @@ type ProductFilter = {
 	current_page: number;
 };
 
+type ComboFilter = ProductFilter;
+
 const initialEmptyProductFilter: ProductFilter = {
+	query: '',
+	status: undefined,
+	page_size: options_page_size[0] as number,
+	current_page: 1,
+};
+
+const initialEmptyComboFilter: ComboFilter = {
 	query: '',
 	status: undefined,
 	page_size: options_page_size[0] as number,
@@ -109,15 +119,23 @@ export const useProductStore = defineStore('productStore', {
 		new_product: structuredClone(initialEmptyProduct),
 		products: [] as Product[],
 		total_products: 0 as number,
+		combos: [] as Product[],
+		total_combos: 0 as number,
 		current_product: undefined as Product | undefined,
 		filter: structuredClone(initialEmptyProductFilter),
+		combo_filter: structuredClone(initialEmptyComboFilter),
+		combo_loading: false as boolean,
+		combo_exporting: false as boolean,
 		errors: [] as string[],
 		listFailure: undefined as ProductFailure | undefined,
+		comboListFailure: undefined as ProductFailure | undefined,
 		listingGeneration: 0 as number,
+		comboListingGeneration: 0 as number,
 	}),
 
 	getters: {
 		filters: (state) => ({ ...state.filter }),
+		combo_filters: (state) => ({ ...state.combo_filter }),
 	},
 
 	actions: {
@@ -141,6 +159,67 @@ export const useProductStore = defineStore('productStore', {
 			const { $api } = useNuxtApp();
 			const response = await $api.product.getMany(comboListingQuery(filter));
 			return { items: response.data ?? response.value ?? [], total: response['@odata.count'] ?? response.count ?? 0 };
+		},
+
+		setComboSearch(search: string) {
+			this.combo_filter.query = search;
+			this.combo_filter.current_page = 1;
+			if (comboFilterTimer) clearTimeout(comboFilterTimer);
+			comboFilterTimer = setTimeout(() => {
+				comboFilterTimer = undefined;
+				void this.refreshComboListing();
+			}, PRODUCT_FILTER_DEBOUNCE_MS);
+		},
+
+		setComboStatus(status: ProductStatus | undefined) {
+			this.combo_filter.status = status;
+			this.combo_filter.current_page = 1;
+			void this.refreshComboListing();
+		},
+
+		async setComboPage(page: number): Promise<ProductRefreshOutcome> {
+			this.combo_filter.current_page = page;
+			return this.refreshComboListing();
+		},
+
+		async setComboPageSize(size: number): Promise<ProductRefreshOutcome> {
+			this.combo_filter.page_size = size;
+			this.combo_filter.current_page = 1;
+			return this.refreshComboListing();
+		},
+
+		async clearComboFilters(): Promise<ProductRefreshOutcome> {
+			if (comboFilterTimer) clearTimeout(comboFilterTimer);
+			comboFilterTimer = undefined;
+			this.combo_filter.query = '';
+			this.combo_filter.status = undefined;
+			this.combo_filter.current_page = 1;
+			return this.refreshComboListing();
+		},
+
+		async refreshComboListing(): Promise<ProductRefreshOutcome> {
+			const generation = ++this.comboListingGeneration;
+			this.combo_loading = true;
+			this.comboListFailure = undefined;
+			try {
+				const result = await this.getCombos({
+					page: this.combo_filter.current_page,
+					pageSize: this.combo_filter.page_size,
+					search: this.combo_filter.query,
+					status: this.combo_filter.status,
+				});
+				if (generation !== this.comboListingGeneration) return { status: 'stale' };
+				this.combos = result.items;
+				this.total_combos = result.total;
+				return { status: 'completed' };
+			} catch (err: unknown | ErrorResponse) {
+				if (generation !== this.comboListingGeneration) return { status: 'stale' };
+				const failure = { kind: 'request_failed' as const, message: (err as ErrorResponse).message ?? 'Failed to process combo' };
+				this.comboListFailure = failure;
+				return { status: 'failed', failure };
+			} finally {
+				if (generation === this.comboListingGeneration) this.combo_loading = false;
+			}
 		},
 
 		setSearch(search: string) {

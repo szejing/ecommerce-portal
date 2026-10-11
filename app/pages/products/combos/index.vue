@@ -1,157 +1,104 @@
 <template>
 	<ZPagePanel id="product-combos" :title="t('combo.title')" back-to="/products">
 		<template #navbar-right>
-			<ZCreateButton to="/products/combos/create" :label="t('combo.create')" />
+			<ZCreateButton to="/products/combos/create" :label="t('common.addCombo')" />
 		</template>
 		<template #toolbar>
-			<div class="flex flex-wrap items-center gap-3">
-				<UInput v-model="search" icon="i-lucide-search" :placeholder="t('combo.search')" :aria-label="t('combo.search')" class="w-full sm:w-72" />
-				<USelect v-model="status" :items="statusItems" :aria-label="t('common.status')" class="w-44" />
-				<USelect v-model="pageSize" :items="[10, 20, 50]" :aria-label="t('common.entries')" class="w-20" />
-				<UTooltip :text="t('common.refresh')">
-					<UButton icon="i-lucide-refresh-cw" color="neutral" variant="ghost" :aria-label="t('common.refresh')" :loading="pending" @click="refresh()" />
-				</UTooltip>
-			</div>
+			<ZSectionFilterCombos />
 		</template>
-		<UAlert
-			v-if="error"
-			color="error"
-			icon="i-lucide-circle-alert"
-			:title="t('combo.loadFailed')"
-			:description="getErrorResponseMessage(error, t('combo.loadFailed'))"
-			class="mb-4"
-		/>
-		<div class="flex flex-col">
-			<div class="min-h-130 min-w-0 flex-1 overflow-x-auto" :aria-busy="pending">
-				<UTable :data="data?.items ?? []" :columns="columns" :loading="pending" @select="selectCombo">
-					<template #name-cell="{ row }">
-						<NuxtLink :to="productDetailPath(row.original)" class="flex items-center gap-3 min-w-48 max-w-80">
-							<img
-								v-if="row.original.thumbnail?.url"
-								:src="row.original.thumbnail.url"
-								:alt="row.original.name"
-								class="size-12 shrink-0 rounded object-cover"
-							/>
-							<div class="min-w-0">
-								<p class="font-medium break-words whitespace-normal">{{ row.original.name }}</p>
-								<p class="text-xs text-muted break-all">{{ row.original.code }}</p>
-							</div>
-						</NuxtLink>
-					</template>
-					<template #components-cell="{ row }">
-						<ul class="min-w-44 max-w-80 text-sm space-y-1">
-							<li v-for="(label, index) in componentLabels(row.original)" :key="index" class="whitespace-normal break-words">{{ label }}</li>
-						</ul>
-					</template>
-					<template #available-cell="{ row }">
-						<UBadge v-if="row.original.combo_available_quantity === 0" color="error" variant="subtle">{{ t('combo.unavailable') }}</UBadge>
-						<span v-else class="tabular-nums">{{
-							row.original.combo_available_quantity === null ? t('combo.unlimited') : (row.original.combo_available_quantity ?? 0)
-						}}</span>
-					</template>
-					<template #price-cell="{ row }">
-						<span class="whitespace-nowrap tabular-nums">{{ comboPrice(row.original) }}</span>
-					</template>
-					<template #status-cell="{ row }">
-						<UBadge
-							:color="row.original.is_active === false ? 'neutral' : row.original.status === ProductStatus.PUBLISHED ? 'primary' : 'warning'"
-							variant="subtle"
-						>
-							{{
-								t(row.original.is_active === false ? 'combo.archived' : row.original.status === ProductStatus.PUBLISHED ? 'combo.published' : 'combo.hidden')
-							}}
-						</UBadge>
-					</template>
-					<template #actions-cell="{ row }">
-						<UTooltip :text="t('combo.configure')">
-							<UButton
-								icon="i-lucide-pencil"
-								color="neutral"
-								variant="ghost"
-								:aria-label="t('combo.configure')"
-								:to="productDetailPath(row.original)"
-								@click.stop
-							/>
-						</UTooltip>
-					</template>
+		<div class="space-y-6">
+			<ZTableToolbar
+				v-model:selected-column-keys="selectedColumnKeys"
+				:model-value="combo_filters.page_size"
+				:page-size-options="options_page_size"
+				:export-enabled="false"
+				:column-options="columnOptions"
+				@update:model-value="productStore.setComboPageSize"
+			/>
+
+			<template v-if="initialize">
+				<div class="rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
+					<div class="grid grid-cols-4 gap-4 p-4">
+						<USkeleton v-for="i in 4" :key="i" class="h-4 flex-1 min-w-0" />
+					</div>
+					<div v-for="i in 5" :key="i" class="grid grid-cols-4 gap-4 p-4 items-center">
+						<USkeleton v-for="j in 4" :key="j" class="h-4 flex-1 min-w-0" />
+					</div>
+				</div>
+			</template>
+
+			<UCard v-else :ui="{ body: 'p-0 sm:p-0' }">
+				<UTable :data="combos" :columns="visibleColumns" :loading="combo_loading" @select="selectCombo">
 					<template #empty>
-						<p class="py-10 text-center text-muted">{{ pending ? t('common.loading') : error ? t('combo.loadFailed') : t('combo.empty') }}</p>
+						<div class="flex flex-col items-center justify-center py-12 gap-3">
+							<UIcon :name="ICONS.CUBE" class="w-12 h-12 text-gray-400" />
+							<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noCombosFound') }}</p>
+							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
+						</div>
 					</template>
 				</UTable>
-			</div>
-			<div class="flex shrink-0 justify-between items-center gap-4 flex-wrap pt-4 border-t border-muted">
-				<span class="text-sm text-muted">{{ t('combo.count', { count: data?.total ?? 0 }) }}</span>
-				<UPagination v-model:page="page" :items-per-page="pageSize" :total="data?.total ?? 0" :disabled="pending" />
+			</UCard>
+
+			<div v-if="!initialize && combos.length > 0" class="section-pagination">
+				<UPagination
+					:page="combo_filters.current_page"
+					:items-per-page="combo_filters.page_size"
+					:total="total_combos"
+					@update:page="productStore.setComboPage"
+				/>
 			</div>
 		</div>
 	</ZPagePanel>
 </template>
 
-<script setup lang="ts">
-import type { TableColumn, TableRow } from '@nuxt/ui';
-import { useDebounceFn } from '@vueuse/core';
-import { formatCurrency, getErrorResponseMessage, ProductStatus } from 'yeppi-common';
+<script lang="ts" setup>
+import { options_page_size } from '~/utils/options';
+import { getComboColumns } from '~/utils/table-columns';
+import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import type { Product } from '~/utils/types/product';
+import type { TableRow } from '@nuxt/ui';
+import { ICONS } from '~/utils/icons';
 import { productDetailPath } from '~/utils/product-route';
+import { failedNotification } from '~/stores/AppUi/AppUi';
 
 const { t } = useI18n();
-useHead({ title: () => t('combo.title') });
 const productStore = useProductStore();
-const search = ref('');
-const query = ref('');
-const status = ref('all');
-const page = ref(1);
-const pageSize = ref(20);
-watch(
-	search,
-	useDebounceFn(() => {
-		query.value = search.value.trim();
-		page.value = 1;
-	}, 500),
-);
-watch([status, pageSize], () => {
-	page.value = 1;
+
+const COMBO_COLUMN_LABELS = {
+	name: 'table.codeAndName',
+	components: 'combo.components',
+	available: 'combo.available',
+	price_types: 'table.price',
+	status: 'table.status',
+} as const;
+
+const combo_columns = computed(() => getComboColumns(t));
+const columnOptions = computed(() => columnOptionsFromLabelMap(t, COMBO_COLUMN_LABELS));
+const { selectedColumnKeys, visibleColumns } = useTableColumnVisibility(combo_columns, columnOptions);
+useHead({ title: () => t('pages.combosTitle') });
+
+const { combos, combo_loading, combo_filters, total_combos, comboListFailure } = storeToRefs(productStore);
+const initialize = ref(true);
+
+watch(comboListFailure, (failure) => {
+	if (failure) failedNotification(failure.message);
 });
-const statusItems = computed(() => [
-	{ label: t('combo.allStatuses'), value: 'all' },
-	{ label: t('combo.published'), value: ProductStatus.PUBLISHED },
-	{ label: t('combo.hidden'), value: ProductStatus.DRAFT },
-]);
-const { data, pending, error, refresh } = await useAsyncData(
-	'product-combos',
-	() =>
-		productStore.getCombos({
-			page: page.value,
-			pageSize: pageSize.value,
-			search: query.value,
-			status: status.value === 'all' ? undefined : (status.value as ProductStatus),
-		}),
-	{ watch: [page, pageSize, query, status], default: () => ({ items: [], total: 0 }) },
-);
-const columns = computed<TableColumn<Product>[]>(() => [
-	{ accessorKey: 'name', header: t('table.codeAndName') },
-	{ id: 'components', header: t('combo.components') },
-	{ id: 'available', header: t('combo.available') },
-	{ id: 'price', header: t('common.price') },
-	{ id: 'status', header: t('common.status') },
-	{ id: 'actions', header: '' },
-]);
 
-const componentLabels = (product: Product): string[] => {
-	return (product.combo_component_details?.length ? product.combo_component_details : (product.combo_components ?? [])).map((component) => {
-		const name = 'product_name' in component ? component.product_name : component.product_code;
-		const variant = 'variant_name' in component ? component.variant_name : component.variant_code;
-		return `${component.quantity} x ${name}${variant ? ` / ${variant}` : ''}`;
-	});
-};
+onMounted(async () => {
+	initialize.value = true;
+	try {
+		await productStore.refreshComboListing();
+	} finally {
+		initialize.value = false;
+	}
+});
 
-const comboPrice = (product: Product): string => {
-	const price = product.price_types?.[0];
-	if (!price) return '-';
-	return formatCurrency(price.sale_price && price.sale_price > 0 ? price.sale_price : price.orig_sell_price, price.currency_code);
-};
+const selectCombo = async (_event: Event, row: TableRow<Product>) => {
+	const combo = row.original;
+	if (!combo) return;
 
-const selectCombo = (_event: Event, row: TableRow<Product>) => {
-	void navigateTo(productDetailPath(row.original));
+	navigateTo(productDetailPath(combo));
 };
 </script>
+
+<style scoped></style>

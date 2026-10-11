@@ -113,6 +113,22 @@ describe('useProductStore', () => {
 		expect(store.products).toEqual([]);
 	});
 
+	it('refreshes combo listing into dedicated combo state without touching products', async () => {
+		const store = useProductStore();
+		store.products = [product('SKU-1')];
+		store.combo_filter.query = 'Meal';
+		store.combo_filter.status = ProductStatus.DRAFT;
+		store.combo_filter.page_size = 10;
+		store.combo_filter.current_page = 2;
+		getMany.mockResolvedValue({ data: [product('MEAL')], '@odata.count': 12 });
+		const outcome = await store.refreshComboListing();
+		expect(outcome).toEqual({ status: 'completed' });
+		expect(getMany).toHaveBeenCalledWith(expect.objectContaining({ $filter: `composition eq 'fixed_combo' and status eq '${ProductStatus.DRAFT}'`, $top: 10, $skip: 10, $search: 'Meal' }));
+		expect(store.combos.map((row) => row.code)).toEqual(['MEAL']);
+		expect(store.total_combos).toBe(12);
+		expect(store.products.map((row) => row.code)).toEqual(['SKU-1']);
+	});
+
 	it('does not let an older listing request replace rows', async () => {
 		const first = deferred<{ data: Product[]; '@odata.count': number }>();
 		const second = deferred<{ data: Product[]; '@odata.count': number }>();
