@@ -33,20 +33,44 @@
 				</div>
 				<article data-testid="order-item-mobile-card" class="px-4 py-4" :class="itemSurfaceClass(item)">
 					<div class="flex items-start gap-3">
-						<img
-							:src="resolvedThumbnailUrl(item)"
-							:alt="item.prod_name || t('table.productThumbnail')"
-							width="56"
-							height="56"
-							class="size-14 rounded-lg object-cover shrink-0 bg-elevated"
-							@error="onThumbnailError(item)"
-						/>
 						<div class="min-w-0 flex-1 space-y-1">
-							<ZSectionOrderDetailItemIdentity
-								:product-text="productLineText(item)"
-								:variant-text="variantLineText(item)"
-								:is-voided="item.status === OrderItemStatus.VOIDED"
-							/>
+							<NuxtLink
+								v-if="orderItemDetailPath(item)"
+								:to="orderItemDetailPath(item)!"
+								data-testid="order-item-catalog-link"
+								class="flex items-start gap-3 rounded-md outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary"
+							>
+								<img
+									:src="resolvedThumbnailUrl(item)"
+									:alt="item.prod_name || t('table.productThumbnail')"
+									width="56"
+									height="56"
+									class="size-14 rounded-lg object-cover shrink-0 bg-elevated"
+									@error="onThumbnailError(item)"
+								/>
+								<ZSectionOrderDetailItemIdentity
+									class="min-w-0 flex-1"
+									:product-text="productLineText(item)"
+									:variant-text="variantLineText(item)"
+									:is-voided="item.status === OrderItemStatus.VOIDED"
+								/>
+							</NuxtLink>
+							<div v-else class="flex items-start gap-3">
+								<img
+									:src="resolvedThumbnailUrl(item)"
+									:alt="item.prod_name || t('table.productThumbnail')"
+									width="56"
+									height="56"
+									class="size-14 rounded-lg object-cover shrink-0 bg-elevated"
+									@error="onThumbnailError(item)"
+								/>
+								<ZSectionOrderDetailItemIdentity
+									class="min-w-0 flex-1"
+									:product-text="productLineText(item)"
+									:variant-text="variantLineText(item)"
+									:is-voided="item.status === OrderItemStatus.VOIDED"
+								/>
+							</div>
 							<div v-if="comboItems(item).length" data-testid="order-item-combo-nested" class="mt-2 space-y-1.5">
 								<div
 									v-for="child in comboItems(item)"
@@ -54,17 +78,37 @@
 									data-testid="order-item-combo-child"
 									class="flex items-start gap-2 rounded-md bg-elevated/50 py-1.5 pl-2 pr-2"
 								>
-									<img
-										:src="resolvedThumbnailUrl(child)"
-										:alt="child.prod_name || t('table.productThumbnail')"
-										width="32"
-										height="32"
-										class="size-8 rounded object-cover shrink-0 bg-elevated"
-										@error="onThumbnailError(child)"
-									/>
-									<p class="min-w-0 flex-1 text-xs text-muted wrap-break-word">
-										{{ child.prod_name }}<template v-if="child.prod_variant_name"> ({{ child.prod_variant_name }})</template>
-									</p>
+									<NuxtLink
+										v-if="orderItemDetailPath(child)"
+										:to="orderItemDetailPath(child)!"
+										data-testid="order-item-combo-child-catalog-link"
+										class="flex min-w-0 flex-1 items-start gap-2 rounded-sm outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary"
+									>
+										<img
+											:src="resolvedThumbnailUrl(child)"
+											:alt="child.prod_name || t('table.productThumbnail')"
+											width="32"
+											height="32"
+											class="size-8 rounded object-cover shrink-0 bg-elevated"
+											@error="onThumbnailError(child)"
+										/>
+										<p class="min-w-0 flex-1 text-xs text-muted wrap-break-word">
+											{{ child.prod_name }}<template v-if="child.prod_variant_name"> ({{ child.prod_variant_name }})</template>
+										</p>
+									</NuxtLink>
+									<template v-else>
+										<img
+											:src="resolvedThumbnailUrl(child)"
+											:alt="child.prod_name || t('table.productThumbnail')"
+											width="32"
+											height="32"
+											class="size-8 rounded object-cover shrink-0 bg-elevated"
+											@error="onThumbnailError(child)"
+										/>
+										<p class="min-w-0 flex-1 text-xs text-muted wrap-break-word">
+											{{ child.prod_name }}<template v-if="child.prod_variant_name"> ({{ child.prod_variant_name }})</template>
+										</p>
+									</template>
 									<span class="shrink-0 text-xs font-medium tabular-nums text-muted">×{{ child.qty }}</span>
 								</div>
 							</div>
@@ -136,20 +180,44 @@
 		>
 			<template #item-cell="{ row }">
 				<div class="flex items-start gap-3 min-w-0" :class="{ 'opacity-60': row.original.status !== OrderItemStatus.ACTIVE }">
-					<img
-						:src="resolvedThumbnailUrl(row.original)"
-						:alt="row.original.prod_name || t('table.productThumbnail')"
-						width="48"
-						height="48"
-						class="size-12 rounded-md object-cover shrink-0 bg-elevated"
-						@error="onThumbnailError(row.original)"
-					/>
 					<div class="min-w-0 flex-1 space-y-1">
-						<ZSectionOrderDetailItemIdentity
-							:product-text="productLineText(row.original)"
-							:variant-text="variantLineText(row.original)"
-							:is-voided="row.original.status === OrderItemStatus.VOIDED"
-						/>
+						<NuxtLink
+							v-if="orderItemDetailPath(row.original)"
+							:to="orderItemDetailPath(row.original)!"
+							data-testid="order-item-catalog-link"
+							class="flex items-start gap-3 rounded-md outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary"
+						>
+							<img
+								:src="resolvedThumbnailUrl(row.original)"
+								:alt="row.original.prod_name || t('table.productThumbnail')"
+								width="48"
+								height="48"
+								class="size-12 rounded-md object-cover shrink-0 bg-elevated"
+								@error="onThumbnailError(row.original)"
+							/>
+							<ZSectionOrderDetailItemIdentity
+								class="min-w-0 flex-1"
+								:product-text="productLineText(row.original)"
+								:variant-text="variantLineText(row.original)"
+								:is-voided="row.original.status === OrderItemStatus.VOIDED"
+							/>
+						</NuxtLink>
+						<div v-else class="flex items-start gap-3">
+							<img
+								:src="resolvedThumbnailUrl(row.original)"
+								:alt="row.original.prod_name || t('table.productThumbnail')"
+								width="48"
+								height="48"
+								class="size-12 rounded-md object-cover shrink-0 bg-elevated"
+								@error="onThumbnailError(row.original)"
+							/>
+							<ZSectionOrderDetailItemIdentity
+								class="min-w-0 flex-1"
+								:product-text="productLineText(row.original)"
+								:variant-text="variantLineText(row.original)"
+								:is-voided="row.original.status === OrderItemStatus.VOIDED"
+							/>
+						</div>
 						<div v-if="comboItems(row.original).length" data-testid="order-item-combo-nested" class="mt-2 space-y-1.5">
 							<div
 								v-for="child in comboItems(row.original)"
@@ -157,17 +225,37 @@
 								data-testid="order-item-combo-child"
 								class="flex items-start gap-2 rounded-md bg-elevated/50 py-1.5 pl-2 pr-2"
 							>
-								<img
-									:src="resolvedThumbnailUrl(child)"
-									:alt="child.prod_name || t('table.productThumbnail')"
-									width="32"
-									height="32"
-									class="size-8 rounded object-cover shrink-0 bg-elevated"
-									@error="onThumbnailError(child)"
-								/>
-								<p class="min-w-0 flex-1 text-xs text-muted wrap-break-word">
-									{{ child.prod_name }}<template v-if="child.prod_variant_name"> ({{ child.prod_variant_name }})</template>
-								</p>
+								<NuxtLink
+									v-if="orderItemDetailPath(child)"
+									:to="orderItemDetailPath(child)!"
+									data-testid="order-item-combo-child-catalog-link"
+									class="flex min-w-0 flex-1 items-start gap-2 rounded-sm outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary"
+								>
+									<img
+										:src="resolvedThumbnailUrl(child)"
+										:alt="child.prod_name || t('table.productThumbnail')"
+										width="32"
+										height="32"
+										class="size-8 rounded object-cover shrink-0 bg-elevated"
+										@error="onThumbnailError(child)"
+									/>
+									<p class="min-w-0 flex-1 text-xs text-muted wrap-break-word">
+										{{ child.prod_name }}<template v-if="child.prod_variant_name"> ({{ child.prod_variant_name }})</template>
+									</p>
+								</NuxtLink>
+								<template v-else>
+									<img
+										:src="resolvedThumbnailUrl(child)"
+										:alt="child.prod_name || t('table.productThumbnail')"
+										width="32"
+										height="32"
+										class="size-8 rounded object-cover shrink-0 bg-elevated"
+										@error="onThumbnailError(child)"
+									/>
+									<p class="min-w-0 flex-1 text-xs text-muted wrap-break-word">
+										{{ child.prod_name }}<template v-if="child.prod_variant_name"> ({{ child.prod_variant_name }})</template>
+									</p>
+								</template>
 								<span class="shrink-0 text-xs font-medium tabular-nums text-muted">×{{ child.qty }}</span>
 							</div>
 						</div>
@@ -277,6 +365,7 @@ import { visibleOrderHeaderDiscounts } from '~/utils/order-header-discounts';
 import { formatProductLineIdentity, formatVariantLineIdentity } from '~/utils/line-identity';
 import { getOrderItemStatusColor, getOrderItemStatusOptions } from '~/utils/options';
 import { getOrderItemWorkload } from '~/utils/order-workbench';
+import { orderItemDetailPath } from '~/utils/product-route';
 
 const PRODUCT_THUMBNAIL_FALLBACK = '/svg/product-holder.svg';
 
