@@ -34,11 +34,13 @@
 				<article data-testid="order-item-mobile-card" class="px-4 py-4" :class="itemSurfaceClass(item)">
 					<div class="flex items-start gap-3">
 						<div class="min-w-0 flex-1 space-y-1">
-							<NuxtLink
+							<button
 								v-if="orderItemDetailPath(item)"
-								:to="orderItemDetailPath(item)!"
+								type="button"
 								data-testid="order-item-catalog-link"
-								class="flex items-start gap-3 rounded-md outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary"
+								class="flex w-full items-start gap-3 rounded-md text-left outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+								:aria-label="t('components.zModal.catalogStatusPeek.openPeek', { item: productLineText(item) || item.prod_name })"
+								@click="openCatalogStatusPeek(item)"
 							>
 								<img
 									:src="resolvedThumbnailUrl(item)"
@@ -54,7 +56,7 @@
 									:variant-text="variantLineText(item)"
 									:is-voided="item.status === OrderItemStatus.VOIDED"
 								/>
-							</NuxtLink>
+							</button>
 							<div v-else class="flex items-start gap-3">
 								<img
 									:src="resolvedThumbnailUrl(item)"
@@ -78,11 +80,13 @@
 									data-testid="order-item-combo-child"
 									class="flex items-start gap-2 rounded-md bg-elevated/50 py-1.5 pl-2 pr-2"
 								>
-									<NuxtLink
+									<button
 										v-if="orderItemDetailPath(child)"
-										:to="orderItemDetailPath(child)!"
+										type="button"
 										data-testid="order-item-combo-child-catalog-link"
-										class="flex min-w-0 flex-1 items-start gap-2 rounded-sm outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary"
+										class="flex min-w-0 flex-1 items-start gap-2 rounded-sm text-left outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+										:aria-label="t('components.zModal.catalogStatusPeek.openPeek', { item: child.prod_name })"
+										@click="openCatalogStatusPeek(child)"
 									>
 										<img
 											:src="resolvedThumbnailUrl(child)"
@@ -95,7 +99,7 @@
 										<p class="min-w-0 flex-1 text-xs text-muted wrap-break-word">
 											{{ child.prod_name }}<template v-if="child.prod_variant_name"> ({{ child.prod_variant_name }})</template>
 										</p>
-									</NuxtLink>
+									</button>
 									<template v-else>
 										<img
 											:src="resolvedThumbnailUrl(child)"
@@ -181,11 +185,13 @@
 			<template #item-cell="{ row }">
 				<div class="flex items-start gap-3 min-w-0" :class="{ 'opacity-60': row.original.status !== OrderItemStatus.ACTIVE }">
 					<div class="min-w-0 flex-1 space-y-1">
-						<NuxtLink
+						<button
 							v-if="orderItemDetailPath(row.original)"
-							:to="orderItemDetailPath(row.original)!"
+							type="button"
 							data-testid="order-item-catalog-link"
-							class="flex items-start gap-3 rounded-md outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary"
+							class="flex w-full items-start gap-3 rounded-md text-left outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+							:aria-label="t('components.zModal.catalogStatusPeek.openPeek', { item: productLineText(row.original) || row.original.prod_name })"
+							@click="openCatalogStatusPeek(row.original)"
 						>
 							<img
 								:src="resolvedThumbnailUrl(row.original)"
@@ -201,7 +207,7 @@
 								:variant-text="variantLineText(row.original)"
 								:is-voided="row.original.status === OrderItemStatus.VOIDED"
 							/>
-						</NuxtLink>
+						</button>
 						<div v-else class="flex items-start gap-3">
 							<img
 								:src="resolvedThumbnailUrl(row.original)"
@@ -225,11 +231,13 @@
 								data-testid="order-item-combo-child"
 								class="flex items-start gap-2 rounded-md bg-elevated/50 py-1.5 pl-2 pr-2"
 							>
-								<NuxtLink
+								<button
 									v-if="orderItemDetailPath(child)"
-									:to="orderItemDetailPath(child)!"
+									type="button"
 									data-testid="order-item-combo-child-catalog-link"
-									class="flex min-w-0 flex-1 items-start gap-2 rounded-sm outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary"
+									class="flex min-w-0 flex-1 items-start gap-2 rounded-sm text-left outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+									:aria-label="t('components.zModal.catalogStatusPeek.openPeek', { item: child.prod_name })"
+									@click="openCatalogStatusPeek(child)"
 								>
 									<img
 										:src="resolvedThumbnailUrl(child)"
@@ -242,7 +250,7 @@
 									<p class="min-w-0 flex-1 text-xs text-muted wrap-break-word">
 										{{ child.prod_name }}<template v-if="child.prod_variant_name"> ({{ child.prod_variant_name }})</template>
 									</p>
-								</NuxtLink>
+								</button>
 								<template v-else>
 									<img
 										:src="resolvedThumbnailUrl(child)"
@@ -353,7 +361,7 @@
 
 <script lang="ts" setup>
 import type { TableMeta, Row } from '@tanstack/vue-table';
-import { ZModalInformation, ZModalOrderDetailItem } from '#components';
+import { ZModalInformation, ZModalOrderCatalogStatusPeek, ZModalOrderDetailItem } from '#components';
 import { LineType, OrderItemStatus, OrderStatus, OrderType, formatCurrency, GROUP_CODE, PRODUCT } from 'yeppi-common';
 import { ICONS } from '~/utils/icons';
 import type { ItemModel } from '~/utils/models/item.model';
@@ -455,6 +463,19 @@ const order_items_table_meta = computed<TableMeta<ItemModel>>(() => ({
 		},
 	},
 }));
+
+const openCatalogStatusPeek = (item: ItemModel) => {
+	if (!orderItemDetailPath(item)) return;
+
+	const peekModal = overlay.create(ZModalOrderCatalogStatusPeek, {
+		props: {
+			item: JSON.parse(JSON.stringify(item)),
+			orderCurrency: currency_code.value,
+		},
+	});
+
+	peekModal.open();
+};
 
 const openOrderItemEdit = (item: ItemModel) => {
 	if (item.status === OrderItemStatus.ACTIVE) {

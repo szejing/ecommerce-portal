@@ -2297,6 +2297,48 @@
 			"edit": "编辑变体"
 		},
 		"zModal": {
+			"catalogStatusPeek": {
+				"title": "目录状态",
+				"openPeek": "查看 {item} 的目录状态",
+				"orderedAs": "下单时",
+				"orderedQty": "数量",
+				"unitPriceCharged": "成交单价",
+				"liveStatus": "当前目录",
+				"components": "组合内容",
+				"notFoundTitle": "目录中找不到此商品",
+				"notFoundDescription": "订单行仍存在，但商品在目录中缺失或不可用。",
+				"openProduct": "打开商品",
+				"openCombo": "打开组合",
+				"kind": {
+					"product": "商品",
+					"service": "服务",
+					"fixed_combo": "固定组合"
+				},
+				"sellability": {
+					"sellable": "可售",
+					"draft": "草稿",
+					"hidden": "隐藏",
+					"archived": "已归档",
+					"unknown": "未知"
+				},
+				"values": {
+					"yes": "是",
+					"no": "否",
+					"na": "不适用",
+					"unlimited": "不限"
+				},
+				"rows": {
+					"manageInventory": "管理库存",
+					"availableQuantity": "可用数量",
+					"allowPreorder": "允许预购",
+					"origSellPrice": "原价",
+					"salePrice": "售价",
+					"costPrice": "成本价",
+					"currency": "货币",
+					"sku": "SKU",
+					"barcode": "条码"
+				}
+			},
 			"activityLogDetail": {
 				"title": "活动日志详情",
 				"description": "描述",

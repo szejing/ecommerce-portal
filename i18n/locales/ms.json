@@ -2297,6 +2297,48 @@
 			"edit": "Edit varian"
 		},
 		"zModal": {
+			"catalogStatusPeek": {
+				"title": "Status katalog",
+				"openPeek": "Lihat status katalog untuk {item}",
+				"orderedAs": "Seperti dipesan",
+				"orderedQty": "Kuantiti",
+				"unitPriceCharged": "Harga unit dikenakan",
+				"liveStatus": "Katalog semasa",
+				"components": "Komponen",
+				"notFoundTitle": "Produk tidak dijumpai dalam katalog",
+				"notFoundDescription": "Baris pesanan masih wujud, tetapi produk tiada atau tidak tersedia dalam katalog.",
+				"openProduct": "Buka produk",
+				"openCombo": "Buka kombo",
+				"kind": {
+					"product": "Produk",
+					"service": "Perkhidmatan",
+					"fixed_combo": "Kombo Tetap"
+				},
+				"sellability": {
+					"sellable": "Boleh dijual",
+					"draft": "Draf",
+					"hidden": "Tersembunyi",
+					"archived": "Diarkibkan",
+					"unknown": "Tidak diketahui"
+				},
+				"values": {
+					"yes": "Ya",
+					"no": "Tidak",
+					"na": "Tidak berkenaan",
+					"unlimited": "Tanpa had"
+				},
+				"rows": {
+					"manageInventory": "Urus Inventori",
+					"availableQuantity": "Kuantiti Tersedia",
+					"allowPreorder": "Benarkan Pra-pesan",
+					"origSellPrice": "Harga Jualan Asal",
+					"salePrice": "Harga Jualan",
+					"costPrice": "Harga Kos",
+					"currency": "Mata wang",
+					"sku": "SKU",
+					"barcode": "Kod bar"
+				}
+			},
 			"activityLogDetail": {
 				"title": "Butiran Log Aktiviti",
 				"description": "Keterangan",

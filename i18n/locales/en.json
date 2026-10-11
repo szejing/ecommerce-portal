@@ -2298,6 +2298,48 @@
 			"edit": "Edit variant"
 		},
 		"zModal": {
+			"catalogStatusPeek": {
+				"title": "Catalog status",
+				"openPeek": "View catalog status for {item}",
+				"orderedAs": "Ordered as",
+				"orderedQty": "Quantity",
+				"unitPriceCharged": "Unit price charged",
+				"liveStatus": "Live catalog",
+				"components": "Components",
+				"notFoundTitle": "Product not found in catalog",
+				"notFoundDescription": "This line is still on the order, but the product is missing or unavailable in the catalog.",
+				"openProduct": "Open product",
+				"openCombo": "Open combo",
+				"kind": {
+					"product": "Product",
+					"service": "Service",
+					"fixed_combo": "Fixed Combo"
+				},
+				"sellability": {
+					"sellable": "Sellable",
+					"draft": "Draft",
+					"hidden": "Hidden",
+					"archived": "Archived",
+					"unknown": "Unknown"
+				},
+				"values": {
+					"yes": "Yes",
+					"no": "No",
+					"na": "Not applicable",
+					"unlimited": "Unlimited"
+				},
+				"rows": {
+					"manageInventory": "Manage Inventory",
+					"availableQuantity": "Available Quantity",
+					"allowPreorder": "Allow Pre-order",
+					"origSellPrice": "Original Sell Price",
+					"salePrice": "Sale Price",
+					"costPrice": "Cost Price",
+					"currency": "Currency",
+					"sku": "SKU",
+					"barcode": "Barcode"
+				}
+			},
 			"activityLogDetail": {
 				"title": "Activity Log Detail",
 				"description": "Description",
