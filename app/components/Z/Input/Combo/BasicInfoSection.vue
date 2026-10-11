@@ -17,20 +17,27 @@
 		</template>
 
 		<div class="space-y-6 py-2 px-4">
-			<div class="space-y-4">
-				<div class="w-full flex flex-wrap items-center gap-4 justify-end">
-					<UFormField>
-						<USwitch v-model="published" :label="t(published ? 'combo.showInStore' : 'combo.hideInStore')" />
-					</UFormField>
-				</div>
+			<div class="w-full flex flex-wrap items-center gap-4 justify-end">
+				<UFormField>
+					<USwitch v-model="published" :label="t(published ? 'combo.showInStore' : 'combo.hideInStore')" />
+				</UFormField>
+			</div>
 
+			<section
+				aria-labelledby="combo-included-items-heading"
+				class="rounded-xl border border-default/15 bg-elevated/60 p-4 sm:p-5"
+			>
 				<ZInputComboComponents
 					v-model="state.combo_components"
 					v-model:reference-total="referenceTotal"
 					:product-code="state.code"
 					:currency-code="currencyCode"
 				/>
+			</section>
 
+			<hr class="border-default/15" />
+
+			<div class="space-y-4">
 				<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 					<UFormField name="code" :label="t('combo.code')">
 						<p class="text-xs text-neutral-500 my-1">{{ t('combo.uniqueIdentifier') }}</p>
@@ -74,7 +81,7 @@
 				</UFormField>
 			</div>
 
-			<hr class="my-6" />
+			<hr class="border-default/15" />
 
 			<div class="space-y-4">
 				<h3 class="text-lg font-semibold">{{ t('combo.images') }}</h3>

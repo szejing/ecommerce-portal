@@ -9,6 +9,7 @@
 		"allStatuses": "All statuses",
 		"components": "Components",
 		"includedItems": "Included items",
+		"includedItemsHint": "Choose the products that make up this combo",
 		"addItems": "Add items",
 		"item": "Item",
 		"quantity": "Quantity",

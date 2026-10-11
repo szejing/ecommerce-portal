@@ -9,6 +9,7 @@
 		"allStatuses": "所有状态",
 		"components": "组成商品",
 		"includedItems": "包含商品",
+		"includedItemsHint": "选择组成此套餐的商品",
 		"addItems": "添加商品",
 		"item": "商品",
 		"quantity": "数量",
