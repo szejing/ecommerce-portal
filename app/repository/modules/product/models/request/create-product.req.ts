@@ -2,10 +2,16 @@ import type { ProductStatus } from 'yeppi-common';
 import type { ImageReq } from '../../../image/models/request/image.req';
 
 import type { PriceInput } from '~/utils/types/price';
-import type { ProductVariantInput } from '~/utils/types/product';
+import type { ProductVariantInput, ComboComponent } from '~/utils/types/product';
 import type { ProductVariationInput } from '~/utils/types/product-variation';
 
 export type CreateProductReq = {
+  composition?: 'single' | 'fixed_combo';
+  combo_components?: ComboComponent[];
+  manage_inventory?: boolean;
+  allow_preorder?: boolean;
+  inventory_quantity?: number;
+  expected_inventory_quantity?: number;
 	code?: string;
 	name?: string;
 	short_desc?: string;

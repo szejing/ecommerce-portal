@@ -1,10 +1,27 @@
 <template>
-	<USelectMenu v-model="status" :items="items" value-key="value" size="md" :placeholder="t('components.selectMenu.selectOrderItemStatus')">
+	<USelectMenu
+		v-model="status"
+		:items="items"
+		value-key="value"
+		:size="appearance === 'pill' ? 'sm' : 'md'"
+		:variant="appearance === 'pill' ? 'none' : undefined"
+		:trailing-icon="appearance === 'pill' ? '' : undefined"
+		:disabled="disabled"
+		:placeholder="t('components.selectMenu.selectOrderItemStatus')"
+		:aria-label="t('components.orderInput.changeItemStatus')"
+		:search-input="{
+			placeholder: 'Search item status…',
+			icon: 'i-lucide-search',
+		}"
+		:ui="selectUi"
+		:class="{ 'status-select-pill': appearance === 'pill' }"
+	>
 		<template #default>
-			<span v-if="status">
-				<UBadge :color="getOrderItemStatusColor(status)" variant="subtle" class="truncate">
+			<span v-if="status" :class="appearance === 'pill' ? 'status-select-pill-label' : undefined">
+				<UBadge v-if="appearance !== 'pill'" :color="getOrderItemStatusColor(status)" variant="subtle" class="truncate">
 					{{ selectedLabel }}
 				</UBadge>
+				<template v-else>{{ selectedLabel }}</template>
 			</span>
 			<span v-else class="text-neutral-400">{{ t('components.selectMenu.selectOrderItemStatus') }}</span>
 		</template>
@@ -23,25 +40,76 @@ import { getOrderItemStatusOptions, getOrderItemStatusColor } from '~/utils/opti
 
 const { t } = useI18n();
 
-const props = defineProps<{ status: OrderItemStatus | undefined }>();
-const emit = defineEmits(['update:status']);
+const props = withDefaults(
+	defineProps<{
+		status: OrderItemStatus | undefined;
+		disabled?: boolean;
+		appearance?: 'default' | 'pill';
+		allowAll?: boolean;
+	}>(),
+	{
+		disabled: false,
+		appearance: 'default',
+		allowAll: true,
+	},
+);
+const emit = defineEmits<{
+	'update:status': [status: OrderItemStatus | undefined];
+}>();
 
-const items = computed(() => getOrderItemStatusOptions(t));
+const items = computed(() => {
+	const options = getOrderItemStatusOptions(t);
+	return props.allowAll ? options : options.filter((option) => option.value !== 'All');
+});
 
 const status = computed({
 	get() {
-		return props.status ?? 'All';
+		if (props.status) {
+			return props.status;
+		}
+		return props.allowAll ? 'All' : undefined;
 	},
 	set(value) {
 		if (value === 'All') {
 			emit('update:status', undefined);
 		} else {
-			emit('update:status', value);
+			emit('update:status', value as OrderItemStatus | undefined);
 		}
 	},
 });
 
 const selectedLabel = computed(() => items.value.find((i) => i.value === status.value)?.label ?? status.value ?? '');
+
+const selectUi = computed(() => {
+	if (props.appearance !== 'pill') {
+		return undefined;
+	}
+
+	return {
+		base: '!min-w-0 w-auto max-w-full px-2.5 py-1 rounded-none bg-transparent text-inverted hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-0 cursor-pointer',
+		trailing: 'hidden',
+		trailingIcon: 'hidden',
+		value: 'truncate text-xs font-semibold uppercase tracking-wide text-inverted',
+		content: 'min-w-48',
+	};
+});
 </script>
 
-<style scoped></style>
+<style scoped>
+.status-select-pill {
+	min-width: 0;
+	width: auto;
+}
+
+.status-select-pill-label {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.6875rem;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: inherit;
+}
+</style>

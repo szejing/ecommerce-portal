@@ -33,28 +33,91 @@
 				</div>
 				<article data-testid="order-item-mobile-card" class="px-4 py-4" :class="itemSurfaceClass(item)">
 					<div class="flex items-start gap-3">
-						<img
-							:src="itemThumbnailUrl(item)"
-							:alt="item.prod_name || t('table.productThumbnail')"
-							width="56"
-							height="56"
-							class="size-14 rounded-lg object-cover shrink-0 bg-elevated"
-						/>
 						<div class="min-w-0 flex-1 space-y-1">
-							<ZSectionOrderDetailItemIdentity
-								:product-text="productLineText(item)"
-								:variant-text="variantLineText(item)"
-								:is-voided="item.status === OrderItemStatus.VOIDED"
-							/>
-							<div class="flex flex-wrap items-center gap-1.5">
-								<UBadge
-									v-if="showsPreorderLine(item)"
-									data-testid="order-item-preorder"
-									color="warning"
-									variant="subtle"
-									size="sm"
-									class="whitespace-nowrap"
+							<button
+								v-if="orderItemDetailPath(item)"
+								type="button"
+								data-testid="order-item-catalog-link"
+								class="flex w-full items-start gap-3 rounded-md text-left outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+								:aria-label="t('components.zModal.catalogStatusPeek.openPeek', { item: productLineText(item) || item.prod_name })"
+								@click="openCatalogStatusPeek(item)"
+							>
+								<img
+									:src="resolvedThumbnailUrl(item)"
+									:alt="item.prod_name || t('table.productThumbnail')"
+									width="56"
+									height="56"
+									class="size-14 rounded-lg object-cover shrink-0 bg-elevated"
+									@error="onThumbnailError(item)"
+								/>
+								<ZSectionOrderDetailItemIdentity
+									class="min-w-0 flex-1"
+									:product-text="productLineText(item)"
+									:variant-text="variantLineText(item)"
+									:is-voided="item.status === OrderItemStatus.VOIDED"
+								/>
+							</button>
+							<div v-else class="flex items-start gap-3">
+								<img
+									:src="resolvedThumbnailUrl(item)"
+									:alt="item.prod_name || t('table.productThumbnail')"
+									width="56"
+									height="56"
+									class="size-14 rounded-lg object-cover shrink-0 bg-elevated"
+									@error="onThumbnailError(item)"
+								/>
+								<ZSectionOrderDetailItemIdentity
+									class="min-w-0 flex-1"
+									:product-text="productLineText(item)"
+									:variant-text="variantLineText(item)"
+									:is-voided="item.status === OrderItemStatus.VOIDED"
+								/>
+							</div>
+							<div v-if="comboItems(item).length" data-testid="order-item-combo-nested" class="mt-2 space-y-1.5">
+								<div
+									v-for="child in comboItems(item)"
+									:key="child.item_line"
+									data-testid="order-item-combo-child"
+									class="flex items-start gap-2 rounded-md bg-elevated/50 py-1.5 pl-2 pr-2"
 								>
+									<button
+										v-if="orderItemDetailPath(child)"
+										type="button"
+										data-testid="order-item-combo-child-catalog-link"
+										class="flex min-w-0 flex-1 items-start gap-2 rounded-sm text-left outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+										:aria-label="t('components.zModal.catalogStatusPeek.openPeek', { item: child.prod_name })"
+										@click="openCatalogStatusPeek(child)"
+									>
+										<img
+											:src="resolvedThumbnailUrl(child)"
+											:alt="child.prod_name || t('table.productThumbnail')"
+											width="32"
+											height="32"
+											class="size-8 rounded object-cover shrink-0 bg-elevated"
+											@error="onThumbnailError(child)"
+										/>
+										<p class="min-w-0 flex-1 text-xs text-muted wrap-break-word">
+											{{ child.prod_name }}<template v-if="child.prod_variant_name"> ({{ child.prod_variant_name }})</template>
+										</p>
+									</button>
+									<template v-else>
+										<img
+											:src="resolvedThumbnailUrl(child)"
+											:alt="child.prod_name || t('table.productThumbnail')"
+											width="32"
+											height="32"
+											class="size-8 rounded object-cover shrink-0 bg-elevated"
+											@error="onThumbnailError(child)"
+										/>
+										<p class="min-w-0 flex-1 text-xs text-muted wrap-break-word">
+											{{ child.prod_name }}<template v-if="child.prod_variant_name"> ({{ child.prod_variant_name }})</template>
+										</p>
+									</template>
+									<span class="shrink-0 text-xs font-medium tabular-nums text-muted">×{{ child.qty }}</span>
+								</div>
+							</div>
+							<div class="flex flex-wrap items-center gap-1.5">
+								<UBadge v-if="showsPreorderLine(item)" data-testid="order-item-preorder" color="warning" variant="subtle" size="sm" class="whitespace-nowrap">
 									{{ t('components.orderDetail.preorder') }}
 								</UBadge>
 								<UBadge v-if="item.status !== OrderItemStatus.ACTIVE" :color="getOrderItemStatusColor(item.status)" variant="subtle" size="sm">
@@ -112,24 +175,98 @@
 			:data="ordered_items"
 			:columns="order_detail_item_columns"
 			:meta="order_items_table_meta"
-			:ui="{ td: 'align-top whitespace-normal' }"
+			:ui="{
+				root: 'relative overflow-x-hidden',
+				base: 'w-full table-fixed',
+				td: 'align-top whitespace-normal',
+			}"
 			class="hidden w-full md:block"
 		>
 			<template #item-cell="{ row }">
 				<div class="flex items-start gap-3 min-w-0" :class="{ 'opacity-60': row.original.status !== OrderItemStatus.ACTIVE }">
-					<img
-						:src="itemThumbnailUrl(row.original)"
-						:alt="row.original.prod_name || t('table.productThumbnail')"
-						width="48"
-						height="48"
-						class="size-12 rounded-md object-cover shrink-0 bg-elevated"
-					/>
 					<div class="min-w-0 flex-1 space-y-1">
-						<ZSectionOrderDetailItemIdentity
-							:product-text="productLineText(row.original)"
-							:variant-text="variantLineText(row.original)"
-							:is-voided="row.original.status === OrderItemStatus.VOIDED"
-						/>
+						<button
+							v-if="orderItemDetailPath(row.original)"
+							type="button"
+							data-testid="order-item-catalog-link"
+							class="flex w-full items-start gap-3 rounded-md text-left outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+							:aria-label="t('components.zModal.catalogStatusPeek.openPeek', { item: productLineText(row.original) || row.original.prod_name })"
+							@click="openCatalogStatusPeek(row.original)"
+						>
+							<img
+								:src="resolvedThumbnailUrl(row.original)"
+								:alt="row.original.prod_name || t('table.productThumbnail')"
+								width="48"
+								height="48"
+								class="size-12 rounded-md object-cover shrink-0 bg-elevated"
+								@error="onThumbnailError(row.original)"
+							/>
+							<ZSectionOrderDetailItemIdentity
+								class="min-w-0 flex-1"
+								:product-text="productLineText(row.original)"
+								:variant-text="variantLineText(row.original)"
+								:is-voided="row.original.status === OrderItemStatus.VOIDED"
+							/>
+						</button>
+						<div v-else class="flex items-start gap-3">
+							<img
+								:src="resolvedThumbnailUrl(row.original)"
+								:alt="row.original.prod_name || t('table.productThumbnail')"
+								width="48"
+								height="48"
+								class="size-12 rounded-md object-cover shrink-0 bg-elevated"
+								@error="onThumbnailError(row.original)"
+							/>
+							<ZSectionOrderDetailItemIdentity
+								class="min-w-0 flex-1"
+								:product-text="productLineText(row.original)"
+								:variant-text="variantLineText(row.original)"
+								:is-voided="row.original.status === OrderItemStatus.VOIDED"
+							/>
+						</div>
+						<div v-if="comboItems(row.original).length" data-testid="order-item-combo-nested" class="mt-2 space-y-1.5">
+							<div
+								v-for="child in comboItems(row.original)"
+								:key="child.item_line"
+								data-testid="order-item-combo-child"
+								class="flex items-start gap-2 rounded-md bg-elevated/50 py-1.5 pl-2 pr-2"
+							>
+								<button
+									v-if="orderItemDetailPath(child)"
+									type="button"
+									data-testid="order-item-combo-child-catalog-link"
+									class="flex min-w-0 flex-1 items-start gap-2 rounded-sm text-left outline-none transition-opacity hover:opacity-80 hover:underline focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+									:aria-label="t('components.zModal.catalogStatusPeek.openPeek', { item: child.prod_name })"
+									@click="openCatalogStatusPeek(child)"
+								>
+									<img
+										:src="resolvedThumbnailUrl(child)"
+										:alt="child.prod_name || t('table.productThumbnail')"
+										width="32"
+										height="32"
+										class="size-8 rounded object-cover shrink-0 bg-elevated"
+										@error="onThumbnailError(child)"
+									/>
+									<p class="min-w-0 flex-1 text-xs text-muted wrap-break-word">
+										{{ child.prod_name }}<template v-if="child.prod_variant_name"> ({{ child.prod_variant_name }})</template>
+									</p>
+								</button>
+								<template v-else>
+									<img
+										:src="resolvedThumbnailUrl(child)"
+										:alt="child.prod_name || t('table.productThumbnail')"
+										width="32"
+										height="32"
+										class="size-8 rounded object-cover shrink-0 bg-elevated"
+										@error="onThumbnailError(child)"
+									/>
+									<p class="min-w-0 flex-1 text-xs text-muted wrap-break-word">
+										{{ child.prod_name }}<template v-if="child.prod_variant_name"> ({{ child.prod_variant_name }})</template>
+									</p>
+								</template>
+								<span class="shrink-0 text-xs font-medium tabular-nums text-muted">×{{ child.qty }}</span>
+							</div>
+						</div>
 						<div class="flex flex-wrap items-center gap-1.5">
 							<UBadge
 								v-if="showsPreorderLine(row.original)"
@@ -224,8 +361,8 @@
 
 <script lang="ts" setup>
 import type { TableMeta, Row } from '@tanstack/vue-table';
-import { ZModalInformation, ZModalOrderDetailItem } from '#components';
-import { OrderItemStatus, OrderStatus, OrderType, formatCurrency, GROUP_CODE, PRODUCT } from 'yeppi-common';
+import { ZModalInformation, ZModalOrderCatalogStatusPeek, ZModalOrderDetailItem } from '#components';
+import { LineType, OrderItemStatus, OrderStatus, OrderType, formatCurrency, GROUP_CODE, PRODUCT } from 'yeppi-common';
 import { ICONS } from '~/utils/icons';
 import type { ItemModel } from '~/utils/models/item.model';
 import type { OrderHistory } from '~/utils/types/order-history';
@@ -236,6 +373,7 @@ import { visibleOrderHeaderDiscounts } from '~/utils/order-header-discounts';
 import { formatProductLineIdentity, formatVariantLineIdentity } from '~/utils/line-identity';
 import { getOrderItemStatusColor, getOrderItemStatusOptions } from '~/utils/options';
 import { getOrderItemWorkload } from '~/utils/order-workbench';
+import { orderItemDetailPath } from '~/utils/product-route';
 
 const PRODUCT_THUMBNAIL_FALLBACK = '/svg/product-holder.svg';
 
@@ -261,11 +399,18 @@ const itemStatusLabel = (status: OrderItemStatus) => getOrderItemStatusOptions(t
 
 const showsPreorderLine = (item: ItemModel) => !!item.is_preorder && item.status !== OrderItemStatus.VOIDED;
 
+const comboItems = (item: ItemModel) => {
+	if (item.line_type !== LineType.COMBO_HEADER) return [];
+	return (props.order.items ?? []).filter((child) => child.line_type === LineType.COMBO_ITEM && child.parent_item_line === item.item_line);
+};
+
 const itemSurfaceClass = (item: ItemModel) => {
 	if (showsPreorderLine(item)) return 'bg-warning/10';
 	if (item.status !== OrderItemStatus.ACTIVE) return 'bg-elevated/25';
 	return 'bg-default';
 };
+
+const brokenThumbnailLines = ref(new Set<number>());
 
 const itemThumbnailUrl = (item: ItemModel) => {
 	const fromThumb = item.thumbnail?.url?.trim();
@@ -278,6 +423,18 @@ const itemThumbnailUrl = (item: ItemModel) => {
 	}
 
 	return PRODUCT_THUMBNAIL_FALLBACK;
+};
+
+const resolvedThumbnailUrl = (item: ItemModel) => {
+	if (brokenThumbnailLines.value.has(item.item_line)) return PRODUCT_THUMBNAIL_FALLBACK;
+	return itemThumbnailUrl(item);
+};
+
+const onThumbnailError = (item: ItemModel) => {
+	if (brokenThumbnailLines.value.has(item.item_line)) return;
+	const next = new Set(brokenThumbnailLines.value);
+	next.add(item.item_line);
+	brokenThumbnailLines.value = next;
 };
 
 const workload = computed(() => getOrderItemWorkload(props.order.items ?? []));
@@ -306,6 +463,19 @@ const order_items_table_meta = computed<TableMeta<ItemModel>>(() => ({
 		},
 	},
 }));
+
+const openCatalogStatusPeek = (item: ItemModel) => {
+	if (!orderItemDetailPath(item)) return;
+
+	const peekModal = overlay.create(ZModalOrderCatalogStatusPeek, {
+		props: {
+			item: JSON.parse(JSON.stringify(item)),
+			orderCurrency: currency_code.value,
+		},
+	});
+
+	peekModal.open();
+};
 
 const openOrderItemEdit = (item: ItemModel) => {
 	if (item.status === OrderItemStatus.ACTIVE) {

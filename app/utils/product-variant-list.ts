@@ -121,6 +121,7 @@ export type VariantDetailPayload = {
 	manage_inventory?: boolean;
 	allow_preorder?: boolean;
 	inventory_quantity?: number;
+	expected_inventory_quantity?: number;
 };
 
 type VariantDetailTarget = {
@@ -129,6 +130,7 @@ type VariantDetailTarget = {
 	manage_inventory?: boolean;
 	allow_preorder?: boolean;
 	inventory_quantity?: number;
+	expected_inventory_quantity?: number;
 	price_types?: Array<{
 		orig_sell_price?: number;
 		sale_price?: number | null;
@@ -144,6 +146,7 @@ export function applyVariantDetailPayload(variant: VariantDetailTarget, payload:
 	variant.manage_inventory = payload.manage_inventory;
 	variant.allow_preorder = payload.allow_preorder;
 	variant.inventory_quantity = payload.inventory_quantity;
+	variant.expected_inventory_quantity ??= payload.expected_inventory_quantity;
 
 	if (!variant.price_types?.[0]) {
 		variant.price_types = [{ orig_sell_price: 0, currency_code: 'MYR' }];

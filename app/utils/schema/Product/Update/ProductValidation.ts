@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PRODUCT_SHORT_DESC_MAX } from 'yeppi-common';
+import { totalComboComponentUnits } from '~/utils/combo-pricing';
 import { duplicateVariantSkuIndexes } from '~/utils/product-variant-list';
 
 export type TranslateFn = (key: string) => string;
@@ -53,7 +54,9 @@ const buildVariant = () => {
 
 export const createUpdateProductValidation = (t: TranslateFn) => {
 	const Variant = buildVariant();
-	const base = z.object({
+  const base = z.object({
+    composition: z.enum(['single', 'fixed_combo']).optional(),
+    combo_components: z.array(z.object({ product_code: z.string().min(1), variant_code: z.string().nullish(), quantity: z.number().int().min(1) })).optional(),
 		code: z.string({ message: t('validation.product.codeRequired') }).min(1, t('validation.product.codeRequired')),
 		name: z.string({ message: t('validation.product.nameRequired') }).min(1, t('validation.product.nameRequired')),
 		short_desc: z
@@ -73,7 +76,14 @@ export const createUpdateProductValidation = (t: TranslateFn) => {
 		allow_preorder: z.boolean().optional().nullable(),
 		type_id: z.number().default(1),
 	});
-	return base.superRefine((data, ctx) => {
+  return base.superRefine((data, ctx) => {
+	if (data.composition === 'fixed_combo') {
+		if (data.variants?.length || data.variations?.length) {
+			ctx.addIssue({ code: z.ZodIssueCode.custom, message: t('validation.product.comboComponentsNoVariants'), path: ['combo_components'] });
+		} else if (data.status === 'published' && totalComboComponentUnits(data.combo_components) < 2) {
+			ctx.addIssue({ code: z.ZodIssueCode.custom, message: t('validation.product.comboMinUnits'), path: ['combo_components'] });
+		}
+	}
 		const variants = data.variants ?? [];
 		for (let i = 0; i < variants.length; i++) {
 			const pt = variants[i]?.price_types?.[0];

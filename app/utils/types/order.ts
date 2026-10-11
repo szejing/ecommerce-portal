@@ -1,4 +1,4 @@
-import type { OrderItemStatus, OrderStatus, PaymentStatus } from 'yeppi-common';
+import type { LineType, OrderItemStatus, OrderStatus, PaymentStatus } from 'yeppi-common';
 import type { AddressModel } from '~/utils/models/customer.model';
 import type { Appointment } from './appointment';
 import type { Currency } from './currency';
@@ -18,6 +18,7 @@ type OrderCustomerDto_ = {
 type OrderItemDto_ = {
 	item_line: number;
 	parent_item_line: number;
+	line_type?: LineType;
 	prod_code: string;
 	prod_name: string;
 	prod_variant_code?: string;

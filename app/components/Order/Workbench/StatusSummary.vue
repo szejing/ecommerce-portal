@@ -90,14 +90,20 @@
 		<div data-testid="workbench-fulfillment-status" class="state-summary-item">
 			<dt class="state-summary-label">{{ t('components.orderDetail.fulfillmentState') }}</dt>
 			<dd class="state-summary-value">
-				<div v-if="editableShipmentStatus !== undefined" class="status-control">
-					<div class="status-split text-inverted" :class="shipmentPillClass" :title="shipmentState.label">
+				<div class="status-control">
+					<div
+						class="status-split text-inverted"
+						:class="editableShipmentStatus !== undefined ? shipmentPillClass : fulfillmentPillClass"
+						:title="editableShipmentStatus !== undefined ? shipmentState.label : fulfillmentState.label"
+					>
 						<ZSelectMenuShipmentStatus
+							v-if="editableShipmentStatus !== undefined"
 							appearance="pill"
 							:shipment-status="editableShipmentStatus"
 							:disabled="updating"
 							@update:shipment-status="onShipmentStatusSelected"
 						/>
+						<span v-else class="status-pill-label">{{ fulfillmentState.label }}</span>
 						<button
 							v-if="nextShipmentStatus"
 							type="button"
@@ -125,9 +131,6 @@
 						@click="onShipmentStatusSelected('delivered')"
 					/>
 				</div>
-				<UBadge v-else :color="fulfillmentState.color" variant="subtle" size="sm" class="max-w-full capitalize">
-					<span class="min-w-0 truncate whitespace-nowrap">{{ fulfillmentState.label }}</span>
-				</UBadge>
 			</dd>
 		</div>
 	</dl>
@@ -272,6 +275,7 @@ const fulfillmentState = computed(() => {
 
 	return { label: t('options.processing'), color: 'info' as const };
 });
+const fulfillmentPillClass = computed(() => pillClassForColor(fulfillmentState.value.color));
 
 function onStatusSelected(status: OrderStatus | undefined) {
 	if (!status || status === props.order.status || props.updating) {
@@ -364,6 +368,21 @@ function onShipmentStatusSelected(status: ShipmentStatusValue | undefined) {
 	max-width: 100%;
 	overflow: hidden;
 	border-radius: 0.5rem;
+}
+
+.status-pill-label {
+	display: inline-flex;
+	align-items: center;
+	min-width: 0;
+	padding: 0.25rem 0.625rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.6875rem;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: inherit;
 }
 
 .status-split-next {

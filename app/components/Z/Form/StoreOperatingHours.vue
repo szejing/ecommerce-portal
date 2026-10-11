@@ -1,6 +1,6 @@
 <template>
 	<div class="space-y-4">
-		<h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+		<h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">
 			{{ t('pages.storeProfilePage.operatingHoursAndOffDays') }}
 		</h4>
 		<div class="grid grid-cols-1 gap-4 md:grid-cols-3">

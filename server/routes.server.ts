@@ -41,6 +41,7 @@ export const Routes = {
 		Import: () => `${API_PATH.PROD}/import`,
 		ImportTemplate: () => `${API_PATH.PROD}/import/template`,
 		Update: (code: string) => `${API_PATH.PROD}/${code}`,
+		Stock: (code: string) => `${API_PATH.PROD}/${encodeURIComponent(code)}/stock`,
 		Delete: (code: string) => `${API_PATH.PROD}/${code}`,
 		DeleteVariant: (code: string, variant_code: string) => `${API_PATH.PROD}/${code}/variants/${variant_code}`,
 		Restore: (code: string) => `${API_PATH.PROD}/restore/${code}`,

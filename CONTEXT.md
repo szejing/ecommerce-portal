@@ -60,6 +60,10 @@ _Avoid_: Shipping Summary (daily), Order History, Order-side shipping details
 The merchant-facing workspace for visually verifying one loaded Order History record and carrying out its payment, fulfillment, communication, and status actions.
 _Avoid_: Order Detail, picking checklist
 
+**Catalog Status Peek**:
+A read-only Order Workbench modal that loads live catalog status for one order line (Available Quantity, Manage Inventory, Allow Pre-order, Original Sell Price, Sale Price, Cost Price, sellability). It shows an Ordered-as strip from the line and can open the full product or Fixed Combo page. It does not edit catalog or order lines.
+_Avoid_: product edit modal, Variant Detail, navigating away as the only overview
+
 **Visual Verification**:
 A staff review of an Order History record's active item identities, quantities, appointments, and excluded lines before fulfillment. It records no picked, checked, or packed state.
 _Avoid_: Picking completion, item check-off, packing progress

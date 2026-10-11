@@ -50,6 +50,9 @@
 					>
 						{{ refresh_button_text }}
 					</UButton>
+					<p v-if="order?.last_updated" class="status-last-updated" :title="t('table.lastUpdated')">
+						{{ order.last_updated }}
+					</p>
 				</div>
 				<OrderWorkbenchStatusSummary
 					v-if="orderForModal"
@@ -59,9 +62,17 @@
 					@update:status="handleWorkbenchStatusChange"
 					@update:shipment-status="handleWorkbenchShipmentStatusChange"
 				/>
-				<p v-if="order?.last_updated" class="status-last-updated" :title="t('table.lastUpdated')">
-					{{ order.last_updated }}
-				</p>
+
+				<hr class="order-header-divider" aria-hidden="true" />
+
+				<!-- Customer Detail (header for staff scanability) -->
+				<ZSectionOrderDetailCustomer
+					class="order-header-customer"
+					:customer="record?.customer"
+					:show-addresses="(record?.order_type ?? OrderType.PICKUP) === OrderType.DELIVERY"
+					:order-no="record?.order_no"
+					@refresh="refreshOrder"
+				/>
 			</div>
 
 			<!-- Main Grid Layout -->
@@ -80,14 +91,6 @@
 					<!-- Order Items -->
 					<ZSectionOrderDetailItems v-if="orderForModal" :order="orderForModal" @refresh="onItemsRefresh" />
 
-					<!-- Customer Detail -->
-					<ZSectionOrderDetailCustomer
-						:customer="record?.customer"
-						:show-addresses="(record?.order_type ?? OrderType.PICKUP) === OrderType.DELIVERY"
-						:order-no="record?.order_no"
-						@refresh="refreshOrder"
-					/>
-
 					<Activities :activities="activityLogEntries" />
 				</div>
 
@@ -103,12 +106,12 @@
 							@refresh="getOrderDetails"
 						/>
 
-						<ZSectionOrderDetailOrderStatus
+						<!-- <ZSectionOrderDetailOrderStatus
 							v-model:status="new_order_status"
 							:current-status="order?.status"
 							:updating="updating"
 							@submit="handleUpdateOrderStatus"
-						/>
+						/> -->
 
 						<ZSectionOrderDetailCustomerEmail
 							v-if="resend_email_action"
@@ -139,12 +142,7 @@
 						@update:shipment-status="handleWorkbenchShipmentStatusChange"
 					/>
 					<!-- Default slot is the open trigger; do not also set open in @click (double-toggles shut). -->
-					<UDrawer
-						v-model:open="isOrderActionsOpen"
-						:title="t('components.orderDetail.orderActionsTitle')"
-						direction="bottom"
-						handle-only
-					>
+					<UDrawer v-model:open="isOrderActionsOpen" :title="t('components.orderDetail.orderActionsTitle')" direction="bottom" handle-only>
 						<UButton color="primary" :icon="ICONS.SETTINGS_ROUNDED" class="mobile-actions-open-trigger min-h-11">
 							{{ t('components.orderDetail.processOrder') }}
 						</UButton>
@@ -159,12 +157,12 @@
 									@refresh="getOrderDetails"
 								/>
 
-								<ZSectionOrderDetailOrderStatus
+								<!-- <ZSectionOrderDetailOrderStatus
 									v-model:status="new_order_status"
 									:current-status="order?.status"
 									:updating="updating"
 									@submit="handleUpdateOrderStatus"
-								/>
+								/> -->
 
 								<ZSectionOrderDetailCustomerEmail
 									v-if="resend_email_action"
@@ -527,8 +525,9 @@ const executeOrderStatusUpdate = async (new_status: OrderStatus) => {
 
 .order-header-right {
 	display: flex;
-	justify-content: flex-end;
-	align-items: flex-start;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 0.25rem;
 }
 
 .order-header-states {
@@ -536,14 +535,24 @@ const executeOrderStatusUpdate = async (new_status: OrderStatus) => {
 }
 
 .status-last-updated {
-	grid-column: 1 / -1;
 	margin: 0;
-	text-align: left;
+	text-align: right;
 	font-size: 0.6875rem;
 	line-height: 1.25;
 	font-variant-numeric: tabular-nums;
 	color: var(--ui-text-muted, var(--color-gray-500));
 	opacity: 0.75;
+}
+
+.order-header-divider {
+	grid-column: 1 / -1;
+	margin: 0;
+	border: 0;
+	border-top: 1px solid var(--ui-border);
+}
+
+.order-header-customer {
+	grid-column: 1 / -1;
 }
 
 .wrapper-grid {

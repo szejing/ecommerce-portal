@@ -112,6 +112,7 @@ const updateProductSchema = computed(() => createUpdateProductValidation(t));
 const formRef = ref();
 
 const props = defineProps({
+	returnTo: { type: String, default: undefined },
 	product: {
 		type: Object as PropType<Product>,
 		required: true,
@@ -448,7 +449,7 @@ const doUpdateProduct = async () => {
 			// const product = await productStore.getProduct(formState.value.code!);
 			// productStore.current_product = product;
 
-			navigateTo(`/products/listing`);
+			navigateTo(props.returnTo ?? '/products/listing');
 		}
 	} catch (error) {
 		console.error(error);

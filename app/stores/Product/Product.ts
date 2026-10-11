@@ -9,19 +9,15 @@ import type { BaseODataReq } from '~/repository/base/base.req';
 import type { ImageReq } from '~/repository/modules/image/models/request/image.req';
 import type { ProductImportStreamResult, ProductImportTemplateType } from '~/repository/modules/product/product';
 import { resolveProductImportStoppedSummary, resolveProductImportSummary } from '~/utils/product-import-feedback';
+import { comboListingQuery, type ComboListingFilter } from '~/utils/combo-listing';
 
 export const PRODUCT_FILTER_DEBOUNCE_MS = 500;
 
 const PRODUCT_LISTING_EXPAND = ['price_types', 'thumbnail', 'type', 'variants'] as const;
 
 export type ProductFailure = { kind: 'request_failed'; message: string };
-export type ProductRefreshOutcome =
-	| { status: 'completed' }
-	| { status: 'stale' }
-	| { status: 'failed'; failure: ProductFailure };
-export type ProductMutationOutcome =
-	| { status: 'completed'; product: Product }
-	| { status: 'failed'; failure: ProductFailure };
+export type ProductRefreshOutcome = { status: 'completed' } | { status: 'stale' } | { status: 'failed'; failure: ProductFailure };
+export type ProductMutationOutcome = { status: 'completed'; product: Product } | { status: 'failed'; failure: ProductFailure };
 
 let productFilterTimer: ReturnType<typeof setTimeout> | undefined;
 let productImportController: AbortController | undefined;
@@ -49,6 +45,8 @@ const initialEmptyProductFilter: ProductFilter = {
 };
 
 const initialEmptyProduct: ProductCreate = {
+	composition: 'single',
+	combo_components: [],
 	code: undefined,
 	name: '',
 	short_desc: undefined,
@@ -125,6 +123,24 @@ export const useProductStore = defineStore('productStore', {
 	actions: {
 		resetNewProduct() {
 			this.new_product = structuredClone(initialEmptyProduct);
+		},
+
+		startNewCombo(typeId: number) {
+			this.resetNewProduct();
+			Object.assign(this.new_product, {
+				type_id: typeId,
+				composition: 'fixed_combo',
+				combo_components: [],
+				manage_inventory: false,
+				allow_preorder: false,
+				inventory_quantity: 0,
+			});
+		},
+
+		async getCombos(filter: ComboListingFilter): Promise<{ items: Product[]; total: number }> {
+			const { $api } = useNuxtApp();
+			const response = await $api.product.getMany(comboListingQuery(filter));
+			return { items: response.data ?? response.value ?? [], total: response['@odata.count'] ?? response.count ?? 0 };
 		},
 
 		setSearch(search: string) {
@@ -342,6 +358,12 @@ export const useProductStore = defineStore('productStore', {
 
 				// Build payload with only defined fields (partial update: omit = no change)
 				const body: Record<string, unknown> = {};
+				if (product.composition !== undefined) body.composition = product.composition;
+				if (product.combo_components !== undefined) body.combo_components = product.combo_components;
+				if (product.manage_inventory !== undefined) body.manage_inventory = product.manage_inventory;
+				if (product.allow_preorder !== undefined) body.allow_preorder = product.allow_preorder;
+				if (product.inventory_quantity !== undefined) body.inventory_quantity = product.inventory_quantity;
+				if (product.expected_inventory_quantity !== undefined) body.expected_inventory_quantity = product.expected_inventory_quantity;
 				if (product.slug !== undefined) body.slug = product.slug;
 				if (product.name !== undefined) body.name = product.name;
 				if (product.short_desc !== undefined) body.short_desc = product.short_desc;
@@ -478,7 +500,7 @@ export const useProductStore = defineStore('productStore', {
 
 				const message = (err as ErrorResponse).message ?? (err instanceof Error ? err.message : 'Failed to import products');
 				failedNotification(message);
-				throw new Error(message);
+				throw new Error(message, { cause: err });
 			} finally {
 				if (productImportElapsedTimer) clearInterval(productImportElapsedTimer);
 				productImportElapsedTimer = undefined;

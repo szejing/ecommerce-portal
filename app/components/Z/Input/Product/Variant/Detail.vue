@@ -75,8 +75,9 @@
 						<UCheckbox v-model="draft.manage_inventory" name="manageInventory" :label="t('components.zInput.manageInventory')" color="success" />
 						<UCheckbox v-model="draft.allow_preorder" name="allowPreorder" :label="t('components.zInput.allowPreorder')" color="success" />
 					</div>
-					<UFormField v-if="draft.manage_inventory" :label="t('components.zInput.quantity')" name="inventory_quantity">
+          <UFormField v-if="draft.manage_inventory" label="Available Quantity" name="inventory_quantity">
 						<UInput v-model.number="draft.inventory_quantity" type="number" :min="0" step="1" />
+						<ZInputProductStockAddition v-if="props.variant.product_code && props.variant.variant_code && props.variant.expected_inventory_quantity !== undefined" :product-code="props.variant.product_code" :variant-code="props.variant.variant_code" class="mt-3" @received="quantity => { draft.inventory_quantity = quantity; props.variant.inventory_quantity = quantity; props.variant.expected_inventory_quantity = quantity; }" />
 					</UFormField>
 				</div>
 			</div>
@@ -170,7 +171,8 @@ const onConfirm = () => {
 		cost_price: draft.cost_price,
 		manage_inventory: draft.manage_inventory,
 		allow_preorder: draft.allow_preorder,
-		inventory_quantity: draft.inventory_quantity,
+    inventory_quantity: draft.inventory_quantity,
+    expected_inventory_quantity: props.variant.expected_inventory_quantity ?? props.variant.inventory_quantity ?? 0,
 	});
 };
 </script>

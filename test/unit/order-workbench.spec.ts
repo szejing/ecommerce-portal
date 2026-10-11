@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { OrderItemStatus } from 'yeppi-common';
+import { LineType, OrderItemStatus } from 'yeppi-common';
 import { fulfillmentActionForShipmentStatus, getOrderItemWorkload } from '../../app/utils/order-workbench';
 
 describe('getOrderItemWorkload', () => {
@@ -15,6 +15,17 @@ describe('getOrderItemWorkload', () => {
 		expect(workload.excludedLineCount).toBe(1);
 		expect(workload.activeItems.map((item) => item.qty)).toEqual([2, 3]);
 		expect(workload.excludedItems.map((item) => item.qty)).toEqual([7]);
+	});
+
+	it('leaves combo item lines out of the workload', () => {
+		const workload = getOrderItemWorkload([
+			{ status: OrderItemStatus.ACTIVE, qty: 2, line_type: LineType.COMBO_HEADER },
+			{ status: OrderItemStatus.ACTIVE, qty: 2, line_type: LineType.COMBO_ITEM },
+			{ status: OrderItemStatus.ACTIVE, qty: 1, line_type: LineType.PRODUCT },
+		]);
+
+		expect(workload.activeLineCount).toBe(2);
+		expect(workload.activeUnitCount).toBe(3);
 	});
 
 	it('normalizes invalid or negative quantities out of the unit count', () => {

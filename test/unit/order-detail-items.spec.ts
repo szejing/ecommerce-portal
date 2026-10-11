@@ -56,11 +56,17 @@ describe('order detail items section', () => {
 
 	it('lets the item identity wrap and keeps money columns nowrap', () => {
 		const columns = readFileSync(resolve(process.cwd(), 'app/utils/table-columns/order/order-detail-item.ts'), 'utf8');
+		const items = readFileSync(resolve(process.cwd(), 'app/components/Z/Section/Order/Detail/Items.vue'), 'utf8');
 
 		expect(columns).toContain('whitespace-normal');
 		expect(columns).toContain('whitespace-nowrap');
 		expect(columns).toContain('TABLE_ALIGN_RIGHT');
 		expect(columns).toContain('min-w-0');
+		expect(columns).toContain('break-words');
+		expect(items).toContain("base: 'w-full table-fixed'");
+		expect(items).toContain("root: 'relative overflow-x-hidden'");
+		expect(items).toContain('wrap-break-word');
+		expect(items).not.toContain('truncate text-xs text-muted');
 	});
 
 	it('loops visible header discounts in the bill summary like taxes', () => {
@@ -76,5 +82,41 @@ describe('order detail items section', () => {
 		expect(items).toContain('({{ discount.disc_code }})');
 		expect(items).toContain('({{ shipping_fee_method_hint }})');
 		expect(items).toContain('formatCurrency(discount.disc_amt, currency_code)');
+	});
+
+	it('nests COMBO_ITEM under COMBO_HEADER with thumbnail error fallback', () => {
+		const items = readFileSync(resolve(process.cwd(), 'app/components/Z/Section/Order/Detail/Items.vue'), 'utf8');
+
+		expect(items).toContain('data-testid="order-item-combo-nested"');
+		expect(items).toContain('data-testid="order-item-combo-child"');
+		expect(items).toContain('@error');
+		expect(items).toContain('onThumbnailError');
+		expect(items).toContain('product-holder.svg');
+		expect(items).not.toContain('legacyComboComponents');
+		expect(items).not.toContain('metadata?.combo_components');
+		expect(items).toMatch(/order-item-combo-child[\s\S]*?child\.qty/);
+	});
+
+	it('shows read-only combo includes in the order item edit modal', () => {
+		const itemModal = readFileSync(resolve(process.cwd(), 'app/components/Z/Modal/Order/Detail/Item.vue'), 'utf8');
+		const itemInput = readFileSync(resolve(process.cwd(), 'app/components/Z/Input/Order/Detail/Item.vue'), 'utf8');
+
+		expect(itemModal).toContain(':combo-items="comboChildren"');
+		expect(itemModal).toContain(':line-type="state.item.line_type"');
+		expect(itemModal).not.toContain(':metadata="state.item.metadata"');
+		expect(itemModal).toContain('LineType.COMBO_ITEM');
+		expect(itemModal).toContain('parent_item_line');
+
+		expect(itemInput).toContain('comboItems');
+		expect(itemInput).toContain('lineType');
+		expect(itemInput).toContain('isComboHeader');
+		expect(itemInput).toContain('data-testid="order-item-combo-nested"');
+		expect(itemInput).toContain('data-testid="order-item-combo-child"');
+		expect(itemInput).not.toContain('legacyComboComponents');
+		expect(itemInput).toContain('components.orderInput.includes');
+		expect(itemInput).toContain('v-if="prodVariantCode && !isComboHeader"');
+		expect(itemInput).toMatch(/order-item-combo-child[\s\S]*?child\.qty/);
+		expect(itemInput).toContain('product-holder.svg');
+		expect(itemInput).toContain('onThumbnailError');
 	});
 });

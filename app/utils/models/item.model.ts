@@ -1,4 +1,4 @@
-import type { OrderItemStatus } from 'yeppi-common';
+import type { LineType, OrderItemStatus } from 'yeppi-common';
 import type { Image } from '~/utils/types/image';
 import type { AppointmentModel } from './appointment.model';
 import type { ItemTaxModel } from './item-tax.model';
@@ -6,6 +6,7 @@ import type { ItemTaxModel } from './item-tax.model';
 export type ItemModel = {
 	item_line: number;
 	parent_item_line: number;
+	line_type?: LineType;
 	prod_code: string;
 	prod_name: string;
 	prod_variant_code?: string;

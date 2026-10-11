@@ -115,6 +115,7 @@ import { GROUP_CODE, PRODUCT, ProductType } from 'yeppi-common';
 import { clearedProductInventory, normalizeSalePrice, productInventoryFromFirstVariant } from '~/utils/product-variant-list';
 
 const overlay = useOverlay();
+const props = defineProps<{ returnTo?: string }>();
 const formRef = ref();
 
 // Store
@@ -531,7 +532,8 @@ const doCreateProduct = async () => {
 	const outcome = await productStore.publishNewProduct();
 	if (outcome.status === 'completed') {
 		successNotification(t('product.notifications.created', { code: outcome.product.code }));
-		useRouter().back();
+		if (props.returnTo) navigateTo(props.returnTo);
+		else useRouter().back();
 		return;
 	}
 	failedNotification(outcome.failure.message);

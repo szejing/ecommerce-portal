@@ -8,6 +8,8 @@ import { getSortableHeader, mutedCell, tableCellMeta } from './styles';
 
 type TranslateFn = (key: string) => string;
 
+const PRODUCT_THUMBNAIL_FALLBACK = '/svg/product-holder.svg';
+
 export function getProductColumns(t: TranslateFn): TableColumn<Product>[] {
 	return [
 		{
@@ -34,13 +36,16 @@ export function getProductColumns(t: TranslateFn): TableColumn<Product>[] {
 						: [];
 
 				const children: any[] = [
-					thumbnailUrl
-						? h('img', { src: thumbnailUrl, alt: row.original.name || t('table.productThumbnail'), class: 'w-10 h-10 rounded-md object-cover flex-shrink-0' })
-						: h('img', {
-								src: '/svg/product-holder.svg',
-								alt: row.original.name || t('table.productThumbnail'),
-								class: 'w-10 h-10 rounded-md object-cover flex-shrink-0',
-							}),
+					h('img', {
+						src: thumbnailUrl || PRODUCT_THUMBNAIL_FALLBACK,
+						alt: row.original.name || t('table.productThumbnail'),
+						class: 'w-10 h-10 rounded-md object-cover flex-shrink-0',
+						onError: (event: Event) => {
+							const img = event.target as HTMLImageElement;
+							if (img.src.endsWith(PRODUCT_THUMBNAIL_FALLBACK)) return;
+							img.src = PRODUCT_THUMBNAIL_FALLBACK;
+						},
+					}),
 					h('div', { class: 'flex-1 min-w-0' }, [
 						h('div', { class: 'flex items-center gap-1.5 min-w-0' }, [
 							statusDot,

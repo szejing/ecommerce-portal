@@ -24,7 +24,7 @@
 						<ZSelectMenuProductStatus v-model:status="state.status" />
 					</UFormField> -->
 					<UFormField>
-						<USwitch v-model="state.is_active" :label="t(state.is_active ? 'components.productUpdate.showInStore' : 'components.productUpdate.hideInStore')" />
+						<USwitch v-model="published" :label="t(published ? 'components.productUpdate.showInStore' : 'components.productUpdate.hideInStore')" />
 					</UFormField>
 				</div>
 
@@ -50,11 +50,7 @@
 
 				<UFormField name="short_desc" :label="t('components.productUpdate.shortDescription')" required>
 					<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.briefDescription') }}</p>
-					<UInput
-						v-model="state.short_desc"
-						:maxlength="PRODUCT_SHORT_DESC_MAX"
-						:placeholder="t('components.productUpdate.shortDescPlaceholder')"
-					/>
+					<UInput v-model="state.short_desc" :maxlength="PRODUCT_SHORT_DESC_MAX" :placeholder="t('components.productUpdate.shortDescPlaceholder')" />
 					<p class="mt-1 text-xs text-muted text-right">
 						{{
 							t('components.productUpdate.shortDescCounter', {
@@ -97,9 +93,10 @@
 					/>
 				</div>
 				<div v-if="state.manage_inventory" class="max-w-xs">
-					<UFormField name="inventory_quantity" :label="t('components.zInput.quantity')">
+					<UFormField name="inventory_quantity" label="Available Quantity">
 						<UInput v-model.number="state.inventory_quantity" type="number" :min="0" step="1" />
 					</UFormField>
+					<ZInputProductStockAddition v-if="codeDisabled && state.code" :product-code="state.code" class="mt-3" @received="updateStockBalance" />
 				</div>
 			</div>
 
@@ -149,13 +146,15 @@
 </template>
 
 <script lang="ts" setup>
-import { PRODUCT_GALLERY_MAX, PRODUCT_SHORT_DESC_MAX, type ProductStatus } from 'yeppi-common';
+import { PRODUCT_GALLERY_MAX, PRODUCT_SHORT_DESC_MAX, ProductStatus } from 'yeppi-common';
 import type { Image } from '~/utils/types/image';
 import { ICONS } from '~/utils/icons';
 
 const { t } = useI18n();
 
 export type ProductBasicInfoState = {
+	variants?: unknown[];
+	variations?: unknown[];
 	status?: ProductStatus;
 	is_active?: boolean;
 	type_id?: number;
@@ -168,6 +167,7 @@ export type ProductBasicInfoState = {
 	manage_inventory?: boolean;
 	allow_preorder?: boolean;
 	inventory_quantity?: number;
+	expected_inventory_quantity?: number;
 };
 
 const props = withDefaults(
@@ -188,6 +188,17 @@ const emit = defineEmits<{
 }>();
 
 const state = toRef(props, 'state');
+const published = computed({
+	get: () => state.value.status === ProductStatus.PUBLISHED && state.value.is_active !== false,
+	set: (value: boolean) => {
+		state.value.status = value ? ProductStatus.PUBLISHED : ProductStatus.DRAFT;
+		if (value) state.value.is_active = true;
+	},
+});
+function updateStockBalance(quantity: number) {
+	state.value.inventory_quantity = quantity;
+	state.value.expected_inventory_quantity = quantity;
+}
 
 function onManageInventoryChange(value: boolean | 'indeterminate') {
 	if (value !== true) {

@@ -22,6 +22,8 @@
 					v-model:orig-sell-price="state.item.orig_sell_price"
 					v-model:appointment="state.item.appointment"
 					:is-preorder="state.item.is_preorder"
+					:line-type="state.item.line_type"
+					:combo-items="comboChildren"
 				/>
 				<!-- *********************** General Info *********************** -->
 
@@ -37,6 +39,7 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent } from '#ui/types';
 import type { z } from 'zod';
+import { LineType } from 'yeppi-common';
 import type { ItemModel } from '~/utils/models/item.model';
 import type { Order } from '~/utils/types/order';
 import { UpdateOrderItemValidation } from '~/utils/schema';
@@ -64,6 +67,13 @@ const props = defineProps({
 const emit = defineEmits(['update', 'cancel']);
 const state = reactive({
 	item: props.item,
+});
+
+const comboChildren = computed(() => {
+	if (state.item.line_type !== LineType.COMBO_HEADER) return [];
+	return (props.order.items ?? []).filter(
+		(child) => child.line_type === LineType.COMBO_ITEM && child.parent_item_line === state.item.item_line,
+	);
 });
 
 const onSubmit = async (event: FormSubmitEvent<Schema>) => {

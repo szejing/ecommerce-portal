@@ -50,4 +50,21 @@ describe('ZImage', () => {
 		expect(root.classes()).toContain('w-full');
 		expect(root.attributes('style')).toBeUndefined();
 	});
+
+	it('falls back to product-holder when the image fails to load', async () => {
+		const wrapper = await mountSuspended(ZImage, {
+			props: {
+				src: 'https://example.com/broken.png',
+				alt: 'Broken product image',
+			},
+		});
+
+		const img = wrapper.find('img');
+		await img.trigger('error');
+
+		expect(img.attributes('src')).toBe('/svg/product-holder.svg');
+
+		const blur = wrapper.find('div.absolute');
+		expect(blur.attributes('style')).toContain('url(/svg/product-holder.svg)');
+	});
 });

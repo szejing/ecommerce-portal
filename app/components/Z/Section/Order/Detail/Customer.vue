@@ -1,26 +1,24 @@
 <template>
-	<UCard>
-		<template #header>
-			<div class="flex items-center justify-between gap-3">
-				<h2 class="flex min-w-0 items-center gap-2 text-base font-semibold text-highlighted">
-					<UIcon :name="showAddresses ? 'i-heroicons-map-pin' : ICONS.CUSTOMER_GROUP_ROUNDED" class="size-5 shrink-0" aria-hidden="true" />
-					<span class="truncate">{{ customerContextTitle }}</span>
-				</h2>
-				<UButton
-					v-if="canEdit"
-					variant="soft"
-					size="sm"
-					icon="i-heroicons-pencil-square"
-					class="shrink-0"
-					:aria-label="t('components.orderDetail.editCustomer')"
-					@click="editCustomerDetail"
-				>
-					{{ t('components.orderDetail.edit') }}
-				</UButton>
-			</div>
-		</template>
+	<section class="customer-detail space-y-4">
+		<div class="flex items-center justify-between gap-3">
+			<h2 class="flex min-w-0 items-center gap-2 text-base font-semibold text-highlighted">
+				<UIcon :name="showAddresses ? 'i-heroicons-map-pin' : ICONS.CUSTOMER_GROUP_ROUNDED" class="size-5 shrink-0" aria-hidden="true" />
+				<span class="truncate">{{ customerContextTitle }}</span>
+			</h2>
+			<UButton
+				v-if="canEdit"
+				variant="soft"
+				size="sm"
+				icon="i-heroicons-pencil-square"
+				class="shrink-0"
+				:aria-label="t('components.orderDetail.editCustomer')"
+				@click="editCustomerDetail"
+			>
+				{{ t('components.orderDetail.edit') }}
+			</UButton>
+		</div>
 
-		<dl class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+		<dl class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
 			<div v-for="field in contactFields" :key="field.key" class="min-w-0">
 				<dt class="text-xs font-medium text-muted">{{ field.label }}</dt>
 				<dd class="mt-1 text-sm font-semibold break-all">
@@ -37,7 +35,7 @@
 			</div>
 		</dl>
 
-		<div v-if="showAddresses" class="mt-6 grid gap-4 sm:grid-cols-2">
+		<div v-if="showAddresses" class="grid gap-4 sm:grid-cols-2">
 			<section class="flex min-w-0 flex-col gap-2">
 				<div class="flex items-center justify-between gap-2">
 					<h3 class="text-xs font-medium text-muted">{{ t('components.orderDetail.shippingAddress') }}</h3>
@@ -88,7 +86,7 @@
 				</p>
 			</section>
 		</div>
-	</UCard>
+	</section>
 </template>
 
 <script lang="ts" setup>
@@ -149,6 +147,13 @@ const contactFields = computed(() => {
 	const email = customer?.email_address?.trim() ?? '';
 	const phone = displayPhone.value;
 	const fields = [
+		{ key: 'customer_no', label: t('components.orderDetail.customerNo'), value: customer?.customer_no?.trim() ?? '' },
+		{
+			key: 'email',
+			label: t('components.orderDetail.emailAddress'),
+			value: email,
+			href: email ? `mailto:${email}` : undefined,
+		},
 		{ key: 'name', label: t('common.name'), value: customer?.name?.trim() ?? '' },
 		{
 			key: 'phone',
@@ -156,13 +161,6 @@ const contactFields = computed(() => {
 			value: phone,
 			href: phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : undefined,
 		},
-		{
-			key: 'email',
-			label: t('components.orderDetail.emailAddress'),
-			value: email,
-			href: email ? `mailto:${email}` : undefined,
-		},
-		{ key: 'customer_no', label: t('components.orderDetail.customerNo'), value: customer?.customer_no?.trim() ?? '' },
 	];
 	if (customer?.ref_no1?.trim()) {
 		fields.push({ key: 'ref_no1', label: t('components.orderDetail.refNo1'), value: customer.ref_no1.trim() });
@@ -223,3 +221,12 @@ const editCustomerDetail = () => {
 	customerModal.open();
 };
 </script>
+
+<style scoped>
+.customer-detail {
+	border: 1px solid var(--ui-border);
+	border-radius: 0.75rem;
+	background: color-mix(in srgb, var(--ui-bg-elevated) 55%, transparent);
+	padding: 0.75rem;
+}
+</style>

@@ -12,12 +12,12 @@ export const useAppStore = defineStore('appStore', {
 			const merchantInfo = useMerchantInfoStore();
 			const settingsStore = useSettingStore();
 			const productTypeStore = useProductTypeStore();
-			const orderStore = useOrderStore();
+			// const orderStore = useOrderStore();
 			const paymentTypeStore = usePaymentTypeStore();
 			const paymentMethodStore = usePaymentMethodStore();
 			const summOrderStore = useSummOrderStore();
 			const summSalesStore = useSummSaleStore();
-			const customerStore = useCustomerStore();
+			// const customerStore = useCustomerStore();
 			const notificationStore = useNotificationStore();
 
 			// const outletStore = useOutletStore();
