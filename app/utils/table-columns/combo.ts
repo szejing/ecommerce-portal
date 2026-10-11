@@ -71,9 +71,11 @@ export function getComboColumns(t: TranslateFn): TableColumn<Product>[] {
 				const labels = componentLabels(row.original);
 				if (labels.length === 0) return mutedCell('—');
 				return h(
-					'ul',
-					{ class: 'text-sm space-y-1' },
-					labels.map((label) => h('li', { class: 'whitespace-normal break-words' }, label)),
+					'div',
+					{ class: 'flex flex-wrap items-center gap-1' },
+					labels.map((label) =>
+						h(UBadge, { variant: 'subtle', color: 'info', class: 'max-w-full whitespace-normal' }, () => label),
+					),
 				);
 			},
 		},

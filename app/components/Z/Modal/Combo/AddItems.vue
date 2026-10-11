@@ -2,6 +2,7 @@
 	<UModal
 		:title="t('combo.addItems')"
 		:close="{ onClick: () => settle(undefined) }"
+		:ui="{ content: 'w-full sm:max-w-2xl md:max-w-3xl' }"
 		@update:open="onOpenChange"
 	>
 		<template #body>
@@ -11,33 +12,34 @@
 					<USelect v-model="category" :items="categoryItems" :placeholder="t('combo.category')" class="w-44" />
 				</div>
 				<p v-if="error" class="text-sm text-error">{{ error }}</p>
-				<div :aria-busy="loading" class="min-h-48 max-h-80 overflow-y-auto divide-y">
-					<button
-						v-for="product in choices"
-						:key="product.code"
-						type="button"
-						class="flex w-full items-center gap-3 py-3 text-left hover:bg-muted"
-						@click="selectProduct(product)"
+				<div class="overflow-hidden rounded-lg border border-default">
+					<UTable
+						:data="choices"
+						:columns="columns"
+						:loading="loading"
+						:get-row-id="rowId"
+						:ui="{
+							root: 'relative max-h-80 overflow-auto',
+							base: 'w-full text-sm',
+							tr: 'cursor-pointer',
+							td: 'align-middle whitespace-normal',
+						}"
+						@select="onSelectRow"
 					>
-						<img v-if="product.thumbnail?.url" :src="product.thumbnail.url" :alt="product.name" class="size-10 rounded object-cover" />
-						<span class="min-w-0 flex-1 break-words">
-							{{ product.name }}
-							<span class="text-muted">{{ product.code }}</span>
-						</span>
-						<UIcon v-if="selected?.code === product.code" name="i-lucide-check" />
-					</button>
-					<p v-if="!loading && !choices.length" class="py-6 text-center text-muted">{{ t('combo.noMatchingProducts') }}</p>
+						<template #select-cell="{ row }">
+							<UIcon
+								v-if="selected?.code === row.original.code"
+								name="i-lucide-check"
+								class="size-4 text-primary"
+							/>
+						</template>
+						<template #empty>
+							<p class="py-6 text-center text-sm text-muted">{{ t('combo.noMatchingProducts') }}</p>
+						</template>
+					</UTable>
 				</div>
-				<div class="flex justify-between items-center">
-					<UButton icon="i-lucide-chevron-left" variant="ghost" :aria-label="t('combo.prevPage')" :disabled="page === 1 || loading" @click="page--" />
-					<span class="text-sm">{{ page }}</span>
-					<UButton
-						icon="i-lucide-chevron-right"
-						variant="ghost"
-						:aria-label="t('combo.nextPage')"
-						:disabled="page * 25 >= total || loading"
-						@click="page++"
-					/>
+				<div v-if="total > 0" class="flex justify-end">
+					<UPagination v-model:page="page" :items-per-page="PAGE_SIZE" :total="total" />
 				</div>
 				<UFormField v-if="selected?.variants?.length" :label="t('combo.exactVariant')" required>
 					<USelect
@@ -56,12 +58,16 @@
 
 <script setup lang="ts">
 import { ProductType } from 'yeppi-common';
+import type { TableRow } from '@nuxt/ui';
+import { getComboAddItemColumns } from '~/utils/table-columns';
 import type { Product } from '~/utils/types/product';
 
 export type ComboAddItemsPayload = {
 	product: Product;
 	variant_code?: string;
 };
+
+const PAGE_SIZE = 25;
 
 const props = defineProps<{
 	excludeProductCode?: string;
@@ -86,6 +92,9 @@ const loading = ref(false);
 const error = ref('');
 let generation = 0;
 let settled = false;
+
+const columns = computed(() => getComboAddItemColumns(t));
+const rowId = (product: Product) => product.code ?? '';
 
 const categoryItems = computed(() => [
 	{ label: t('combo.allCategories'), value: 'all' },
@@ -122,6 +131,11 @@ function selectProduct(product: Product) {
 	variantCode.value = undefined;
 }
 
+function onSelectRow(_event: Event, row: TableRow<Product>) {
+	if (!row.original) return;
+	selectProduct(row.original);
+}
+
 async function load() {
 	const current = ++generation;
 	loading.value = true;
@@ -129,8 +143,8 @@ async function load() {
 	try {
 		const searchTerm = search.value.trim();
 		const response = await $api.product.getMany({
-			$top: 25,
-			$skip: (page.value - 1) * 25,
+			$top: PAGE_SIZE,
+			$skip: (page.value - 1) * PAGE_SIZE,
 			$count: true,
 			...(searchTerm ? { $search: searchTerm } : {}),
 			$expand: 'type,variants,variants.price_types,thumbnail,categories,price_types',

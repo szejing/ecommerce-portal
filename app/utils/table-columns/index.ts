@@ -6,6 +6,7 @@ import { getSelectableProductVariationColumns } from './selectable-product-varia
 import { getTagColumns } from './tag';
 import { getProductColumns } from './product';
 import { getComboColumns } from './combo';
+import { getComboAddItemColumns } from './combo-add-item';
 import { getComboComponentColumns } from './combo-component';
 import { getSummColumns, getSummColumnLabels } from './analytics/summ';
 import { getSummItemColumns, getSummItemColumnLabels } from './analytics/summ-item';
@@ -50,6 +51,7 @@ export {
 	getOrderColumns,
 	getProductColumns,
 	getComboColumns,
+	getComboAddItemColumns,
 	getComboComponentColumns,
 	getSummColumns,
 	getSummColumnLabels,
