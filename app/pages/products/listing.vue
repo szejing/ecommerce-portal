@@ -22,8 +22,8 @@
 		<div class="space-y-6">
 			<!-- Table Controls -->
 			<ZTableToolbar
-				:model-value="filters.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
+				:model-value="filters.page_size"
 				:page-size-options="options_page_size"
 				:export-enabled="true"
 				:exporting="exporting"

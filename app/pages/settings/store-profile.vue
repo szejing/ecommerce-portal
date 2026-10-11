@@ -51,18 +51,20 @@
 			</UCard>
 		</div>
 		<div v-else class="space-y-6">
+			<!-- Only while store is hidden — unhide here; when listed, use Hide store button instead -->
 			<div
-				class="flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between"
-				:class="
-					hideStore
-						? 'border-red-200/60 bg-red-50/80 dark:border-red-800/50 dark:bg-red-950/40'
-						: 'border-gray-200/60 bg-gray-50/80 dark:border-gray-700/50 dark:bg-gray-800/60'
-				"
+				v-if="hideStore"
+				class="flex flex-col gap-3 rounded-xl border border-red-200/60 bg-red-50/80 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-red-800/50 dark:bg-red-950/40"
 			>
 				<div class="min-w-0 space-y-1">
-					<p class="text-sm font-semibold text-gray-900 dark:text-white">
-						{{ t('pages.storeProfilePage.hideStoreLabel') }}
-					</p>
+					<div class="flex flex-wrap items-center gap-2">
+						<p class="text-sm font-semibold text-gray-900 dark:text-white">
+							{{ t('pages.storeProfilePage.hideStoreLabel') }}
+						</p>
+						<UBadge color="error" variant="subtle" size="sm">
+							{{ t('pages.storeProfilePage.storeHiddenBadge') }}
+						</UBadge>
+					</div>
 					<p class="text-sm text-gray-600 dark:text-gray-400">
 						{{ t('pages.storeProfilePage.hideStoreDesc') }}
 					</p>
@@ -73,75 +75,28 @@
 					:disabled="merchantInfoStore.updating"
 					color="error"
 					size="lg"
+					:aria-label="t('pages.storeProfilePage.hideStoreLabel')"
 					@update:model-value="onHideStoreChange"
 				/>
 			</div>
 
-			<div class="rounded-xl border border-default bg-elevated/40 p-4 space-y-3">
-				<div class="min-w-0 space-y-1">
-					<p class="text-sm font-semibold text-gray-900 dark:text-white">
-						{{ t('pages.storeProfilePage.storeHandleLabel') }}
-					</p>
-					<p class="text-sm text-gray-600 dark:text-gray-400">
-						{{ storeHandleLocked ? t('pages.storeProfilePage.storeHandleLocked') : t('pages.storeProfilePage.storeHandleDesc') }}
-					</p>
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+				<div class="min-w-0 space-y-2">
+					<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('nav.storeProfile') }}</h2>
+					<p class="text-gray-600 dark:text-gray-400">{{ t('pages.storeProfileDesc') }}</p>
 				</div>
-				<UFormField :error="storeHandleError">
-					<UInput
-						class="font-mono"
-						:model-value="storeHandle"
-						:disabled="storeHandleLocked"
-						:placeholder="'acme-tyres'"
-						@update:model-value="onStoreHandleInput"
-					/>
-					<template #help>
-						<div class="flex min-w-0 items-center gap-1.5">
-							<span class="min-w-0 truncate font-mono">{{ storeHandlePreview }}</span>
-							<UButton
-								data-testid="store-profile-copy-url"
-								color="neutral"
-								variant="ghost"
-								size="xs"
-								square
-								:icon="ICONS.CLIPBOARD"
-								:disabled="!storeHandleFullUrl"
-								:aria-label="t('pages.storeProfilePage.copyStoreUrl')"
-								@click="copyStoreUrl"
-							/>
-						</div>
-					</template>
-				</UFormField>
-			</div>
-
-			<!-- <div class="rounded-xl border border-default bg-elevated/40 p-4 space-y-3">
-				<div class="min-w-0 space-y-1">
-					<p class="text-sm font-semibold text-gray-900 dark:text-white">
-						{{ t('pages.storeProfilePage.storeThemeLabel') }}
-					</p>
-					<p class="text-sm text-gray-600 dark:text-gray-400">
-						{{ t('pages.storeProfilePage.storeThemeDesc') }}
-					</p>
-				</div>
-				<div class="flex flex-wrap items-center gap-3">
-					<UPopover>
-						<UButton color="neutral" variant="outline" :icon="ICONS.PALETTE">
-							<span class="size-4 rounded-full border border-default" :style="{ backgroundColor: themeColour || 'transparent' }" />
-							{{ themeColour || t('pages.storeProfilePage.storeThemeNone') }}
-						</UButton>
-						<template #content>
-							<UColorPicker class="p-2" format="hex" :model-value="themeColour || '#FFFFFF'" @update:model-value="onThemeColour" />
-						</template>
-					</UPopover>
-					<UInput class="w-36 font-mono" :model-value="themeColour" placeholder="#C41E3A" @update:model-value="onThemeColour" />
-					<UButton v-if="themeColour" color="neutral" variant="ghost" @click="onThemeColour('')">
-						{{ t('pages.storeProfilePage.storeThemeClear') }}
-					</UButton>
-				</div>
-			</div> -->
-
-			<div class="space-y-2">
-				<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('nav.storeProfile') }}</h2>
-				<p class="text-gray-600 dark:text-gray-400">{{ t('pages.storeProfileDesc') }}</p>
+				<UButton
+					v-if="!hideStore"
+					color="error"
+					variant="ghost"
+					:loading="merchantInfoStore.updating"
+					:disabled="merchantInfoStore.updating"
+					icon="i-heroicons-eye-slash"
+					class="shrink-0 self-start opacity-40 hover:opacity-100"
+					@click="onHideStoreClick"
+				>
+					{{ t('pages.storeProfilePage.hideStoreButton') }}
+				</UButton>
 			</div>
 
 			<!-- Merchant ID | Account Type | Expired Date | Account Status – card based, tinted backgrounds -->
@@ -177,110 +132,220 @@
 			</div>
 
 			<UCard>
-				<div class="space-y-6">
+				<div class="space-y-5">
 					<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('pages.storeProfilePage.merchantInformation') }}</h3>
 
-					<!-- Thumbnail -->
-					<UFormField :label="t('pages.storeProfilePage.thumbnail')" :description="t('pages.storeProfilePage.thumbnailRecommendedSize')">
-						<ZDropzone
-							:key="thumbnailDropzoneKey"
-							class="max-w-full sm:max-w-50"
-							:existing-images="thumbnailExistingImages"
-							:multiple="false"
-							:disabled="merchantInfoStore.loading || merchantInfoStore.updating"
-							@files-selected="onThumbnailFilesSelected"
-							@delete-image="onThumbnailDelete"
-						/>
-					</UFormField>
+					<!-- Identity -->
+					<section class="space-y-4 rounded-xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
+						<h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+							{{ t('pages.storeProfilePage.sectionIdentity') }}
+						</h4>
 
-					<!-- Name, Company email, website, phone no -->
-					<div class="grid gap-4 sm:grid-cols-2">
-						<div class="sm:col-span-2 grid gap-4 sm:grid-cols-2">
-							<UFormField :label="t('common.name')">
-								<UInput
-									:model-value="getMerchantValue(GROUP_CODE.INFO, MERCHANT.NAME)"
-									@update:model-value="(v) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.NAME, v)"
-								/>
-							</UFormField>
-							<UFormField class="sm:col-start-1" :label="t('pages.storeProfilePage.shortDescription')">
-								<UInput
-									:model-value="getMerchantValue(GROUP_CODE.INFO, MERCHANT.SHORT_DESC)"
-									:maxlength="280"
-									@update:model-value="(v) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.SHORT_DESC, String(v ?? ''))"
-								/>
-								<p class="mt-1 text-xs text-muted text-right">
-									{{
+						<div class="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+							<!-- Left: store thumbnail -->
+							<div
+								class="flex w-full shrink-0 flex-col gap-2 rounded-lg border border-slate-200 bg-white/70 p-3 sm:w-52 dark:border-slate-600/70 dark:bg-slate-950/40"
+							>
+								<div class="space-y-0.5">
+									<p class="text-sm font-medium text-slate-900 dark:text-slate-100">
+										{{ t('pages.storeProfilePage.thumbnail') }}
+									</p>
+									<p class="text-xs leading-snug text-slate-500 dark:text-slate-400">
+										{{ t('pages.storeProfilePage.thumbnailRecommendedSize') }}
+									</p>
+								</div>
+								<div class="aspect-square w-full overflow-hidden rounded-lg">
+									<ZDropzone
+										:key="thumbnailDropzoneKey"
+										class="size-full"
+										:existing-images="thumbnailExistingImages"
+										:multiple="false"
+										:disabled="merchantInfoStore.loading || merchantInfoStore.updating"
+										@files-selected="onThumbnailFilesSelected"
+										@delete-image="onThumbnailDelete"
+									/>
+								</div>
+							</div>
+
+							<!-- Right: name + short description -->
+							<div class="flex min-w-0 flex-1 flex-col gap-4 rounded-lg border border-slate-200 bg-white/70 p-3 dark:border-slate-600/70 dark:bg-slate-950/40">
+								<UFormField :label="t('common.name')">
+									<UInput
+										size="lg"
+										:model-value="getMerchantValue(GROUP_CODE.INFO, MERCHANT.NAME)"
+										@update:model-value="(v) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.NAME, v)"
+									/>
+								</UFormField>
+								<UFormField
+									class="flex-1"
+									:label="t('pages.storeProfilePage.shortDescription')"
+									:description="t('pages.storeProfilePage.shortDescriptionDesc')"
+									:hint="
 										t('pages.storeProfilePage.shortDescriptionCounter', {
 											n: getMerchantValue(GROUP_CODE.INFO, MERCHANT.SHORT_DESC).length,
 										})
-									}}
+									"
+									:ui="{
+										hint: 'text-xs font-normal tabular-nums text-slate-500 dark:text-slate-400',
+										description: 'text-xs font-normal tabular-nums text-slate-500 dark:text-slate-400',
+									}"
+								>
+									<UTextarea
+										class="w-full"
+										:rows="4"
+										:maxrows="8"
+										:maxlength="280"
+										autoresize
+										:model-value="getMerchantValue(GROUP_CODE.INFO, MERCHANT.SHORT_DESC)"
+										@update:model-value="(v) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.SHORT_DESC, String(v ?? ''))"
+									/>
+								</UFormField>
+							</div>
+						</div>
+
+						<!-- Editable only while unlocked; hide once handle is fixed after store is listed -->
+						<div v-if="!storeHandleLocked" class="space-y-2 rounded-lg border border-slate-200 bg-white/70 p-3 dark:border-slate-600/70 dark:bg-slate-950/40">
+							<div class="min-w-0 space-y-1">
+								<p class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+									{{ t('pages.storeProfilePage.storeHandleLabel') }}
 								</p>
+								<p class="text-xs text-slate-500 dark:text-slate-400">
+									{{ t('pages.storeProfilePage.storeHandleDesc') }}
+								</p>
+							</div>
+							<UFormField :error="storeHandleError">
+								<UInput class="font-mono" :model-value="storeHandle" placeholder="acme-tyres" @update:model-value="onStoreHandleInput" />
+								<template #help>
+									<div class="flex min-w-0 items-center gap-1.5">
+										<span class="min-w-0 truncate font-mono text-xs text-slate-600 dark:text-slate-300">{{ storeHandlePreview }}</span>
+										<UButton
+											data-testid="store-profile-copy-url"
+											color="neutral"
+											variant="ghost"
+											size="xs"
+											square
+											:icon="ICONS.CLIPBOARD"
+											:disabled="!storeHandleFullUrl"
+											:aria-label="t('pages.storeProfilePage.copyStoreUrl')"
+											@click="copyStoreUrl"
+										/>
+									</div>
+								</template>
 							</UFormField>
 						</div>
-						<div class="sm:col-span-2 space-y-3">
-							<div class="flex items-start justify-between gap-4 rounded-lg border border-default p-3">
-								<div class="min-w-0 space-y-1">
-									<p class="text-sm font-semibold text-gray-900 dark:text-white">
+					</section>
+
+					<!-- Contact -->
+					<section class="space-y-4 rounded-xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
+						<h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+							{{ t('pages.storeProfilePage.sectionContact') }}
+						</h4>
+
+						<div
+							class="flex items-start justify-between gap-4 rounded-lg border px-3 py-2.5 transition-colors"
+							:class="
+								merchantInfoStore.isStoreEmailHidden
+									? 'border-slate-400 bg-slate-200/80 dark:border-slate-500 dark:bg-slate-800/80'
+									: 'border-slate-300/80 bg-slate-100/90 dark:border-slate-600 dark:bg-slate-800/50'
+							"
+						>
+							<div class="min-w-0 space-y-1">
+								<div class="flex flex-wrap items-center gap-2">
+									<p class="text-sm font-medium text-slate-900 dark:text-slate-100">
 										{{ t('pages.storeProfilePage.hideEmailLabel') }}
 									</p>
-									<p class="text-sm text-gray-600 dark:text-gray-400">
-										{{ t('pages.storeProfilePage.hideEmailDesc') }}
-									</p>
+									<UBadge
+										v-if="merchantInfoStore.isStoreEmailHidden"
+										color="neutral"
+										variant="subtle"
+										size="sm"
+										class="bg-slate-300/80 text-slate-800 dark:bg-slate-700 dark:text-slate-100"
+									>
+										{{ t('pages.storeProfilePage.privacyHiddenBadge') }}
+									</UBadge>
 								</div>
-								<USwitch
-									:model-value="merchantInfoStore.isStoreEmailHidden"
-									color="error"
-									@update:model-value="(value: boolean) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.HIDE_STORE_EMAIL, value ? 'true' : 'false')"
-								/>
+								<p class="text-xs text-slate-600 dark:text-slate-400">
+									{{ t('pages.storeProfilePage.hideEmailDesc') }}
+								</p>
 							</div>
-							<UFormField :label="t('pages.storeProfilePage.companyEmail')">
+							<USwitch
+								:model-value="merchantInfoStore.isStoreEmailHidden"
+								color="neutral"
+								:aria-label="t('pages.storeProfilePage.hideEmailLabel')"
+								@update:model-value="(value: boolean) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.HIDE_STORE_EMAIL, value ? 'true' : 'false')"
+							/>
+						</div>
+
+						<div class="grid gap-4 sm:grid-cols-2">
+							<UFormField :label="t('pages.storeProfilePage.companyEmail')" class="sm:col-span-2">
 								<UInput
 									type="email"
 									:model-value="getMerchantValue(GROUP_CODE.INFO, MERCHANT.COMPANY_EMAIL_ADDRESS)"
 									@update:model-value="(v) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.COMPANY_EMAIL_ADDRESS, v)"
 								/>
 							</UFormField>
+							<UFormField :label="t('pages.storeProfilePage.companyWebsite')" class="sm:col-span-2">
+								<UInput
+									:model-value="getMerchantValue(GROUP_CODE.INFO, MERCHANT.COMPANY_WEBSITE)"
+									@update:model-value="(v) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.COMPANY_WEBSITE, v)"
+								/>
+							</UFormField>
+							<UFormField :label="t('pages.storeProfilePage.contactPerson')">
+								<UInput
+									:model-value="getMerchantValue(GROUP_CODE.CONTACT, MERCHANT.CONTACT_PERSON)"
+									@update:model-value="(v) => setMerchantValue(GROUP_CODE.CONTACT, MERCHANT.CONTACT_PERSON, v)"
+								/>
+							</UFormField>
+							<UFormField :label="t('pages.storeProfilePage.contactNo')">
+								<ZPhoneInput
+									:dial-code="getMerchantValue(GROUP_CODE.CONTACT, MERCHANT.DIAL_CODE)"
+									:phone-no="getMerchantValue(GROUP_CODE.CONTACT, MERCHANT.PHONE_NO)"
+									@update:dial-code="(v: string) => setMerchantValue(GROUP_CODE.CONTACT, MERCHANT.DIAL_CODE, v)"
+									@update:phone-no="(v: string) => setMerchantValue(GROUP_CODE.CONTACT, MERCHANT.PHONE_NO, v)"
+								/>
+							</UFormField>
 						</div>
-						<UFormField :label="t('pages.storeProfilePage.companyWebsite')" class="sm:col-span-2">
-							<UInput
-								:model-value="getMerchantValue(GROUP_CODE.INFO, MERCHANT.COMPANY_WEBSITE)"
-								@update:model-value="(v) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.COMPANY_WEBSITE, v)"
-							/>
-						</UFormField>
-						<UFormField :label="t('pages.storeProfilePage.contactPerson')">
-							<UInput
-								:model-value="getMerchantValue(GROUP_CODE.CONTACT, MERCHANT.CONTACT_PERSON)"
-								@update:model-value="(v) => setMerchantValue(GROUP_CODE.CONTACT, MERCHANT.CONTACT_PERSON, v)"
-							/>
-						</UFormField>
-						<UFormField :label="t('pages.storeProfilePage.contactNo')">
-							<ZPhoneInput
-								:dial-code="getMerchantValue(GROUP_CODE.CONTACT, MERCHANT.DIAL_CODE)"
-								:phone-no="getMerchantValue(GROUP_CODE.CONTACT, MERCHANT.PHONE_NO)"
-								@update:dial-code="(v: string) => setMerchantValue(GROUP_CODE.CONTACT, MERCHANT.DIAL_CODE, v)"
-								@update:phone-no="(v: string) => setMerchantValue(GROUP_CODE.CONTACT, MERCHANT.PHONE_NO, v)"
-							/>
-						</UFormField>
-					</div>
+					</section>
 
 					<!-- Address -->
-					<div class="space-y-4">
-						<h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ t('common.address') }}</h4>
-						<div class="flex items-start justify-between gap-4 rounded-lg border border-default p-3">
+					<section class="space-y-4 rounded-xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
+						<h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ t('common.address') }}</h4>
+
+						<div
+							class="flex items-start justify-between gap-4 rounded-lg border px-3 py-2.5 transition-colors"
+							:class="
+								merchantInfoStore.isStoreAddressHidden
+									? 'border-slate-400 bg-slate-200/80 dark:border-slate-500 dark:bg-slate-800/80'
+									: 'border-slate-300/80 bg-slate-100/90 dark:border-slate-600 dark:bg-slate-800/50'
+							"
+						>
 							<div class="min-w-0 space-y-1">
-								<p class="text-sm font-semibold text-gray-900 dark:text-white">
-									{{ t('pages.storeProfilePage.hideAddressLabel') }}
-								</p>
-								<p class="text-sm text-gray-600 dark:text-gray-400">
+								<div class="flex flex-wrap items-center gap-2">
+									<p class="text-sm font-medium text-slate-900 dark:text-slate-100">
+										{{ t('pages.storeProfilePage.hideAddressLabel') }}
+									</p>
+									<UBadge
+										v-if="merchantInfoStore.isStoreAddressHidden"
+										color="neutral"
+										variant="subtle"
+										size="sm"
+										class="bg-slate-300/80 text-slate-800 dark:bg-slate-700 dark:text-slate-100"
+									>
+										{{ t('pages.storeProfilePage.privacyHiddenBadge') }}
+									</UBadge>
+								</div>
+								<p class="text-xs text-slate-600 dark:text-slate-400">
 									{{ t('pages.storeProfilePage.hideAddressDesc') }}
 								</p>
 							</div>
 							<USwitch
 								:model-value="merchantInfoStore.isStoreAddressHidden"
-								color="error"
+								color="neutral"
+								:aria-label="t('pages.storeProfilePage.hideAddressLabel')"
 								@update:model-value="(value: boolean) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.HIDE_STORE_ADDRESS, value ? 'true' : 'false')"
 							/>
 						</div>
+
 						<div class="grid gap-4 sm:grid-cols-2">
 							<UFormField :label="t('pages.storeProfilePage.addressLine1')">
 								<UInput
@@ -324,17 +389,20 @@
 								</UFormField>
 							</div>
 						</div>
-					</div>
+					</section>
 
-					<ZFormStoreOperatingHours
-						:off-days="operationOffDaysArray"
-						:start-time="getMerchantValue(GROUP_CODE.INFO, MERCHANT.OPERATION_START_TIME) || null"
-						:end-time="getMerchantValue(GROUP_CODE.INFO, MERCHANT.OPERATION_END_TIME) || null"
-						:time-select-title="t('components.zInput.selectTime')"
-						@update:off-days="onOperationOffDaysUpdate"
-						@update:start-time="(v: string) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.OPERATION_START_TIME, v)"
-						@update:end-time="(v: string) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.OPERATION_END_TIME, v)"
-					/>
+					<!-- Operating hours -->
+					<section class="rounded-xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
+						<ZFormStoreOperatingHours
+							:off-days="operationOffDaysArray"
+							:start-time="getMerchantValue(GROUP_CODE.INFO, MERCHANT.OPERATION_START_TIME) || null"
+							:end-time="getMerchantValue(GROUP_CODE.INFO, MERCHANT.OPERATION_END_TIME) || null"
+							:time-select-title="t('components.zInput.selectTime')"
+							@update:off-days="onOperationOffDaysUpdate"
+							@update:start-time="(v: string) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.OPERATION_START_TIME, v)"
+							@update:end-time="(v: string) => setMerchantValue(GROUP_CODE.INFO, MERCHANT.OPERATION_END_TIME, v)"
+						/>
+					</section>
 				</div>
 			</UCard>
 		</div>
@@ -342,14 +410,13 @@
 </template>
 
 <script lang="ts" setup>
-import { ZModalLoading } from '#components';
+import { ZModalConfirmation, ZModalLoading } from '#components';
 import { APP_PLATFORM, getFormattedDate, GROUP_CODE, MERCHANT, Package, validateStoreHandle, merchantStorePath } from 'yeppi-common';
 import { sanitizeStoreHandleInput } from '~/utils/store-handle-form';
 import { useDataStore } from '~/stores/Data/Data';
 import type { Country } from '~/utils/types/country';
 import { ICONS } from '~/utils/icons';
 import { accountTypeLabel } from '~/utils/options/account-type';
-import { normalizeStoreThemePrimaryColour, STORE_THEME_PRIMARY_COLOUR_SET_CODE } from '~/utils/store-theme';
 
 definePageMeta({ ssr: false });
 
@@ -424,6 +491,31 @@ const onHideStoreChange = async (value: boolean) => {
 	} catch {
 		// notification handled in store
 	}
+};
+
+/** Destructive path when store is listed — confirm before hiding from marketplace. */
+const onHideStoreClick = () => {
+	const confirmModal = overlay.create(ZModalConfirmation, {
+		props: {
+			title: t('pages.storeProfilePage.hideStoreConfirmTitle'),
+			message: t('pages.storeProfilePage.hideStoreConfirmMessage'),
+			titleVariant: 'danger',
+			action: 'delete',
+			onConfirm: async () => {
+				try {
+					await merchantInfoStore.setHideStore(true);
+				} catch {
+					// notification handled in store
+				} finally {
+					confirmModal.close();
+				}
+			},
+			onCancel: () => {
+				confirmModal.close();
+			},
+		},
+	});
+	confirmModal.open();
 };
 
 const thumbnailDropzoneKey = ref(0);

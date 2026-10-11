@@ -1,5 +1,5 @@
 <template>
-	<section class="space-y-4">
+	<section class="customer-detail space-y-4">
 		<div class="flex items-center justify-between gap-3">
 			<h2 class="flex min-w-0 items-center gap-2 text-base font-semibold text-highlighted">
 				<UIcon :name="showAddresses ? 'i-heroicons-map-pin' : ICONS.CUSTOMER_GROUP_ROUNDED" class="size-5 shrink-0" aria-hidden="true" />
@@ -221,3 +221,12 @@ const editCustomerDetail = () => {
 	customerModal.open();
 };
 </script>
+
+<style scoped>
+.customer-detail {
+	border: 1px solid var(--ui-border);
+	border-radius: 0.75rem;
+	background: color-mix(in srgb, var(--ui-bg-elevated) 55%, transparent);
+	padding: 0.75rem;
+}
+</style>

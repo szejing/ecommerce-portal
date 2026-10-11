@@ -106,12 +106,12 @@
 							@refresh="getOrderDetails"
 						/>
 
-						<ZSectionOrderDetailOrderStatus
+						<!-- <ZSectionOrderDetailOrderStatus
 							v-model:status="new_order_status"
 							:current-status="order?.status"
 							:updating="updating"
 							@submit="handleUpdateOrderStatus"
-						/>
+						/> -->
 
 						<ZSectionOrderDetailCustomerEmail
 							v-if="resend_email_action"
@@ -157,12 +157,12 @@
 									@refresh="getOrderDetails"
 								/>
 
-								<ZSectionOrderDetailOrderStatus
+								<!-- <ZSectionOrderDetailOrderStatus
 									v-model:status="new_order_status"
 									:current-status="order?.status"
 									:updating="updating"
 									@submit="handleUpdateOrderStatus"
-								/>
+								/> -->
 
 								<ZSectionOrderDetailCustomerEmail
 									v-if="resend_email_action"

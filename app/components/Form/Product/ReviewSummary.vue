@@ -29,6 +29,7 @@
 							:src="thumbnailUrl"
 							:alt="t('components.productUpdate.thumbnailLabel')"
 							class="rounded-lg border border-default/20 object-cover w-20 h-20 shadow-sm"
+							@error="onImageError"
 						/>
 					</div>
 					<div v-if="imageUrls.length > 0" class="space-y-1.5">
@@ -40,6 +41,7 @@
 								:src="url"
 								:alt="`${t('components.productUpdate.galleryLabel')} ${i + 1}`"
 								class="rounded-lg border border-default/20 object-cover w-14 h-14 shadow-sm"
+								@error="onImageError"
 							/>
 						</div>
 					</div>
@@ -166,6 +168,8 @@
 </template>
 
 <script lang="ts" setup>
+const PRODUCT_THUMBNAIL_FALLBACK = '/svg/product-holder.svg';
+
 const { t } = useI18n();
 export interface ProductReviewSummary {
 	name: string;
@@ -211,6 +215,12 @@ function isImageLike(item: File | { url: string }): item is { url: string } {
 
 function getUrl(item: File | { url: string }): string {
 	return isImageLike(item) ? item.url : URL.createObjectURL(item);
+}
+
+function onImageError(event: Event) {
+	const img = event.target as HTMLImageElement;
+	if (img.src.endsWith(PRODUCT_THUMBNAIL_FALLBACK)) return;
+	img.src = PRODUCT_THUMBNAIL_FALLBACK;
 }
 
 const thumbnailUrl = ref<string | null>(null);
