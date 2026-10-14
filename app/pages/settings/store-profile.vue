@@ -59,14 +59,14 @@
 				<div class="min-w-0 space-y-1">
 					<div class="flex flex-wrap items-center gap-2">
 						<p class="text-sm font-semibold text-gray-900 dark:text-white">
-							{{ t('pages.storeProfilePage.hideStoreLabel') }}
+							{{ t('pages.storeProfilePage.hideStoreLabel', { platform: platformName }) }}
 						</p>
 						<UBadge color="error" variant="subtle" size="sm">
 							{{ t('pages.storeProfilePage.storeHiddenBadge') }}
 						</UBadge>
 					</div>
 					<p class="text-sm text-gray-600 dark:text-gray-400">
-						{{ t('pages.storeProfilePage.hideStoreDesc') }}
+						{{ t('pages.storeProfilePage.hideStoreDesc', { platform: platformName }) }}
 					</p>
 				</div>
 				<USwitch
@@ -75,7 +75,7 @@
 					:disabled="merchantInfoStore.updating"
 					color="error"
 					size="lg"
-					:aria-label="t('pages.storeProfilePage.hideStoreLabel')"
+					:aria-label="t('pages.storeProfilePage.hideStoreLabel', { platform: platformName })"
 					@update:model-value="onHideStoreChange"
 				/>
 			</div>
@@ -425,7 +425,7 @@ useHead({ title: () => `${t('common.appName')} - ${t('nav.storeProfile')}` });
 
 const overlay = useOverlay();
 const toast = useToast();
-const { platform } = usePlatformShell();
+const { platform, platformName } = usePlatformShell();
 const merchantInfoStore = useMerchantInfoStore();
 const dataStore = useDataStore();
 const loadingModal = overlay.create(ZModalLoading, { props: { key: 'loading' } });

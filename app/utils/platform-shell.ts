@@ -6,6 +6,8 @@ import {
 
 export type PlatformShellBrand = {
 	platform: AppPlatform;
+	/** Short marketplace brand for copy (e.g. "Wemotoo" / "Yeppi"). */
+	platformName: string;
 	appName: string;
 	logoSrc: string;
 	logoAlt: string;
@@ -23,6 +25,7 @@ export function resolvePlatformShellBrand(
 	if (platform === APP_PLATFORM.YEPPI) {
 		return {
 			platform,
+			platformName: 'Yeppi',
 			appName: 'Yeppi Portal',
 			logoSrc: '/logo/yeppi-wordmark.png',
 			logoAlt: 'Yeppi Portal',
@@ -34,6 +37,7 @@ export function resolvePlatformShellBrand(
 
 	return {
 		platform,
+		platformName: 'Wemotoo',
 		appName: 'Wemotoo Portal',
 		logoSrc: '/logo/logo.png',
 		logoAlt: 'Wemotoo Portal',

@@ -59,7 +59,7 @@
 				class="flex w-full shrink-0 flex-wrap items-center justify-center gap-x-2 gap-y-1 bg-red-600 px-4 py-2.5 text-center text-sm font-medium text-white"
 				role="status"
 			>
-				<span>{{ t('pages.storeProfilePage.storeDisabledBanner') }}</span>
+				<span>{{ t('pages.storeProfilePage.storeDisabledBanner', { platform: platformName }) }}</span>
 				<UButton
 					type="button"
 					variant="link"
@@ -82,6 +82,7 @@
 
 <script lang="ts" setup>
 const { t } = useI18n();
+const { platformName } = usePlatformShell();
 const route = useRoute();
 const appUiStore = useAppUiStore();
 const merchantInfoStore = useMerchantInfoStore();

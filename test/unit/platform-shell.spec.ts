@@ -22,6 +22,7 @@ describe('resolvePlatformShellBrand', () => {
 	it('uses Yeppi Portal chrome for yeppi platform', () => {
 		expect(resolvePlatformShellBrand('yeppi')).toEqual({
 			platform: APP_PLATFORM.YEPPI,
+			platformName: 'Yeppi',
 			appName: 'Yeppi Portal',
 			logoSrc: '/logo/yeppi-wordmark.png',
 			logoAlt: 'Yeppi Portal',
@@ -34,6 +35,7 @@ describe('resolvePlatformShellBrand', () => {
 	it('uses Wemotoo Portal chrome by default', () => {
 		expect(resolvePlatformShellBrand()).toEqual({
 			platform: APP_PLATFORM.WEMOTOO,
+			platformName: 'Wemotoo',
 			appName: 'Wemotoo Portal',
 			logoSrc: '/logo/logo.png',
 			logoAlt: 'Wemotoo Portal',

@@ -13,6 +13,7 @@ export function usePlatformShell() {
 	return {
 		brand,
 		appName: computed(() => brand.value.appName),
+		platformName: computed(() => brand.value.platformName),
 		logoSrc: computed(() => brand.value.logoSrc),
 		logoAlt: computed(() => brand.value.logoAlt),
 		faviconIco: computed(() => brand.value.faviconIco),
