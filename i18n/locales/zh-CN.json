@@ -158,6 +158,10 @@
 		"usageLimit": "使用上限"
 	},
 	"nav": {
+		"platform": "平台",
+		"announcements": "公告",
+		"emailBlast": "邮件群发",
+		"inAppAnnouncement": "应用内公告",
 		"main": "主要功能",
 		"dashboard": "仪表板",
 		"analytics": "数据分析",

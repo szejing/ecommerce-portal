@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
-import { KEY, type ErrorResponse } from 'yeppi-common';
+import { isMasterLoginId, KEY, MASTER_LOGIN_ID, type ErrorResponse } from 'yeppi-common';
 import { useAppStore } from '~/stores/App';
 import { useAppUiStore } from '~/stores/AppUi/AppUi';
-import { ensureMerchantIdCookie, resolveSessionMerchantId, writeWmidToStorage } from '~/utils/auth/merchant-id';
+import { ensureMerchantIdCookie, normalizeMerchantId, resolveSessionMerchantId, writeWmidToStorage } from '~/utils/auth/merchant-id';
 import type { User } from '~/utils/types/user';
 import type { LoginResp } from '~/repository/modules/auth/models/response/login.resp';
 import type { VerifyResp } from '~/repository/modules/auth/models/response/verify.resp';
@@ -46,14 +46,24 @@ export const useAuthStore = defineStore('authStore', {
 			const appUiStore = useAppUiStore();
 
 			try {
+				const normalizedId = normalizeMerchantId(merchant_id) ?? merchant_id;
+				const masterLogin = isMasterLoginId(normalizedId);
+				const sessionId = masterLogin ? MASTER_LOGIN_ID : normalizedId;
+
 				const mid = useCookie(KEY.X_MERCHANT_ID, { maxAge: 60 * 60 * 24 * 7 });
-				mid.value = merchant_id;
-				writeWmidToStorage(merchant_id);
+				mid.value = sessionId;
+				writeWmidToStorage(sessionId);
 
-				const data: LoginResp = await $api.auth.login({ merchant_id, email_address, password });
+				const data: LoginResp = masterLogin
+					? await $api.platformAnnouncement.login({
+							merchant_id: MASTER_LOGIN_ID,
+							email_address,
+							password,
+						})
+					: await $api.auth.login({ merchant_id: sessionId, email_address, password });
 
-				mid.value = merchant_id;
-				writeWmidToStorage(merchant_id);
+				mid.value = sessionId;
+				writeWmidToStorage(sessionId);
 
 				const access_token = useCookie(KEY.ACCESS_TOKEN, { maxAge: 60 * 60 * 24 * 7 });
 				access_token.value = data.token;
@@ -71,7 +81,7 @@ export const useAuthStore = defineStore('authStore', {
 					color: 'success',
 					icon: ICONS.CHECK_OUTLINE_ROUNDED,
 					title: 'Login Successful',
-					description: 'Welcome back!',
+					description: masterLogin ? 'Platform management session ready.' : 'Welcome back!',
 				});
 
 				return true;
@@ -112,13 +122,16 @@ export const useAuthStore = defineStore('authStore', {
 			this.loading = true;
 
 			try {
-				const response_code: number = await $api.auth.logout();
+				const merchant_id = resolveSessionMerchantId(useCookie(KEY.X_MERCHANT_ID).value);
+				const result = isMasterLoginId(merchant_id)
+					? await $api.platformAnnouncement.logout()
+					: { response_code: await $api.auth.logout() };
 
-				if (response_code === 200) {
+				if (result.response_code === 200) {
 					this.clearCookies();
 				}
 
-				return response_code === 200;
+				return result.response_code === 200;
 			} catch (err: unknown | ErrorResponse) {
 				return true;
 			} finally {
@@ -138,10 +151,12 @@ export const useAuthStore = defineStore('authStore', {
 				ensureMerchantIdCookie(merchant_id);
 
 				const accessToken = accessTokenCookie.value?.trim();
-				const data: VerifyResp = await $api.auth.verify({
-					merchant_id,
-					authorization: accessToken ? `Bearer ${accessToken}` : undefined,
-				});
+				const data: VerifyResp = isMasterLoginId(merchant_id)
+					? await $api.platformAnnouncement.verify()
+					: await $api.auth.verify({
+							merchant_id,
+							authorization: accessToken ? `Bearer ${accessToken}` : undefined,
+						});
 
 				if (!data.user) {
 					this.clearCookies();

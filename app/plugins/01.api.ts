@@ -37,6 +37,7 @@ import {
 	StaffDepartmentModule,
 	ActivityLogModule,
 	DocumentTemplateModule,
+	PlatformAnnouncementModule,
 } from '../repository/modules';
 
 interface IApiInstance {
@@ -78,6 +79,7 @@ interface IApiInstance {
 	staffDepartment: StaffDepartmentModule;
 	activityLog: ActivityLogModule;
 	documentTemplate: DocumentTemplateModule;
+	platformAnnouncement: PlatformAnnouncementModule;
 }
 
 export default defineNuxtPlugin((_) => {
@@ -130,6 +132,7 @@ export default defineNuxtPlugin((_) => {
 	const staffDepartmentModule = new StaffDepartmentModule();
 	const activityLogModule = new ActivityLogModule();
 	const documentTemplateModule = new DocumentTemplateModule();
+	const platformAnnouncementModule = new PlatformAnnouncementModule();
 
 	const modules: IApiInstance = {
 		auth: authModule,
@@ -170,6 +173,7 @@ export default defineNuxtPlugin((_) => {
 		staffDepartment: staffDepartmentModule,
 		activityLog: activityLogModule,
 		documentTemplate: documentTemplateModule,
+		platformAnnouncement: platformAnnouncementModule,
 	};
 
 	return {

@@ -158,6 +158,10 @@
 		"usageLimit": "Usage limit"
 	},
 	"nav": {
+		"platform": "Platform",
+		"announcements": "Announcements",
+		"emailBlast": "Email Blast",
+		"inAppAnnouncement": "In-app Announcement",
 		"main": "Main",
 		"dashboard": "Dashboard",
 		"analytics": "Analytics",

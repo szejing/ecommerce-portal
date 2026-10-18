@@ -158,6 +158,10 @@
 		"usageLimit": "Had penggunaan"
 	},
 	"nav": {
+		"platform": "Platform",
+		"announcements": "Pengumuman",
+		"emailBlast": "Email Blast",
+		"inAppAnnouncement": "Pengumuman dalam aplikasi",
 		"main": "Utama",
 		"dashboard": "Papan Pemuka",
 		"analytics": "Analitik",
