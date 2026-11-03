@@ -319,4 +319,8 @@ export const Routes = {
 		EmailBlastCancel: (id: string) => `platform/announcements/email-blasts/${encodeURIComponent(id)}/cancel`,
 		EmailBlastSend: (id: string) => `platform/announcements/email-blasts/${encodeURIComponent(id)}/send`,
 	},
+	PlatformMerchants: {
+		Many: () => 'platform/merchants',
+		Single: (merchantId: string) => `platform/merchants/${encodeURIComponent(merchantId)}`,
+	},
 };

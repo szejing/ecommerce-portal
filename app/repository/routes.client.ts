@@ -332,6 +332,10 @@ const MerchantRoutes = {
 		EmailBlastCancel: (id: string) => `${prefix}/platform/announcements/email-blasts/${encodeURIComponent(id)}/cancel`,
 		EmailBlastSend: (id: string) => `${prefix}/platform/announcements/email-blasts/${encodeURIComponent(id)}/send`,
 	},
+	PlatformMerchants: {
+		Many: () => `${prefix}/platform/merchants`,
+		Single: (merchantId: string) => `${prefix}/platform/merchants/${encodeURIComponent(merchantId)}`,
+	},
 };
 
 export default MerchantRoutes;

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { failedNotification } from '../AppUi/AppUi';
 import type { Notification, NotificationCenter, NotificationItem } from '~/utils/types/notification';
 import type { BaseODataReq } from '~/repository/base/base.req';
-import type { NotificationType, ErrorResponse } from 'yeppi-common';
+import { isMasterLoginId, KEY, type NotificationType, type ErrorResponse } from 'yeppi-common';
 
 type NotificationQueryOptions = BaseODataReq & {
 	includeRead?: boolean;
@@ -68,6 +68,17 @@ export const useNotificationStore = defineStore('notificationStore', {
 	},
 	actions: {
 		async getNotifications(options: NotificationQueryOptions = {}): Promise<void> {
+			// MASTER has no merchant schema — merchant notification APIs always 401.
+			if (isMasterLoginId(useCookie(KEY.X_MERCHANT_ID).value)) {
+				this.notifications = [];
+				this.all_notifications = [];
+				this.total_count = 0;
+				this.all_total_count = 0;
+				this.loading = false;
+				this.loadingMore = false;
+				return;
+			}
+
 			const { includeRead, append = false, ...query } = options;
 
 			if (!append) {
@@ -127,6 +138,10 @@ export const useNotificationStore = defineStore('notificationStore', {
 			}
 		},
 		async openNotificationItem(type: NotificationType, item: NotificationItem) {
+			if (isMasterLoginId(useCookie(KEY.X_MERCHANT_ID).value)) {
+				return undefined;
+			}
+
 			const { $api } = useNuxtApp();
 			const itemIds = item.notification_ids?.length ? item.notification_ids : [item.id];
 			let updatedItems: NotificationItem[];

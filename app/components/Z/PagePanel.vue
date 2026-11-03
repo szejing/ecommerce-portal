@@ -9,7 +9,7 @@
 					<div class="page-panel-actions">
 						<slot v-if="$slots['navbar-right']" name="navbar-right" />
 
-						<UPopover v-model:open="notificationPopoverOpen" :content="{ align: 'end' }">
+						<UPopover v-if="!isMasterSession" v-model:open="notificationPopoverOpen" :content="{ align: 'end' }">
 							<UButton class="notification-btn" color="secondary" variant="soft" square :aria-label="t('notifications.open')" @click="refreshNotifications">
 								<UIcon :name="ICONS.BELL" class="size-5" />
 								<!-- ClientOnly: unreadCount is filled by client-only 02.init-app before hydrate; SSR always has 0 -->
@@ -80,7 +80,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { NotificationType } from 'yeppi-common';
+import { isMasterLoginId, KEY, type NotificationType } from 'yeppi-common';
 import type { NotificationItem } from '~/utils/types/notification';
 import { ICONS } from '~/utils/icons';
 
@@ -100,6 +100,7 @@ withDefaults(
 
 const notificationStore = useNotificationStore();
 const notificationPopoverOpen = ref(false);
+const isMasterSession = computed(() => isMasterLoginId(useCookie(KEY.X_MERCHANT_ID).value));
 
 const refreshNotifications = async () => {
 	await notificationStore.getNotifications();
@@ -123,7 +124,9 @@ const openNotification = async (type: NotificationType, item: NotificationItem) 
 };
 
 onMounted(() => {
-	notificationStore.getNotifications();
+	if (!isMasterSession.value) {
+		notificationStore.getNotifications();
+	}
 });
 </script>
 

@@ -37,6 +37,7 @@ import StaffDepartmentModule from './staff-department/staff-department';
 import ActivityLogModule from './activity-log/activity-log';
 import DocumentTemplateModule from './document-template/document-template';
 import PlatformAnnouncementModule from './platform-announcement/platform-announcement';
+import PlatformMerchantModule from './platform-merchant/platform-merchant';
 
 export {
 	CrmUserModule,
@@ -78,4 +79,5 @@ export {
 	ActivityLogModule,
 	DocumentTemplateModule,
 	PlatformAnnouncementModule,
+	PlatformMerchantModule,
 };

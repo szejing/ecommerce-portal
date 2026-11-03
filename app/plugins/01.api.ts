@@ -38,6 +38,7 @@ import {
 	ActivityLogModule,
 	DocumentTemplateModule,
 	PlatformAnnouncementModule,
+	PlatformMerchantModule,
 } from '../repository/modules';
 
 interface IApiInstance {
@@ -80,6 +81,7 @@ interface IApiInstance {
 	activityLog: ActivityLogModule;
 	documentTemplate: DocumentTemplateModule;
 	platformAnnouncement: PlatformAnnouncementModule;
+	platformMerchant: PlatformMerchantModule;
 }
 
 export default defineNuxtPlugin((_) => {
@@ -133,6 +135,7 @@ export default defineNuxtPlugin((_) => {
 	const activityLogModule = new ActivityLogModule();
 	const documentTemplateModule = new DocumentTemplateModule();
 	const platformAnnouncementModule = new PlatformAnnouncementModule();
+	const platformMerchantModule = new PlatformMerchantModule();
 
 	const modules: IApiInstance = {
 		auth: authModule,
@@ -174,6 +177,7 @@ export default defineNuxtPlugin((_) => {
 		activityLog: activityLogModule,
 		documentTemplate: documentTemplateModule,
 		platformAnnouncement: platformAnnouncementModule,
+		platformMerchant: platformMerchantModule,
 	};
 
 	return {

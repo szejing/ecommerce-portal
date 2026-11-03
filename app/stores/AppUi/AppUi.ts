@@ -9,6 +9,12 @@ const default_navigations = [
 		label: 'nav.platform',
 		links: [
 			{
+				label: 'nav.merchants',
+				icon: ICONS.OUTLET,
+				to: '/merchants',
+				value: 'merchants',
+			},
+			{
 				label: 'nav.announcements',
 				icon: ICONS.SPARKLES,
 				to: '/announcements',

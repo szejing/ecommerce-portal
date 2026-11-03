@@ -39,9 +39,11 @@ import { getStaffDepartmentColumns } from './staff-department';
 import { getNotificationColumns } from './notification';
 import { ACTIVITY_LOG_COLUMN_LABELS, getActivityLogColumns } from './activity-log';
 import { getShipmentArrangementColumns, getShipmentArrangementPreviewColumns } from './shipment-arrangement';
+import { getPlatformMerchantColumns } from './platform-merchant';
 import type { SummBillTableRow, SummCountKey, SummCustomerVariant, SummItemRow } from './analytics/types';
 
 export {
+	getPlatformMerchantColumns,
 	getCustomerColumns,
 	getTagColumns,
 	getCategoryColumns,
