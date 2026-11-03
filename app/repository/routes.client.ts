@@ -317,6 +317,25 @@ const MerchantRoutes = {
 		Complete: () => `${prefix}/${API_PATH.MERCHANT}/conversations/connection/complete`,
 		Disconnect: () => `${prefix}/${API_PATH.MERCHANT}/conversations/connection/disconnect`,
 	},
+	PlatformAuth: {
+		Login: () => `${prefix}/platform/auth/login`,
+		Verify: () => `${prefix}/platform/auth/verify`,
+		Logout: () => `${prefix}/platform/auth/logout`,
+	},
+	PlatformAnnouncements: {
+		InAppMany: () => `${prefix}/platform/announcements/in-app`,
+		InAppCreate: () => `${prefix}/platform/announcements/in-app`,
+		InAppPublish: (id: string) => `${prefix}/platform/announcements/in-app/${encodeURIComponent(id)}/publish`,
+		InAppUnpublish: (id: string) => `${prefix}/platform/announcements/in-app/${encodeURIComponent(id)}/unpublish`,
+		EmailBlastsMany: () => `${prefix}/platform/announcements/email-blasts`,
+		EmailBlastCreate: () => `${prefix}/platform/announcements/email-blasts`,
+		EmailBlastCancel: (id: string) => `${prefix}/platform/announcements/email-blasts/${encodeURIComponent(id)}/cancel`,
+		EmailBlastSend: (id: string) => `${prefix}/platform/announcements/email-blasts/${encodeURIComponent(id)}/send`,
+	},
+	PlatformMerchants: {
+		Many: () => `${prefix}/platform/merchants`,
+		Single: (merchantId: string) => `${prefix}/platform/merchants/${encodeURIComponent(merchantId)}`,
+	},
 };
 
 export default MerchantRoutes;

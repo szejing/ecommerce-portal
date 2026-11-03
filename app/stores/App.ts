@@ -1,9 +1,15 @@
 import { defineStore } from 'pinia';
+import { isMasterLoginId, KEY } from 'yeppi-common';
 
 export const useAppStore = defineStore('appStore', {
 	state: () => ({}),
 	actions: {
 		async init() {
+			const merchantId = useCookie(KEY.X_MERCHANT_ID).value;
+			if (isMasterLoginId(merchantId)) {
+				return;
+			}
+
 			// const productOptionsStore = useProductOptionStore();
 			const productTagsStore = useProductTagStore();
 			const categoryStore = useProductCategoryStore();

@@ -305,4 +305,22 @@ export const Routes = {
 		Departments: () => `staff-commissions/departments`,
 		Department: (id: number | string) => `staff-commissions/departments/${id}`,
 	},
+	PlatformAuth: {
+		Login: () => 'platform/auth/login',
+		Verify: () => 'platform/auth/verify',
+		Logout: () => 'platform/auth/logout',
+		Refresh: () => 'platform/auth/refresh',
+	},
+	PlatformAnnouncements: {
+		InAppMany: () => 'platform/announcements/in-app',
+		InAppPublish: (id: string) => `platform/announcements/in-app/${encodeURIComponent(id)}/publish`,
+		InAppUnpublish: (id: string) => `platform/announcements/in-app/${encodeURIComponent(id)}/unpublish`,
+		EmailBlastsMany: () => 'platform/announcements/email-blasts',
+		EmailBlastCancel: (id: string) => `platform/announcements/email-blasts/${encodeURIComponent(id)}/cancel`,
+		EmailBlastSend: (id: string) => `platform/announcements/email-blasts/${encodeURIComponent(id)}/send`,
+	},
+	PlatformMerchants: {
+		Many: () => 'platform/merchants',
+		Single: (merchantId: string) => `platform/merchants/${encodeURIComponent(merchantId)}`,
+	},
 };

@@ -4,6 +4,28 @@ import { resolveNotificationMessage, type NotificationTranslateValues } from '~/
 
 // Grouped navigation structure for UDashboardGroup (labels are i18n keys)
 const default_navigations = [
+	// Platform Announcements (MASTER login only; store sessions exclude via exclude_routes)
+	{
+		label: 'nav.platform',
+		links: [
+			{
+				label: 'nav.merchants',
+				icon: ICONS.OUTLET,
+				to: '/merchants',
+				value: 'merchants',
+			},
+			{
+				label: 'nav.announcements',
+				icon: ICONS.SPARKLES,
+				to: '/announcements',
+				value: 'announcements',
+				children: [
+					{ label: 'nav.emailBlast', icon: ICONS.DOCUMENT, to: '/announcements/email-blast' },
+					{ label: 'nav.inAppAnnouncement', icon: ICONS.ADDITIONAL, to: '/announcements/in-app' },
+				],
+			},
+		],
+	},
 	// Main section
 	{
 		label: 'nav.main',

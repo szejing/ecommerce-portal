@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, defineStore, setActivePinia } from 'pinia';
+import { KEY, MASTER_LOGIN_ID } from 'yeppi-common';
 import { mergeAppendedAllNotifications } from '../../app/stores/Notification/Notification';
 import type { Notification } from '../../app/utils/types/notification';
 
@@ -10,6 +11,8 @@ const { failedNotification } = vi.hoisted(() => ({
 vi.mock('../../app/stores/AppUi/AppUi', () => ({
 	failedNotification,
 }));
+
+let merchantCookieValue: string | null = 'M00001';
 
 const createNotification = (id: string): Notification => ({
 	type: 'order_created',
@@ -43,6 +46,7 @@ describe('useNotificationStore all-notifications pagination', () => {
 		setActivePinia(createPinia());
 		getMany.mockReset();
 		failedNotification.mockReset();
+		merchantCookieValue = 'M00001';
 		(globalThis as unknown as { defineStore: typeof defineStore }).defineStore = defineStore;
 		(globalThis as unknown as { useNuxtApp: () => unknown }).useNuxtApp = () =>
 			({
@@ -52,6 +56,9 @@ describe('useNotificationStore all-notifications pagination', () => {
 					},
 				},
 			}) as unknown;
+		(globalThis as unknown as { useCookie: (key: string) => { value: string | null } }).useCookie = (key: string) => ({
+			value: key === KEY.X_MERCHANT_ID ? merchantCookieValue : null,
+		});
 	});
 
 	it('loads the first batch and replaces existing all-notifications data', async () => {
@@ -130,5 +137,19 @@ describe('useNotificationStore all-notifications pagination', () => {
 		await store.loadMoreAllNotifications();
 
 		expect(getMany).toHaveBeenCalledTimes(1);
+	});
+
+	it('skips merchant notification APIs for MASTER login', async () => {
+		merchantCookieValue = MASTER_LOGIN_ID;
+
+		const { useNotificationStore } = await import('../../app/stores/Notification/Notification');
+		const store = useNotificationStore();
+		store.notifications = [createNotification('stale')];
+
+		await store.getNotifications();
+
+		expect(getMany).not.toHaveBeenCalled();
+		expect(store.notifications).toEqual([]);
+		expect(failedNotification).not.toHaveBeenCalled();
 	});
 });

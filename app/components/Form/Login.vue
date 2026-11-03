@@ -58,6 +58,7 @@
 </template>
 
 <script lang="ts" setup>
+import { isMasterLoginId } from 'yeppi-common';
 import { LoginValidation } from '~/utils/schema';
 import type { FormSubmitEvent, FormErrorEvent } from '#ui/types';
 import type { z } from 'zod';
@@ -134,7 +135,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 		} catch {
 			// ignore (e.g. private mode)
 		}
-		navigateTo('/');
+		navigateTo(isMasterLoginId(merchant_id) ? '/announcements' : '/');
 	}
 };
 

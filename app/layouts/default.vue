@@ -77,6 +77,7 @@
 				<slot />
 			</div>
 		</div>
+		<ZModalPlatformAnnouncement />
 	</UDashboardGroup>
 </template>
 
