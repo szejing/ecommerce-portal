@@ -1,12 +1,17 @@
 import type { AccountStatus, Package, SubsDuration } from 'yeppi-common';
 import type { UpdatePlatformMerchantReq } from '~/repository/modules/platform-merchant/models/request/update-platform-merchant.req';
 
+/** Sentinel for USelect — empty string is reserved by Reka Select for clearing. */
+export const EXTEND_DURATION_NONE = 'none' as const;
+
+export type PlatformMerchantExtendDuration = typeof EXTEND_DURATION_NONE | SubsDuration;
+
 export type PlatformMerchantEditForm = {
 	package: Package;
 	account: AccountStatus;
 	hide_store: boolean;
 	expiry_date: string;
-	extend_duration: '' | SubsDuration;
+	extend_duration: PlatformMerchantExtendDuration;
 };
 
 /**
@@ -22,7 +27,7 @@ export function buildPlatformMerchantUpdateBody(
 		hide_store: form.hide_store,
 	};
 
-	if (form.extend_duration !== '') {
+	if (form.extend_duration !== EXTEND_DURATION_NONE) {
 		body.extend_duration = form.extend_duration;
 	} else if (form.expiry_date) {
 		body.expiry_date = form.expiry_date;

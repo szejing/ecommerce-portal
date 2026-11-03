@@ -262,15 +262,15 @@ const reviewSummary = computed(() => ({
 }));
 
 // Methods: Auto-save
-const triggerAutoSave = async () => {
-	if (autoSaveTimer.value) {
-		clearTimeout(autoSaveTimer.value);
-	}
+// const triggerAutoSave = async () => {
+// 	if (autoSaveTimer.value) {
+// 		clearTimeout(autoSaveTimer.value);
+// 	}
 
-	autoSaveTimer.value = setTimeout(async () => {
-		await saveDraft(true);
-	}, 3000);
-};
+// 	autoSaveTimer.value = setTimeout(async () => {
+// 		await saveDraft(true);
+// 	}, 3000);
+// };
 
 const saveDraft = async (silent = false) => {
 	saving.value = true;

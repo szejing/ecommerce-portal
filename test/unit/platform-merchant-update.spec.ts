@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AccountStatus, Package, SubsDuration } from 'yeppi-common';
-import { buildPlatformMerchantUpdateBody } from '~/utils/platform-merchant-update';
+import { EXTEND_DURATION_NONE, buildPlatformMerchantUpdateBody } from '~/utils/platform-merchant-update';
 
 describe('buildPlatformMerchantUpdateBody', () => {
 	const base = {
@@ -8,7 +8,7 @@ describe('buildPlatformMerchantUpdateBody', () => {
 		account: AccountStatus.ACTIVE,
 		hide_store: true,
 		expiry_date: '2027-06-01',
-		extend_duration: '' as const,
+		extend_duration: EXTEND_DURATION_NONE,
 	};
 
 	it('sends absolute expiry when no extend is selected', () => {
