@@ -20,13 +20,10 @@
 				class="max-h-48 w-full rounded-lg object-contain"
 				@error="imageBroken = true"
 			>
-			<p v-else-if="imageUrl.trim() && imageBroken" class="text-xs text-muted">
-				{{ t('platformAnnouncements.inApp.imageFailed') }}
-			</p>
 			<div
-				v-if="bodyHtml.trim()"
+				v-if="messageHtml"
 				class="prose prose-sm dark:prose-invert max-w-none"
-				v-html="bodyHtml"
+				v-html="messageHtml"
 			/>
 			<p v-else class="text-sm text-muted">
 				{{ t('platformAnnouncements.inApp.previewEmpty') }}
@@ -44,6 +41,9 @@
 </template>
 
 <script setup lang="ts">
+import { isHttpsCoverImageUrl, reduceAnnouncementMessage } from '~/utils/announcement-message';
+import { announcementHtmlHasText } from '~/utils/platform-announcement';
+
 const props = defineProps<{
 	title: string;
 	bodyHtml: string;
@@ -57,7 +57,13 @@ const imageBroken = ref(false);
 
 const shownImage = computed(() => {
 	if (imageBroken.value) return '';
-	return props.imageUrl.trim();
+	const image = props.imageUrl.trim();
+	return isHttpsCoverImageUrl(image) ? image : '';
+});
+
+const messageHtml = computed(() => {
+	const reduced = reduceAnnouncementMessage(props.bodyHtml);
+	return announcementHtmlHasText(reduced) ? reduced : '';
 });
 
 watch(() => props.imageUrl, () => {

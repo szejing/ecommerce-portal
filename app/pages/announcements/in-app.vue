@@ -46,7 +46,10 @@
 							:description="t('platformAnnouncements.inApp.bodyHelp')"
 							:error="errors.body_html"
 						>
-							<UTextarea v-model="form.body_html" class="w-full" :rows="8" />
+							<ZAnnouncementHtmlEditor
+								v-model="form.body_html"
+								:aria-label="t('platformAnnouncements.inApp.body')"
+							/>
 						</UFormField>
 						<UFormField
 							:label="t('platformAnnouncements.inApp.imageUrl')"
@@ -189,6 +192,11 @@
 import type { AccordionItem } from '@nuxt/ui';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 import {
+	isHttpsCoverImageUrl,
+	reduceAnnouncementMessage,
+} from '~/utils/announcement-message';
+import {
+	announcementHtmlHasText,
 	announcementStatusColor,
 	formatAnnouncementWhen,
 	inAppSampleHtml,
@@ -280,9 +288,9 @@ function fillSample() {
 
 function validate() {
 	errors.title = form.title.trim() ? '' : t('platformAnnouncements.inApp.titleRequired');
-	errors.body_html = form.body_html.trim() ? '' : t('platformAnnouncements.inApp.bodyRequired');
+	errors.body_html = announcementHtmlHasText(form.body_html) ? '' : t('platformAnnouncements.inApp.bodyRequired');
 	const image = form.image_url.trim();
-	errors.image_url = !image || /^https?:\/\//i.test(image) ? '' : t('platformAnnouncements.inApp.imageInvalid');
+	errors.image_url = !image || isHttpsCoverImageUrl(image) ? '' : t('platformAnnouncements.inApp.imageInvalid');
 	const hasLabel = Boolean(form.cta_label.trim());
 	const hasUrl = Boolean(form.cta_url.trim());
 	errors.cta = hasLabel === hasUrl ? '' : t('platformAnnouncements.inApp.ctaPair');
@@ -300,6 +308,7 @@ async function load() {
 }
 
 async function onSubmit() {
+	form.body_html = reduceAnnouncementMessage(form.body_html);
 	if (!validate()) return;
 	saving.value = true;
 	try {

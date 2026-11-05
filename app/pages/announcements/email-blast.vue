@@ -206,6 +206,7 @@ import type { AccordionItem } from '@nuxt/ui';
 import { isBefore, startOfDay } from 'date-fns';
 import { getFormattedDate } from 'yeppi-common';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
+import { reduceAnnouncementMessage } from '~/utils/announcement-message';
 import {
 	announcementHtmlHasText,
 	announcementStatusColor,
@@ -341,6 +342,7 @@ async function loadBlasts() {
 }
 
 async function onSubmit() {
+	form.body_html = reduceAnnouncementMessage(form.body_html);
 	if (!validate()) return;
 	const scheduled = scheduledDate.value ? startOfDay(scheduledDate.value) : null;
 	saving.value = true;

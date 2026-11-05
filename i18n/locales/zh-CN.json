@@ -322,7 +322,7 @@
 			"bodyRequired": "请填写正文",
 			"imageUrl": "图片链接",
 			"imageHelp": "可选。请使用可公开访问的 https 链接。不需要图片就留空。",
-			"imageInvalid": "图片链接必须以 http:// 或 https:// 开头",
+			"imageInvalid": "图片链接必须以 https:// 开头",
 			"imageFailed": "这张图片无法加载。请检查链接。",
 			"ctaLabel": "按钮文字",
 			"ctaLabelPlaceholder": "查看销售",

@@ -41,6 +41,8 @@
 </template>
 
 <script setup lang="ts">
+import { isHttpsCoverImageUrl, reduceAnnouncementMessage } from '~/utils/announcement-message';
+import { announcementHtmlHasText } from '~/utils/platform-announcement';
 import type { NotificationItem } from '~/utils/types/notification';
 
 const props = defineProps<{
@@ -65,14 +67,18 @@ watch(open, (value) => {
 
 const title = computed(() => props.item.title?.trim() || props.item.notification_title?.trim() || t('notifications.detailTitle'));
 
-const bodyHtml = computed(() => props.item.notification_description?.trim() || props.item.subtitle?.trim() || '');
+const bodyHtml = computed(() => {
+	const reduced = reduceAnnouncementMessage(props.item.notification_description?.trim() || props.item.subtitle?.trim() || '');
+	return announcementHtmlHasText(reduced) ? reduced : '';
+});
 
 const imageUrl = computed(() => {
 	if (imageBroken.value) {
 		return '';
 	}
 
-	return props.item.image_url?.trim() || '';
+	const image = props.item.image_url?.trim() || '';
+	return isHttpsCoverImageUrl(image) ? image : '';
 });
 
 const ctaUrl = computed(() => {

@@ -1,5 +1,6 @@
 <template>
 	<QuillEditor
+		ref="editorRef"
 		:content="editorContent"
 		content-type="html"
 		theme="snow"
@@ -14,6 +15,7 @@
 <script setup lang="ts">
 import { QuillEditor } from '@vueup/vue-quill';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
+import { announcementMessageEditorUpdate } from '~/utils/announcement-message';
 
 const props = withDefaults(
 	defineProps<{
@@ -38,9 +40,11 @@ const toolbar = [
 	['link'],
 ];
 
+const editorRef = ref<{ pasteHTML?: (html: string, source?: string) => void }>();
 const editorContent = ref(props.modelValue);
 const quillRoot = shallowRef<HTMLElement>();
 let lastEmitted = props.modelValue;
+let applying = false;
 
 watch(
 	() => props.modelValue,
@@ -57,9 +61,17 @@ function rememberEditor(instance: { root: HTMLElement }) {
 }
 
 function updateContent(value: unknown) {
-	if (typeof value !== 'string') return;
-	lastEmitted = value;
-	emit('update:modelValue', value);
+	if (applying || typeof value !== 'string') return;
+	const next = announcementMessageEditorUpdate(value);
+	lastEmitted = next.stored;
+	emit('update:modelValue', next.stored);
+	if (!next.replaceEditor) return;
+	applying = true;
+	try {
+		editorRef.value?.pasteHTML?.(next.stored, 'silent');
+	} finally {
+		applying = false;
+	}
 }
 
 watch(

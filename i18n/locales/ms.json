@@ -322,7 +322,7 @@
 			"bodyRequired": "Mesej diperlukan",
 			"imageUrl": "Pautan imej",
 			"imageHelp": "Pilihan. Guna pautan https awam. Biarkan kosong jika tidak perlukan imej.",
-			"imageInvalid": "Pautan imej mesti bermula dengan http:// atau https://",
+			"imageInvalid": "Pautan imej mesti bermula dengan https://",
 			"imageFailed": "Pautan imej itu tidak dapat dimuatkan. Semak alamat.",
 			"ctaLabel": "Label butang",
 			"ctaLabelPlaceholder": "Lihat jualan",

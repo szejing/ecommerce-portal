@@ -322,7 +322,7 @@
 			"bodyRequired": "Message is required",
 			"imageUrl": "Image link",
 			"imageHelp": "Optional. Use a public https link. Leave empty if you do not need an image.",
-			"imageInvalid": "Image link must start with http:// or https://",
+			"imageInvalid": "Image link must start with https://",
 			"imageFailed": "That image link did not load. Check the address.",
 			"ctaLabel": "Button label",
 			"ctaLabelPlaceholder": "View sales",

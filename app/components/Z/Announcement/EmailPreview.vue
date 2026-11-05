@@ -22,7 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import { escapePreviewHtml } from '~/utils/platform-announcement';
+import { reduceAnnouncementMessage } from '~/utils/announcement-message';
+import { announcementHtmlHasText, escapePreviewHtml } from '~/utils/platform-announcement';
 
 const props = defineProps<{
 	subject: string;
@@ -37,8 +38,9 @@ const { t } = useI18n();
 const srcdoc = computed(() => {
 	const platformName = escapePreviewHtml(props.platformName || 'Wemotoo');
 	const merchantName = escapePreviewHtml(t('platformAnnouncements.email.previewMerchant'));
-	const body = props.bodyHtml.trim()
-		? props.bodyHtml
+	const message = reduceAnnouncementMessage(props.bodyHtml);
+	const body = announcementHtmlHasText(message)
+		? message
 		: `<p style="color:#9ca3af;">${escapePreviewHtml(t('platformAnnouncements.email.previewEmpty'))}</p>`;
 	const label = props.ctaLabel.trim();
 	const url = props.ctaUrl.trim();
