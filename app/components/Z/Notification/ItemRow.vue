@@ -177,6 +177,13 @@ const itemMeta = computed(() => formatItemMeta(props.item));
 	color: var(--color-neutral-500);
 }
 
+.z-notification-item-row__line {
+	display: -webkit-box;
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+}
+
 .z-notification-item-row--inbox .z-notification-item-row__line,
 .z-notification-item-row--inbox .z-notification-item-row__meta {
 	font-size: 0.78rem;

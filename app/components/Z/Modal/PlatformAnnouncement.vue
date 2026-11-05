@@ -56,7 +56,7 @@ const imageBroken = ref(false);
 
 const imageUrl = computed(() => {
 	if (imageBroken.value) return '';
-	return '';
+	return item.value?.image_url?.trim() || '';
 });
 
 const ctaLabel = computed(() => item.value?.action?.label || 'Open');

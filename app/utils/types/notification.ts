@@ -19,6 +19,7 @@ export type NotificationItem = {
 	updated_at?: string | Date;
 	read_at?: string;
 	opened_at?: string;
+	image_url?: string;
 	notification_type?: NotificationType;
 	notification_title?: string;
 	notification_description?: string;

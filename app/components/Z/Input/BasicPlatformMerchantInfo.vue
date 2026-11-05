@@ -38,26 +38,50 @@
 			</div>
 			<div class="grid gap-3 sm:grid-cols-2">
 				<UFormField :label="t('platformMerchants.package')" :required="isCreate">
-					<USelect v-model="state.package" :items="packageOptions" />
+					<USelect
+						v-model="state.package"
+						:items="packageOptions"
+						value-key="value"
+						class="w-full"
+						:ui="selectUi"
+					/>
 				</UFormField>
 				<UFormField :label="t('platformMerchants.account')" :required="isCreate">
-					<USelect v-model="state.account" :items="accountOptions" />
+					<USelect
+						v-model="state.account"
+						:items="accountOptions"
+						value-key="value"
+						class="w-full"
+						:ui="selectUi"
+					/>
 				</UFormField>
 				<template v-if="isCreate">
 					<UFormField :label="t('platformMerchants.duration')" required>
-						<USelect v-model="state.duration" :items="durationOptions" value-key="value" />
+						<USelect
+							v-model="state.duration"
+							:items="durationOptions"
+							value-key="value"
+							class="w-full"
+							:ui="selectUi"
+						/>
 					</UFormField>
 					<UFormField :label="t('platformMerchants.joinedDate')" required>
-						<UInput v-model="state.joined_date" type="date" icon="i-lucide-calendar" />
+						<UInput v-model="state.joined_date" type="date" icon="i-lucide-calendar" class="w-full" />
 					</UFormField>
 				</template>
 				<template v-else>
 					<UFormField :label="t('platformMerchants.expiryDate')">
-						<UInput v-model="state.expiry_date" type="date" icon="i-lucide-calendar" />
+						<UInput v-model="state.expiry_date" type="date" icon="i-lucide-calendar" class="w-full" />
 					</UFormField>
 					<UFormField :label="t('platformMerchants.extendBy')">
 						<p class="text-xs text-muted mb-1">{{ t('platformMerchants.extendByHint') }}</p>
-						<USelect v-model="state.extend_duration" :items="extendOptions" value-key="value" />
+						<USelect
+							v-model="state.extend_duration"
+							:items="extendOptions"
+							value-key="value"
+							class="w-full"
+							:ui="selectUi"
+						/>
 					</UFormField>
 				</template>
 			</div>
@@ -128,6 +152,7 @@
 <script setup lang="ts">
 import { AccountStatus, Package, SubsDuration } from 'yeppi-common';
 import { ICONS } from '~/utils/icons';
+import { accountTypeLabel } from '~/utils/options/account-type';
 import { EXTEND_DURATION_NONE, type PlatformMerchantExtendDuration } from '~/utils/platform-merchant-update';
 
 export type BasicPlatformMerchantInfoState = {
@@ -172,8 +197,39 @@ const state = toRef(props, 'state');
 const isCreate = computed(() => props.mode === 'create');
 const isEdit = computed(() => props.mode === 'edit');
 
-const packageOptions = Object.values(Package).map((value) => ({ label: value, value }));
-const accountOptions = Object.values(AccountStatus).map((value) => ({ label: value, value }));
+/** Expand menu past trigger width so full option labels stay readable (Nuxt UI Select pattern). */
+const selectUi = {
+	content: 'min-w-fit',
+	itemLabel: 'whitespace-nowrap',
+};
+
+const accountStatusLabel = (status: AccountStatus): string => {
+	switch (status) {
+		case AccountStatus.NEW:
+			return t('options.new');
+		case AccountStatus.ACTIVE:
+			return t('options.active');
+		case AccountStatus.INACTIVE:
+			return t('options.inactive');
+		case AccountStatus.EXPIRED:
+			return t('options.expired');
+		default:
+			return String(status);
+	}
+};
+
+const packageOptions = computed(() =>
+	Object.values(Package).map((value) => ({
+		label: accountTypeLabel(value, t),
+		value,
+	})),
+);
+const accountOptions = computed(() =>
+	Object.values(AccountStatus).map((value) => ({
+		label: accountStatusLabel(value),
+		value,
+	})),
+);
 const durationOptions = computed(() => [
 	{ label: t('platformMerchants.durationOneMonth'), value: SubsDuration.ONE_MONTH },
 	{ label: t('platformMerchants.durationThreeMonths'), value: SubsDuration.THREE_MONTHS },
