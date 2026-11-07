@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { toNotificationPlainText } from '~/utils/notification-display';
 import type { NotificationItem } from '~/utils/types/notification';
 
 export const useNotificationItemDisplay = () => {
@@ -22,9 +23,11 @@ export const useNotificationItemDisplay = () => {
 	};
 
 	const getSummaryLines = (item: NotificationItem) => {
-		return item.summary_lines?.length
+		const lines = item.summary_lines?.length
 			? item.summary_lines
 			: [item.subtitle].filter((line): line is string => !!line);
+
+		return lines.map((line) => toNotificationPlainText(line)).filter((line) => line.length > 0);
 	};
 
 	return {

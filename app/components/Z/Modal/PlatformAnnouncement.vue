@@ -23,7 +23,7 @@
 				>
 				<div
 					class="prose prose-sm dark:prose-invert max-w-none"
-					v-html="item?.notification_description || ''"
+					v-html="messageHtml"
 				/>
 				<div class="flex flex-wrap justify-end gap-2">
 					<UButton color="neutral" variant="soft" :loading="saving" @click="dismiss">
@@ -46,6 +46,8 @@
 
 <script setup lang="ts">
 import { NotificationType } from 'yeppi-common';
+import { isHttpsCoverImageUrl, reduceAnnouncementMessage } from '~/utils/announcement-message';
+import { announcementHtmlHasText } from '~/utils/platform-announcement';
 import type { NotificationItem } from '~/utils/types/notification';
 
 const notificationStore = useNotificationStore();
@@ -56,7 +58,13 @@ const imageBroken = ref(false);
 
 const imageUrl = computed(() => {
 	if (imageBroken.value) return '';
-	return '';
+	const image = item.value?.image_url?.trim() || '';
+	return isHttpsCoverImageUrl(image) ? image : '';
+});
+
+const messageHtml = computed(() => {
+	const reduced = reduceAnnouncementMessage(item.value?.notification_description || '');
+	return announcementHtmlHasText(reduced) ? reduced : '';
 });
 
 const ctaLabel = computed(() => item.value?.action?.label || 'Open');

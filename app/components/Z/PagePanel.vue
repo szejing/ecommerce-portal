@@ -80,7 +80,7 @@
 </template>
 
 <script lang="ts" setup>
-import { isMasterLoginId, KEY, type NotificationType } from 'yeppi-common';
+import { isMasterLoginId, KEY, NotificationType } from 'yeppi-common';
 import type { NotificationItem } from '~/utils/types/notification';
 import { ICONS } from '~/utils/icons';
 
@@ -99,6 +99,7 @@ withDefaults(
 );
 
 const notificationStore = useNotificationStore();
+const { openInAppNotification } = useInAppNotificationModal();
 const notificationPopoverOpen = ref(false);
 const isMasterSession = computed(() => isMasterLoginId(useCookie(KEY.X_MERCHANT_ID).value));
 
@@ -113,6 +114,12 @@ const viewAllNotifications = async () => {
 };
 
 const openNotification = async (type: NotificationType, item: NotificationItem) => {
+	if (type === NotificationType.PLATFORM_ANNOUNCEMENT) {
+		notificationPopoverOpen.value = false;
+		await openInAppNotification(item);
+		return;
+	}
+
 	const updated = await notificationStore.openNotificationItem(type, item);
 
 	if (!updated) {

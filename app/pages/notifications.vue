@@ -52,7 +52,7 @@
 												`notifications-row__dot--${row.original.severity}`,
 											]"
 										/>
-										<span>{{ row.original.descriptionPrefix ?? row.original.description }}</span>
+										<span class="notifications-row__text">{{ row.original.descriptionPrefix ?? row.original.description }}</span>
 										<UBadge v-if="row.original.statusBadge" :color="row.original.statusBadge.color" variant="subtle" size="sm" class="notifications-row__badge">
 											{{ row.original.statusBadge.label }}
 										</UBadge>
@@ -91,15 +91,16 @@ import { useInfiniteScroll } from '@vueuse/core';
 import type { Row, TableMeta } from '@tanstack/vue-table';
 import type { TableRow } from '@nuxt/ui';
 import { format, isToday, isYesterday, parseISO } from 'date-fns';
-import type { NotificationType } from 'yeppi-common';
+import { NotificationType } from 'yeppi-common';
 import { ICONS } from '~/utils/icons';
-import { getNotificationDisplayDescription, getNotificationDisplayReferenceId } from '~/utils/notification-display';
+import { getNotificationDisplayDescription, getNotificationDisplayReferenceId, toNotificationPlainText } from '~/utils/notification-display';
 import { getOrderStatusColor, getPaymentStatusColor } from '~/utils/options';
 import { getNotificationColumns } from '~/utils/table-columns';
 import type { NotificationBadgeColor, NotificationDisplayRow, NotificationEntry, NotificationItem } from '~/utils/types/notification';
 
 const { t } = useI18n();
 const notificationStore = useNotificationStore();
+const { openInAppNotification, rowSelectLocked } = useInAppNotificationModal();
 const { formatDateTime } = useNotificationItemDisplay();
 const { loading, loadingMore, hasMoreAllNotifications } = storeToRefs(notificationStore);
 
@@ -110,7 +111,8 @@ const notificationColumns = computed(() => getNotificationColumns(t));
 
 const notificationTableMeta = computed<TableMeta<NotificationDisplayRow>>(() => ({
 	class: {
-		tr: (row: Row<NotificationDisplayRow>) => (row.original.isRead ? 'notifications-row notifications-row--read' : 'notifications-row'),
+		tr: (row: Row<NotificationDisplayRow>) =>
+			row.original.isRead ? 'notifications-row notifications-row--read cursor-pointer' : 'notifications-row cursor-pointer',
 	},
 }));
 
@@ -162,6 +164,15 @@ const openNotification = async (type: NotificationType, item: NotificationItem) 
 };
 
 const selectNotificationRow = (_event: Event, row: TableRow<NotificationDisplayRow>) => {
+	if (rowSelectLocked.value) {
+		return;
+	}
+
+	if (row.original.type === NotificationType.PLATFORM_ANNOUNCEMENT) {
+		void openInAppNotification(row.original.item);
+		return;
+	}
+
 	void openNotification(row.original.type, row.original.item);
 };
 
@@ -170,7 +181,7 @@ const getItemTime = (item: NotificationItem) => new Date(item.updated_at ?? item
 const getItemDate = (item: NotificationItem) => new Date(item.updated_at ?? item.created_at ?? item.scheduled_at ?? Date.now());
 
 const createDisplayRow = (entry: NotificationEntry): NotificationDisplayRow => {
-	const description = getNotificationDisplayDescription(entry.item);
+	const description = toNotificationPlainText(getNotificationDisplayDescription(entry.item));
 	const statusChange = parseStatusChange(description);
 	const normalizedDescription = normalizeDescription(description);
 
@@ -373,6 +384,14 @@ onMounted(async () => {
 	gap: 0.5rem;
 	font-size: 0.86rem;
 	color: var(--color-neutral-700);
+}
+
+.notifications-row__text {
+	min-width: 0;
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
 }
 
 .notifications-row__dot {
