@@ -133,6 +133,7 @@ const MerchantRoutes = {
 		UpdateOrderItems: (order_no: string) => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.ORDERS}/${order_no}/items`,
 		UpdateOrderPayments: (order_no: string) => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.ORDERS}/${order_no}/payments`,
 		ResendEmail: (order_no: string) => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.ORDERS}/${order_no}/resend-email`,
+		GeneratePayment: (order_no: string) => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.ORDERS}/${order_no}/generate-payment`,
 		Process: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.ORDERS}/process`,
 		Export: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.ORDERS}/export`,
 	},

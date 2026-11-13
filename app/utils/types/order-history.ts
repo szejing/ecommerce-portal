@@ -40,6 +40,15 @@ export type OrderHistory = {
 	customer_no: string;
 	gross_amt: number;
 	payable_total: number;
+	deposit_required_amt?: number | null;
+	collected_amt?: number;
+	outstanding_amt?: number;
+	released_balance_amt?: number;
+	closure_reason?: string | null;
+	closed_at?: string | Date | null;
+	refund_status?: string | null;
+	payment_review_required?: boolean;
+	can_pay_online?: boolean;
 	shipping_fee: number;
 	net_amt: number;
 	net_total: number;

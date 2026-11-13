@@ -6,22 +6,64 @@
 					<UIcon name="i-heroicons-banknotes" class="w-5 h-5" aria-hidden="true" />
 					{{ t('components.orderDetail.paymentInformation') }}
 				</h3>
-				<UButton
-					v-if="order?.payments?.length == 0"
-					variant="ghost"
-					size="xs"
-					:icon="ICONS.ADD_OUTLINE"
-					:aria-label="t('components.orderDetail.addPayment')"
-					@click="addPaymentInfo"
-				/>
-				<div v-if="order?.payment_status === PaymentStatus.PAID" class="status-group">
-					<UBadge color="success" size="lg">
-						<UIcon name="i-heroicons-check-circle" class="w-4 h-4" />
-						{{ t('components.orderDetail.paid') }}
-					</UBadge>
+				<div class="flex items-center gap-1">
+					<UButton
+						v-if="summary.canAddPayment"
+						variant="ghost"
+						size="xs"
+						:icon="ICONS.ADD_OUTLINE"
+						:aria-label="t('components.orderDetail.addPayment')"
+						data-testid="add-payment-btn"
+						@click="addPaymentInfo"
+					/>
+					<UButton
+						v-if="summary.canGenerateQr"
+						variant="ghost"
+						size="xs"
+						icon="i-heroicons-qr-code"
+						:aria-label="t('components.orderDetail.generatePaymentQr')"
+						data-testid="generate-payment-qr-btn"
+						@click="openPaymentQr"
+					/>
+					<div v-if="order?.payment_status === PaymentStatus.PAID" class="status-group">
+						<UBadge color="success" size="lg">
+							<UIcon name="i-heroicons-check-circle" class="w-4 h-4" />
+							{{ t('components.orderDetail.paid') }}
+						</UBadge>
+					</div>
 				</div>
 			</div>
 		</template>
+
+		<div v-if="summary.hasDepositAgreement || summary.released > 0 || summary.paymentReviewRequired" class="deposit-summary" data-testid="deposit-summary">
+			<div class="deposit-row">
+				<span>{{ t('components.orderDetail.fullPrice') }}</span>
+				<span class="tabular-nums font-medium">{{ money(summary.payableTotal) }}</span>
+			</div>
+			<div v-if="summary.depositRequired != null" class="deposit-row">
+				<span>{{ t('components.orderDetail.depositRequired') }}</span>
+				<span class="tabular-nums font-medium">{{ money(summary.depositRequired) }}</span>
+			</div>
+			<div class="deposit-row">
+				<span>{{ t('components.orderDetail.amountCollected') }}</span>
+				<span class="tabular-nums font-medium">{{ money(summary.collected) }}</span>
+			</div>
+			<div class="deposit-row">
+				<span>{{ t('components.orderDetail.outstandingBalance') }}</span>
+				<span class="tabular-nums font-semibold">{{ money(summary.outstanding) }}</span>
+			</div>
+			<div v-if="summary.released > 0" class="deposit-row">
+				<span>{{ t('components.orderDetail.releasedBalance') }}</span>
+				<span class="tabular-nums font-medium">{{ money(summary.released) }}</span>
+			</div>
+			<div v-if="summary.refundStatus" class="deposit-row" data-testid="refund-status">
+				<span>{{ t('components.orderDetail.refundStatus') }}</span>
+				<UBadge color="warning" variant="subtle" size="sm">{{ summary.refundStatus }}</UBadge>
+			</div>
+			<div v-if="summary.paymentReviewRequired" data-testid="payment-review-required">
+				<UBadge color="warning" variant="subtle" size="sm">{{ t('components.orderDetail.paymentReviewRequired') }}</UBadge>
+			</div>
+		</div>
 
 		<div v-if="order?.payments && order.payments.length > 0" class="payments-list">
 			<button
@@ -39,7 +81,18 @@
 				@click="viewPaymentInfo(payment)"
 			>
 				<div class="payment-header">
-					<span class="payment-type">{{ payment.payment_type_desc }}</span>
+					<span class="payment-type">
+						{{ payment.payment_type_desc }}
+						<UBadge
+							v-if="payment.payment_purpose && payment.payment_purpose !== 'full'"
+							color="neutral"
+							variant="subtle"
+							size="xs"
+							class="ml-2 capitalize"
+						>
+							{{ payment.payment_purpose }}
+						</UBadge>
+					</span>
 					<span class="payment-amount">{{ payment.currency_code }} {{ payment.payment_amt?.toFixed(2) }}</span>
 				</div>
 				<div v-if="payment.ref_no1" class="payment-ref">
@@ -55,19 +108,40 @@
 		<div v-else class="payment-empty">
 			<UIcon name="i-heroicons-currency-dollar" class="w-12 h-12 text-neutral-300" />
 			<p class="payment-empty-text">{{ t('components.orderDetail.noPaymentRecorded') }}</p>
-			<UButton size="sm" color="primary" :icon="ICONS.ADD_OUTLINE" @click="addPaymentInfo">
-				{{ t('components.orderDetail.addPayment') }}
-			</UButton>
+			<div class="flex flex-wrap items-center justify-center gap-2">
+				<UButton
+					v-if="summary.canAddPayment"
+					size="sm"
+					color="primary"
+					:icon="ICONS.ADD_OUTLINE"
+					data-testid="add-payment-empty-btn"
+					@click="addPaymentInfo"
+				>
+					{{ t('components.orderDetail.addPayment') }}
+				</UButton>
+				<UButton
+					v-if="summary.canGenerateQr"
+					size="sm"
+					color="neutral"
+					variant="soft"
+					icon="i-heroicons-qr-code"
+					data-testid="generate-payment-qr-empty-btn"
+					@click="openPaymentQr"
+				>
+					{{ t('components.orderDetail.generatePaymentQr') }}
+				</UButton>
+			</div>
 		</div>
 	</UCard>
 </template>
 
 <script lang="ts" setup>
-import { ZModalOrderDetailPayment } from '#components';
+import { ZModalOrderDetailPayment, ZModalOrderPaymentQr } from '#components';
 import { PaymentStatus, getFormattedDate } from 'yeppi-common';
 import type { PaymentModel } from '~/utils/models';
 import type { OrderHistory } from '~/utils/types/order-history';
 import { ICONS } from '~/utils/icons';
+import { getOrderDepositSummary } from '~/utils/order-deposit-summary';
 
 const { t } = useI18n();
 
@@ -80,6 +154,13 @@ const emit = defineEmits<{
 }>();
 
 const overlay = useOverlay();
+
+const summary = computed(() => getOrderDepositSummary(props.order));
+
+const money = (amt: number) => {
+	const code = props.order?.currency?.code ?? 'MYR';
+	return `${code} ${Number(amt).toFixed(2)}`;
+};
 
 const addPaymentInfo = () => {
 	if (!props.order) return;
@@ -98,6 +179,24 @@ const addPaymentInfo = () => {
 	});
 
 	paymentModal.open();
+};
+
+const openPaymentQr = () => {
+	if (!props.order) return;
+
+	const qrModal = overlay.create(ZModalOrderPaymentQr, {
+		props: {
+			order: props.order,
+			onClose: () => {
+				qrModal.close();
+			},
+			onRefresh: () => {
+				emit('refresh');
+			},
+		},
+	});
+
+	qrModal.open();
 };
 
 const viewPaymentInfo = (payment: PaymentModel) => {
@@ -142,6 +241,25 @@ const viewPaymentInfo = (payment: PaymentModel) => {
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.deposit-summary {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+	margin-bottom: 0.75rem;
+	padding: 0.75rem;
+	border-radius: 0.5rem;
+	background: var(--ui-bg-elevated);
+	border: 1px solid var(--ui-border);
+	font-size: 0.8125rem;
+}
+
+.deposit-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.75rem;
+	color: var(--ui-text);
+}
+
 .payments-list {
 	display: flex;
 	flex-direction: column;
@@ -183,6 +301,8 @@ const viewPaymentInfo = (payment: PaymentModel) => {
 	font-size: 0.875rem;
 	font-weight: 600;
 	color: var(--ui-text-highlighted);
+	display: inline-flex;
+	align-items: center;
 }
 
 .payment-amount {

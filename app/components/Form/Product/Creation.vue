@@ -83,6 +83,7 @@
 							@update:variations="updateProductVariations"
 							@update:variants="updateProductVariants"
 							@update:metadata="updateProductMetadata"
+							@update:appointment-deposit-amt="updateAppointmentDepositAmt"
 						/>
 					</UCard>
 				</UForm>
@@ -398,6 +399,11 @@ const updateProductVariants = (value: ProductVariantInput[]) => {
 
 const updateProductMetadata = (value: any) => {
 	new_product.value.metadata = value;
+	triggerAutoSave();
+};
+
+const updateAppointmentDepositAmt = (value: number | null) => {
+	new_product.value.appointment_deposit_amt = value;
 	triggerAutoSave();
 };
 

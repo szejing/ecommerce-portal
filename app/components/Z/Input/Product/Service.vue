@@ -11,6 +11,33 @@
 			/>
 		</div>
 
+		<!-- Appointment deposit (per unit) -->
+		<div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+			<div class="min-w-0">
+				<label class="text-sm font-medium text-default">{{ t('components.zInput.appointmentDeposit') }}</label>
+				<p class="text-sm text-muted">{{ t('components.zInput.appointmentDepositDesc') }}</p>
+			</div>
+			<div class="w-full sm:w-56 shrink-0 space-y-2">
+				<USelect
+					v-model="depositPolicy"
+					:items="depositPolicyItems"
+					value-key="value"
+					class="w-full"
+					data-testid="appointment-deposit-policy"
+				/>
+				<UInput
+					v-if="depositPolicy === 'custom'"
+					v-model.number="customDepositAmt"
+					type="number"
+					min="0"
+					step="0.01"
+					:placeholder="t('components.zInput.appointmentDepositAmount')"
+					data-testid="appointment-deposit-amt"
+					class="w-full"
+				/>
+			</div>
+		</div>
+
 		<!-- Duration -->
 		<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
 			<div class="min-w-0">
@@ -76,14 +103,53 @@ const { t } = useI18n();
 
 type ServiceMetadataExtended = ServiceMetadata & { follow_operation_hour?: boolean };
 
+type DepositPolicy = 'inherit' | 'none' | 'custom';
+
 const props = defineProps({
 	metadata: {
 		type: Object as PropType<Record<string, unknown> | undefined>,
 		required: false,
 	},
+	appointmentDepositAmt: {
+		type: Number as PropType<number | null | undefined>,
+		required: false,
+		default: undefined,
+	},
 });
 
-const emit = defineEmits(['update:productMetadata']);
+const emit = defineEmits<{
+	'update:productMetadata': [value: ServiceMetadataExtended];
+	'update:appointmentDepositAmt': [value: number | null];
+}>();
+
+const depositPolicyItems = computed(() => [
+	{ label: t('components.zInput.appointmentDepositInherit'), value: 'inherit' },
+	{ label: t('components.zInput.appointmentDepositNone'), value: 'none' },
+	{ label: t('components.zInput.appointmentDepositCustom'), value: 'custom' },
+]);
+
+const depositPolicy = computed({
+	get(): DepositPolicy {
+		if (props.appointmentDepositAmt === null || props.appointmentDepositAmt === undefined) return 'inherit';
+		if (Number(props.appointmentDepositAmt) === 0) return 'none';
+		return 'custom';
+	},
+	set(value: DepositPolicy) {
+		if (value === 'inherit') emit('update:appointmentDepositAmt', null);
+		else if (value === 'none') emit('update:appointmentDepositAmt', 0);
+		else emit('update:appointmentDepositAmt', Number(props.appointmentDepositAmt) > 0 ? Number(props.appointmentDepositAmt) : 0);
+	},
+});
+
+const customDepositAmt = computed({
+	get(): number {
+		return Number(props.appointmentDepositAmt) > 0 ? Number(props.appointmentDepositAmt) : 0;
+	},
+	set(value: number) {
+		const next = Number.isFinite(value) && value >= 0 ? Number(value) : 0;
+		emit('update:appointmentDepositAmt', next);
+	},
+});
 
 const merchantInfoStore = useMerchantInfoStore();
 

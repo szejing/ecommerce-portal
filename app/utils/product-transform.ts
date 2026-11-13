@@ -30,6 +30,7 @@ export function transformProductToUpdate(
 		manage_inventory: product.manage_inventory,
 		inventory_quantity: product.inventory_quantity,
 		allow_preorder: product.allow_preorder,
+		appointment_deposit_amt: product.appointment_deposit_amt ?? null,
 		type_id,
 		category_codes:
 			product.categories

@@ -2,6 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { getDefaultOrderPaymentAmt } from '../../app/utils/order-payment-amt';
 
 describe('getDefaultOrderPaymentAmt', () => {
+	it('prefers outstanding_amt when present', () => {
+		expect(
+			getDefaultOrderPaymentAmt({
+				outstanding_amt: 150,
+				payable_total: 200,
+			}),
+		).toBe(150);
+	});
+
 	it('uses payable_total when present', () => {
 		expect(
 			getDefaultOrderPaymentAmt({

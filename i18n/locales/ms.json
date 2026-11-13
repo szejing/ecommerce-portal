@@ -148,7 +148,8 @@
 		"apply": "Guna",
 		"phoneNo": "No. telefon",
 		"close": "Tutup",
-		"view": "Lihat"
+		"view": "Lihat",
+		"retry": "Cuba lagi"
 	},
 	"form": {
 		"code": "Kod",
@@ -204,7 +205,6 @@
 		"sectionVisibilityHint": "Kawalan sama ada kedai disenaraikan secara awam.",
 		"listCount": "{n} merchant | {n} merchant",
 		"rowClickHint": "Klik baris untuk edit",
-
 		"hideStoreLabel": "Sembunyi dari Platform Directory",
 		"actions": "Tindakan",
 		"copy": "Salin",
@@ -1197,7 +1197,6 @@
 		"noOrdersFoundForCustomer": "Belum ada pesanan",
 		"noOrdersFoundForCustomerDescription": "Pelanggan ini belum membuat sebarang pesanan sebelum ini. Sejarah pesanan mereka akan dipaparkan di sini selepas pembelian dibuat.",
 		"noInvoicesFound": "Tiada invois dijumpai.",
-		"customersTitle": "Wemotoo Portal - Pelanggan",
 		"addOrder": "Pesanan",
 		"addAppointment": "Temujanji",
 		"customerInsights": {
@@ -1873,7 +1872,33 @@
 			"fulfillmentState": "Pemenuhan",
 			"manageOrder": "Urus pesanan",
 			"processOrder": "Proses pesanan",
-			"orderActionsTitle": "Tindakan pesanan"
+			"orderActionsTitle": "Tindakan pesanan",
+			"generatePaymentQr": "Jana QR pembayaran",
+			"generatingPaymentQr": "Menyediakan pautan pembayaran…",
+			"generatePaymentQrFailed": "Tidak dapat menjana QR pembayaran",
+			"paymentPurpose": "Tujuan",
+			"amountDue": "Jumlah perlu dibayar",
+			"paymentRequestPaid": "Permintaan pembayaran ini sudah dibayar",
+			"paymentQrAlt": "Kod QR pembayaran",
+			"copyPaymentLink": "Salin pautan",
+			"copyPaymentLinkSuccess": "Pautan bayaran disalin",
+			"copyPaymentLinkFailed": "Tidak dapat salin pautan bayaran",
+			"openPaymentLink": "Buka pautan",
+			"paymentLinkUnavailable": "Tiada pautan pembayaran untuk pesanan ini",
+			"fullPrice": "Harga penuh",
+			"depositRequired": "Deposit diperlukan",
+			"collected": "Dikutip",
+			"outstanding": "Baki tertunggak",
+			"releasedBalance": "Baki dilepaskan",
+			"refundStatus": "Status bayaran balik",
+			"paymentReviewRequired": "Bayaran perlu semakan",
+			"amountCollected": "Dikumpul",
+			"outstandingBalance": "Baki tertunggak",
+			"paymentQrLoading": "Menyediakan permintaan bayaran…",
+			"paymentQrAlreadyPaid": "Baki ini sudah dibayar.",
+			"paymentQrAmount": "Amaun perlu dibayar",
+			"paymentQrUnavailable": "Tiada pautan bayaran untuk pesanan ini.",
+			"paymentQrFailed": "Tidak dapat cipta permintaan bayaran."
 		},
 		"fulfillment": {
 			"title": "Pemenuhan",
@@ -2476,7 +2501,13 @@
 			"noOptionsSelected": "Tiada pilihan dipilih. Sila pilih sekurang-kurangnya satu pilihan di atas untuk menjana varian.",
 			"possible": "mungkin",
 			"autoGenerateHint": "Klik \"Jana Auto\" untuk cipta semua kombinasi yang mungkin secara automatik",
-			"readyToCreateVariants": "Sedia untuk cipta {count} varian"
+			"readyToCreateVariants": "Sedia untuk cipta {count} varian",
+			"appointmentDeposit": "Deposit temujanji (setiap unit)",
+			"appointmentDepositDesc": "Guna tetapan kedai, tanpa deposit, atau amaun tersuai setiap unit.",
+			"appointmentDepositInherit": "Guna tetapan kedai",
+			"appointmentDepositNone": "Tiada deposit",
+			"appointmentDepositCustom": "Amaun tersuai setiap unit",
+			"appointmentDepositAmount": "Amaun deposit setiap unit"
 		},
 		"variations": {
 			"variationLabel": "Variasi{index}",
@@ -2611,7 +2642,17 @@
 			"appointmentEndDate": "Tarikh & masa tamat",
 			"taxRule": "Peraturan Cukai",
 			"confirmationTitle": "Pengesahan",
-			"confirmationMessage": "Adakah anda pasti mahu meneruskan?"
+			"confirmationMessage": "Adakah anda pasti mahu meneruskan?",
+			"noShowDispositionTitle": "Tindakan deposit tidak hadir",
+			"noShowDispositionHint": "Pilih sama ada kekalkan deposit, tandakan untuk bayaran balik, atau kekalkan tempahan untuk dijadual semula.",
+			"noShowRetain": "Kekalkan deposit dan tutup",
+			"noShowRetainDesc": "Kekalkan deposit dibayar dan lepaskan baki belum dibayar.",
+			"noShowRefund": "Bayar balik deposit dan tutup",
+			"noShowRefundDesc": "Tutup tempahan dan tandakan deposit untuk bayaran balik manual.",
+			"noShowReschedule": "Jadual semula (kekalkan terbuka)",
+			"noShowRescheduleDesc": "Jangan tutup. Tukar jadual di bawah.",
+			"noShowDispositionRequired": "Pilih kekal, bayaran balik atau jadual semula sebelum menyimpan tidak hadir.",
+			"noShowRescheduleHint": "Status dikembalikan supaya anda boleh pilih masa baharu. Kemas kini jadual lalu simpan."
 		}
 	}
 }

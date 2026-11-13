@@ -441,6 +441,7 @@ export const useProductStore = defineStore('productStore', {
 				if (product.combo_components !== undefined) body.combo_components = product.combo_components;
 				if (product.manage_inventory !== undefined) body.manage_inventory = product.manage_inventory;
 				if (product.allow_preorder !== undefined) body.allow_preorder = product.allow_preorder;
+				if (product.appointment_deposit_amt !== undefined) body.appointment_deposit_amt = product.appointment_deposit_amt;
 				if (product.inventory_quantity !== undefined) body.inventory_quantity = product.inventory_quantity;
 				if (product.expected_inventory_quantity !== undefined) body.expected_inventory_quantity = product.expected_inventory_quantity;
 				if (product.slug !== undefined) body.slug = product.slug;
