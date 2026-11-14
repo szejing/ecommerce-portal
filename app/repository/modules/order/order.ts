@@ -4,6 +4,7 @@ import MerchantRoutes from '../../routes.client';
 import type { CustomerModel, PaymentModel } from '~/utils/models';
 import type { GetOrderResp } from './models/response/get-order.resp';
 import type { UpdateOrderStatusResp } from './models/response/update-order.resp';
+import type { GeneratePaymentResp } from './models/response/generate-payment.resp';
 import type { BaseODataReq } from '~/repository/base/base.req';
 import type { BaseODataResp } from '~/repository/base/base.resp';
 import type { OrderHistory } from '~/utils/types/order-history';
@@ -104,6 +105,17 @@ class OrderModule extends HttpFactory {
 			method: 'POST',
 			url: `${this.RESOURCE.ResendEmail(encodeURIComponent(order_no))}`,
 			body: { action },
+		});
+	}
+
+	/**
+	 * Creates or reuses a provider payment request (deposit or outstanding balance).
+	 */
+	async generatePayment(order_no: string): Promise<GeneratePaymentResp> {
+		return await this.call<GeneratePaymentResp>({
+			method: 'POST',
+			url: `${this.RESOURCE.GeneratePayment(encodeURIComponent(order_no))}`,
+			body: {},
 		});
 	}
 

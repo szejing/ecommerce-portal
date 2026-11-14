@@ -93,6 +93,8 @@ export type Product = {
 	manage_inventory?: boolean;
 	inventory_quantity?: number;
 	allow_preorder?: boolean;
+	/** null = inherit store default (-); 0 = no deposit; positive = custom per-qty amount */
+	appointment_deposit_amt?: number | null;
 
 	// Timestamps
 	created_at?: Date;

@@ -179,6 +179,9 @@ export const useAppointmentStore = defineStore('appointmentStore', {
 					end_date_time: appointment.end_date_time ?? appointment.start_date_time,
 					ref_no: appointment.ref_no,
 					status: appointment.status,
+					...(appointment.deposit_disposition
+						? { deposit_disposition: appointment.deposit_disposition }
+						: {}),
 				});
 
 				if (updated.appointment) {

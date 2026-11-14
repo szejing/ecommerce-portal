@@ -16,11 +16,7 @@
 				/>
 
 				<!-- Variations Input -->
-				<ZInputProductVariations
-					:variations="product.variations"
-					:variant-count="product.variants?.length ?? 0"
-					@update:variations="updateProductVariations"
-				/>
+				<ZInputProductVariations :variations="product.variations" :variant-count="product.variants?.length ?? 0" @update:variations="updateProductVariations" />
 
 				<!-- Variant List (auto-generated) -->
 				<ZInputProductVariantList
@@ -42,7 +38,12 @@
 					tooltip-key="components.productUpdate.setUpServiceTooltip"
 				/>
 
-				<ZInputProductService v-model:metadata="product.metadata" @update:product-metadata="updateProductMetadata" />
+				<ZInputProductService
+					v-model:metadata="product.metadata"
+					:appointment-deposit-amt="product.appointment_deposit_amt"
+					@update:product-metadata="updateProductMetadata"
+					@update:appointment-deposit-amt="updateAppointmentDepositAmt"
+				/>
 			</div>
 		</template>
 
@@ -78,7 +79,7 @@ const props = defineProps({
 	},
 });
 
-const emit = defineEmits(['update:variations', 'update:variants', 'delete:variant', 'update:metadata']);
+const emit = defineEmits(['update:variations', 'update:variants', 'delete:variant', 'update:metadata', 'update:appointmentDepositAmt']);
 const { t } = useI18n();
 const productTypeStore = useProductTypeStore();
 
@@ -106,11 +107,12 @@ const shouldShowService = computed(() => {
 const product_additional_info = computed(() => {
 	const tabs = [];
 
-  if (product.value.composition !== 'fixed_combo') tabs.push({
-		label: t('components.productUpdate.variationsTab'),
-		slot: 'variations',
-		icon: ICONS.LAYERS,
-	});
+	if (product.value.composition !== 'fixed_combo')
+		tabs.push({
+			label: t('components.productUpdate.variationsTab'),
+			slot: 'variations',
+			icon: ICONS.LAYERS,
+		});
 
 	// Conditionally add service for kind SERVICE
 	if (shouldShowService.value) {
@@ -146,6 +148,10 @@ const deleteProductVariant = (value: ProductVariantInput) => {
 
 const updateProductMetadata = (value: Record<string, unknown>) => {
 	emit('update:metadata', value);
+};
+
+const updateAppointmentDepositAmt = (value: number | null) => {
+	emit('update:appointmentDepositAmt', value);
 };
 </script>
 

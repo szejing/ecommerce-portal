@@ -148,7 +148,8 @@
 		"apply": "应用",
 		"phoneNo": "电话号码",
 		"close": "关闭",
-		"view": "查看"
+		"view": "查看",
+		"retry": "重试"
 	},
 	"form": {
 		"code": "代码",
@@ -204,7 +205,6 @@
 		"sectionVisibilityHint": "控制店铺是否出现在公开列表。",
 		"listCount": "{n} 个商家",
 		"rowClickHint": "点击行进行编辑",
-
 		"hideStoreLabel": "从 Platform Directory 隐藏",
 		"actions": "操作",
 		"copy": "复制",
@@ -1714,6 +1714,10 @@
 			"itemStatus": "商品状态",
 			"orderItemStatus": "订单商品状态",
 			"paymentStatus": "付款状态",
+			"productType": "类型",
+			"productTypeProducts": "产品",
+			"productTypeServices": "服务",
+			"productTypeEvent": "活动",
 			"actions": "操作",
 			"searchLabel": "搜索",
 			"clear": "清除",
@@ -1873,7 +1877,33 @@
 			"fulfillmentState": "履约",
 			"manageOrder": "管理订单",
 			"processOrder": "处理订单",
-			"orderActionsTitle": "订单操作"
+			"orderActionsTitle": "订单操作",
+			"generatePaymentQr": "生成付款二维码",
+			"generatingPaymentQr": "正在准备付款链接…",
+			"generatePaymentQrFailed": "无法生成付款二维码",
+			"paymentPurpose": "用途",
+			"amountDue": "应付金额",
+			"paymentRequestPaid": "此付款请求已支付",
+			"paymentQrAlt": "付款二维码",
+			"copyPaymentLink": "复制链接",
+			"copyPaymentLinkSuccess": "付款链接已复制",
+			"copyPaymentLinkFailed": "无法复制付款链接",
+			"openPaymentLink": "打开链接",
+			"paymentLinkUnavailable": "此订单没有可用的付款链接",
+			"fullPrice": "全价",
+			"depositRequired": "应付订金",
+			"collected": "已收",
+			"outstanding": "未付余额",
+			"releasedBalance": "已豁免余额",
+			"refundStatus": "退款状态",
+			"paymentReviewRequired": "付款需人工复核",
+			"amountCollected": "已收",
+			"outstandingBalance": "尚欠",
+			"paymentQrLoading": "正在准备付款请求…",
+			"paymentQrAlreadyPaid": "该余额已付清。",
+			"paymentQrAmount": "应付金额",
+			"paymentQrUnavailable": "此订单暂无可用付款链接。",
+			"paymentQrFailed": "无法创建付款请求。"
 		},
 		"fulfillment": {
 			"title": "履约",
@@ -2476,7 +2506,14 @@
 			"noOptionsSelected": "未选择任何选项。请至少选择上面的一个选项来生成变体。",
 			"possible": "可能",
 			"autoGenerateHint": "点击“自动生成”自动创建所有可能的组合",
-			"readyToCreateVariants": "准备创建 {count} 变体"
+			"readyToCreateVariants": "准备创建 {count} 变体",
+			"appointmentDeposit": "预约订金（每件数量）",
+			"appointmentDepositDesc": "输入 - 沿用店铺默认，0 表示不收订金，大于 0 则按每件数量覆盖店铺默认。",
+			"appointmentDepositInherit": "使用店铺默认",
+			"appointmentDepositNone": "不收订金",
+			"appointmentDepositCustom": "自定义每件数量金额",
+			"appointmentDepositAmount": "每件数量订金金额",
+			"appointmentDepositPlaceholder": "- / 0 / 金额"
 		},
 		"variations": {
 			"variationLabel": "变体{index}",
@@ -2611,7 +2648,17 @@
 			"appointmentEndDate": "结束日期和时间",
 			"taxRule": "税务规则",
 			"confirmationTitle": "确认",
-			"confirmationMessage": "您确定要继续吗？"
+			"confirmationMessage": "您确定要继续吗？",
+			"noShowDispositionTitle": "未到店订金处理",
+			"noShowDispositionHint": "选择保留订金、标记退款，或保持预约以便改期。",
+			"noShowRetain": "保留订金并关闭",
+			"noShowRetainDesc": "保留已付订金，并豁免未付余额。",
+			"noShowRefund": "退还订金并关闭",
+			"noShowRefundDesc": "关闭预约，并将订金标记为需人工退款。",
+			"noShowReschedule": "改为改期（保持开放）",
+			"noShowRescheduleDesc": "不关闭。请在下方修改时间。",
+			"noShowDispositionRequired": "标记未到店前请先选择保留、退款或改期。",
+			"noShowRescheduleHint": "已恢复状态以便改期。请更新时间后保存。"
 		}
 	}
 }

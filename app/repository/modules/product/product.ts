@@ -6,7 +6,7 @@ import type { UpdateProductReq } from './models/request/update-product.req';
 import type { CreateProductResp } from './models/response/create-product.resp';
 import type { ProductResp } from './models/response/product.resp';
 import type { BaseODataReq } from '~/repository/base/base.req';
-import type { BaseODataResp } from '~/repository/base/base.resp';
+import type { BaseODataResp, ProductListingODataResp } from '~/repository/base/base.resp';
 import type { Product } from '~/utils/types/product';
 import { parseImportStreamEvent, splitNdjsonLines, type ImportProgress } from '~/utils/import-stream';
 
@@ -180,8 +180,8 @@ class ProductModule extends HttpFactory {
 		return this.call<StockSummary>({ method: 'POST', url: this.RESOURCE.Stock(code), body: input });
 	}
 
-	async getMany(query: BaseODataReq): Promise<BaseODataResp<Product>> {
-		return await this.call<BaseODataResp<Product>>({
+	async getMany(query: BaseODataReq & { type_id?: number }): Promise<ProductListingODataResp<Product>> {
+		return await this.call<ProductListingODataResp<Product>>({
 			method: 'GET',
 			url: `${this.RESOURCE.Many()}`,
 			query,

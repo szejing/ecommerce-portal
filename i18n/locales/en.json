@@ -148,7 +148,8 @@
 		"apply": "Apply",
 		"phoneNo": "Phone No",
 		"close": "Close",
-		"view": "View"
+		"view": "View",
+		"retry": "Retry"
 	},
 	"form": {
 		"code": "Code",
@@ -204,7 +205,6 @@
 		"sectionVisibilityHint": "Control whether the store is listed publicly.",
 		"listCount": "{n} merchant | {n} merchants",
 		"rowClickHint": "Click a row to edit",
-
 		"hideStoreLabel": "Hide from Platform Directory",
 		"actions": "Actions",
 		"copy": "Copy",
@@ -1198,7 +1198,6 @@
 		"noOrdersFoundForCustomer": "No orders yet",
 		"noOrdersFoundForCustomerDescription": "This customer hasn't placed any orders before. Their order history will appear here once they make a purchase.",
 		"noInvoicesFound": "No invoices found.",
-		"customersTitle": "Wemotoo Portal - Customers",
 		"addOrder": "Order",
 		"addAppointment": "Appointment",
 		"customerInsights": {
@@ -1715,6 +1714,10 @@
 			"itemStatus": "Item Status",
 			"orderItemStatus": "Order Item Status",
 			"paymentStatus": "Payment Status",
+			"productType": "Type",
+			"productTypeProducts": "Products",
+			"productTypeServices": "Services",
+			"productTypeEvent": "Event",
 			"actions": "Actions",
 			"searchLabel": "Search",
 			"clear": "Clear",
@@ -1874,7 +1877,33 @@
 			"fulfillmentState": "Fulfillment",
 			"manageOrder": "Manage order",
 			"processOrder": "Process order",
-			"orderActionsTitle": "Order actions"
+			"orderActionsTitle": "Order actions",
+			"generatePaymentQr": "Generate payment QR",
+			"generatingPaymentQr": "Preparing payment link…",
+			"generatePaymentQrFailed": "Could not generate payment QR",
+			"paymentPurpose": "Purpose",
+			"amountDue": "Amount due",
+			"paymentRequestPaid": "This payment request is already paid",
+			"paymentQrAlt": "Payment QR code",
+			"copyPaymentLink": "Copy link",
+			"copyPaymentLinkSuccess": "Payment link copied",
+			"copyPaymentLinkFailed": "Could not copy payment link",
+			"openPaymentLink": "Open link",
+			"paymentLinkUnavailable": "No payment link is available for this order",
+			"fullPrice": "Full price",
+			"depositRequired": "Deposit required",
+			"collected": "Collected",
+			"outstanding": "Outstanding",
+			"releasedBalance": "Released balance",
+			"refundStatus": "Refund status",
+			"paymentReviewRequired": "Payment needs review",
+			"amountCollected": "Collected",
+			"outstandingBalance": "Outstanding",
+			"paymentQrLoading": "Preparing payment request…",
+			"paymentQrAlreadyPaid": "This balance is already paid.",
+			"paymentQrAmount": "Amount due",
+			"paymentQrUnavailable": "No payment link is available for this order.",
+			"paymentQrFailed": "Could not create the payment request."
 		},
 		"fulfillment": {
 			"title": "Fulfillment",
@@ -2477,7 +2506,14 @@
 			"noOptionsSelected": "No options selected. Please select at least one option above to generate variants.",
 			"possible": "possible",
 			"autoGenerateHint": "Click \"Auto Generate\" to create all possible combinations automatically",
-			"readyToCreateVariants": "Ready to create {count} variants"
+			"readyToCreateVariants": "Ready to create {count} variants",
+			"appointmentDeposit": "Appointment deposit (per qty)",
+			"appointmentDepositDesc": "Enter - to follow the store default, 0 for no deposit, or an amount greater than 0 to override the store default per qty.",
+			"appointmentDepositInherit": "Use store default",
+			"appointmentDepositNone": "No deposit",
+			"appointmentDepositCustom": "Custom per-qty amount",
+			"appointmentDepositAmount": "Deposit amount per qty",
+			"appointmentDepositPlaceholder": "- / 0 / amount"
 		},
 		"variations": {
 			"variationLabel": "Variation{index}",
@@ -2612,7 +2648,17 @@
 			"appointmentEndDate": "End date & time",
 			"taxRule": "Tax Rule",
 			"confirmationTitle": "Confirmation",
-			"confirmationMessage": "Are you sure you want to proceed?"
+			"confirmationMessage": "Are you sure you want to proceed?",
+			"noShowDispositionTitle": "No-show deposit action",
+			"noShowDispositionHint": "Choose whether to retain the deposit, mark it for refund, or keep the booking open to reschedule.",
+			"noShowRetain": "Retain deposit and close",
+			"noShowRetainDesc": "Keep the paid deposit and release any unpaid balance.",
+			"noShowRefund": "Refund deposit and close",
+			"noShowRefundDesc": "Close the booking and mark the deposit for a manual refund.",
+			"noShowReschedule": "Reschedule instead (keep open)",
+			"noShowRescheduleDesc": "Do not close. Change the schedule below instead.",
+			"noShowDispositionRequired": "Select retain, refund, or reschedule before saving a no-show.",
+			"noShowRescheduleHint": "Status reset so you can pick a new time. Update the schedule and save."
 		}
 	}
 }

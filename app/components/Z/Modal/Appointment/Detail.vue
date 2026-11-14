@@ -29,6 +29,35 @@
 
 		<template #body>
 			<UForm ref="formRef" :schema="appointmentSchema" :state="state.appointment" class="space-y-5" @submit="onSubmit">
+				<div
+					v-if="isNoShowSelected"
+					class="rounded-lg border border-warning/30 bg-warning/5 p-3 space-y-3"
+					data-testid="no-show-disposition"
+				>
+					<p class="text-sm font-medium">{{ t('components.zModal.noShowDispositionTitle') }}</p>
+					<p class="text-xs text-muted">{{ t('components.zModal.noShowDispositionHint') }}</p>
+					<div class="flex flex-col gap-2">
+						<label
+							v-for="option in dispositionOptions"
+							:key="option.value"
+							class="flex items-start gap-2 text-sm cursor-pointer"
+						>
+							<input
+								v-model="noShowAction"
+								type="radio"
+								class="mt-1"
+								:value="option.value"
+								:data-testid="`no-show-${option.value}`"
+							/>
+							<span>
+								<span class="font-medium">{{ option.label }}</span>
+								<span class="block text-xs text-muted">{{ option.description }}</span>
+							</span>
+						</label>
+					</div>
+					<p v-if="dispositionError" class="text-xs text-error">{{ dispositionError }}</p>
+				</div>
+
 				<!-- Service details -->
 				<div>
 					<h4 class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 sm:mb-3">{{ t('pages.serviceDetails') }}</h4>
@@ -113,13 +142,16 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent } from '#ui/types';
 import type { z } from 'zod';
+import { AppointmentStatus } from 'yeppi-common';
 import { UpdateAppointmentValidation } from '~/utils/schema';
-import type { Appointment } from '~/utils/types/appointment';
+import type { Appointment, AppointmentDepositDisposition } from '~/utils/types/appointment';
+import { failedNotification } from '~/stores/AppUi/AppUi';
 
 const { t } = useI18n();
 const appointmentSchema = computed(() => UpdateAppointmentValidation(t));
 
 type Schema = z.infer<ReturnType<typeof UpdateAppointmentValidation>>;
+type NoShowAction = AppointmentDepositDisposition | 'reschedule';
 
 const DEFAULT_DURATION_MS = 60 * 60 * 1000; // 1 hour
 
@@ -186,9 +218,66 @@ const formRef = ref<{ submit: () => void } | null>(null);
 const appointmentStore = useAppointmentStore();
 const { updating } = storeToRefs(appointmentStore);
 
+const noShowAction = ref<NoShowAction | undefined>(
+	props.appointment.deposit_disposition ?? undefined,
+);
+const dispositionError = ref<string | null>(null);
+
+const isNoShowSelected = computed(() => state.appointment.status === AppointmentStatus.NO_SHOW);
+
+const dispositionOptions = computed(() => [
+	{
+		value: 'retain' as const,
+		label: t('components.zModal.noShowRetain'),
+		description: t('components.zModal.noShowRetainDesc'),
+	},
+	{
+		value: 'refund' as const,
+		label: t('components.zModal.noShowRefund'),
+		description: t('components.zModal.noShowRefundDesc'),
+	},
+	{
+		value: 'reschedule' as const,
+		label: t('components.zModal.noShowReschedule'),
+		description: t('components.zModal.noShowRescheduleDesc'),
+	},
+]);
+
+watch(
+	() => state.appointment.status,
+	(status) => {
+		if (status !== AppointmentStatus.NO_SHOW) {
+			dispositionError.value = null;
+			noShowAction.value = undefined;
+		}
+	},
+);
+
 const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 	const { start_date_time, end_date_time, ref_no, status } = event.data;
 	const end = end_date_time ?? start_date_time;
+
+	if (status === AppointmentStatus.NO_SHOW) {
+		if (!noShowAction.value) {
+			dispositionError.value = t('components.zModal.noShowDispositionRequired');
+			return;
+		}
+		if (noShowAction.value === 'reschedule') {
+			dispositionError.value = null;
+			state.appointment.status = props.appointment.status;
+			failedNotification(t('components.zModal.noShowRescheduleHint'));
+			return;
+		}
+		emit('update', {
+			...props.appointment,
+			start_date_time,
+			end_date_time: end,
+			ref_no,
+			status,
+			deposit_disposition: noShowAction.value,
+		});
+		return;
+	}
 
 	emit('update', { ...props.appointment, start_date_time, end_date_time: end, ref_no, status });
 };

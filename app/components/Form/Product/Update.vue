@@ -77,6 +77,7 @@
 							@update:variations="updateProductVariations"
 							@update:variants="updateProductVariants"
 							@update:metadata="updateProductMetadata"
+							@update:appointment-deposit-amt="updateAppointmentDepositAmt"
 						/>
 					</UCard>
 				</UForm>
@@ -385,6 +386,10 @@ const updateProductVariants = (value: ProductVariantInput[]) => {
 
 const updateProductMetadata = (value: any) => {
 	formState.value.metadata = value;
+};
+
+const updateAppointmentDepositAmt = (value: number | null) => {
+	formState.value.appointment_deposit_amt = value;
 };
 
 // Field-to-section mapping for scroll-to-error

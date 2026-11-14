@@ -117,6 +117,7 @@ export const Routes = {
 		UpdateOrderItems: (order_no: string) => `${API_PATH.ORDERS}/${order_no}/items`,
 		UpdateOrderPayments: (order_no: string) => `${API_PATH.ORDERS}/${order_no}/payments`,
 		ResendEmail: (order_no: string) => `${API_PATH.ORDERS}/${order_no}/resend-email`,
+		GeneratePayment: (order_no: string) => `${API_PATH.ORDERS}/${order_no}/generate-payment`,
 		Process: () => `${API_PATH.ORDERS}/process`,
 		Export: () => `${API_PATH.ORDERS}/export`,
 	},

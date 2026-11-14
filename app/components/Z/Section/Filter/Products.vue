@@ -45,22 +45,32 @@
 				{{ t('components.filter.status') }}: {{ capitalizeFirstLetter(filters.status) }}
 				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
 			</UBadge>
+			<UBadge v-if="filters.type_id != null" color="warning" variant="subtle" size="sm" @click="productStore.setTypeId(undefined)">
+				{{ t('components.filter.productType') }}: {{ labelForSelectedType }}
+				<UIcon name="i-heroicons-x-mark" class="w-3 h-3 ml-1 cursor-pointer" />
+			</UBadge>
 		</div>
 	</div>
 </template>
 
 <script lang="ts" setup>
 import { ICONS } from '~/utils/icons';
+import { productTypeFilterLabel } from '~/utils/product-type-label';
 
 const { t } = useI18n();
 
 const productStore = useProductStore();
-const { filters, loading } = storeToRefs(productStore);
+const { filters, loading, product_types } = storeToRefs(productStore);
 
 const is_loading = computed(() => loading.value);
 
 const hasActiveFilters = computed(() => {
-	return filters.value.query || filters.value.status;
+	return filters.value.query || filters.value.status || filters.value.type_id != null;
+});
+
+const labelForSelectedType = computed(() => {
+	const match = product_types.value.find((pt) => pt.id === filters.value.type_id);
+	return match ? productTypeFilterLabel(match.value, t) : String(filters.value.type_id);
 });
 </script>
 

@@ -32,6 +32,8 @@ export type ItemModel = {
 	status: OrderItemStatus;
 	/** Snapshotted at Order Intake — Pre-order Line (survives later catalog changes). */
 	is_preorder?: boolean;
+	deposit_unit_amt?: number | null;
+	deposit_required_amt?: number | null;
 	appointment?: AppointmentModel;
 	taxes: ItemTaxModel[];
 };

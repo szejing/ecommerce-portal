@@ -20,17 +20,34 @@
 			<ZSectionFilterProducts />
 		</template>
 		<div class="space-y-6">
-			<!-- Table Controls -->
-			<ZTableToolbar
-				v-model:selected-column-keys="selectedColumnKeys"
-				:model-value="filters.page_size"
-				:page-size-options="options_page_size"
-				:export-enabled="true"
-				:exporting="exporting"
-				:column-options="columnOptions"
-				@update:model-value="productStore.setPageSize"
-				@export="exportProducts"
-			/>
+			<!-- Type pills (left) + table controls (right) -->
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+				<UTabs
+					v-if="showTypeFilter"
+					v-model="selectedTypeTab"
+					:items="typeTabItems"
+					:content="false"
+					color="primary"
+					variant="pill"
+					size="sm"
+					activation-mode="manual"
+					:aria-label="t('components.filter.productType')"
+					:ui="typeTabsUi"
+					class="min-w-0"
+				/>
+				<div class="sm:ms-auto shrink-0">
+					<ZTableToolbar
+						v-model:selected-column-keys="selectedColumnKeys"
+						:model-value="filters.page_size"
+						:page-size-options="options_page_size"
+						:export-enabled="true"
+						:exporting="exporting"
+						:column-options="columnOptions"
+						@update:model-value="productStore.setPageSize"
+						@export="exportProducts"
+					/>
+				</div>
+			</div>
 
 			<template v-if="initialize">
 				<div class="rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
@@ -67,7 +84,7 @@ import { options_page_size } from '~/utils/options';
 import { getProductColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import type { Product } from '~/utils/types/product';
-import type { TableRow } from '@nuxt/ui';
+import type { TableRow, TabsItem } from '@nuxt/ui';
 import { ZModalImporting, ZModalLoading } from '#components';
 import {
 	PRODUCT_IMPORT_ACCEPT,
@@ -77,7 +94,16 @@ import {
 } from '~/repository/modules/product/product';
 import { ICONS } from '~/utils/icons';
 import { productDetailPath } from '~/utils/product-route';
+import { productTypeFilterIcon, productTypeFilterLabel } from '~/utils/product-type-label';
 import { failedNotification } from '~/stores/AppUi/AppUi';
+
+const TYPE_TAB_ALL = 'all';
+const typeTabsUi = {
+	root: 'w-auto max-w-full',
+	list: 'inline-flex w-auto max-w-full flex-wrap gap-0.5 p-1.5 shadow-sm ring-1 ring-default/50',
+	trigger: 'grow-0 whitespace-nowrap px-3.5 py-2 text-sm',
+	leadingIcon: 'size-5',
+} as const;
 
 const { t } = useI18n();
 const productStore = useProductStore();
@@ -131,6 +157,7 @@ const {
 	products,
 	loading,
 	filters,
+	product_types,
 	total_products,
 	exporting,
 	updating,
@@ -142,6 +169,28 @@ const {
 	listFailure,
 } = storeToRefs(productStore);
 const initialize = ref(true);
+const showTypeFilter = computed(() => product_types.value.length > 1);
+
+const typeTabItems = computed<TabsItem[]>(() => [
+	{
+		label: t('options.all'),
+		value: TYPE_TAB_ALL,
+		icon: ICONS.LAYERS,
+	},
+	...product_types.value.map((pt) => ({
+		label: productTypeFilterLabel(pt.value, t),
+		value: String(pt.id),
+		icon: productTypeFilterIcon(pt.value),
+	})),
+]);
+
+const selectedTypeTab = computed({
+	get: () => (filters.value.type_id == null ? TYPE_TAB_ALL : String(filters.value.type_id)),
+	set: (value: string | number) => {
+		const key = String(value);
+		productStore.setTypeId(key === TYPE_TAB_ALL ? undefined : Number(key));
+	},
+});
 
 watch(listFailure, (failure) => {
 	if (failure) failedNotification(failure.message);

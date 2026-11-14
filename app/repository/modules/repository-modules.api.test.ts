@@ -281,6 +281,13 @@ describe('OrderModule', () => {
 		expect(lastFetch().opts.method).toBe('POST');
 		expect(lastFetch().opts.body).toEqual({ action: OrderResendEmailAction.SHIPPED });
 	});
+
+	it('generatePayment posts to encoded order generate-payment route', async () => {
+		await mod.generatePayment('ORD/1');
+		expect(lastFetch().url).toBe(MerchantRoutes.Orders.GeneratePayment(encodeURIComponent('ORD/1')));
+		expect(lastFetch().opts.method).toBe('POST');
+		expect(lastFetch().opts.body).toEqual({});
+	});
 });
 
 describe('OrderSummaryModule (summ-order)', () => {

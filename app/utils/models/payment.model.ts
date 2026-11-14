@@ -9,5 +9,7 @@ export type PaymentModel = {
 	local_amt: number;
 	currency_code: string;
 	external_intg_type: number;
+	payment_purpose?: 'full' | 'deposit' | 'balance' | string;
+	payment_request_id?: string | null;
 	metadata: Record<string, unknown>;
 };

@@ -4,6 +4,8 @@ export type AppointmentInput = {
 	code: string;
 };
 
+export type AppointmentDepositDisposition = 'retain' | 'refund';
+
 export type Appointment = {
 	code: string;
 	start_date_time: Date;
@@ -16,4 +18,5 @@ export type Appointment = {
 	customer_phone: string;
 	ref_no?: string;
 	status: AppointmentStatus;
+	deposit_disposition?: AppointmentDepositDisposition | null;
 };
