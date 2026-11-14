@@ -54,33 +54,41 @@
 		</div>
 
 		<!-- Operating hours -->
-		<div class="flex flex-col gap-2">
-			<label class="text-sm font-medium text-default">{{ t('components.zInput.operatingHours') }}</label>
-			<p class="text-sm text-muted">{{ t('components.zInput.operatingHoursDesc') }}</p>
-			<div class="flex items-start gap-3">
+		<div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+			<div class="min-w-0">
+				<label class="text-sm font-medium text-default">{{ t('components.zInput.operatingHours') }}</label>
+				<p class="text-sm text-muted">{{ t('components.zInput.operatingHoursDesc') }}</p>
+			</div>
+			<div class="flex w-full flex-col gap-3 sm:w-auto sm:min-w-56 sm:items-end shrink-0">
 				<UCheckbox
 					v-model="followOperationHour"
 					name="follow_operation_hour"
 					:label="t('components.zInput.followOperationHour')"
-					color="primary"
+					color="success"
 					@update:model-value="updateFollowOperationHour"
 				/>
-			</div>
-			<template v-if="followOperationHour">
-				<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2 text-muted">
-					<span class="text-sm">{{ merchantStartTime || '–' }}</span>
-					<span class="hidden sm:inline shrink-0" aria-hidden="true">–</span>
-					<span class="text-sm">{{ merchantEndTime || '–' }}</span>
-					<span v-if="!merchantStartTime && !merchantEndTime" class="text-sm">{{ t('components.zInput.merchantHoursNotSet') }}</span>
-				</div>
-			</template>
-			<div v-else class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2">
-				<div class="w-full sm:w-40 shrink-0">
-					<ZSelectMenuTime :title="t('components.zInput.selectTime')" :time="prodMetadata.start_time" type="start" @update:time="updateStartTime" />
-				</div>
-				<span class="hidden sm:inline text-muted shrink-0" aria-hidden="true">–</span>
-				<div class="w-full sm:w-40 shrink-0">
-					<ZSelectMenuTime :title="t('components.zInput.selectTime')" :time="prodMetadata.end_time" type="end" @update:time="updateEndTime" />
+				<template v-if="followOperationHour">
+					<div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 text-muted sm:justify-end">
+						<span class="text-sm">{{ merchantStartTime || '–' }}</span>
+						<span class="hidden sm:inline shrink-0" aria-hidden="true">–</span>
+						<span class="text-sm">{{ merchantEndTime || '–' }}</span>
+						<span v-if="!merchantStartTime && !merchantEndTime" class="text-sm">{{ t('components.zInput.merchantHoursNotSet') }}</span>
+					</div>
+				</template>
+				<div v-else class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 sm:justify-end">
+					<div class="w-full sm:w-40 shrink-0">
+						<ZSelectMenuTime
+							:title="t('components.zInput.selectTime')"
+							:time="prodMetadata.start_time"
+							type="start"
+							color="success"
+							@update:time="updateStartTime"
+						/>
+					</div>
+					<span class="hidden sm:inline text-muted shrink-0" aria-hidden="true">–</span>
+					<div class="w-full sm:w-40 shrink-0">
+						<ZSelectMenuTime :title="t('components.zInput.selectTime')" :time="prodMetadata.end_time" type="end" @update:time="updateEndTime" />
+					</div>
 				</div>
 			</div>
 		</div>
