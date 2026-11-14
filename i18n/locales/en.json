@@ -1714,6 +1714,10 @@
 			"itemStatus": "Item Status",
 			"orderItemStatus": "Order Item Status",
 			"paymentStatus": "Payment Status",
+			"productType": "Type",
+			"productTypeProducts": "Products",
+			"productTypeServices": "Services",
+			"productTypeEvent": "Event",
 			"actions": "Actions",
 			"searchLabel": "Search",
 			"clear": "Clear",
@@ -2503,12 +2507,13 @@
 			"possible": "possible",
 			"autoGenerateHint": "Click \"Auto Generate\" to create all possible combinations automatically",
 			"readyToCreateVariants": "Ready to create {count} variants",
-			"appointmentDeposit": "Appointment deposit (per unit)",
-			"appointmentDepositDesc": "Inherit the store default, charge no deposit, or set a custom amount per unit.",
+			"appointmentDeposit": "Appointment deposit (per qty)",
+			"appointmentDepositDesc": "Enter - to follow the store default, 0 for no deposit, or an amount greater than 0 to override the store default per qty.",
 			"appointmentDepositInherit": "Use store default",
 			"appointmentDepositNone": "No deposit",
-			"appointmentDepositCustom": "Custom per-unit amount",
-			"appointmentDepositAmount": "Deposit amount per unit"
+			"appointmentDepositCustom": "Custom per-qty amount",
+			"appointmentDepositAmount": "Deposit amount per qty",
+			"appointmentDepositPlaceholder": "- / 0 / amount"
 		},
 		"variations": {
 			"variationLabel": "Variation{index}",

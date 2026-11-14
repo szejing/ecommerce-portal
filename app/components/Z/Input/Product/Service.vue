@@ -11,29 +11,21 @@
 			/>
 		</div>
 
-		<!-- Appointment deposit (per unit) -->
+		<!-- Appointment deposit (per qty) -->
 		<div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
 			<div class="min-w-0">
 				<label class="text-sm font-medium text-default">{{ t('components.zInput.appointmentDeposit') }}</label>
 				<p class="text-sm text-muted">{{ t('components.zInput.appointmentDepositDesc') }}</p>
 			</div>
-			<div class="w-full sm:w-56 shrink-0 space-y-2">
-				<USelect
-					v-model="depositPolicy"
-					:items="depositPolicyItems"
-					value-key="value"
-					class="w-full"
-					data-testid="appointment-deposit-policy"
-				/>
+			<div class="w-full sm:w-56 shrink-0">
 				<UInput
-					v-if="depositPolicy === 'custom'"
-					v-model.number="customDepositAmt"
-					type="number"
-					min="0"
-					step="0.01"
-					:placeholder="t('components.zInput.appointmentDepositAmount')"
+					:model-value="depositInputText"
+					type="text"
+					inputmode="decimal"
+					:placeholder="t('components.zInput.appointmentDepositPlaceholder')"
 					data-testid="appointment-deposit-amt"
 					class="w-full"
+					@update:model-value="onDepositInput"
 				/>
 			</div>
 		</div>
@@ -103,8 +95,6 @@ const { t } = useI18n();
 
 type ServiceMetadataExtended = ServiceMetadata & { follow_operation_hour?: boolean };
 
-type DepositPolicy = 'inherit' | 'none' | 'custom';
-
 const props = defineProps({
 	metadata: {
 		type: Object as PropType<Record<string, unknown> | undefined>,
@@ -122,34 +112,38 @@ const emit = defineEmits<{
 	'update:appointmentDepositAmt': [value: number | null];
 }>();
 
-const depositPolicyItems = computed(() => [
-	{ label: t('components.zInput.appointmentDepositInherit'), value: 'inherit' },
-	{ label: t('components.zInput.appointmentDepositNone'), value: 'none' },
-	{ label: t('components.zInput.appointmentDepositCustom'), value: 'custom' },
-]);
+/** Local draft so typing `-` / partial decimals does not fight the parent null/0/number value. */
+const depositDraft = ref<string | null>(null);
 
-const depositPolicy = computed({
-	get(): DepositPolicy {
-		if (props.appointmentDepositAmt === null || props.appointmentDepositAmt === undefined) return 'inherit';
-		if (Number(props.appointmentDepositAmt) === 0) return 'none';
-		return 'custom';
-	},
-	set(value: DepositPolicy) {
-		if (value === 'inherit') emit('update:appointmentDepositAmt', null);
-		else if (value === 'none') emit('update:appointmentDepositAmt', 0);
-		else emit('update:appointmentDepositAmt', Number(props.appointmentDepositAmt) > 0 ? Number(props.appointmentDepositAmt) : 0);
-	},
+const depositInputText = computed(() => {
+	if (depositDraft.value !== null) return depositDraft.value;
+	if (props.appointmentDepositAmt === null || props.appointmentDepositAmt === undefined) return '-';
+	return String(props.appointmentDepositAmt);
 });
 
-const customDepositAmt = computed({
-	get(): number {
-		return Number(props.appointmentDepositAmt) > 0 ? Number(props.appointmentDepositAmt) : 0;
+function parseDepositInput(raw: string): number | null | undefined {
+	const trimmed = raw.trim();
+	if (trimmed === '' || trimmed === '-') return null;
+	if (!/^\d+(\.\d*)?$/.test(trimmed)) return undefined;
+	const next = Number(trimmed);
+	if (!Number.isFinite(next) || next < 0) return undefined;
+	return next;
+}
+
+const onDepositInput = (value: string | number | null | undefined) => {
+	const text = value == null ? '' : String(value);
+	depositDraft.value = text;
+	const parsed = parseDepositInput(text);
+	if (parsed === undefined) return;
+	emit('update:appointmentDepositAmt', parsed);
+};
+
+watch(
+	() => props.appointmentDepositAmt,
+	() => {
+		depositDraft.value = null;
 	},
-	set(value: number) {
-		const next = Number.isFinite(value) && value >= 0 ? Number(value) : 0;
-		emit('update:appointmentDepositAmt', next);
-	},
-});
+);
 
 const merchantInfoStore = useMerchantInfoStore();
 

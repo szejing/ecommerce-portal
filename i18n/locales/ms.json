@@ -1713,6 +1713,10 @@
 			"itemStatus": "Status Item",
 			"orderItemStatus": "Status Item Pesanan",
 			"paymentStatus": "Status Pembayaran",
+			"productType": "Jenis",
+			"productTypeProducts": "Produk",
+			"productTypeServices": "Perkhidmatan",
+			"productTypeEvent": "Acara",
 			"actions": "Tindakan",
 			"searchLabel": "Cari",
 			"clear": "Kosongkan",
@@ -2502,12 +2506,13 @@
 			"possible": "mungkin",
 			"autoGenerateHint": "Klik \"Jana Auto\" untuk cipta semua kombinasi yang mungkin secara automatik",
 			"readyToCreateVariants": "Sedia untuk cipta {count} varian",
-			"appointmentDeposit": "Deposit temujanji (setiap unit)",
-			"appointmentDepositDesc": "Guna tetapan kedai, tanpa deposit, atau amaun tersuai setiap unit.",
+			"appointmentDeposit": "Deposit temujanji (setiap qty)",
+			"appointmentDepositDesc": "Masukkan - untuk ikut tetapan kedai, 0 untuk tiada deposit, atau amaun lebih daripada 0 untuk ganti tetapan kedai setiap qty.",
 			"appointmentDepositInherit": "Guna tetapan kedai",
 			"appointmentDepositNone": "Tiada deposit",
-			"appointmentDepositCustom": "Amaun tersuai setiap unit",
-			"appointmentDepositAmount": "Amaun deposit setiap unit"
+			"appointmentDepositCustom": "Amaun tersuai setiap qty",
+			"appointmentDepositAmount": "Amaun deposit setiap qty",
+			"appointmentDepositPlaceholder": "- / 0 / amaun"
 		},
 		"variations": {
 			"variationLabel": "Variasi{index}",

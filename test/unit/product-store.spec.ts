@@ -97,6 +97,64 @@ describe('useProductStore', () => {
 		expect(getMany.mock.calls[0]?.[0].$expand).not.toMatch(/brands|categories|collection|images|tags|variations/);
 	});
 
+	it('stores catalog product_types from the listing response', async () => {
+		getMany.mockResolvedValue({
+			data: [product('SKU-1')],
+			'@odata.count': 1,
+			product_types: [
+				{ id: 1, value: 'item' },
+				{ id: 2, value: 'service' },
+			],
+		});
+		const store = useProductStore();
+		await store.refreshListing();
+		expect(store.product_types).toEqual([
+			{ id: 1, value: 'item' },
+			{ id: 2, value: 'service' },
+		]);
+	});
+
+	it('clears product_types when the listing omits them', async () => {
+		const store = useProductStore();
+		store.product_types = [{ id: 1, value: 'item' }];
+		getMany.mockResolvedValue({ data: [product('SKU-1')], '@odata.count': 1 });
+		await store.refreshListing();
+		expect(store.product_types).toEqual([]);
+	});
+
+	it('debounces type_id changes and sends type_id query param with status $filter', async () => {
+		vi.useFakeTimers();
+		const store = useProductStore();
+		store.filter.status = ProductStatus.PUBLISHED;
+		getMany.mockClear();
+		store.setTypeId(1);
+		store.setTypeId(2);
+		await vi.advanceTimersByTimeAsync(PRODUCT_FILTER_DEBOUNCE_MS - 1);
+		expect(getMany).not.toHaveBeenCalled();
+		await vi.advanceTimersByTimeAsync(1);
+		await vi.runAllTicks();
+		expect(store.filters.current_page).toBe(1);
+		expect(store.filters.type_id).toBe(2);
+		expect(getMany).toHaveBeenCalledTimes(1);
+		expect(getMany.mock.calls.at(-1)?.[0]).toMatchObject({
+			type_id: 2,
+			$filter: `status eq '${ProductStatus.PUBLISHED}'`,
+		});
+		expect(getMany.mock.calls.at(-1)?.[0].$filter).not.toContain('type_id');
+	});
+
+	it('clears type_id with other listing filters', async () => {
+		const store = useProductStore();
+		store.filter.type_id = 2;
+		store.filter.status = ProductStatus.DRAFT;
+		store.filter.query = 'helmet';
+		getMany.mockClear();
+		await store.clearFilters();
+		expect(store.filters).toMatchObject({ query: '', status: undefined, type_id: undefined, current_page: 1 });
+		expect(getMany.mock.calls.at(-1)?.[0].$filter).toBeUndefined();
+		expect(getMany.mock.calls.at(-1)?.[0].type_id).toBeUndefined();
+	});
+
 	it('initializes a fresh fixed combo without parent stock or variants', () => {
 		const store = useProductStore();
 		store.new_product.name = 'Old draft';

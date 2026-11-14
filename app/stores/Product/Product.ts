@@ -5,11 +5,12 @@ import type { Product } from '~/utils/types/product';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
 import type { ProductCreate, ProductUpdate } from '~/utils/types/form/product-creation';
 import { dir } from '~/utils/constants/dir';
-import type { BaseODataReq } from '~/repository/base/base.req';
+import type { CatalogProductType } from '~/repository/base/base.resp';
 import type { ImageReq } from '~/repository/modules/image/models/request/image.req';
 import type { ProductImportStreamResult, ProductImportTemplateType } from '~/repository/modules/product/product';
 import { resolveProductImportStoppedSummary, resolveProductImportSummary } from '~/utils/product-import-feedback';
 import { comboListingQuery, type ComboListingFilter } from '~/utils/combo-listing';
+import { buildProductListingQueryExtras, type ProductListingQuery } from '~/utils/product-listing-filter';
 
 export const PRODUCT_FILTER_DEBOUNCE_MS = 500;
 
@@ -34,15 +35,22 @@ function isAbortError(error: unknown): boolean {
 type ProductFilter = {
 	query: string;
 	status: ProductStatus | undefined;
+	type_id: number | undefined;
 	page_size: number;
 	current_page: number;
 };
 
-type ComboFilter = ProductFilter;
+type ComboFilter = {
+	query: string;
+	status: ProductStatus | undefined;
+	page_size: number;
+	current_page: number;
+};
 
 const initialEmptyProductFilter: ProductFilter = {
 	query: '',
 	status: undefined,
+	type_id: undefined,
 	page_size: options_page_size[0] as number,
 	current_page: 1,
 };
@@ -119,6 +127,7 @@ export const useProductStore = defineStore('productStore', {
 		new_product: structuredClone(initialEmptyProduct),
 		products: [] as Product[],
 		total_products: 0 as number,
+		product_types: [] as CatalogProductType[],
 		combos: [] as Product[],
 		total_combos: 0 as number,
 		current_product: undefined as Product | undefined,
@@ -238,6 +247,16 @@ export const useProductStore = defineStore('productStore', {
 			void this.refreshListing();
 		},
 
+		setTypeId(typeId: number | undefined) {
+			this.filter.type_id = typeId;
+			this.filter.current_page = 1;
+			if (productFilterTimer) clearTimeout(productFilterTimer);
+			productFilterTimer = setTimeout(() => {
+				productFilterTimer = undefined;
+				void this.refreshListing();
+			}, PRODUCT_FILTER_DEBOUNCE_MS);
+		},
+
 		async setPage(page: number): Promise<ProductRefreshOutcome> {
 			this.filter.current_page = page;
 			return this.refreshListing();
@@ -254,6 +273,7 @@ export const useProductStore = defineStore('productStore', {
 			productFilterTimer = undefined;
 			this.filter.query = '';
 			this.filter.status = undefined;
+			this.filter.type_id = undefined;
 			this.filter.current_page = 1;
 			return this.refreshListing();
 		},
@@ -264,15 +284,15 @@ export const useProductStore = defineStore('productStore', {
 			this.listFailure = undefined;
 			const { $api } = useNuxtApp();
 			try {
-				const { query, status } = this.filter;
-				const queryParams: BaseODataReq = {
+				const { query, status, type_id } = this.filter;
+				const queryParams: ProductListingQuery = {
 					$top: this.filter.page_size,
 					$count: true,
 					$skip: (this.filter.current_page - 1) * this.filter.page_size,
 					$expand: PRODUCT_LISTING_EXPAND.join(','),
 					$orderby: 'updated_at desc',
+					...buildProductListingQueryExtras({ status, type_id }),
 				};
-				if (status) queryParams.$filter = `status eq '${status}'`;
 				if (query.trim()) queryParams.$search = query.trim();
 				const resp = await $api.product.getMany(queryParams);
 				if (generation !== this.listingGeneration) return { status: 'stale' };
@@ -280,6 +300,7 @@ export const useProductStore = defineStore('productStore', {
 				const total = resp['@odata.count'] ?? resp.count ?? 0;
 				this.products = Array.isArray(items) ? items : [];
 				this.total_products = typeof total === 'number' ? total : 0;
+				this.product_types = Array.isArray(resp.product_types) ? resp.product_types : [];
 				return { status: 'completed' };
 			} catch (err: unknown | ErrorResponse) {
 				if (generation !== this.listingGeneration) return { status: 'stale' };

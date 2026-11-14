@@ -20,7 +20,7 @@ export type ProductCreate = {
 	manage_inventory?: boolean;
 	inventory_quantity?: number;
 	allow_preorder?: boolean;
-	/** null = inherit store default; 0 = no deposit; positive = custom per-unit amount */
+	/** null = inherit store default (-); 0 = no deposit; positive = custom per-qty amount */
 	appointment_deposit_amt?: number | null;
 
 	// Relations (using codes/IDs)
@@ -58,7 +58,7 @@ export type ProductUpdate = {
 	manage_inventory?: boolean;
 	inventory_quantity?: number;
 	allow_preorder?: boolean;
-	/** null = inherit store default; 0 = no deposit; positive = custom per-unit amount */
+	/** null = inherit store default (-); 0 = no deposit; positive = custom per-qty amount */
 	appointment_deposit_amt?: number | null;
 
 	// Relations (using codes/IDs)
