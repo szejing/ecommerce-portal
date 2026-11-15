@@ -288,6 +288,12 @@ describe('OrderModule', () => {
 		expect(lastFetch().opts.method).toBe('POST');
 		expect(lastFetch().opts.body).toEqual({});
 	});
+
+	it('getPaymentStatus gets encoded order payment-status route', async () => {
+		await mod.getPaymentStatus('ORD/1');
+		expect(lastFetch().url).toBe(MerchantRoutes.Orders.PaymentStatus(encodeURIComponent('ORD/1')));
+		expect(lastFetch().opts.method).toBe('GET');
+	});
 });
 
 describe('OrderSummaryModule (summ-order)', () => {

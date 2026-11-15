@@ -78,6 +78,13 @@
 import QRCode from 'qrcode';
 import type { OrderHistory } from '~/utils/types/order-history';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
+import {
+	PAYMENT_QR_MAX_WAIT_MS,
+	PAYMENT_QR_PAID_CLOSE_DELAY_MS,
+	PAYMENT_QR_POLL_MS,
+	isPaymentQrWaitPaid,
+	resolvePaymentQrWaitTick,
+} from '~/utils/payment-qr-wait';
 
 const { t } = useI18n();
 
@@ -96,13 +103,16 @@ const paymentUrl = ref<string | null>(null);
 const amount = ref(0);
 const currencyCode = ref(props.order.currency?.code ?? 'MYR');
 const purpose = ref<string | null>(null);
-const status = ref<string | null>(null);
+const outstandingAmt = ref(Number(props.order.outstanding_amt ?? 0));
 const qrDataUrl = ref<string | null>(null);
+const waitStartedAt = ref<number | null>(null);
 
-const isPaid = computed(() => {
-	const s = (status.value ?? '').toLowerCase();
-	return s === 'paid' || Number(props.order.outstanding_amt ?? 0) <= 0;
-});
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+let maxWaitTimer: ReturnType<typeof setTimeout> | null = null;
+let paidCloseTimer: ReturnType<typeof setTimeout> | null = null;
+let isClosing = false;
+
+const isPaid = computed(() => isPaymentQrWaitPaid(outstandingAmt.value));
 
 async function renderQr(url: string) {
 	qrDataUrl.value = await QRCode.toDataURL(url, {
@@ -112,35 +122,103 @@ async function renderQr(url: string) {
 	});
 }
 
+function stopWait() {
+	if (pollTimer) {
+		clearInterval(pollTimer);
+		pollTimer = null;
+	}
+	if (maxWaitTimer) {
+		clearTimeout(maxWaitTimer);
+		maxWaitTimer = null;
+	}
+	if (paidCloseTimer) {
+		clearTimeout(paidCloseTimer);
+		paidCloseTimer = null;
+	}
+	waitStartedAt.value = null;
+}
+
+function schedulePaidClose() {
+	stopWait();
+	// Show paid state first, then toast + close after the short hold.
+	paidCloseTimer = setTimeout(() => {
+		successNotification(t('components.orderDetail.paymentQrConfirmed'));
+		onClose();
+	}, PAYMENT_QR_PAID_CLOSE_DELAY_MS);
+}
+
+async function pollPaymentStatus() {
+	if (isClosing || isPaid.value) return;
+
+	try {
+		const { $api } = useNuxtApp();
+		const resp = await $api.order.getPaymentStatus(props.order.order_no);
+		outstandingAmt.value = Number(resp?.outstanding_amt ?? outstandingAmt.value);
+
+		const elapsedMs = waitStartedAt.value == null ? 0 : Date.now() - waitStartedAt.value;
+		const tick = resolvePaymentQrWaitTick({
+			outstandingAmt: outstandingAmt.value,
+			elapsedMs,
+		});
+
+		if (tick.kind === 'paid') {
+			schedulePaidClose();
+		}
+	} catch {
+		// Keep waiting; staff can still close or hit the 10-minute timeout.
+	}
+}
+
+function startWait() {
+	stopWait();
+	waitStartedAt.value = Date.now();
+	pollTimer = setInterval(() => {
+		void pollPaymentStatus();
+	}, PAYMENT_QR_POLL_MS);
+	maxWaitTimer = setTimeout(() => {
+		const tick = resolvePaymentQrWaitTick({
+			outstandingAmt: outstandingAmt.value,
+			elapsedMs: PAYMENT_QR_MAX_WAIT_MS,
+		});
+		if (tick.kind === 'timeout') {
+			stopWait();
+			failedNotification(t('components.orderDetail.paymentQrWaitTimeout'));
+			onClose();
+		}
+	}, PAYMENT_QR_MAX_WAIT_MS);
+}
+
 async function loadCheckout() {
 	loading.value = true;
 	errorMessage.value = null;
 	paymentUrl.value = null;
 	qrDataUrl.value = null;
+	stopWait();
 
 	try {
 		const { $api } = useNuxtApp();
 		const resp = await $api.order.generatePayment(props.order.order_no);
 		const checkout = resp?.checkout;
 		if (!checkout) {
-			status.value = 'paid';
+			outstandingAmt.value = 0;
+			schedulePaidClose();
 			return;
 		}
 
-		status.value = checkout.status != null ? String(checkout.status) : null;
 		purpose.value = checkout.purpose != null ? String(checkout.purpose) : null;
 		amount.value = Number(checkout.amount ?? props.order.outstanding_amt ?? 0);
 		currencyCode.value = String(checkout.currency_code ?? props.order.currency?.code ?? 'MYR');
 
-		const url = (checkout.payment_url ?? checkout.checkout_url ?? null) as string | null;
+		// Prefer provider hosted page (Fiuu/Stripe); payment_url is the storefront /pay bearer link.
+		const url = (checkout.checkout_url ?? checkout.payment_url ?? null) as string | null;
 		if (!url) {
-			if ((status.value ?? '').toLowerCase() === 'paid') return;
 			errorMessage.value = t('components.orderDetail.paymentQrUnavailable');
 			return;
 		}
 
 		paymentUrl.value = url;
 		await renderQr(url);
+		startWait();
 	} catch (err: unknown) {
 		errorMessage.value = (err as { message?: string })?.message ?? t('components.orderDetail.paymentQrFailed');
 	} finally {
@@ -159,11 +237,18 @@ async function copyLink() {
 }
 
 function onClose() {
+	if (isClosing) return;
+	isClosing = true;
+	stopWait();
 	emit('refresh');
 	emit('close');
 }
 
 onMounted(() => {
 	void loadCheckout();
+});
+
+onUnmounted(() => {
+	stopWait();
 });
 </script>

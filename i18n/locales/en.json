@@ -1903,7 +1903,9 @@
 			"paymentQrAlreadyPaid": "This balance is already paid.",
 			"paymentQrAmount": "Amount due",
 			"paymentQrUnavailable": "No payment link is available for this order.",
-			"paymentQrFailed": "Could not create the payment request."
+			"paymentQrFailed": "Could not create the payment request.",
+			"paymentQrConfirmed": "Payment confirmed",
+			"paymentQrWaitTimeout": "Payment not confirmed yet. Close and refresh the order later if needed."
 		},
 		"fulfillment": {
 			"title": "Fulfillment",

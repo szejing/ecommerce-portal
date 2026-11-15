@@ -1902,7 +1902,9 @@
 			"paymentQrAlreadyPaid": "Baki ini sudah dibayar.",
 			"paymentQrAmount": "Amaun perlu dibayar",
 			"paymentQrUnavailable": "Tiada pautan bayaran untuk pesanan ini.",
-			"paymentQrFailed": "Tidak dapat cipta permintaan bayaran."
+			"paymentQrFailed": "Tidak dapat cipta permintaan bayaran.",
+			"paymentQrConfirmed": "Bayaran disahkan",
+			"paymentQrWaitTimeout": "Bayaran belum disahkan. Tutup dan muat semula pesanan kemudian jika perlu."
 		},
 		"fulfillment": {
 			"title": "Pemenuhan",

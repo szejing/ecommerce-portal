@@ -1903,7 +1903,9 @@
 			"paymentQrAlreadyPaid": "该余额已付清。",
 			"paymentQrAmount": "应付金额",
 			"paymentQrUnavailable": "此订单暂无可用付款链接。",
-			"paymentQrFailed": "无法创建付款请求。"
+			"paymentQrFailed": "无法创建付款请求。",
+			"paymentQrConfirmed": "付款已确认",
+			"paymentQrWaitTimeout": "尚未确认付款。如有需要，请稍后关闭并刷新订单。"
 		},
 		"fulfillment": {
 			"title": "履约",
