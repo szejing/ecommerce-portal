@@ -5,6 +5,7 @@
 			:label="currentDateTime ? getFormattedDate(currentDateTime, format) : placeholder"
 			variant="outline"
 			color="neutral"
+			class="w-full justify-start"
 		/>
 
 		<template #content="{ close }">

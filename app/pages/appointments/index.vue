@@ -4,210 +4,195 @@
 		<template #toolbar>
 			<ZSectionFilterAppointments />
 		</template>
-		<div class="space-y-6">
-			<!-- Status Filter -->
-			<div class="flex flex-col gap-1.5">
-				<div class="flex flex-wrap gap-2">
-					<UButton
-						v-for="(tab, index) in appointmentTabs"
-						:key="tab.value"
-						:variant="selectedTab === index ? 'solid' : 'soft'"
-						:color="selectedTab === index ? 'primary' : 'neutral'"
-						@click="selectTab(index)"
-					>
-						{{ tab.label }}
-					</UButton>
-				</div>
-			</div>
+		<div class="space-y-4 pb-24 lg:pb-0">
+			<p class="text-sm text-gray-500 dark:text-gray-400">
+				{{
+					t('pages.appointmentDayOpsSummary', {
+						bookings: dayStatusCounts.all,
+						pending: dayStatusCounts.pending,
+					})
+				}}
+			</p>
 
-			<!-- Listing view (default) -->
+			<ZSectionAppointmentsAttentionRail v-if="showAttentionRail" :items="attentionRailItems" @select="selectAppointment" @select-gap="onSelectGap" />
+
+			<ZSectionAppointmentsStatusChips :model-value="uiStatus" :counts="statusCounts" @update:model-value="onStatusChip" />
+
+			<!-- Listing view -->
 			<template v-if="appointmentStore.isListingView">
-				<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-					<div :class="selectedAppointment ? 'lg:col-span-2' : 'lg:col-span-3'">
-						<UCard>
-							<div class="flex items-center justify-between mb-4">
-								<div>
-									<h3 class="font-semibold">{{ t('pages.upcomingAppointments') }}</h3>
+				<UCard>
+					<div class="flex items-center justify-between mb-4">
+						<div>
+							<h3 class="font-semibold">{{ t('pages.upcomingAppointments') }}</h3>
+							<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+								{{ t('pages.appointmentsCount', displayedAppointments.length) }}
+							</p>
+						</div>
+					</div>
+					<ZLoading v-if="appointmentStore.loading" />
+					<UTable
+						v-else
+						:data="displayedAppointments"
+						:columns="appointment_columns"
+						:meta="appointmentTableMeta"
+						@select="onSelectAppointment"
+					>
+						<template #empty>
+							<div class="flex flex-col items-center justify-center py-12 gap-3">
+								<UIcon name="i-heroicons-calendar-days" class="w-16 h-16 text-gray-400" />
+								<div class="text-center">
+									<p class="font-medium text-gray-900 dark:text-white">{{ t('pages.noAppointmentsFound') }}</p>
 									<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-										{{ t('pages.appointmentsCount', displayedAppointments.length) }}
+										{{ filters.query ? t('pages.tryAdjustingFilters') : t('pages.scheduleFirstAppointment') }}
 									</p>
 								</div>
 							</div>
-							<ZLoading v-if="appointmentStore.loading" />
-							<UTable v-else :data="displayedAppointments" :columns="appointment_columns" @select="onSelectAppointment">
-								<template #empty>
-									<div class="flex flex-col items-center justify-center py-12 gap-3">
-										<UIcon name="i-heroicons-calendar-days" class="w-16 h-16 text-gray-400" />
-										<div class="text-center">
-											<p class="font-medium text-gray-900 dark:text-white">{{ t('pages.noAppointmentsFound') }}</p>
-											<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-												{{ filters.query ? t('pages.tryAdjustingFilters') : t('pages.scheduleFirstAppointment') }}
-											</p>
-										</div>
-									</div>
-								</template>
-							</UTable>
-						</UCard>
+						</template>
+					</UTable>
+				</UCard>
+			</template>
+
+			<!-- Daily view -->
+			<template v-else-if="appointmentStore.isDailyView">
+				<UCard>
+					<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+						<h3 class="font-semibold hidden sm:block">{{ t('pages.dailyView') }}</h3>
+						<div class="flex items-center gap-2 justify-between sm:justify-end w-full sm:w-auto">
+							<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-left" class="min-h-10 min-w-10" @click="goPrevDay" />
+							<span class="text-center font-medium text-sm sm:text-base min-w-0 truncate">{{ format(calendarFocusDate, 'EEE, d MMM yyyy') }}</span>
+							<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-right" class="min-h-10 min-w-10" @click="goNextDay" />
+							<UButton color="primary" variant="soft" size="sm" :label="t('pages.today')" class="hidden sm:flex min-h-10" @click="goToTodayMonth" />
+						</div>
 					</div>
-					<div v-if="selectedAppointment" class="lg:col-span-1">
-						<ZCalendarAppointmentDetail
-							:appointment="selectedAppointment"
-							@close="clearSelectedAppointment"
+					<ZLoading v-if="appointmentStore.loading" />
+					<div v-else class="flex flex-col lg:flex-row gap-6">
+						<div class="shrink-0 hidden lg:block">
+							<UCard class="p-2">
+								<UCalendar
+									:model-value="dailyCalendarDate"
+									:month-controls="true"
+									:year-controls="true"
+									:week-starts-on="1"
+									@update:model-value="onDailyCalendarDateSelect"
+								>
+									<template #day="{ day }">
+										<UChip :show="hasAppointmentsOnDate(day)" color="primary" size="2xs">
+											{{ day.day }}
+										</UChip>
+									</template>
+								</UCalendar>
+							</UCard>
+						</div>
+						<div class="flex-1 min-w-0">
+							<ZCalendarDailySlots
+								:date="calendarFocusDate"
+								:appointments="dailyAppointments"
+								:selected-code="selectedAppointment?.code ?? null"
+								:get-status-color="(s: string) => getAppointmentStatusColor(s as AppointmentStatus)"
+								@select="selectAppointment"
+							/>
+						</div>
+					</div>
+				</UCard>
+			</template>
+
+			<!-- Weekly view -->
+			<template v-else-if="appointmentStore.isWeeklyView">
+				<UCard>
+					<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+						<h3 class="font-semibold hidden sm:block">{{ t('pages.weeklyView') }}</h3>
+						<div class="flex items-center gap-2 justify-between sm:justify-end w-full sm:w-auto">
+							<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-left" class="min-h-10 min-w-10" @click="goPrevWeek" />
+							<div class="text-center min-w-0">
+								<span class="font-medium text-sm sm:text-base">
+									{{ format(weekStartDate, 'd MMM') }} – {{ format(add(weekStartDate, { days: 6 }), 'd MMM yyyy') }}
+								</span>
+								<span class="text-gray-500 dark:text-gray-400 font-normal text-xs sm:text-sm ml-1 hidden sm:inline">{{
+									t('pages.weekNumber', { n: getISOWeek(weekStartDate) })
+								}}</span>
+							</div>
+							<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-right" class="min-h-10 min-w-10" @click="goNextWeek" />
+							<UButton color="primary" variant="soft" size="sm" :label="t('pages.today')" class="hidden sm:flex min-h-10" @click="goToTodayMonth" />
+						</div>
+					</div>
+					<ZLoading v-if="appointmentStore.loading" />
+					<div v-else>
+						<ZCalendarWeeklySlots
+							:week-start="weekStartDate"
+							:appointments="visibleAppointments"
+							:selected-code="selectedAppointment?.code ?? null"
+							:get-status-color="(s: string) => getAppointmentStatusColor(s as AppointmentStatus)"
+							@select="selectAppointment"
+							@edit="openEditModal"
+						/>
+					</div>
+				</UCard>
+			</template>
+
+			<!-- Calendar (month) view -->
+			<template v-else-if="appointmentStore.isMonthlyView">
+				<UCard>
+					<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+						<h3 class="font-semibold hidden sm:block">{{ t('pages.monthlyView') }}</h3>
+						<div class="flex items-center gap-2 justify-between sm:justify-end w-full sm:w-auto">
+							<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-left" class="min-h-10 min-w-10" @click="goPrevMonth" />
+							<span class="text-center font-medium text-sm sm:text-base">{{ format(monthDate, 'MMMM yyyy') }}</span>
+							<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-right" class="min-h-10 min-w-10" @click="goNextMonth" />
+							<UButton color="primary" variant="soft" size="sm" :label="t('pages.today')" class="hidden sm:flex min-h-10" @click="goToTodayMonth" />
+						</div>
+					</div>
+					<ZLoading v-if="appointmentStore.loading" />
+					<div v-else>
+						<ZCalendarMonthlyGrid
+							:month="monthDate"
+							:appointments="visibleAppointments"
+							:selected-code="selectedAppointment?.code ?? null"
+							:selected-day="selectedCalendarDay"
+							:get-status-color="(s: string) => getAppointmentStatusColor(s as AppointmentStatus)"
+							@select-day="selectDayInCalendarFromDate"
+							@open-day-listing="openDayListing"
+							@select-appointment="selectAppointment"
 							@edit="openEditModal"
 							@delete="deleteAppointment"
 						/>
 					</div>
-				</div>
+				</UCard>
 			</template>
 
-			<!-- Daily view (UCalendar + timeslots, macOS Calendar style) -->
-			<template v-else-if="appointmentStore.isDailyView">
-				<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-					<div :class="selectedAppointment ? 'lg:col-span-2' : 'lg:col-span-3'">
-						<UCard>
-							<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
-								<h3 class="font-semibold hidden sm:block">{{ t('pages.dailyView') }}</h3>
-								<div class="flex items-center gap-2 justify-between sm:justify-end w-full sm:w-auto">
-									<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-left" @click="goPrevDay" />
-									<span class="text-center font-medium text-sm sm:text-base min-w-0 truncate">{{ format(calendarFocusDate, 'EEE, d MMM yyyy') }}</span>
-									<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-right" @click="goNextDay" />
-									<UButton color="primary" variant="soft" size="sm" :label="t('pages.today')" class="hidden sm:flex" @click="goToTodayMonth" />
-								</div>
-							</div>
-							<ZLoading v-if="appointmentStore.loading" />
-							<div v-else class="flex flex-col lg:flex-row gap-6">
-								<!-- Mini calendar: hidden on mobile, shown on desktop -->
-								<div class="shrink-0 hidden lg:block">
-									<UCard class="p-2">
-										<UCalendar
-											:model-value="dailyCalendarDate"
-											@update:model-value="onDailyCalendarDateSelect"
-											:month-controls="true"
-											:year-controls="true"
-											:weekStartsOn="1"
-										>
-											<template #day="{ day }">
-												<UChip :show="hasAppointmentsOnDate(day)" color="primary" size="2xs">
-													{{ day.day }}
-												</UChip>
-											</template>
-										</UCalendar>
-									</UCard>
-								</div>
-								<div class="flex-1 min-w-0">
-									<ZCalendarDailySlots
-										:date="calendarFocusDate"
-										:appointments="dailyAppointments"
-										:selected-code="selectedAppointment?.code ?? null"
-										:get-status-color="(s: string) => getAppointmentStatusColor(s as AppointmentStatus)"
-										@select="selectAppointment"
-									/>
-								</div>
-							</div>
-						</UCard>
-					</div>
-					<div v-if="selectedAppointment" class="lg:col-span-1">
-						<div class="lg:sticky lg:top-4">
-							<ZCalendarAppointmentDetail
-								:appointment="selectedAppointment"
-								@close="clearSelectedAppointment"
-								@edit="openEditModal"
-								@delete="deleteAppointment"
-							/>
-						</div>
-					</div>
-				</div>
-			</template>
+			<ZCalendarAppointmentPanel
+				v-model:open="isPanelOpen"
+				:appointment="selectedAppointment"
+				:day-date="dayListingDate"
+				:day-appointments="dayListingAppointments"
+				:position-label="panelNavPositionLabel"
+				:can-go-previous="canGoPreviousAppointment"
+				:can-go-next="canGoNextAppointment"
+				@close="closePanel"
+				@back="backToDayAgenda"
+				@previous="goPreviousAppointment"
+				@next="goNextAppointment"
+				@edit="openEditModal"
+				@delete="deleteAppointment"
+				@select="(appointment) => selectAppointment(appointment, { fromDayAgenda: true })"
+			/>
 
-			<!-- Weekly view (timeslots, macOS Calendar style) -->
-			<template v-else-if="appointmentStore.isWeeklyView">
-				<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-					<div :class="selectedAppointment ? 'lg:col-span-2' : 'lg:col-span-3'">
-						<UCard>
-							<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
-								<h3 class="font-semibold hidden sm:block">{{ t('pages.weeklyView') }}</h3>
-								<div class="flex items-center gap-2 justify-between sm:justify-end w-full sm:w-auto">
-									<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-left" @click="goPrevWeek" />
-									<div class="text-center min-w-0">
-										<span class="font-medium text-sm sm:text-base">
-											{{ format(weekStartDate, 'd MMM') }} – {{ format(add(weekStartDate, { days: 6 }), 'd MMM yyyy') }}
-										</span>
-										<span class="text-gray-500 dark:text-gray-400 font-normal text-xs sm:text-sm ml-1 hidden sm:inline">{{
-											t('pages.weekNumber', { n: getISOWeek(weekStartDate) })
-										}}</span>
-									</div>
-									<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-right" @click="goNextWeek" />
-									<UButton color="primary" variant="soft" size="sm" :label="t('pages.today')" class="hidden sm:flex" @click="goToTodayMonth" />
-								</div>
-							</div>
-							<ZLoading v-if="appointmentStore.loading" />
-							<div v-else>
-								<ZCalendarWeeklySlots
-									:week-start="weekStartDate"
-									:appointments="appointments"
-									:selected-code="selectedAppointment?.code ?? null"
-									:get-status-color="(s: string) => getAppointmentStatusColor(s as AppointmentStatus)"
-									@select="selectAppointment"
-									@edit="openEditModal"
-								/>
-							</div>
-						</UCard>
-					</div>
-					<div v-if="selectedAppointment" class="lg:col-span-1">
-						<div class="lg:sticky lg:top-4">
-							<ZCalendarAppointmentDetail
-								:appointment="selectedAppointment"
-								@close="clearSelectedAppointment"
-								@edit="openEditModal"
-								@delete="deleteAppointment"
-							/>
-						</div>
-					</div>
+			<!-- Mobile day-ops dock -->
+			<div
+				class="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-3 py-2 backdrop-blur dark:border-gray-800 dark:bg-gray-950/95 lg:hidden"
+				style="padding-bottom: max(0.5rem, env(safe-area-inset-bottom))"
+			>
+				<div class="mx-auto grid max-w-lg grid-cols-3 gap-2">
+					<UButton color="neutral" variant="outline" class="min-h-12 justify-center" @click="setView('weekly')">
+						{{ t('components.filter.weekly') }}
+					</UButton>
+					<UButton color="neutral" variant="outline" class="min-h-12 justify-center" @click="setView('monthly')">
+						{{ t('components.filter.monthly') }}
+					</UButton>
+					<UButton color="primary" class="min-h-12 justify-center" :disabled="!nextPending" @click="onNextPending">
+						{{ t('pages.appointmentNextPending') }}
+					</UButton>
 				</div>
-			</template>
-
-			<!-- Monthly view (full calendar grid with appointments in each day) -->
-			<template v-else-if="appointmentStore.isMonthlyView">
-				<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-					<div :class="selectedAppointment ? 'lg:col-span-2' : 'lg:col-span-3'">
-						<UCard>
-							<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
-								<h3 class="font-semibold hidden sm:block">{{ t('pages.monthlyView') }}</h3>
-								<div class="flex items-center gap-2 justify-between sm:justify-end w-full sm:w-auto">
-									<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-left" @click="goPrevMonth" />
-									<span class="text-center font-medium text-sm sm:text-base">{{ format(monthDate, 'MMMM yyyy') }}</span>
-									<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-right" @click="goNextMonth" />
-									<UButton color="primary" variant="soft" size="sm" :label="t('pages.today')" class="hidden sm:flex" @click="goToTodayMonth" />
-								</div>
-							</div>
-							<ZLoading v-if="appointmentStore.loading" />
-							<div v-else>
-								<ZCalendarMonthlyGrid
-									:month="monthDate"
-									:appointments="appointments"
-									:selected-code="selectedAppointment?.code ?? null"
-									:selected-day="selectedCalendarDay"
-									:get-status-color="(s: string) => getAppointmentStatusColor(s as AppointmentStatus)"
-									@select-day="selectDayInCalendarFromDate"
-									@select-appointment="selectAppointment"
-									@edit="openEditModal"
-									@delete="deleteAppointment"
-								/>
-							</div>
-						</UCard>
-					</div>
-					<div v-if="selectedAppointment" class="lg:col-span-1">
-						<div class="lg:sticky lg:top-4">
-							<ZCalendarAppointmentDetail
-								:appointment="selectedAppointment"
-								@close="clearSelectedAppointment"
-								@edit="openEditModal"
-								@delete="deleteAppointment"
-							/>
-						</div>
-					</div>
-				</div>
-			</template>
+			</div>
 		</div>
 	</ZPagePanel>
 </template>
@@ -218,6 +203,15 @@ import type { TableRow } from '@nuxt/ui';
 import { ZModalAppointmentDetail, ZModalConfirmation } from '#components';
 import { add, addMonths, endOfMonth, endOfDay, endOfWeek, format, getISOWeek, isWithinInterval, startOfDay, startOfMonth, startOfWeek, sub } from 'date-fns';
 import { AppointmentStatus } from 'yeppi-common';
+import type { AppointmentView } from '~/stores/Appointment/Appointment';
+import {
+	appointmentsOnDay,
+	buildAttentionRailItems,
+	countAppointmentsByStatus,
+	findNextPendingAppointment,
+	isAppointmentPast,
+} from '~/utils/appointment-day-ops';
+import type { Row, TableMeta } from '@tanstack/table-core';
 import type { Appointment } from '~/utils/types/appointment';
 import { getAppointmentColumns } from '~/utils/table-columns';
 import { getAppointmentStatusColor } from '~/utils/options';
@@ -227,8 +221,12 @@ const overlay = useOverlay();
 const appointmentStore = useAppointmentStore();
 const { appointments, filter, filters, listFailure } = storeToRefs(appointmentStore);
 const selectedAppointment = ref<Appointment | null>(null);
+/** When set, Slideover/Drawer shows day agenda until an appointment is chosen (Back returns here). */
+const dayListingDate = ref<Date | null>(null);
 const route = useRoute();
 const router = useRouter();
+/** Client-side status chip filter so range counts stay stable (API keeps status All). */
+const uiStatus = ref<string>('All');
 
 watch(listFailure, (failure) => {
 	if (failure) failedNotification(failure.message);
@@ -239,13 +237,52 @@ const today = new Date();
 const calendarPlaceholder = ref(new CalendarDate(today.getFullYear(), today.getMonth() + 1, 1));
 const calendarFocusDate = ref(new Date());
 const selectedCalendarDay = ref<Date | null>(null);
-const selectedTab = ref(0);
 
 const { t } = useI18n();
 const appointment_columns = computed(() => getAppointmentColumns(t));
+const appointmentTableMeta: TableMeta<Appointment> = {
+	class: {
+		tr: (row: Row<Appointment>) => (isAppointmentPast(row.original) ? 'opacity-50' : undefined),
+	},
+};
 useHead({ title: () => t('pages.appointmentsTitle') });
 
 const dateKey = (d: Date) => format(d, 'yyyy-MM-dd');
+
+const visibleAppointments = computed(() => {
+	if (uiStatus.value === 'All') return appointments.value;
+	if (uiStatus.value === AppointmentStatus.CANCELLED) {
+		return appointments.value.filter((a) => a.status === AppointmentStatus.CANCELLED || a.status === AppointmentStatus.VOIDED);
+	}
+	return appointments.value.filter((a) => a.status === uiStatus.value);
+});
+
+const statusCounts = computed(() => countAppointmentsByStatus(appointments.value));
+const dayAppointments = computed(() => appointmentsOnDay(appointments.value, calendarFocusDate.value));
+const dayStatusCounts = computed(() => countAppointmentsByStatus(dayAppointments.value));
+const nextPending = computed(() => findNextPendingAppointment(appointments.value));
+const showAttentionRail = computed(() => appointmentStore.isDailyView);
+const attentionRailItems = computed(() =>
+	buildAttentionRailItems(visibleAppointments.value, {
+		now: new Date(),
+		day: calendarFocusDate.value,
+		maxPending: 2,
+		minGapMinutes: 30,
+	}),
+);
+
+const dayListingAppointments = computed(() => {
+	if (!dayListingDate.value) return [];
+	return appointmentsOnDay(visibleAppointments.value, dayListingDate.value);
+});
+
+/** Shared open state for desktop Slideover / mobile Drawer (day agenda or detail). */
+const isPanelOpen = computed({
+	get: () => dayListingDate.value !== null || selectedAppointment.value !== null,
+	set: (open: boolean) => {
+		if (!open) closePanel();
+	},
+});
 
 /** Current month, next month, and the following two months (four calendar months total). */
 const fourMonthForwardRange = (anchor: Date) => {
@@ -264,18 +301,10 @@ const dateInLoadedRange = (d: Date) => {
 
 const weekFullyInLoadedRange = (weekStart: Date, weekEnd: Date) => dateInLoadedRange(weekStart) && dateInLoadedRange(weekEnd);
 
-const appointmentTabs = computed(() => [
-	{ label: t('options.all'), value: 'All' },
-	{ label: t('options.pending'), value: AppointmentStatus.PENDING },
-	{ label: t('options.confirmed'), value: AppointmentStatus.CONFIRMED },
-	{ label: t('options.completed'), value: AppointmentStatus.COMPLETED },
-	{ label: t('options.cancelled'), value: AppointmentStatus.CANCELLED },
-]);
-
-// Appointments grouped by date (YYYY-MM-DD)
+// Appointments grouped by date (YYYY-MM-DD) — respects status chips
 const appointmentsByDate = computed(() => {
 	const map: Record<string, Appointment[]> = {};
-	for (const a of appointments.value) {
+	for (const a of visibleAppointments.value) {
 		const key = dateKey(new Date(a.start_date_time));
 		if (!map[key]) map[key] = [];
 		map[key].push(a);
@@ -309,19 +338,69 @@ const weekStartDate = computed(() => startOfWeek(calendarFocusDate.value, { week
 
 // Display appointments based on filter state (listing view)
 const displayedAppointments = computed(() => {
-	const result = [...appointments.value];
+	const result = [...visibleAppointments.value];
 	return result.sort((a, b) => new Date(a.start_date_time).getTime() - new Date(b.start_date_time).getTime());
+});
+
+const weekAppointments = computed(() => {
+	const start = weekStartDate.value;
+	const keys = Array.from({ length: 7 }, (_, i) => dateKey(add(start, { days: i })));
+	const list: Appointment[] = [];
+	for (const key of keys) {
+		const day = appointmentsByDate.value[key];
+		if (day?.length) list.push(...day);
+	}
+	return list;
+});
+
+/**
+ * Hybrid nav: same day from day agenda; else the list staff see in the active view
+ * (Day / Week / Month|List), respecting status chips.
+ */
+const panelNavAppointments = computed(() => {
+	if (dayListingDate.value) return dayListingAppointments.value;
+	if (appointmentStore.isDailyView) return dailyAppointments.value;
+	if (appointmentStore.isWeeklyView) return weekAppointments.value;
+	return displayedAppointments.value;
+});
+
+const panelNavIndex = computed(() => {
+	const code = selectedAppointment.value?.code;
+	if (!code) return -1;
+	return panelNavAppointments.value.findIndex((a) => a.code === code);
+});
+
+const panelNavPositionLabel = computed(() => {
+	const total = panelNavAppointments.value.length;
+	if (total < 2 || panelNavIndex.value < 0) return null;
+	return `${panelNavIndex.value + 1} / ${total}`;
+});
+
+const canGoPreviousAppointment = computed(() => panelNavIndex.value > 0);
+const canGoNextAppointment = computed(() => {
+	const idx = panelNavIndex.value;
+	return idx >= 0 && idx < panelNavAppointments.value.length - 1;
 });
 
 const monthDate = computed(() => new Date(calendarPlaceholder.value.year, calendarPlaceholder.value.month - 1, 1));
 
-const selectTab = async (index: number) => {
-	selectedTab.value = index;
-	await appointmentStore.setStatus(appointmentTabs.value[index]?.value as AppointmentStatus | string);
+const onStatusChip = (status: string) => {
+	uiStatus.value = status;
 };
 
-const search = async () => {
-	await appointmentStore.refreshListing();
+const setView = (view: AppointmentView) => {
+	filter.value.view = view;
+};
+
+const onNextPending = () => {
+	const pending = nextPending.value;
+	if (!pending) return;
+	selectAppointment(pending);
+};
+
+const onSelectGap = (start: Date) => {
+	calendarFocusDate.value = start;
+	filter.value.view = 'daily';
 };
 
 const onDailyCalendarDateSelect = async (value: DateValue | DateValue[] | { start?: DateValue; end?: DateValue } | null | undefined) => {
@@ -396,6 +475,16 @@ const selectDayInCalendarFromDate = (date: Date) => {
 	selectedCalendarDay.value = date;
 };
 
+const openDayListing = (date: Date) => {
+	selectedCalendarDay.value = date;
+	dayListingDate.value = date;
+	selectedAppointment.value = null;
+};
+
+const backToDayAgenda = () => {
+	selectedAppointment.value = null;
+};
+
 const deleteAppointment = async (code: string) => {
 	const confirmModal = overlay.create(ZModalConfirmation, {
 		props: {
@@ -406,7 +495,8 @@ const deleteAppointment = async (code: string) => {
 				confirmModal.close();
 				// Clear selected appointment if it's the one being deleted
 				if (selectedAppointment.value?.code === code) {
-					clearSelectedAppointment();
+					if (dayListingDate.value) backToDayAgenda();
+					else closePanel();
 				}
 			},
 			onCancel: () => {
@@ -460,23 +550,26 @@ const applyDashboardDateQueryToFilter = () => {
 	}
 };
 
-const clearSelectedAppointment = () => {
-	selectedAppointment.value = null;
+const clearQueryCode = () => {
 	if (!route.query.code) return;
-
 	const nextQuery = { ...route.query };
 	delete nextQuery.code;
 	void router.replace({ query: nextQuery });
+};
+
+const closePanel = () => {
+	selectedAppointment.value = null;
+	dayListingDate.value = null;
+	clearQueryCode();
 };
 
 const openAppointmentFromQuery = async () => {
 	const code = typeof route.query.code === 'string' ? route.query.code.trim() : '';
 	if (!code) return;
 
-	filter.value.view = 'listing';
 	filter.value.current_page = 1;
 	filter.value.status = 'All';
-	selectedTab.value = 0;
+	uiStatus.value = 'All';
 
 	let found = appointments.value.find((appointment) => appointment.code === code) ?? null;
 	if (!found) {
@@ -499,11 +592,15 @@ const openAppointmentFromQuery = async () => {
 		return;
 	}
 
+	dayListingDate.value = null;
 	selectedAppointment.value = found;
 };
 
 onMounted(async () => {
 	applyDashboardDateQueryToFilter();
+	// Day Ops counts need the full status mix for the loaded range
+	filter.value.status = 'All';
+	uiStatus.value = 'All';
 	await appointmentStore.refreshListing();
 	await openAppointmentFromQuery();
 });
@@ -515,10 +612,22 @@ watch(
 	},
 );
 
-const selectAppointment = (appointment: Appointment) => {
+const selectAppointment = (appointment: Appointment, opts?: { fromDayAgenda?: boolean }) => {
 	if (!appointment) return;
+	if (!opts?.fromDayAgenda) dayListingDate.value = null;
 	selectedAppointment.value = appointment;
 };
+
+const goAdjacentAppointment = (delta: -1 | 1) => {
+	const idx = panelNavIndex.value;
+	if (idx < 0) return;
+	const next = panelNavAppointments.value[idx + delta];
+	if (!next) return;
+	selectAppointment(next, { fromDayAgenda: Boolean(dayListingDate.value) });
+};
+
+const goPreviousAppointment = () => goAdjacentAppointment(-1);
+const goNextAppointment = () => goAdjacentAppointment(1);
 
 const onSelectAppointment = (_e: Event, row: TableRow<Appointment>) => {
 	const appointment = row.original;
@@ -528,15 +637,22 @@ const onSelectAppointment = (_e: Event, row: TableRow<Appointment>) => {
 const openEditModal = async (appointment: Appointment) => {
 	if (!appointment) return;
 
+	const syncSelectedAppointment = (updated: Appointment) => {
+		if (selectedAppointment.value?.code !== updated.code) return;
+		selectedAppointment.value = appointments.value.find((item) => item.code === updated.code) ?? updated;
+	};
+
 	const appointmentModal = overlay.create(ZModalAppointmentDetail, {
 		props: {
 			appointment: appointment,
-			onUpdate: async (appointment: Appointment) => {
-				await appointmentStore.updateAppointment(appointment);
+			onUpdate: async (updated: Appointment) => {
+				const saved = await appointmentStore.updateAppointment(updated);
+				if (!saved) return;
 				appointmentModal.close();
-				if (selectedAppointment.value?.code === appointment.code) {
-					selectedAppointment.value = appointments.value.find((a) => a.code === appointment.code) || null;
-				}
+				syncSelectedAppointment(updated);
+			},
+			onStatus: (updated: Appointment) => {
+				syncSelectedAppointment(updated);
 			},
 			onDelete: async () => {
 				appointmentModal.close();
@@ -549,10 +665,6 @@ const openEditModal = async (appointment: Appointment) => {
 	});
 
 	appointmentModal.open();
-};
-
-const exportAppointments = async () => {
-	// await appointmentStore.exportAppointments();
 };
 </script>
 

@@ -48,10 +48,13 @@
 					</div>
 					<!-- Appointments in this day (desktop only) -->
 					<div class="flex-1 overflow-hidden px-1 sm:px-1.5 pb-1 space-y-0.5 hidden sm:block">
-						<template v-for="(appointment, idx) in cell.appointments.slice(0, maxVisibleAppointments)" :key="appointment.code">
+						<template v-for="appointment in cell.appointments.slice(0, maxVisibleAppointments)" :key="appointment.code">
 							<div
 								class="flex items-center gap-1 py-0.5 px-1.5 rounded text-[10px] sm:text-xs cursor-pointer transition-all hover:bg-gray-100 dark:hover:bg-gray-700/50"
-								:class="[selectedCode === appointment.code ? 'ring-1 ring-primary bg-primary-50 dark:bg-primary-900/20' : '']"
+								:class="[
+									selectedCode === appointment.code ? 'ring-1 ring-primary bg-primary-50 dark:bg-primary-900/20' : '',
+									isPastAppointment(appointment) ? 'opacity-45' : '',
+								]"
 								@click.stop="$emit('selectAppointment', appointment)"
 							>
 								<span class="w-1.5 h-1.5 rounded-full shrink-0" :class="getDotColorClass(appointment.status)" />
@@ -70,7 +73,7 @@
 							color="primary"
 							size="xs"
 							class="w-full justify-start text-[10px] sm:text-xs font-medium px-1.5 py-0.5 min-h-0"
-							@click.stop="openDayListing(cell.date as Date)"
+							@click.stop="emitOpenDayListing(cell.date as Date)"
 						>
 							+{{ cell.appointments.length - maxVisibleAppointments }} {{ t('components.calendar.more') }}
 						</UButton>
@@ -101,19 +104,17 @@
 						v-for="appointment in selectedDayAppointments"
 						:key="appointment.code"
 						class="flex items-start gap-3 px-3 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors"
-						:class="[selectedCode === appointment.code ? 'bg-primary-50/50 dark:bg-primary-900/10' : '']"
+						:class="[
+							selectedCode === appointment.code ? 'bg-primary-50/50 dark:bg-primary-900/10' : '',
+							isPastAppointment(appointment) ? 'opacity-50' : '',
+						]"
 						@click="$emit('selectAppointment', appointment)"
 					>
 						<div class="w-1 self-stretch rounded-full shrink-0 mt-0.5" :class="getDotColorClass(appointment.status)" />
 						<div class="flex-1 min-w-0">
 							<div class="flex items-center justify-between gap-2">
 								<p class="font-medium text-sm text-gray-900 dark:text-white truncate">{{ appointment.customer_name }}</p>
-								<UBadge
-									:color="getStatusColor(appointment.status) as 'primary' | 'success' | 'warning' | 'error' | 'info' | 'neutral'"
-									variant="subtle"
-									size="xs"
-									class="shrink-0"
-								>
+								<UBadge :color="getStatusColor(appointment.status)" variant="subtle" size="xs" class="shrink-0">
 									{{ t('options.' + appointment.status.toLowerCase()) }}
 								</UBadge>
 							</div>
@@ -136,12 +137,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ZModalDayAppointments } from '#components';
-import { add, endOfMonth, format, startOfMonth, startOfWeek } from 'date-fns';
+import { add, format, startOfMonth, startOfWeek } from 'date-fns';
+import { isAppointmentPast } from '~/utils/appointment-day-ops';
 import type { Appointment } from '~/utils/types/appointment';
-
-const overlay = useOverlay();
-const dayModal = overlay.create(ZModalDayAppointments);
 
 const props = withDefaults(
 	defineProps<{
@@ -161,6 +159,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
 	selectDay: [date: Date];
+	openDayListing: [date: Date];
 	selectAppointment: [appointment: Appointment];
 	edit: [appointment: Appointment];
 	delete: [code: string];
@@ -171,14 +170,20 @@ const { t } = useI18n();
 // Max visible appointments per cell in grid (desktop)
 const maxVisibleAppointments = 3;
 
-// Simple mobile detection
+// Simple mobile detection + refresh "past" styling about once a minute
 const isMobileView = ref(false);
+const now = ref(new Date());
+let pastTimer: ReturnType<typeof setInterval> | null = null;
 onMounted(() => {
 	checkMobile();
 	window.addEventListener('resize', checkMobile);
+	pastTimer = setInterval(() => {
+		now.value = new Date();
+	}, 60_000);
 });
 onUnmounted(() => {
 	window.removeEventListener('resize', checkMobile);
+	if (pastTimer) clearInterval(pastTimer);
 });
 const checkMobile = () => {
 	isMobileView.value = window.innerWidth < 640;
@@ -221,7 +226,6 @@ const appointmentsByDate = computed(() => {
 
 const gridCells = computed(() => {
 	const first = startOfMonth(props.month);
-	const last = endOfMonth(props.month);
 	const gridStart = startOfWeek(first, { weekStartsOn: props.weekStartsOn });
 	const selectedKey = props.selectedDay ? dayKey(props.selectedDay) : null;
 	const cells: {
@@ -260,19 +264,13 @@ const selectedDayAppointments = computed(() => {
 	return appointmentsByDate.value[dayKey(props.selectedDay)] ?? [];
 });
 
-// Day listing modal: open programmatically via useOverlay when clicking "+N more"
-const openDayListing = (date: Date) => {
+/** "+N more" → parent opens day agenda in the shared Slideover (no nested modal). */
+const emitOpenDayListing = (date: Date) => {
 	emit('selectDay', date);
-	const appointments = appointmentsByDate.value[dayKey(date)] ?? [];
-	dayModal.open({
-		date,
-		appointments,
-		getStatusColor: props.getStatusColor,
-		onSelectAppointment: (a) => emit('selectAppointment', a),
-		onEdit: (a) => emit('edit', a),
-		onDelete: (c) => emit('delete', c),
-	});
+	emit('openDayListing', date);
 };
+
+const isPastAppointment = (appointment: Appointment) => isAppointmentPast(appointment, now.value);
 
 const formatTime = (d: string | Date) => format(new Date(d), 'h:mm a');
 

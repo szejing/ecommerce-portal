@@ -22,7 +22,15 @@ import {
 	canCompletePaymentStatus,
 } from './payment-status';
 import { options_page_size } from './page-size';
-import { options_appointment_status, getAppointmentStatusColor, getAppointmentStatusOptions } from './appointment-status';
+import {
+	options_appointment_status,
+	getAppointmentStatusColor,
+	getAppointmentStatusLabel,
+	getAppointmentStatusOptions,
+	getAppointmentStatusUpdateOptions,
+	getNextAppointmentStatus,
+	canCompleteAppointmentStatus,
+} from './appointment-status';
 import { options_amount_type, getAmountTypeOptions } from './amount-type';
 import {
 	options_fulfillment_status,
@@ -77,7 +85,11 @@ export {
 	canCompletePaymentStatus,
 	options_appointment_status,
 	getAppointmentStatusColor,
+	getAppointmentStatusLabel,
 	getAppointmentStatusOptions,
+	getAppointmentStatusUpdateOptions,
+	getNextAppointmentStatus,
+	canCompleteAppointmentStatus,
 	options_amount_type,
 	getAmountTypeOptions,
 	options_fulfillment_status,

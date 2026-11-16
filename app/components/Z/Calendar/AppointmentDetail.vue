@@ -1,22 +1,61 @@
 <template>
 	<UCard>
-		<div class="flex items-center justify-between mb-4 sm:mb-6">
-			<div class="flex items-center gap-2 sm:gap-3 min-w-0">
-				<UIcon name="i-heroicons-document-text" class="w-5 h-5 sm:w-6 sm:h-6 text-primary-600 dark:text-primary-400 shrink-0" />
-				<div class="min-w-0">
-					<h3 class="font-bold text-lg sm:text-xl text-gray-900 dark:text-white truncate">{{ appointment.code }}</h3>
-					<p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{{ t('pages.appointmentDetails') }}</p>
+		<div class="relative mb-4 pr-9 sm:mb-6 sm:pr-10">
+			<UButton
+				icon="i-heroicons-x-mark"
+				color="neutral"
+				variant="ghost"
+				size="sm"
+				class="absolute top-0 right-0 cursor-pointer"
+				:aria-label="t('common.close')"
+				@click="$emit('close')"
+			/>
+			<div class="flex items-start gap-2 sm:gap-3">
+				<UIcon
+					name="i-heroicons-document-text"
+					class="mt-0.5 size-5 shrink-0 text-primary-600 dark:text-primary-400 sm:size-6"
+					aria-hidden="true"
+				/>
+				<div class="min-w-0 flex-1">
+					<!-- Full code always visible; wraps instead of truncating -->
+					<h3 class="break-all text-base font-bold leading-snug text-gray-900 dark:text-white sm:text-lg">
+						{{ appointment.code }}
+					</h3>
+					<UBadge
+						:color="getAppointmentStatusColor(appointment.status)"
+						variant="subtle"
+						size="sm"
+						class="mt-2 inline-flex"
+					>
+						{{ t('options.' + appointment.status.toLowerCase()) }}
+					</UBadge>
 				</div>
 			</div>
-			<div class="flex items-center gap-2 shrink-0">
-				<UBadge :color="getAppointmentStatusColor(appointment.status)" variant="subtle" size="md" class="hidden sm:inline-flex">
-					{{ t('options.' + appointment.status.toLowerCase()) }}
-				</UBadge>
-				<UBadge :color="getAppointmentStatusColor(appointment.status)" variant="subtle" size="sm" class="sm:hidden">
-					{{ t('options.' + appointment.status.toLowerCase()) }}
-				</UBadge>
-				<UButton icon="i-heroicons-x-mark" color="neutral" variant="ghost" size="sm" @click="$emit('close')" />
-			</div>
+		</div>
+		<div v-if="showNav" class="mb-4 flex items-center justify-between gap-2 sm:mb-6">
+			<UButton
+				color="neutral"
+				variant="outline"
+				size="sm"
+				icon="i-heroicons-chevron-left"
+				class="min-h-9 cursor-pointer"
+				:disabled="!canGoPrevious"
+				:aria-label="t('pages.previousAppointment')"
+				:label="t('pages.previousAppointment')"
+				@click="$emit('previous')"
+			/>
+			<span class="shrink-0 text-xs tabular-nums text-gray-500 dark:text-gray-400" aria-live="polite">{{ positionLabel }}</span>
+			<UButton
+				color="neutral"
+				variant="outline"
+				size="sm"
+				trailing-icon="i-heroicons-chevron-right"
+				class="min-h-9 cursor-pointer"
+				:disabled="!canGoNext"
+				:aria-label="t('pages.nextAppointment')"
+				:label="t('pages.nextAppointment')"
+				@click="$emit('next')"
+			/>
 		</div>
 		<div class="space-y-4 sm:space-y-6">
 			<div class="p-3 sm:p-4 bg-primary-50 dark:bg-primary-900/10 rounded-lg border border-primary-200 dark:border-primary-800">
@@ -87,13 +126,28 @@ import { formatAppointmentDateRange } from '~/utils/utils';
 
 const { t } = useI18n();
 
-defineProps<{
-	appointment: Appointment;
-}>();
+const props = withDefaults(
+	defineProps<{
+		appointment: Appointment;
+		/** e.g. "2 / 5" — when set with more than one item, shows Previous / Next. */
+		positionLabel?: string | null;
+		canGoPrevious?: boolean;
+		canGoNext?: boolean;
+	}>(),
+	{
+		positionLabel: null,
+		canGoPrevious: false,
+		canGoNext: false,
+	},
+);
 
 defineEmits<{
 	close: [];
+	previous: [];
+	next: [];
 	edit: [appointment: Appointment];
 	delete: [code: string];
 }>();
+
+const showNav = computed(() => Boolean(props.positionLabel));
 </script>

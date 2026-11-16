@@ -62,7 +62,12 @@
 								<UPopover :open="hoveredCode === block.appointment.code" :popper="{ placement: 'right', strategy: 'fixed' }">
 									<div
 										class="absolute rounded-md cursor-pointer transition-colors overflow-hidden flex flex-col bg-neutral-50 dark:bg-neutral-900/40"
-										:class="['border-l-[3px]', block.borderClass, selectedCode === block.appointment.code ? 'ring-2 ring-primary ring-inset' : '']"
+										:class="[
+											'border-l-[3px]',
+											block.borderClass,
+											selectedCode === block.appointment.code ? 'ring-2 ring-primary ring-inset' : '',
+											block.isPast ? 'opacity-45' : '',
+										]"
 										:style="{
 											top: `${block.topPx}px`,
 											left: `${block.leftPct}%`,
@@ -179,7 +184,10 @@
 						v-for="block in blocksByDay.get(dayIndex) ?? []"
 						:key="block.appointment.code"
 						class="flex items-start gap-3 px-3 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors"
-						:class="[selectedCode === block.appointment.code ? 'bg-primary-50/50 dark:bg-primary-900/10' : '']"
+						:class="[
+							selectedCode === block.appointment.code ? 'bg-primary-50/50 dark:bg-primary-900/10' : '',
+							block.isPast ? 'opacity-50' : '',
+						]"
 						@click="$emit('select', block.appointment)"
 					>
 						<div class="w-1 self-stretch rounded-full shrink-0 mt-0.5" :class="block.borderClass.replace('border-l-', 'bg-')" />
@@ -215,6 +223,7 @@
 <script lang="ts" setup>
 import { add, format, isToday as isTodayFn, startOfDay, startOfWeek } from 'date-fns';
 import { useCalendarTimeSlots } from '~/composables/useCalendarTimeSlots';
+import { isAppointmentPast } from '~/utils/appointment-day-ops';
 import type { Appointment } from '~/utils/types/appointment';
 
 type BadgeColor = 'primary' | 'success' | 'warning' | 'error' | 'info' | 'neutral';
@@ -233,6 +242,7 @@ export type CalendarBlock = {
 	totalColumns: number;
 	leftPct: number;
 	widthPct: number;
+	isPast: boolean;
 };
 
 const props = withDefaults(
@@ -403,6 +413,7 @@ const blocksByDay = computed(() => {
 				totalColumns: 1,
 				leftPct: 0,
 				widthPct: 100,
+				isPast: isAppointmentPast(appointment, now.value),
 			});
 		}
 	}

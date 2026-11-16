@@ -13,7 +13,10 @@
 				:key="item.appointment.code"
 				type="button"
 				class="w-full flex items-center gap-4 px-4 py-4 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-inset"
-				:class="{ 'bg-primary-50 dark:bg-primary-900/20': selectedCode === item.appointment.code }"
+				:class="[
+					selectedCode === item.appointment.code ? 'bg-primary-50 dark:bg-primary-900/20' : '',
+					item.isPast ? 'opacity-50' : '',
+				]"
 				@click="$emit('select', item.appointment)"
 			>
 				<!-- Time & duration -->
@@ -55,6 +58,7 @@
 
 <script lang="ts" setup>
 import { format } from 'date-fns';
+import { isAppointmentPast } from '~/utils/appointment-day-ops';
 import type { Appointment } from '~/utils/types/appointment';
 
 const props = withDefaults(
@@ -86,6 +90,17 @@ function formatDurationMinutes(minutes: number): string {
 	return t('pages.durationMinutesShort', { n: minutes });
 }
 
+const now = ref(new Date());
+let pastTimer: ReturnType<typeof setInterval> | null = null;
+onMounted(() => {
+	pastTimer = setInterval(() => {
+		now.value = new Date();
+	}, 60_000);
+});
+onUnmounted(() => {
+	if (pastTimer) clearInterval(pastTimer);
+});
+
 const rows = computed(() => {
 	return props.appointments.map((appointment) => {
 		const start = new Date(appointment.start_date_time);
@@ -98,6 +113,7 @@ const rows = computed(() => {
 			appointment,
 			timeText,
 			durationText,
+			isPast: isAppointmentPast(appointment, now.value),
 			statusColor: statusColor as 'primary' | 'success' | 'warning' | 'error' | 'info' | 'neutral',
 		};
 	});

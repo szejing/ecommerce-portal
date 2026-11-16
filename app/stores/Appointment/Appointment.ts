@@ -36,7 +36,7 @@ const initialEmptyAppointmentFilter = (): AppointmentFilter => {
 		},
 		page_size: options_page_size[0] as number,
 		current_page: 1,
-		view: 'listing',
+		view: 'daily',
 	};
 };
 
@@ -169,7 +169,7 @@ export const useAppointmentStore = defineStore('appointmentStore', {
 			}
 		},
 
-		async updateAppointment(appointment: Appointment) {
+		async updateAppointment(appointment: Appointment): Promise<boolean> {
 			this.updating = true;
 			const { $api } = useNuxtApp();
 			try {
@@ -188,9 +188,11 @@ export const useAppointmentStore = defineStore('appointmentStore', {
 					this.appointments = this.appointments.map((a) => (a.code === appointment.code ? updated.appointment : a));
 				}
 				successNotification('Appointment updated successfully');
+				return true;
 			} catch (err: unknown | ErrorResponse) {
 				const message = (err as ErrorResponse).message ?? 'Failed to process appointment';
 				failedNotification(message);
+				return false;
 			} finally {
 				this.updating = false;
 			}

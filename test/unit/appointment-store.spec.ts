@@ -50,4 +50,10 @@ describe('useAppointmentStore', () => {
 		expect(store.filters.query).toBe('');
 		expect(getMany.mock.calls.at(-1)?.[0].$filter).toContain(`status eq '${AppointmentStatus.CONFIRMED}'`);
 	});
+
+	it('defaults to day ops daily view', () => {
+		const store = useAppointmentStore();
+		expect(store.filter.view).toBe('daily');
+		expect(store.isDailyView).toBe(true);
+	});
 });
