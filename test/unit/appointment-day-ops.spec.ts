@@ -9,6 +9,7 @@ import {
 	findNextPendingAppointment,
 	findNextUpAppointment,
 	isAppointmentPast,
+	sortAppointmentsForListing,
 } from '../../app/utils/appointment-day-ops';
 
 const appt = (partial: Partial<Appointment> & Pick<Appointment, 'code' | 'start_date_time' | 'status'>): Appointment => ({
@@ -53,6 +54,29 @@ describe('findNextPendingAppointment', () => {
 
 	it('returns null when none pending', () => {
 		expect(findNextPendingAppointment([appt({ code: 'c', start_date_time: new Date(), status: AppointmentStatus.CONFIRMED })])).toBeNull();
+	});
+});
+
+describe('sortAppointmentsForListing', () => {
+	it('lists upcoming bookings soonest first and already-started bookings after them', () => {
+		const now = new Date(2026, 10, 17, 13, 0, 0);
+		const list = [
+			appt({ code: '0', start_date_time: new Date(2026, 10, 17, 10, 0, 0), status: AppointmentStatus.CONFIRMED }),
+			appt({ code: '2', start_date_time: new Date(2026, 10, 17, 16, 0, 0), status: AppointmentStatus.CONFIRMED }),
+			appt({ code: '3', start_date_time: new Date(2026, 10, 18, 10, 0, 0), status: AppointmentStatus.PENDING }),
+			appt({ code: '1', start_date_time: new Date(2026, 10, 17, 14, 0, 0), status: AppointmentStatus.CONFIRMED }),
+		];
+		expect(sortAppointmentsForListing(list, now).map((item) => item.code)).toEqual(['1', '2', '3', '0']);
+	});
+
+	it('keeps a more recent started booking ahead of an older one', () => {
+		const now = new Date(2026, 10, 17, 13, 0, 0);
+		const list = [
+			appt({ code: 'yesterday', start_date_time: new Date(2026, 10, 16, 10, 0, 0), status: AppointmentStatus.COMPLETED }),
+			appt({ code: 'today-morning', start_date_time: new Date(2026, 10, 17, 10, 0, 0), status: AppointmentStatus.CONFIRMED }),
+			appt({ code: 'later-today', start_date_time: new Date(2026, 10, 17, 16, 0, 0), status: AppointmentStatus.CONFIRMED }),
+		];
+		expect(sortAppointmentsForListing(list, now).map((item) => item.code)).toEqual(['later-today', 'today-morning', 'yesterday']);
 	});
 });
 

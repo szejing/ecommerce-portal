@@ -1,11 +1,9 @@
 <template>
-	<div class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-default">
-		<!-- Date group -->
-		<div class="bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-			<span class="font-semibold text-gray-900 dark:text-white">{{ dateHeader }}</span>
-			<span class="text-gray-500 dark:text-gray-400 font-normal ml-1">{{ dayOfWeek }}</span>
-		</div>
-
+	<div
+		class="overflow-hidden rounded-lg border border-gray-200 bg-default dark:border-gray-700"
+		role="region"
+		:aria-label="format(date, 'EEEE, d MMMM yyyy')"
+	>
 		<!-- Appointment rows -->
 		<div class="divide-y divide-gray-200 dark:divide-gray-700">
 			<button
@@ -78,9 +76,6 @@ defineEmits<{
 }>();
 
 const { t } = useI18n();
-
-const dateHeader = computed(() => format(props.date, 'MMM d, yyyy'));
-const dayOfWeek = computed(() => format(props.date, 'EEEE'));
 
 function formatDurationMinutes(minutes: number): string {
 	if (minutes >= 60 && minutes % 60 === 0) {

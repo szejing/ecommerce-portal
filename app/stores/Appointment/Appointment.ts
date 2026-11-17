@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 import { failedNotification, successNotification } from '../AppUi/AppUi';
 import { AppointmentStatus, getFormattedDate, type ErrorResponse } from 'yeppi-common';
 import type { Range } from '~/utils/interface';
-import { addMonths, endOfMonth, startOfMonth } from 'date-fns';
+import { addMonths, endOfDay, endOfMonth, startOfMonth } from 'date-fns';
 import type { Appointment } from '~/utils/types/appointment';
 
 export const APPOINTMENT_FILTER_DEBOUNCE_MS = 500;
@@ -41,6 +41,12 @@ const initialEmptyAppointmentFilter = (): AppointmentFilter => {
 };
 
 let appointmentFilterTimer: ReturnType<typeof setTimeout> | undefined;
+
+const appointmentDateFilter = (start: Date, end?: Date): string => {
+	if (!end) return `start_date_time le '${getFormattedDate(start, 'yyyy-MM-dd')}'`;
+	const endBound = getFormattedDate(endOfDay(end), "yyyy-MM-dd'T'HH:mm:ss");
+	return `(start_date_time between '${getFormattedDate(start, 'yyyy-MM-dd')}' and '${endBound}')`;
+};
 
 const appointmentStatusFilter = (status: AppointmentStatus | string): string => {
 	if (status === 'pending') return `status in ('${AppointmentStatus.PENDING}')`;
@@ -132,14 +138,11 @@ export const useAppointmentStore = defineStore('appointmentStore', {
 				let { start, end } = this.filter.date_range;
 				start = start ?? new Date();
 				end = end ?? new Date();
-				const dateFilter = end
-					? `(start_date_time between '${getFormattedDate(start, 'yyyy-MM-dd')}' and '${getFormattedDate(end, 'yyyy-MM-dd')}')`
-					: `start_date_time le '${getFormattedDate(start, 'yyyy-MM-dd')}'`;
+				const dateFilter = appointmentDateFilter(start, end);
 				filter = filter ? `${filter} and ${dateFilter}` : dateFilter;
 				const queryParams: Record<string, unknown> = {
 					$top: this.filter.page_size,
 					$skip: (this.filter.current_page - 1) * this.filter.page_size,
-					$count: true,
 					$filter: filter,
 					$orderby: 'start_date_time desc',
 				};
@@ -222,10 +225,7 @@ export const useAppointmentStore = defineStore('appointmentStore', {
 				start = start ?? new Date();
 				end = end ?? new Date();
 
-				// Add date filter
-				const dateFilter = end
-					? `(start_date_time between '${getFormattedDate(start, 'yyyy-MM-dd')}' and '${getFormattedDate(end, 'yyyy-MM-dd')}')`
-					: `start_date_time le '${getFormattedDate(start, 'yyyy-MM-dd')}'`;
+				const dateFilter = appointmentDateFilter(start, end);
 
 				filter = filter ? `${filter} and ${dateFilter}` : dateFilter;
 

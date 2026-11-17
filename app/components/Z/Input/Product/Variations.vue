@@ -1,9 +1,9 @@
 <template>
 	<div class="space-y-4">
-		<div v-for="(variation, vIdx) in localVariations" :key="vIdx" class="border border-neutral-200 rounded-lg p-4 bg-white">
+		<div v-for="(variation, vIdx) in localVariations" :key="vIdx" class="border border-default rounded-lg p-4 bg-default">
 			<div class="flex items-center justify-between mb-3">
 				<div class="flex items-center gap-3 flex-1">
-					<span class="text-sm font-medium text-neutral-700 whitespace-nowrap">
+					<span class="text-sm font-medium text-default whitespace-nowrap">
 						{{ t('components.variations.variationLabel', { index: vIdx + 1 }) }}
 					</span>
 					<UInput
@@ -21,7 +21,7 @@
 
 			<!-- Options as tags -->
 			<div class="flex items-start gap-3">
-				<span class="text-sm text-neutral-500 whitespace-nowrap pt-1.5">
+				<span class="text-sm text-muted whitespace-nowrap pt-1.5">
 					{{ t('components.variations.optionsLabel') }}
 				</span>
 				<UInputTags

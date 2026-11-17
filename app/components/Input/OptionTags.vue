@@ -247,7 +247,7 @@ useDetectClickOutside(elementInputTags, () => {
 
 .wrapper-selected-tag li {
 	padding: 0.25rem 0.5rem;
-	border: 1px solid var(--color-main-200);
+	border: 1px solid color-mix(in srgb, var(--ui-primary) 30%, var(--ui-border));
 	border-radius: 0.375rem;
 	font-size: 0.75rem;
 	line-height: 1;
@@ -255,7 +255,7 @@ useDetectClickOutside(elementInputTags, () => {
 	gap: 0.25rem;
 	align-items: center;
 	cursor: pointer;
-	background-color: var(--color-main-50);
+	background-color: color-mix(in srgb, var(--ui-primary) 10%, var(--ui-bg));
 }
 
 .wrapper-selected-tag li:hover {
@@ -264,9 +264,9 @@ useDetectClickOutside(elementInputTags, () => {
 
 .section-available-tag {
 	padding: 0.5rem;
-	border: 1px solid var(--color-neutral-200);
+	border: 1px solid var(--ui-border);
 	border-radius: 0.375rem;
-	background-color: white;
+	background-color: var(--ui-bg);
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
@@ -291,7 +291,7 @@ useDetectClickOutside(elementInputTags, () => {
 }
 
 .wrapper-available-tag li:hover {
-	background-color: var(--color-neutral-900);
+	background-color: var(--ui-bg-elevated);
 	cursor: pointer;
 }
 </style>

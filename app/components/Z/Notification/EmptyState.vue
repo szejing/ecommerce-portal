@@ -25,7 +25,7 @@ withDefaults(
 	display: grid;
 	place-items: center;
 	gap: 0.75rem;
-	color: var(--color-neutral-500);
+	color: var(--ui-text-muted);
 	text-align: center;
 }
 

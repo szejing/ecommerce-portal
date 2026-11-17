@@ -4,7 +4,7 @@ import { getFormattedDate, isSameDate } from 'yeppi-common';
 import { UBadge } from '#components';
 import { getAppointmentStatusColor } from '~/utils/options';
 import type { Appointment } from '~/utils/types/appointment';
-import { getSortableHeader, headerCell, mutedCell } from './styles';
+import { headerCell, mutedCell } from './styles';
 
 type TranslateFn = (key: string, params?: Record<string, number | string>) => string;
 
@@ -13,7 +13,8 @@ export function getAppointmentColumns(t: TranslateFn): TableColumn<Appointment>[
 		{
 			id: 'date_time',
 			accessorFn: (row) => (row.start_date_time ? new Date(row.start_date_time).getTime() : 0),
-			header: ({ column }) => getSortableHeader(column, t('table.dateTime')),
+			enableSorting: false,
+			header: () => headerCell(t('table.dateTime')),
 			cell: ({ row }) => {
 				const start = row.original.start_date_time ? new Date(row.original.start_date_time) : null;
 				const end = row.original.end_date_time ? new Date(row.original.end_date_time) : null;
@@ -60,7 +61,8 @@ export function getAppointmentColumns(t: TranslateFn): TableColumn<Appointment>[
 		},
 		{
 			accessorKey: 'status',
-			header: ({ column }) => getSortableHeader(column, t('table.status')),
+			enableSorting: false,
+			header: () => headerCell(t('table.status'), 'center'),
 			cell: ({ row }) => {
 				const status = row.original.status;
 				const color = getAppointmentStatusColor(status);

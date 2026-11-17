@@ -15,7 +15,7 @@
 				</div>
 			</div>
 			<!-- Time grid: 30-min rows, time axis + 7 day columns -->
-			<div class="flex flex-1 min-h-0 overflow-auto items-stretch max-h-[calc(100vh-380px)]">
+			<div class="flex flex-1 min-h-0 items-stretch overflow-auto max-h-[calc(100dvh-20rem)]">
 				<!-- Time axis (weekly style) -->
 				<div
 					class="shrink-0 w-30 border-r border-neutral-200 dark:border-neutral-800 flex flex-col"

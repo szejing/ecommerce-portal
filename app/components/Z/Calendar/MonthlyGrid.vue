@@ -20,7 +20,7 @@
 						cell.isToday ? 'bg-primary/5 dark:bg-primary/10' : cell.isCurrentMonth ? 'bg-default' : 'bg-gray-50/80 dark:bg-gray-900/50',
 						cell.isSelected ? 'ring-2 ring-primary ring-inset bg-primary/5 dark:bg-primary/10' : '',
 					]"
-					:style="{ minHeight: isMobileView ? '56px' : '100px' }"
+					:style="{ minHeight: isMobileView ? '3.5rem' : `max(4.75rem, calc((100dvh - 20rem) / ${weeksInGrid}))` }"
 					@click="$emit('selectDay', cell.date as Date)"
 				>
 					<!-- Date number -->
@@ -29,7 +29,7 @@
 							v-if="cell.date"
 							class="w-7 h-7 min-w-7 rounded-full text-xs sm:text-sm font-medium flex items-center justify-center transition-colors"
 							:class="[
-								cell.isToday ? 'bg-primary text-white font-bold' : '',
+								cell.isToday ? 'bg-primary text-inverted font-bold' : '',
 								cell.isSelected && !cell.isToday ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300' : '',
 								!cell.isCurrentMonth && 'text-gray-400 dark:text-gray-500',
 							]"
@@ -88,7 +88,7 @@
 				<div class="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
 					<div
 						class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-sm"
-						:class="[isSelectedDayToday ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300']"
+						:class="[isSelectedDayToday ? 'bg-primary text-inverted' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300']"
 					>
 						{{ format(selectedDay, 'd') }}
 					</div>

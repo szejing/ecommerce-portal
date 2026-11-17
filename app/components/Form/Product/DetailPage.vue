@@ -6,7 +6,7 @@
 		</div>
 
 		<template #footer>
-			<div v-if="current_product" class="w-full backdrop-blur-sm border-t border-neutral-200 shadow-md z-50">
+			<div v-if="current_product" class="w-full backdrop-blur-sm border-t border-default shadow-md z-50">
 				<div class="mx-auto px-4 sm:px-6 py-4">
 					<!-- Desktop Layout -->
 					<div class="hidden md:flex justify-between items-center gap-3">

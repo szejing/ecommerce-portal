@@ -266,29 +266,17 @@ const onCancel = () => {
 	transition:
 		background-color 0.15s ease,
 		color 0.15s ease;
-	color: var(--ui-color-neutral-700, #404040);
+	color: var(--ui-text);
 }
 
 .category-item:hover {
-	background-color: var(--ui-color-neutral-50, #fafafa);
-}
-
-:root.dark .category-item {
-	color: var(--ui-color-neutral-300, #d4d4d4);
-}
-
-:root.dark .category-item:hover {
-	background-color: var(--ui-color-neutral-800, #262626);
+	background-color: var(--ui-bg-elevated);
 }
 
 .category-item--active {
-	background-color: var(--ui-color-primary-50, #eff6ff);
-	color: var(--ui-color-primary-600, #2563eb);
+	background-color: color-mix(in srgb, var(--ui-primary) 10%, var(--ui-bg));
+	color: var(--ui-primary);
 	font-weight: 500;
 }
 
-:root.dark .category-item--active {
-	background-color: rgba(var(--ui-color-primary-900-rgb, 30, 58, 138), 0.2);
-	color: var(--ui-color-primary-400, #60a5fa);
-}
 </style>

@@ -10,7 +10,7 @@
 				<!-- *********************** Tax Detail *********************** -->
 				<div class="space-y-4">
 					<div class="flex-jbetween-icenter">
-						<h4 class="text-neutral-700 text-sm">{{ t('common.code') }} <span class="text-red-500">*</span></h4>
+						<h4 class="text-default text-sm">{{ t('common.code') }} <span class="text-red-500">*</span></h4>
 
 						<UFormField name="code" required>
 							<ZSelectMenuTax :tax="state.detail.tax_code" @update:tax="updateTax" />
@@ -18,7 +18,7 @@
 					</div>
 
 					<div class="flex-jbetween-icenter">
-						<h4 class="text-neutral-700 text-sm">{{ t('common.description') }} <span class="text-red-500">*</span></h4>
+						<h4 class="text-default text-sm">{{ t('common.description') }} <span class="text-red-500">*</span></h4>
 
 						<UFormField v-slot="{ error }" name="description" required>
 							<UInput v-model="state.detail.description" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="t('common.description')" />

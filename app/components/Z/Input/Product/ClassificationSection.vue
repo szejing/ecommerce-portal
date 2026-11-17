@@ -143,54 +143,37 @@ const removeCategory = (category: Category) => {
 .category-chip {
 	display: flex;
 	align-items: center;
-	background-color: var(--color-neutral-50);
-	border: 1px solid var(--color-neutral-200);
+	background-color: var(--ui-bg-muted);
+	border: 1px solid var(--ui-border);
 	border-radius: 6px;
 	padding: 2px 8px;
-}
-
-:root.dark .category-chip {
-	background-color: var(--color-neutral-900);
-	border-color: var(--color-neutral-700);
 }
 
 .category-chip-label {
 	font-size: 0.875rem;
 	font-weight: 500;
-	color: var(--color-neutral-900);
+	color: var(--ui-text-highlighted);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-}
-
-:root.dark .category-chip-label {
-	color: var(--color-neutral-100);
 }
 
 .category-chip-remove {
 	width: 16px;
 	height: 16px;
 	flex-shrink: 0;
-	color: var(--color-error-500);
+	color: var(--ui-error);
 	margin-left: 6px;
 	cursor: pointer;
 	transition: color 0.15s ease;
 }
 
 .category-chip-remove:hover {
-	color: var(--color-error-600);
-}
-
-:root.dark .category-chip-remove {
-	color: var(--color-error-400);
-}
-
-:root.dark .category-chip-remove:hover {
-	color: var(--color-error-300);
+	color: var(--ui-error);
 }
 
 .category-picker-placeholder {
-	color: var(--color-neutral-400);
+	color: var(--ui-text-muted);
 	font-size: 0.875rem;
 }
 
@@ -198,7 +181,7 @@ const removeCategory = (category: Category) => {
 	width: 20px;
 	height: 20px;
 	flex-shrink: 0;
-	color: var(--color-neutral-400);
+	color: var(--ui-text-muted);
 	margin-left: 4px;
 }
 </style>

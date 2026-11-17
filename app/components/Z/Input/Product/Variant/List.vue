@@ -1,6 +1,6 @@
 <template>
 	<div v-if="validVariations.length > 0 && variantRows.length > 0" class="space-y-4">
-		<h4 class="text-sm font-semibold text-neutral-900">{{ t('components.variantList.title') }}</h4>
+		<h4 class="text-sm font-semibold text-highlighted">{{ t('components.variantList.title') }}</h4>
 
 		<!-- Apply to All -->
 		<div class="space-y-2 mb-2">
@@ -67,23 +67,23 @@
 		</div>
 
 		<!-- Variants Table -->
-		<div class="border border-neutral-200 rounded-lg overflow-x-auto">
+		<div class="border border-default rounded-lg overflow-x-auto">
 			<table class="w-full text-sm">
-				<thead class="bg-neutral-50 border-b border-neutral-200">
+				<thead class="bg-muted border-b border-default">
 					<tr>
-						<th v-for="(variation, vIdx) in validVariations" :key="'header-' + vIdx" class="text-left px-3 py-2 text-xs font-semibold text-neutral-700">
+						<th v-for="(variation, vIdx) in validVariations" :key="'header-' + vIdx" class="text-left px-3 py-2 text-xs font-semibold text-default">
 							<div class="flex items-center gap-1">
 								<span class="w-2 h-2 rounded-full bg-primary-500 shrink-0" />
 								{{ variationDisplayName(variation, vIdx) }}
 							</div>
 						</th>
-						<th class="text-left px-3 py-2 text-xs font-semibold text-neutral-700">
+						<th class="text-left px-3 py-2 text-xs font-semibold text-default">
 							<span class="text-red-500">*</span> {{ t('components.variantList.price') }}
 						</th>
-						<th class="text-left px-3 py-2 text-xs font-semibold text-neutral-700">
+						<th class="text-left px-3 py-2 text-xs font-semibold text-default">
 							{{ t('components.variantList.salePrice') }}
 						</th>
-						<th v-if="showStockColumn" class="text-left px-3 py-2 text-xs font-semibold text-neutral-700">
+						<th v-if="showStockColumn" class="text-left px-3 py-2 text-xs font-semibold text-default">
               Available Quantity
 						</th>
 						<th class="w-12 px-3 py-2">
@@ -94,21 +94,21 @@
 				<tbody>
 					<template v-for="(row, rowIdx) in variantRows" :key="row.key">
 						<tr
-							class="border-b border-neutral-100 last:border-b-0 hover:bg-neutral-50/50 cursor-pointer"
+							class="border-b border-default last:border-b-0 hover:bg-muted/50 cursor-pointer"
 							@click="onRowClick($event, rowIdx)"
 						>
 							<!-- Single variation -->
 							<template v-if="validVariations.length === 1">
-								<td class="px-3 py-2 text-neutral-900 font-medium">
+								<td class="px-3 py-2 text-highlighted font-medium">
 									{{ row.optionLabels[0] }}
 								</td>
 							</template>
 							<!-- Two variations with rowspan grouping -->
 							<template v-else>
-								<td v-if="isFirstInGroup(rowIdx)" :rowspan="groupSize" class="px-3 py-2 text-neutral-900 font-medium align-top border-r border-neutral-100">
+								<td v-if="isFirstInGroup(rowIdx)" :rowspan="groupSize" class="px-3 py-2 text-highlighted font-medium align-top border-r border-default">
 									{{ row.optionLabels[0] }}
 								</td>
-								<td class="px-3 py-2 text-neutral-700">
+								<td class="px-3 py-2 text-default">
 									{{ row.optionLabels[1] }}
 								</td>
 							</template>

@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="relative shrink-0 overflow-hidden rounded-sm bg-neutral-100"
+		class="relative shrink-0 overflow-hidden rounded-sm bg-elevated"
 		:class="{ 'h-full w-full': fill }"
 		:style="fill ? undefined : { width: `${width}px`, height: `${height}px` }">
 		<div

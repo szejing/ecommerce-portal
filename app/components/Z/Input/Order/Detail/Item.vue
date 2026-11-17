@@ -203,19 +203,19 @@ const props = withDefaults(
 function pillClassForColor(color: string | undefined) {
 	switch (color) {
 		case 'primary':
-			return 'bg-primary-500';
+			return 'bg-primary';
 		case 'success':
-			return 'bg-success-500';
+			return 'bg-success';
 		case 'warning':
-			return 'bg-warning-500';
+			return 'bg-warning';
 		case 'error':
-			return 'bg-error-500';
+			return 'bg-error';
 		case 'secondary':
-			return 'bg-secondary-500';
+			return 'bg-secondary';
 		case 'neutral':
 			return 'bg-inverted';
 		default:
-			return 'bg-info-500';
+			return 'bg-info';
 	}
 }
 

@@ -9,7 +9,7 @@
 						:alt="merchantName"
 						:width="32"
 						:height="32" />
-					<div v-else class="flex size-8 shrink-0 items-center justify-center rounded-sm bg-neutral-100">
+					<div v-else class="flex size-8 shrink-0 items-center justify-center rounded-sm bg-elevated">
 						<UIcon name="i-heroicons-building-storefront" class="size-4 shrink-0 text-neutral-400" />
 					</div>
 				</template>

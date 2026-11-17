@@ -18,8 +18,8 @@
 			<!-- Right content: cards skeleton -->
 			<div class="lg:col-span-9 space-y-6">
 				<!-- Card 1: Basic Information -->
-				<div class="rounded-lg border border-neutral-200 shadow-md overflow-hidden">
-					<div class="p-4 sm:p-6 border-b border-neutral-200">
+				<div class="rounded-lg border border-default shadow-md overflow-hidden">
+					<div class="p-4 sm:p-6 border-b border-default">
 						<div class="flex items-start justify-between gap-4">
 							<div class="flex-1 space-y-2">
 								<div class="flex items-center gap-2">
@@ -76,8 +76,8 @@
 					</div>
 				</div>
 				<!-- Card 2: Classification -->
-				<div class="rounded-lg border border-neutral-200 shadow-md overflow-hidden">
-					<div class="p-4 sm:p-6 border-b border-neutral-200">
+				<div class="rounded-lg border border-default shadow-md overflow-hidden">
+					<div class="p-4 sm:p-6 border-b border-default">
 						<div class="flex items-start justify-between gap-4">
 							<div class="flex-1 space-y-2">
 								<div class="flex items-center gap-2">
@@ -108,8 +108,8 @@
 					</div>
 				</div>
 				<!-- Card 3: Pricing -->
-				<div class="rounded-lg border border-neutral-200 shadow-md overflow-hidden">
-					<div class="p-4 sm:p-6 border-b border-neutral-200">
+				<div class="rounded-lg border border-default shadow-md overflow-hidden">
+					<div class="p-4 sm:p-6 border-b border-default">
 						<div class="flex items-start justify-between gap-4">
 							<div class="flex-1 space-y-2">
 								<div class="flex items-center gap-2">
@@ -134,8 +134,8 @@
 					</div>
 				</div>
 				<!-- Card 4: Variants -->
-				<div class="rounded-lg border border-neutral-200 shadow-md overflow-hidden">
-					<div class="p-4 sm:p-6 border-b border-neutral-200">
+				<div class="rounded-lg border border-default shadow-md overflow-hidden">
+					<div class="p-4 sm:p-6 border-b border-default">
 						<div class="flex-1 space-y-2">
 							<div class="flex items-center gap-2">
 								<USkeleton class="h-6 w-6 rounded" />
@@ -150,8 +150,8 @@
 					</div>
 				</div>
 				<!-- Card 5: Review -->
-				<div class="rounded-lg border-2 border-neutral-200 shadow-md overflow-hidden">
-					<div class="p-4 sm:p-6 border-b border-neutral-200">
+				<div class="rounded-lg border-2 border-default shadow-md overflow-hidden">
+					<div class="p-4 sm:p-6 border-b border-default">
 						<div class="flex-1 space-y-2">
 							<div class="flex items-center gap-2">
 								<USkeleton class="h-6 w-6 rounded" />

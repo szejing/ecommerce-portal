@@ -12,39 +12,39 @@
 
 		<div class="grid grid-cols-2 gap-6">
 			<UFormField :label="t('components.productUpdate.currency')">
-				<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.currency') }}</p>
+				<p class="text-xs text-muted my-1">{{ t('components.productUpdate.currency') }}</p>
 				<ZSelectMenuCurrency :currency-code="currency_code" class="w-full" @update:currency="updateCurrency" />
 			</UFormField>
 
 			<UFormField :label="t('components.productUpdate.originalSellingPrice')" required>
-				<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.sellingPrice') }}</p>
+				<p class="text-xs text-muted my-1">{{ t('components.productUpdate.sellingPrice') }}</p>
 				<UInput v-model.number="orig_sell_price" type="number" :placeholder="t('components.productUpdate.pricePlaceholder')" :min="0" :step="0.01" />
 			</UFormField>
 
 			<UFormField :label="t('components.productUpdate.costPriceOptional')">
-				<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.costForProfit') }}</p>
+				<p class="text-xs text-muted my-1">{{ t('components.productUpdate.costForProfit') }}</p>
 				<UInput v-model.number="cost_price" type="number" :placeholder="t('components.productUpdate.costPricePlaceholder')" :min="0" :step="0.01" />
 			</UFormField>
 
 			<UFormField :label="t('components.productUpdate.salePriceOptional')">
-				<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.discountedPrice') }}</p>
+				<p class="text-xs text-muted my-1">{{ t('components.productUpdate.discountedPrice') }}</p>
 				<UInput v-model.number="sale_price" type="number" :placeholder="t('components.productUpdate.salePricePlaceholder')" :min="0" :step="0.01" />
 			</UFormField>
 		</div>
 
 		<!-- Price Preview -->
-		<div v-if="orig_sell_price" class="p-4 bg-neutral-50 rounded-lg">
+		<div v-if="orig_sell_price" class="p-4 bg-muted rounded-lg">
 			<h4 class="text-sm font-medium mb-3">{{ t('components.productUpdate.pricePreview') }}</h4>
 			<div class="flex flex-wrap items-center gap-3">
 				<div v-if="sale_price && sale_price < orig_sell_price" class="text-2xl font-bold text-green-600">{{ currency_code }} {{ sale_price }}</div>
-				<div class="text-lg" :class="sale_price && sale_price < orig_sell_price ? 'line-through text-neutral-500' : 'font-bold text-neutral-900'">
+				<div class="text-lg" :class="sale_price && sale_price < orig_sell_price ? 'line-through text-muted' : 'font-bold text-highlighted'">
 					{{ currency_code }} {{ orig_sell_price }}
 				</div>
 				<div v-if="sale_price && sale_price < orig_sell_price" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
 					{{ Math.round(((Number(orig_sell_price) - Number(sale_price)) / Number(orig_sell_price)) * 100) }}% {{ t('components.productUpdate.percentOff') }}
 				</div>
 			</div>
-			<div v-if="cost_price && orig_sell_price" class="text-xs text-neutral-600 mt-2">
+			<div v-if="cost_price && orig_sell_price" class="text-xs text-toned mt-2">
 				{{ t('components.productUpdate.profitMargin') }}: {{ currency_code }} {{ Number(orig_sell_price) - Number(cost_price) }} ({{
 					Math.round(((Number(orig_sell_price) - Number(cost_price)) / Number(orig_sell_price)) * 100)
 				}}%)

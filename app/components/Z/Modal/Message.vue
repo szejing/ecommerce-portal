@@ -8,7 +8,7 @@
 		<template #body>
 			<div class="space-y-2">
 				<h3 class="text-lg text-center" :class="notification?.color == 'error' ? 'text-red-600' : 'text-primary-500'">{{ notification?.title }}</h3>
-				<p class="text-neutral-800">{{ notification?.description }}</p>
+				<p class="text-highlighted">{{ notification?.description }}</p>
 			</div>
 		</template>
 

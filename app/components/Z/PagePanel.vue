@@ -61,9 +61,9 @@
 					</div>
 				</template>
 			</UDashboardNavbar>
-			<UDashboardToolbar v-if="$slots.toolbar || backTo">
+			<UDashboardToolbar v-if="$slots.toolbar || backTo" :ui="toolbarFill ? { left: 'min-w-0 flex-1' } : undefined">
 				<template #left>
-					<div class="py-2 space-y-2">
+					<div :class="toolbarFill ? 'w-full min-w-0 py-1.5' : 'py-2 space-y-2'">
 						<ZBackButton v-if="backTo" :fallback-to="backTo" labeled />
 						<slot name="toolbar" />
 					</div>
@@ -94,8 +94,10 @@ withDefaults(
 		backTo?: string;
 		/** When true, the panel grows to fill available space. */
 		grow?: boolean;
+		/** Stretch the toolbar slot across the panel so filters are not stuck on the left. */
+		toolbarFill?: boolean;
 	}>(),
-	{ grow: false },
+	{ grow: false, toolbarFill: false },
 );
 
 const notificationStore = useNotificationStore();
@@ -163,7 +165,7 @@ onMounted(() => {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	box-shadow: 0 0 0 2px white;
+	box-shadow: 0 0 0 2px var(--ui-bg);
 }
 
 .notification-panel {
@@ -185,13 +187,13 @@ onMounted(() => {
 	font-size: 0.7rem;
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
-	color: var(--color-neutral-500);
+	color: var(--ui-text-muted);
 }
 
 .notification-header h3 {
 	font-size: 1rem;
 	font-weight: 700;
-	color: var(--color-neutral-950);
+	color: var(--ui-text-highlighted);
 }
 
 .notification-list {

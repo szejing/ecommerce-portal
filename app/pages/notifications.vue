@@ -302,13 +302,13 @@ onMounted(async () => {
 	font-size: 0.75rem;
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
-	color: var(--color-neutral-500);
+	color: var(--ui-text-muted);
 }
 
 .notifications-toolbar h1 {
 	font-size: 1.35rem;
 	font-weight: 750;
-	color: var(--color-neutral-950);
+	color: var(--ui-text-highlighted);
 }
 
 .notifications-inbox {
@@ -328,13 +328,13 @@ onMounted(async () => {
 	align-items: center;
 	justify-content: space-between;
 	padding: 0 0.25rem 0.25rem;
-	color: var(--color-neutral-500);
+	color: var(--ui-text-muted);
 }
 
 .notifications-date-header h2 {
 	font-size: 0.82rem;
 	font-weight: 700;
-	color: var(--color-neutral-700);
+	color: var(--ui-text);
 }
 
 .notifications-date-header span {
@@ -347,20 +347,20 @@ onMounted(async () => {
 }
 
 .notifications-table :deep(.notifications-row:not(.notifications-row--read)) {
-	background: var(--color-main-50);
+	background: color-mix(in srgb, var(--ui-primary) 8%, var(--ui-bg));
 }
 
 .notifications-table :deep(.notifications-row:not(.notifications-row--read):hover) {
-	background: var(--color-main-100);
+	background: color-mix(in srgb, var(--ui-primary) 14%, var(--ui-bg));
 }
 
 .notifications-table :deep(.notifications-row--read) {
-	color: var(--color-neutral-500);
-	background: white;
+	color: var(--ui-text-muted);
+	background: var(--ui-bg);
 }
 
 .notifications-table :deep(.notifications-row--read:hover) {
-	background: var(--color-neutral-50);
+	background: var(--ui-bg-muted);
 }
 
 .notifications-row__order {
@@ -368,13 +368,13 @@ onMounted(async () => {
 	overflow: hidden;
 	font-size: 0.86rem;
 	font-weight: 700;
-	color: var(--color-neutral-900);
+	color: var(--ui-text-highlighted);
 	text-overflow: ellipsis;
 }
 
 .notifications-row__time {
 	font-size: 0.8rem;
-	color: var(--color-neutral-500);
+	color: var(--ui-text-muted);
 }
 
 .notifications-row__description {
@@ -383,7 +383,7 @@ onMounted(async () => {
 	align-items: center;
 	gap: 0.5rem;
 	font-size: 0.86rem;
-	color: var(--color-neutral-700);
+	color: var(--ui-text);
 }
 
 .notifications-row__text {
@@ -402,7 +402,7 @@ onMounted(async () => {
 }
 
 .notifications-row__dot--read {
-	background: var(--color-neutral-300);
+	background: var(--ui-border-accented);
 }
 
 .notifications-row__dot--info {
@@ -425,14 +425,14 @@ onMounted(async () => {
 	width: 1rem;
 	height: 1rem;
 	margin-left: auto;
-	color: var(--color-neutral-400);
+	color: var(--ui-text-muted);
 }
 
 .notifications-table :deep(.notifications-row--read .notifications-row__order),
 .notifications-table :deep(.notifications-row--read .notifications-row__description),
 .notifications-table :deep(.notifications-row--read .notifications-row__time),
 .notifications-table :deep(.notifications-row--read .notifications-row__icon) {
-	color: var(--color-neutral-400);
+	color: var(--ui-text-muted);
 }
 
 .notifications-load-more {

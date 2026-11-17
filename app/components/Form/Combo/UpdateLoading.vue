@@ -18,8 +18,8 @@
 			<!-- Center: cards skeleton -->
 			<div class="lg:col-span-7 space-y-6">
 				<!-- Card 1: Basic Information -->
-				<div class="rounded-lg border border-neutral-200 shadow-md overflow-hidden">
-					<div class="p-4 sm:p-6 border-b border-neutral-200">
+				<div class="rounded-lg border border-default shadow-md overflow-hidden">
+					<div class="p-4 sm:p-6 border-b border-default">
 						<div class="flex items-start justify-between gap-4">
 							<div class="flex-1 space-y-2">
 								<div class="flex items-center gap-2">
@@ -71,8 +71,8 @@
 					</div>
 				</div>
 				<!-- Card 2: Pricing -->
-				<div class="rounded-lg border border-neutral-200 shadow-md overflow-hidden">
-					<div class="p-4 sm:p-6 border-b border-neutral-200">
+				<div class="rounded-lg border border-default shadow-md overflow-hidden">
+					<div class="p-4 sm:p-6 border-b border-default">
 						<div class="flex items-start justify-between gap-4">
 							<div class="flex-1 space-y-2">
 								<div class="flex items-center gap-2">
@@ -99,8 +99,8 @@
 			</div>
 			<!-- Right review skeleton -->
 			<div class="lg:col-span-3">
-				<div class="lg:sticky lg:top-2 rounded-lg border border-neutral-200 shadow-md overflow-hidden">
-					<div class="p-4 border-b border-neutral-200 space-y-2">
+				<div class="lg:sticky lg:top-2 rounded-lg border border-default shadow-md overflow-hidden">
+					<div class="p-4 border-b border-default space-y-2">
 						<USkeleton class="h-6 w-32" />
 						<USkeleton class="h-4 w-48" />
 					</div>

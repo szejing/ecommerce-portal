@@ -64,63 +64,63 @@ const itemMeta = computed(() => formatItemMeta(props.item));
 .z-notification-item-row--inbox {
 	gap: 0.85rem;
 	padding: 0.85rem;
-	border: 1px solid var(--color-neutral-200);
+	border: 1px solid var(--ui-border);
 	border-radius: 0.5rem;
-	background: white;
+	background: var(--ui-bg);
 	transition:
 		border-color 0.2s,
 		background 0.2s;
 }
 
 .z-notification-item-row--inbox:not(.z-notification-item-row--read) {
-	border-color: var(--color-main-200);
-	background: var(--color-main-50);
+	border-color: color-mix(in srgb, var(--ui-primary) 30%, var(--ui-border));
+	background: color-mix(in srgb, var(--ui-primary) 8%, var(--ui-bg));
 }
 
 .z-notification-item-row--inbox:not(.z-notification-item-row--read):hover {
-	border-color: var(--color-main-300);
-	background: var(--color-main-100);
+	border-color: color-mix(in srgb, var(--ui-primary) 50%, var(--ui-border));
+	background: color-mix(in srgb, var(--ui-primary) 14%, var(--ui-bg));
 }
 
 .z-notification-item-row--inbox.z-notification-item-row--read {
-	border-color: var(--color-neutral-200);
-	background: var(--color-neutral-50);
+	border-color: var(--ui-border);
+	background: var(--ui-bg-muted);
 }
 
 .z-notification-item-row--inbox.z-notification-item-row--read:hover {
-	border-color: var(--color-neutral-300);
-	background: var(--color-neutral-100);
+	border-color: var(--ui-border-accented);
+	background: var(--ui-bg-elevated);
 }
 
 .z-notification-item-row--popover:not(.z-notification-item-row--read) {
-	background: var(--color-main-50);
+	background: color-mix(in srgb, var(--ui-primary) 8%, var(--ui-bg));
 }
 
 .z-notification-item-row--popover:not(.z-notification-item-row--read):hover {
-	background: var(--color-main-100);
+	background: color-mix(in srgb, var(--ui-primary) 14%, var(--ui-bg));
 }
 
 .z-notification-item-row--popover.z-notification-item-row--read:hover {
-	background: var(--color-neutral-100);
+	background: var(--ui-bg-elevated);
 }
 
 .z-notification-item-row--read {
-	opacity: 0.55;
+	color: var(--ui-text-muted);
 }
 
 .z-notification-item-row--read .z-notification-item-row__title,
 .z-notification-item-row--read .z-notification-item-row__line,
 .z-notification-item-row--read .z-notification-item-row__meta,
 .z-notification-item-row--read .z-notification-item-row__trailing {
-	color: var(--color-neutral-400);
+	color: var(--ui-text-muted);
 }
 
 .z-notification-item-row:not(.z-notification-item-row--read) .z-notification-item-row__title {
-	color: var(--color-main-700);
+	color: var(--ui-text-highlighted);
 }
 
 .z-notification-item-row:not(.z-notification-item-row--read) .z-notification-item-row__trailing {
-	color: var(--color-main-500);
+	color: var(--ui-primary);
 }
 
 .z-notification-item-row__dot {
@@ -138,7 +138,7 @@ const itemMeta = computed(() => formatItemMeta(props.item));
 }
 
 .z-notification-item-row__dot--read {
-	background: var(--color-neutral-300);
+	background: var(--ui-border-accented);
 }
 
 .z-notification-item-row__dot--info {
@@ -174,7 +174,7 @@ const itemMeta = computed(() => formatItemMeta(props.item));
 	display: block;
 	font-size: 0.72rem;
 	line-height: 1.35;
-	color: var(--color-neutral-500);
+	color: var(--ui-text-muted);
 }
 
 .z-notification-item-row__line {
@@ -193,7 +193,7 @@ const itemMeta = computed(() => formatItemMeta(props.item));
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
-	color: var(--color-neutral-400);
+	color: var(--ui-text-muted);
 }
 
 @media (max-width: 640px) {

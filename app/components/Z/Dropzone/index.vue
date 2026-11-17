@@ -14,10 +14,10 @@
 			description="Square images are recommended"
 			class="dropzone-upload"
 			:ui="{
-				base: 'border-2 border-dashed border-neutral-300 rounded-xl p-4 min-h-[120px] transition-all duration-200 hover:bg-main-50 hover:border-main-500 data-[dragging=true]:bg-main-100 data-[dragging=true]:border-main-500',
+				base: 'border-2 border-dashed border-accented rounded-xl p-4 min-h-[120px] transition-all duration-200 hover:bg-primary/10 hover:border-primary data-[dragging=true]:bg-primary/15 data-[dragging=true]:border-primary',
 				wrapper: 'flex flex-col items-center justify-center text-center gap-2',
-				icon: 'w-6 h-6 text-neutral-600',
-				label: 'text-neutral-600 font-normal',
+				icon: 'w-6 h-6 text-toned',
+				label: 'text-toned font-normal',
 				description: 'text-xs text-neutral-400',
 			}"
 			@update:model-value="handleFilesUpdate"
@@ -58,8 +58,8 @@
 
 					<!-- Empty state: custom #default replaces UFileUpload's built-in dropzone, so keep a clickable affordance -->
 					<div v-else class="flex flex-col items-center justify-center text-center gap-2 min-h-[120px] p-4">
-						<UIcon :name="ICONS.UPLOAD" class="w-6 h-6 text-neutral-600" />
-						<p class="text-neutral-600 font-normal">{{ uploadLabel }}</p>
+						<UIcon :name="ICONS.UPLOAD" class="w-6 h-6 text-toned" />
+						<p class="text-toned font-normal">{{ uploadLabel }}</p>
 						<p class="text-xs text-neutral-400">Square images are recommended</p>
 					</div>
 				</div>
@@ -380,7 +380,7 @@ onBeforeUnmount(() => {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background-color: rgba(255, 255, 255, 0.7);
+	background-color: color-mix(in srgb, var(--ui-bg) 85%, transparent);
 	border-radius: 0.75rem;
 	pointer-events: none;
 }
@@ -393,7 +393,7 @@ onBeforeUnmount(() => {
 
 /* Custom dropzone for preview state */
 .custom-dropzone {
-	border: 2px dashed var(--color-neutral-300);
+	border: 2px dashed var(--ui-border-accented);
 	border-radius: 0.75rem;
 	padding: 0.5rem;
 	transition: all 200ms;
@@ -401,12 +401,12 @@ onBeforeUnmount(() => {
 }
 
 .custom-dropzone.has-content {
-	border-color: var(--color-neutral-300);
+	border-color: var(--ui-border-accented);
 }
 
 .custom-dropzone.has-content:hover {
-	border-color: var(--color-primary-600);
-	background-color: var(--color-main-50);
+	border-color: var(--ui-primary);
+	background-color: color-mix(in srgb, var(--ui-primary) 10%, var(--ui-bg));
 }
 
 /* NuxtUI FileUpload styling */
@@ -417,7 +417,7 @@ onBeforeUnmount(() => {
 /* Enhanced hover effects for text elements */
 .dropzone-container :deep(.dropzone-upload:hover) p,
 .dropzone-container :deep(.dropzone-upload:hover) span {
-	color: var(--color-main) !important;
+	color: var(--ui-primary) !important;
 	font-weight: 700;
 	transition: color 200ms;
 }
@@ -425,7 +425,7 @@ onBeforeUnmount(() => {
 /* Enhanced dragging state text effects */
 .dropzone-container :deep(.dropzone-upload[data-dragging='true']) p,
 .dropzone-container :deep(.dropzone-upload[data-dragging='true']) span {
-	color: var(--color-main) !important;
+	color: var(--ui-primary) !important;
 	font-weight: 700;
 }
 
@@ -433,11 +433,11 @@ onBeforeUnmount(() => {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
-	color: rgb(217 119 6);
-	background-color: rgb(254 252 232);
+	color: var(--ui-text);
+	background-color: color-mix(in srgb, var(--ui-warning) 10%, var(--ui-bg));
 	padding: 0.75rem;
 	border-radius: 0.5rem;
-	border: 1px solid rgb(252 211 77);
+	border: 1px solid color-mix(in srgb, var(--ui-warning) 40%, var(--ui-border));
 	font-size: 0.875rem;
 	line-height: 1.25rem;
 	margin-top: 0.5rem;
@@ -461,7 +461,7 @@ onBeforeUnmount(() => {
 	align-items: center;
 	font-size: 0.875rem;
 	line-height: 1.25rem;
-	color: var(--color-neutral-600);
+	color: var(--ui-text-toned);
 	margin-bottom: 0.5rem;
 	padding: 0 0.25rem;
 }
@@ -476,7 +476,7 @@ onBeforeUnmount(() => {
 	overflow-x: auto;
 	overflow-y: hidden;
 	scrollbar-width: thin;
-	scrollbar-color: rgb(209 213 219) transparent;
+	scrollbar-color: var(--ui-border-accented) transparent;
 	/* Ensure smooth scrolling on mobile */
 	-webkit-overflow-scrolling: touch;
 }
@@ -490,7 +490,7 @@ onBeforeUnmount(() => {
 }
 
 .preview-grid::-webkit-scrollbar-thumb {
-	background-color: var(--color-neutral-300);
+	background-color: var(--ui-border-accented);
 	border-radius: 9999px;
 }
 

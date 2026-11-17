@@ -10,13 +10,13 @@
 			</template>
 
 			<template #title="{ item }">
-				<span class="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 text-neutral-700">
+				<span class="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 text-default">
 					<template v-for="(segment, index) in item.segments" :key="`${item.value}-${index}`">
 						<span v-if="segment.type === 'text'">{{ segment.text }}</span>
-						<span v-else-if="segment.type === 'identifier'" class="italic underline decoration-dotted underline-offset-4 text-neutral-900">
+						<span v-else-if="segment.type === 'identifier'" class="italic underline decoration-dotted underline-offset-4 text-highlighted">
 							{{ segment.text }}
 						</span>
-						<span v-else-if="segment.type === 'bold'" class="font-bold text-neutral-900">{{ segment.text }}</span>
+						<span v-else-if="segment.type === 'bold'" class="font-bold text-highlighted">{{ segment.text }}</span>
 						<UBadge v-else :color="segment.color" variant="subtle" size="md" class="capitalize">
 							{{ segment.text }}
 						</UBadge>
@@ -27,13 +27,13 @@
 			<template #description="{ item }">
 				<div
 					v-if="item.courierService || item.trackingNo"
-					class="mt-1 mb-2 inline-grid w-fit max-w-full gap-1 rounded-md border-2 border-dotted border-primary/20 bg-primary-100 px-2.5 py-2 text-xs text-neutral-700"
+					class="mt-1 mb-2 inline-grid w-fit max-w-full gap-1 rounded-md border-2 border-dotted border-primary/20 bg-primary/10 px-2.5 py-2 text-xs text-default"
 				>
-					<p v-if="item.courierService" class="font-medium text-neutral-700">
+					<p v-if="item.courierService" class="font-medium text-default">
 						{{ item.courierService }}
 					</p>
 					<p v-if="item.trackingNo" class="flex flex-wrap items-center gap-1">
-						<span class="tabular-nums break-all text-neutral-700">{{ item.trackingNo }}</span>
+						<span class="tabular-nums break-all text-default">{{ item.trackingNo }}</span>
 						<UButton
 							data-testid="activity-copy-tracking"
 							color="primary"
@@ -49,7 +49,7 @@
 				<p v-if="item.actor" class="text-xs text-neutral-300">{{ t('components.activities.createdBy') }}: {{ item.actor }}</p>
 			</template>
 		</UTimeline>
-		<p v-else class="text-sm text-neutral-700">{{ t('components.activities.empty') }}</p>
+		<p v-else class="text-sm text-default">{{ t('components.activities.empty') }}</p>
 	</UCard>
 </template>
 

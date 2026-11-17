@@ -51,6 +51,23 @@ const appointmentEnd = (appointment: Appointment): Date => {
 export const isAppointmentPast = (appointment: Appointment, now: Date = new Date()): boolean =>
 	appointmentEnd(appointment).getTime() < now.getTime();
 
+/**
+ * Listing order: bookings whose start is still ahead, soonest first,
+ * then bookings that have already started, closest to now first.
+ */
+export const sortAppointmentsForListing = (appointments: Appointment[], now: Date = new Date()): Appointment[] => {
+	const nowMs = now.getTime();
+	const startMs = (appointment: Appointment) => toDate(appointment.start_date_time).getTime();
+	return [...appointments].sort((a, b) => {
+		const aStarted = startMs(a) < nowMs;
+		const bStarted = startMs(b) < nowMs;
+		if (aStarted !== bStarted) return aStarted ? 1 : -1;
+		const aStart = startMs(a);
+		const bStart = startMs(b);
+		return aStarted ? bStart - aStart : aStart - bStart;
+	});
+};
+
 export const countAppointmentsByStatus = (appointments: Appointment[]): AppointmentStatusCounts => {
 	const counts: AppointmentStatusCounts = {
 		all: appointments.length,

@@ -1,7 +1,7 @@
 <template>
 	<div class="space-y-4">
 		<!-- <div class="flex-jbetween-icenter">
-			<h4 class="text-neutral-700 text-sm">Code <span class="text-red-500">*</span></h4>
+			<h4 class="text-default text-sm">Code <span class="text-red-500">*</span></h4>
 
 			<UFormField v-slot="{ error }" name="code" :required="!isUpdate">
 				<UInput v-model="code" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" placeholder="Code" :disabled="isUpdate" />
@@ -9,12 +9,12 @@
 		</div> -->
 
 		<div class="flex-jbetween-icenter">
-			<h4 class="text-neutral-700 text-sm">{{ t('components.zInput.amountType') }}<span class="text-red-500">*</span></h4>
+			<h4 class="text-default text-sm">{{ t('components.zInput.amountType') }}<span class="text-red-500">*</span></h4>
 			<ZSelectMenuAmountType :amount-type="amountType" @update:amount-type="amountType = $event" />
 		</div>
 
 		<div class="flex-jbetween-icenter">
-			<h4 class="text-neutral-700 text-sm">{{ t('components.zInput.rate') }} <span class="text-red-500">*</span></h4>
+			<h4 class="text-default text-sm">{{ t('components.zInput.rate') }} <span class="text-red-500">*</span></h4>
 			<UFormField v-slot="{ error }" name="rate" required>
 				<UInput v-model="rate" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="t('components.zInput.ratePlaceholder')" />
 			</UFormField>

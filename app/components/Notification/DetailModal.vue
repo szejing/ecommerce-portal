@@ -145,27 +145,27 @@ const goToAction = async () => {
 	gap: 1rem;
 	padding: 1rem;
 	border-radius: 1rem;
-	background: linear-gradient(135deg, #f8fafc, #ffffff);
-	border: 1px solid var(--color-neutral-200);
+	background: linear-gradient(135deg, var(--ui-bg-muted), var(--ui-bg));
+	border: 1px solid var(--ui-border);
 }
 
 .detail-kicker {
 	font-size: 0.72rem;
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
-	color: var(--color-neutral-500);
+	color: var(--ui-text-muted);
 }
 
 .detail-hero h3 {
 	font-size: 1.15rem;
 	font-weight: 800;
-	color: var(--color-neutral-950);
+	color: var(--ui-text-highlighted);
 }
 
 .detail-description {
 	margin-top: 0.35rem;
 	font-size: 0.88rem;
-	color: var(--color-neutral-600);
+	color: var(--ui-text-toned);
 }
 
 .detail-grid {
@@ -176,10 +176,10 @@ const goToAction = async () => {
 
 .detail-field,
 .detail-note {
-	border: 1px solid var(--color-neutral-200);
+	border: 1px solid var(--ui-border);
 	border-radius: 0.875rem;
 	padding: 0.75rem;
-	background: white;
+	background: var(--ui-bg);
 }
 
 .detail-field span,
@@ -188,7 +188,7 @@ const goToAction = async () => {
 	font-size: 0.72rem;
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
-	color: var(--color-neutral-500);
+	color: var(--ui-text-muted);
 }
 
 .detail-field > :not(span) {
@@ -197,10 +197,10 @@ const goToAction = async () => {
 
 .detail-dates {
 	grid-column: 1 / -1;
-	border: 1px solid var(--color-neutral-200);
+	border: 1px solid var(--ui-border);
 	border-radius: 0.875rem;
 	padding: 0.75rem;
-	background: white;
+	background: var(--ui-bg);
 }
 
 .detail-dates > span {
@@ -208,7 +208,7 @@ const goToAction = async () => {
 	font-size: 0.72rem;
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
-	color: var(--color-neutral-500);
+	color: var(--ui-text-muted);
 }
 
 .detail-dates-grid {
@@ -221,7 +221,7 @@ const goToAction = async () => {
 .detail-date-item span {
 	display: block;
 	font-size: 0.72rem;
-	color: var(--color-neutral-500);
+	color: var(--ui-text-muted);
 }
 
 .detail-date-item strong {
@@ -229,12 +229,12 @@ const goToAction = async () => {
 	margin-top: 0.15rem;
 	font-size: 0.88rem;
 	font-weight: 600;
-	color: var(--color-neutral-950);
+	color: var(--ui-text-highlighted);
 }
 
 .detail-note p {
 	margin-top: 0.25rem;
-	color: var(--color-neutral-800);
+	color: var(--ui-text);
 }
 
 .detail-footer {

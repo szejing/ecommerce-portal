@@ -1,7 +1,7 @@
 <template>
 	<div class="w-full">
 		<!-- Auto-save indicator -->
-		<div v-if="lastSaved" class="text-sm text-neutral-600 text-right mb-4 px-2">
+		<div v-if="lastSaved" class="text-sm text-toned text-right mb-4 px-2">
 			<UIcon :name="ICONS.CHECK_ROUNDED" class="inline-block w-4 h-4 text-green-500" />
 			{{ t('components.productForm.draftSavedAt', { time: lastSaved }) }}
 		</div>
@@ -16,13 +16,13 @@
 							v-for="section in sections"
 							:key="section.id"
 							class="cursor-pointer rounded-lg px-4 py-3 transition-all duration-200"
-							:class="[activeSection === section.id ? 'bg-primary-500 text-white shadow-md' : 'hover:bg-neutral-100 text-neutral-700 hover:text-neutral-900']"
+							:class="[activeSection === section.id ? 'bg-primary text-inverted shadow-md' : 'hover:bg-elevated text-default hover:text-highlighted']"
 							@click="scrollToSection(section.id)"
 						>
 							<div class="flex items-center gap-3">
 								<div
 									class="flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold"
-									:class="[activeSection === section.id ? 'bg-white text-primary-500' : 'bg-neutral-200 text-neutral-600']"
+									:class="[activeSection === section.id ? 'bg-default text-primary' : 'bg-accented text-toned']"
 								>
 									{{ section.number }}
 								</div>
@@ -31,7 +31,7 @@
 										<span class="text-sm font-medium truncate">{{ section.name }}</span>
 										<span v-if="section.required" class="text-red-500 text-xs">*</span>
 									</div>
-									<p class="text-xs opacity-80 truncate" :class="[activeSection === section.id ? 'text-main-100' : 'text-neutral-700']">
+									<p class="text-xs opacity-80 truncate" :class="[activeSection === section.id ? 'text-inverted/80' : 'text-default']">
 										{{ section.description }}
 									</p>
 								</div>
