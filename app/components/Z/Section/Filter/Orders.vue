@@ -1,15 +1,26 @@
 <template>
-	<div class="w-full">
+	<div class="flex w-full min-w-0 flex-col gap-2">
 		<!-- Compact Filter Grid -->
-		<div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+		<div class="flex w-full min-w-0 flex-wrap items-end gap-2">
 			<!-- Date Range Filter -->
-			<div class="flex flex-col col-span-full gap-1.5">
+			<div class="flex shrink-0 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.dateRange') }}</label>
 				<ZDateRange :model-value="filters.dateRange" @update:model-value="orderStore.setDateRange" />
 			</div>
 
+			<ZSectionFilterStatuses
+				class="w-56 shrink-0"
+				show-label
+				:label="t('components.filter.status')"
+				:model-value="filters.statuses"
+				:items="statusItems"
+				:get-color="getOrderStatusColor"
+				:placeholder="t('components.selectMenu.selectOrderStatus')"
+				@update:model-value="onStatuses"
+			/>
+
 			<!-- Order Number Search -->
-			<div class="flex flex-col col-span-2 gap-1.5">
+			<div class="flex min-w-48 flex-1 basis-64 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.orderNo') }}</label>
 				<UInput
 					:model-value="filters.search"
@@ -20,7 +31,7 @@
 			</div>
 
 			<!-- Actions -->
-			<div class="flex flex-col gap-1.5 col-span-full">
+			<div class="flex shrink-0 items-end gap-2">
 				<div class="flex gap-2">
 					<UButton variant="outline" color="neutral" :disabled="is_loading" @click="orderStore.clearFilters">
 						<UIcon name="i-heroicons-arrow-path" class="w-4 h-4" />
@@ -63,9 +74,10 @@
 </template>
 
 <script lang="ts" setup>
+import type { OrderStatus } from 'yeppi-common';
 import type { Range } from '~/utils/interface';
 import { sub, format } from 'date-fns';
-import { getDefaultOrderStatuses, getOrderStatusOptions, isAllOrderStatusesSelected } from '~/utils/options';
+import { getDefaultOrderStatuses, getOrderStatusColor, getOrderStatusOptions, isAllOrderStatusesSelected } from '~/utils/options';
 import { ICONS } from '~/utils/icons';
 
 const { t } = useI18n();
@@ -73,6 +85,11 @@ const orderStore = useOrderStore();
 const { filters, loading } = storeToRefs(orderStore);
 
 const is_loading = computed(() => loading.value);
+const statusItems = computed(() => getOrderStatusOptions(t).filter((option) => option.value !== 'All'));
+
+const onStatuses = (value: string[]) => {
+	orderStore.setStatuses(value as OrderStatus[]);
+};
 
 const statusLabelMap = computed(() => {
 	const map = new Map<string, string>();

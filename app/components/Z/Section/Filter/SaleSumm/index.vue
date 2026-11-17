@@ -1,17 +1,17 @@
 <template>
-	<div class="w-full">
-		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3 items-center">
-			<div class="flex flex-col col-span-full gap-1.5">
+	<div class="flex w-full min-w-0 flex-col gap-2">
+		<div class="flex w-full min-w-0 flex-wrap items-end gap-2">
+			<div class="flex shrink-0 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.dateRange') }}</label>
 				<ZDateRange :model-value="filters.dateRange" @update:model-value="saleSummStore.setDateRange" />
 			</div>
 
-			<div class="flex flex-col gap-1.5">
+			<div class="flex w-44 shrink-0 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.orderStatus') }}</label>
 				<ZSelectMenuOrderStatus :status="filters.status" @update:status="saleSummStore.setStatus" />
 			</div>
 
-			<div class="flex flex-col gap-1.5 col-span-full">
+			<div class="flex shrink-0 items-end gap-2">
 				<div class="flex gap-2">
 					<UButton variant="outline" color="neutral" :disabled="is_loading" @click="saleSummStore.clearFilters">
 						<UIcon name="i-heroicons-arrow-path" class="w-4 h-4" />

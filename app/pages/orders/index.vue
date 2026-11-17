@@ -4,18 +4,8 @@
 			<ZSectionFilterOrders />
 		</template>
 
-		<div class="space-y-6">
-			<!-- Table Controls -->
-			<div class="flex flex-col sm:flex-row sm:items-center justify-end sm:justify-between gap-4">
-				<ZSectionFilterStatuses
-					v-model="selectedStatuses"
-					:items="statusItems"
-					:get-color="getOrderStatusColor"
-					:placeholder="t('components.selectMenu.selectOrderStatus')"
-					class="w-full sm:w-72"
-				/>
-
-				<!-- Table Actions -->
+		<div class="space-y-4">
+			<div class="flex justify-end">
 				<ZTableToolbar
 					v-model:selected-column-keys="selectedColumnKeys"
 					:model-value="pageSize"
@@ -41,7 +31,14 @@
 
 			<!-- Orders Table -->
 			<UCard :ui="{ body: 'p-0 sm:p-0' }">
-				<UTable v-if="!initialize && !loading" v-model:sorting="sorting" :data="orders" :columns="visibleColumns" @select="selectOrder">
+				<UTable
+					v-if="!initialize && !loading"
+					v-model:sorting="sorting"
+					:data="orders"
+					:columns="visibleColumns"
+					:ui="{ th: 'whitespace-nowrap' }"
+					@select="selectOrder"
+				>
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon name="i-heroicons-shopping-cart" class="w-12 h-12 text-gray-400" />
@@ -75,8 +72,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { OrderStatus } from 'yeppi-common';
-import { getOrderStatusColor, getOrderStatusOptions, options_page_size } from '~/utils/options';
+import { options_page_size } from '~/utils/options';
 import { getOrderColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import type { TableRow } from '@nuxt/ui';
@@ -110,7 +106,7 @@ const { selectedColumnKeys, visibleColumns } = useTableColumnVisibility(order_co
 useHead({ title: () => t('pages.ordersTitle') });
 
 const orderStore = useOrderStore();
-const { orders, filters, loading, exporting, page, pageSize, total, listFailure } = storeToRefs(orderStore);
+const { orders, loading, exporting, page, pageSize, total, listFailure } = storeToRefs(orderStore);
 const overlay = useOverlay();
 const loadingModal = overlay.create(ZModalLoading, {
 	props: { key: 'orders-export-loading' },
@@ -130,17 +126,6 @@ watch(orders, () => {
 
 watch(listFailure, (failure) => {
 	if (failure) failedNotification(failure.message);
-});
-
-const statusItems = computed(() => getOrderStatusOptions(t).filter((option) => option.value !== 'All'));
-
-const selectedStatuses = computed({
-	get() {
-		return filters.value.statuses as string[];
-	},
-	set(value: string[]) {
-		orderStore.setStatuses(value as OrderStatus[]);
-	},
 });
 
 const initialize = ref(true);

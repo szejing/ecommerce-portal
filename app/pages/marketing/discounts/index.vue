@@ -31,15 +31,17 @@
 					</div>
 				</div>
 			</template>
-			<UTable v-else :data="discounts" :columns="visibleColumns" :loading="loading" @select="selectDiscount">
-				<template #empty>
-					<div class="flex flex-col items-center justify-center py-12 gap-3">
-						<UIcon :name="ICONS.ADDITIONAL" class="w-12 h-12 text-gray-400" />
-						<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noDiscountsFound') }}</p>
-						<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
-					</div>
-				</template>
-			</UTable>
+			<UCard v-else :ui="{ body: 'p-0 sm:p-0' }">
+				<UTable :data="discounts" :columns="visibleColumns" :loading="loading" @select="selectDiscount">
+					<template #empty>
+						<div class="flex flex-col items-center justify-center py-12 gap-3">
+							<UIcon :name="ICONS.ADDITIONAL" class="w-12 h-12 text-gray-400" />
+							<p class="text-sm text-gray-600 dark:text-gray-400">{{ t('pages.noDiscountsFound') }}</p>
+							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
+						</div>
+					</template>
+				</UTable>
+			</UCard>
 
 			<!-- Pagination -->
 			<div v-if="!initialize && discounts.length > 0" class="section-pagination">

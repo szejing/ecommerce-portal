@@ -97,7 +97,7 @@ withDefaults(
 		/** Stretch the toolbar slot across the panel so filters are not stuck on the left. */
 		toolbarFill?: boolean;
 	}>(),
-	{ grow: false, toolbarFill: false },
+	{ grow: false, toolbarFill: true },
 );
 
 const notificationStore = useNotificationStore();

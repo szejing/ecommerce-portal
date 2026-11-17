@@ -59,12 +59,15 @@ describe('order detail items section', () => {
 		const items = readFileSync(resolve(process.cwd(), 'app/components/Z/Section/Order/Detail/Items.vue'), 'utf8');
 
 		expect(columns).toContain('whitespace-normal');
-		expect(columns).toContain('whitespace-nowrap');
+		expect(columns).toContain('!whitespace-nowrap');
+		expect(columns).toContain('w-px');
 		expect(columns).toContain('TABLE_ALIGN_RIGHT');
 		expect(columns).toContain('min-w-0');
 		expect(columns).toContain('break-words');
-		expect(items).toContain("base: 'w-full table-fixed'");
-		expect(items).toContain("root: 'relative overflow-x-hidden'");
+		expect(columns).not.toContain('w-24');
+		expect(items).toContain("base: 'w-full table-auto'");
+		expect(items).toContain("th: 'whitespace-nowrap'");
+		expect(items).toContain("root: 'relative overflow-x-auto'");
 		expect(items).toContain('wrap-break-word');
 		expect(items).not.toContain('truncate text-xs text-muted');
 	});

@@ -1,9 +1,9 @@
 <template>
-	<div class="w-full">
+	<div class="flex w-full min-w-0 flex-col gap-2">
 		<!-- Compact Filter Grid -->
-		<div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+		<div class="flex w-full min-w-0 flex-wrap items-end gap-2">
 			<!-- Product Search -->
-			<div class="flex flex-col gap-1.5 col-span-2">
+			<div class="flex min-w-48 flex-1 basis-64 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.searchLabel') }}</label>
 				<UInput
 					:model-value="filters.query"
@@ -14,13 +14,13 @@
 			</div>
 
 			<!-- Status Filter -->
-			<div class="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
+			<div class="flex w-44 shrink-0 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.status') }}</label>
 				<ZSelectMenuProductStatus :status="filters.status" @update:status="productStore.setStatus" />
 			</div>
 
 			<!-- Actions -->
-			<div class="flex flex-col gap-1.5 justify-end">
+			<div class="flex shrink-0 items-end gap-2">
 				<div class="flex gap-2">
 					<UButton variant="outline" color="neutral" :disabled="is_loading" @click="productStore.clearFilters">
 						<UIcon name="i-heroicons-arrow-path" class="w-4 h-4" />

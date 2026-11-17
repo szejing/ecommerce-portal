@@ -1,12 +1,12 @@
 <template>
-	<div class="w-full">
-		<div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
-			<div class="flex flex-col col-span-full gap-1.5">
+	<div class="flex w-full min-w-0 flex-col gap-2">
+		<div class="flex w-full min-w-0 flex-wrap items-end gap-2">
+			<div class="flex shrink-0 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.dateRange') }}</label>
 				<ZDateRange :model-value="filters.date_range" @update:model-value="activityLogStore.setDateRange" />
 			</div>
 
-			<div class="flex flex-col col-span-2 gap-1.5">
+			<div class="flex min-w-48 flex-1 basis-64 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.search') }}</label>
 				<UInput
 					:model-value="filters.query"
@@ -16,7 +16,7 @@
 				/>
 			</div>
 
-			<div class="flex flex-col gap-1.5">
+			<div class="flex w-44 shrink-0 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('table.action') }}</label>
 				<USelect
 					:model-value="actionSelectValue"
@@ -30,7 +30,7 @@
 				/>
 			</div>
 
-			<div class="flex flex-col gap-1.5">
+			<div class="flex w-44 shrink-0 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('table.actor') }}</label>
 				<USelect
 					:model-value="actorTypeSelectValue"
@@ -44,7 +44,7 @@
 				/>
 			</div>
 
-			<div class="flex flex-col gap-1.5">
+			<div class="flex w-44 shrink-0 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('table.source') }}</label>
 				<USelect
 					:model-value="sourceSelectValue"
@@ -58,7 +58,7 @@
 				/>
 			</div>
 
-			<div class="flex flex-col gap-1.5">
+			<div class="flex w-44 shrink-0 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('table.visibility') }}</label>
 				<USelect
 					:model-value="visibilitySelectValue"
@@ -72,7 +72,7 @@
 				/>
 			</div>
 
-			<div class="flex flex-col gap-1.5 justify-end">
+			<div class="flex shrink-0 items-end gap-2">
 				<div class="flex gap-2">
 					<UButton variant="outline" color="neutral" :disabled="is_loading" @click="activityLogStore.clearFilters">
 						<UIcon name="i-heroicons-arrow-path" class="w-4 h-4" />

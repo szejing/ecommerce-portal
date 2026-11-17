@@ -1,8 +1,8 @@
 <template>
-	<div class="w-full min-w-80 sm:min-w-md lg:min-w-xl">
-		<div class="flex flex-col gap-3 mb-3">
+	<div class="flex w-full min-w-0 flex-col gap-2">
+		<div class="flex w-full min-w-0 flex-wrap items-end gap-2">
 			<!-- Customer Search -->
-			<div class="flex flex-col gap-1.5">
+			<div class="flex min-w-48 flex-1 basis-64 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.searchLabel') }}</label>
 				<UInput
 					v-model="filter.query"

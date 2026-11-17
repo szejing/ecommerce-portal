@@ -1,12 +1,12 @@
 <template>
-	<div class="w-full">
-		<div class="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
-			<div class="flex flex-col col-span-3 sm:col-span-2 gap-1.5">
+	<div class="flex w-full min-w-0 flex-col gap-2">
+		<div class="flex w-full min-w-0 flex-wrap items-end gap-2">
+			<div class="flex min-w-48 flex-1 basis-64 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.search') }}</label>
 				<UInput v-model="filter.query" :placeholder="t('components.filter.searchStaffDepartments')" :icon="ICONS.SEARCH_ROUNDED" @input="debouncedSearch" />
 			</div>
 
-			<div class="flex flex-col gap-1.5 justify-end">
+			<div class="flex shrink-0 items-end gap-2">
 				<div class="flex gap-2">
 					<UButton variant="outline" color="neutral" :disabled="loading" @click="clearFilters">
 						<UIcon name="i-heroicons-arrow-path" class="w-4 h-4" />

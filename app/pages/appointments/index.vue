@@ -32,13 +32,7 @@
 						</div>
 					</div>
 					<ZLoading v-if="showInitialLoader" />
-					<UTable
-						v-else
-						:data="displayedAppointments"
-						:columns="appointment_columns"
-						:meta="appointmentTableMeta"
-						@select="onSelectAppointment"
-					>
+					<UTable v-else :data="displayedAppointments" :columns="appointment_columns" :meta="appointmentTableMeta" @select="onSelectAppointment">
 						<template #empty>
 							<div class="flex flex-col items-center justify-center py-12 gap-3">
 								<UIcon name="i-heroicons-calendar-days" class="w-16 h-16 text-gray-400" />
@@ -58,18 +52,18 @@
 			<template v-else-if="appointmentStore.isDailyView">
 				<UCard>
 					<div class="mb-3 flex items-center gap-2">
-						<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-left" class="min-h-10 min-w-10" :aria-label="t('pages.previousAppointment')" @click="goPrevDay" />
+						<UButton
+							color="neutral"
+							variant="outline"
+							size="lg"
+							icon="i-heroicons-chevron-left"
+							:aria-label="t('pages.previousAppointment')"
+							@click="goPrevDay"
+						/>
 						<span class="min-w-0 flex-1 truncate text-center text-sm font-medium sm:text-base">{{ format(calendarFocusDate, 'EEE, d MMM yyyy') }}</span>
-						<UButton color="neutral" variant="outline" size="sm" icon="i-heroicons-chevron-right" class="min-h-10 min-w-10" :aria-label="t('pages.nextAppointment')" @click="goNextDay" />
+						<UButton color="neutral" variant="outline" size="lg" icon="i-heroicons-chevron-right" :aria-label="t('pages.nextAppointment')" @click="goNextDay" />
 						<UPopover v-model:open="dayPickerOpen">
-							<UButton
-								color="neutral"
-								variant="outline"
-								size="sm"
-								icon="i-heroicons-calendar-days"
-								class="min-h-10 min-w-10"
-								:aria-label="t('components.selectMenu.pickADate')"
-							/>
+							<UButton color="neutral" variant="outline" size="lg" icon="i-heroicons-calendar-days" :aria-label="t('components.selectMenu.pickADate')" />
 							<template #content>
 								<div class="p-2">
 									<UCalendar
@@ -109,9 +103,8 @@
 						<UButton
 							color="neutral"
 							variant="outline"
-							size="sm"
+							size="lg"
 							icon="i-heroicons-chevron-left"
-							class="min-h-10 min-w-10"
 							:aria-label="t('pages.previousAppointment')"
 							@click="goPrevWeek"
 						/>
@@ -126,9 +119,8 @@
 						<UButton
 							color="neutral"
 							variant="outline"
-							size="sm"
+							size="lg"
 							icon="i-heroicons-chevron-right"
-							class="min-h-10 min-w-10"
 							:aria-label="t('pages.nextAppointment')"
 							@click="goNextWeek"
 						/>
@@ -155,9 +147,8 @@
 						<UButton
 							color="neutral"
 							variant="outline"
-							size="sm"
+							size="lg"
 							icon="i-heroicons-chevron-left"
-							class="min-h-10 min-w-10"
 							:aria-label="t('pages.previousAppointment')"
 							@click="goPrevMonth"
 						/>
@@ -165,9 +156,8 @@
 						<UButton
 							color="neutral"
 							variant="outline"
-							size="sm"
+							size="lg"
 							icon="i-heroicons-chevron-right"
-							class="min-h-10 min-w-10"
 							:aria-label="t('pages.nextAppointment')"
 							@click="goNextMonth"
 						/>
@@ -292,9 +282,7 @@ const visibleAppointments = computed(() => {
 	return appointments.value.filter((a) => a.status === uiStatus.value);
 });
 
-const showInitialLoader = computed(
-	() => appointmentStore.loading && appointments.value.length === 0,
-);
+const showInitialLoader = computed(() => appointmentStore.loading && appointments.value.length === 0);
 const statusCounts = computed(() => countAppointmentsByStatus(appointments.value));
 const dayAppointments = computed(() => appointmentsOnDay(appointments.value, calendarFocusDate.value));
 const dayStatusCounts = computed(() => countAppointmentsByStatus(dayAppointments.value));

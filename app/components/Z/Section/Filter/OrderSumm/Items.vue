@@ -1,27 +1,27 @@
 <template>
-	<div class="w-full">
+	<div class="flex w-full min-w-0 flex-col gap-2">
 		<!-- Compact Filter Grid -->
-		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3 items-center">
+		<div class="flex w-full min-w-0 flex-wrap items-end gap-2">
 			<!-- Date Range Filter -->
-			<div class="flex flex-col col-span-full gap-1.5">
+			<div class="flex shrink-0 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.dateRange') }}</label>
 				<ZDateRange v-model="filter.date_range" @update:model-value="handleDateRangeChange" />
 			</div>
 
 			<!-- Order Item Status Filter -->
-			<div class="flex flex-col gap-1.5">
+			<div class="flex w-44 shrink-0 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.itemStatus') }}</label>
 				<ZSelectMenuOrderItemStatus v-model:status="filter.item_status" @update:model-value="handleItemStatusChange" />
 			</div>
 
 			<!-- Currency Filter -->
-			<!-- <div class="flex flex-col gap-1.5">
+			<!-- <div class="flex w-44 shrink-0 flex-col gap-1.5">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.currency') }}</label>
 				<ZSelectMenuCurrency v-model:currency-code="filter.currency_code" @update:model-value="handleCurrencyChange" />
 			</div> -->
 
 			<!-- Actions -->
-			<div class="flex flex-col gap-1.5 col-span-full">
+			<div class="flex shrink-0 items-end gap-2">
 				<div class="flex gap-2">
 					<UButton variant="outline" color="neutral" :disabled="is_loading" @click="clearFilters">
 						<UIcon name="i-heroicons-arrow-path" class="w-4 h-4" />

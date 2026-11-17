@@ -139,15 +139,15 @@
 						</div>
 					</div>
 
-					<div class="mt-3 flex items-end justify-between gap-3 border-t border-default pt-3">
-						<div class="grid min-w-0 flex-1 grid-cols-2 gap-3">
-							<div>
-								<p class="text-xs text-muted">{{ t('components.orderDetail.unitPrice') }}</p>
-								<p class="text-sm tabular-nums text-default">{{ formatCurrency(item.unit_sell_price, currency_code) }}</p>
+					<div class="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-default pt-3">
+						<div class="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-x-4 gap-y-2">
+							<div class="shrink-0">
+								<p class="whitespace-nowrap text-xs text-muted">{{ t('components.orderDetail.unitPrice') }}</p>
+								<p class="whitespace-nowrap text-sm tabular-nums text-default">{{ formatCurrency(item.unit_sell_price, currency_code) }}</p>
 							</div>
-							<div class="text-right">
-								<p class="text-xs text-muted">{{ t('components.orderDetail.price') }}</p>
-								<p class="text-sm font-semibold tabular-nums text-highlighted">
+							<div class="shrink-0 text-right">
+								<p class="whitespace-nowrap text-xs text-muted">{{ t('components.orderDetail.price') }}</p>
+								<p class="whitespace-nowrap text-sm font-semibold tabular-nums text-highlighted">
 									{{ item.status === OrderItemStatus.ACTIVE ? formatCurrency(item.net_amt, currency_code) : formatCurrency(0, currency_code) }}
 								</p>
 							</div>
@@ -176,8 +176,9 @@
 			:columns="order_detail_item_columns"
 			:meta="order_items_table_meta"
 			:ui="{
-				root: 'relative overflow-x-hidden',
-				base: 'w-full table-fixed',
+				root: 'relative overflow-x-auto',
+				base: 'w-full table-auto',
+				th: 'whitespace-nowrap',
 				td: 'align-top whitespace-normal',
 			}"
 			class="hidden w-full md:block"

@@ -23,8 +23,8 @@ export function getOrderDetailItemColumns(t: TranslateFn): TableColumn<ItemModel
 			header: t('components.orderDetail.unitPrice'),
 			meta: {
 				class: {
-					th: `${TABLE_ALIGN_RIGHT} w-24`,
-					td: `${TABLE_ALIGN_RIGHT} w-24 whitespace-nowrap`,
+					th: `${TABLE_ALIGN_RIGHT} w-px !whitespace-nowrap`,
+					td: `${TABLE_ALIGN_RIGHT} w-px !whitespace-nowrap`,
 				},
 			},
 		},
@@ -33,8 +33,8 @@ export function getOrderDetailItemColumns(t: TranslateFn): TableColumn<ItemModel
 			header: t('components.orderDetail.qty'),
 			meta: {
 				class: {
-					th: `${TABLE_ALIGN_RIGHT} w-14`,
-					td: `${TABLE_ALIGN_RIGHT} w-14 whitespace-nowrap`,
+					th: `${TABLE_ALIGN_RIGHT} w-px !whitespace-nowrap`,
+					td: `${TABLE_ALIGN_RIGHT} w-px !whitespace-nowrap`,
 				},
 			},
 		},
@@ -44,8 +44,8 @@ export function getOrderDetailItemColumns(t: TranslateFn): TableColumn<ItemModel
 			header: t('components.orderDetail.price'),
 			meta: {
 				class: {
-					th: `${TABLE_ALIGN_RIGHT} w-24`,
-					td: `${TABLE_ALIGN_RIGHT} w-24 whitespace-nowrap`,
+					th: `${TABLE_ALIGN_RIGHT} w-px !whitespace-nowrap`,
+					td: `${TABLE_ALIGN_RIGHT} w-px !whitespace-nowrap`,
 				},
 			},
 		},
