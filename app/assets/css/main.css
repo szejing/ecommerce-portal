@@ -74,6 +74,15 @@ html {
 	scroll-behavior: smooth;
 }
 
+/* Pass the portal theme to the embedded catalogue placeholder SVG. */
+img[src$='/svg/product-holder.svg'] {
+	color-scheme: light;
+}
+
+.dark img[src$='/svg/product-holder.svg'] {
+	color-scheme: dark;
+}
+
 /* Yeppi Platform Shell primary (storefront orange); secondary stays Wemotoo blue */
 html[data-platform='yeppi'] {
 	--color-main-50: #fff7ed;

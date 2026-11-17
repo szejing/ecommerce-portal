@@ -21,7 +21,7 @@
 		</template>
 		<div class="space-y-6">
 			<!-- Type pills (left) + table controls (right) -->
-			<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+			<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
 				<UTabs
 					v-if="showTypeFilter"
 					v-model="selectedTypeTab"
@@ -99,8 +99,8 @@ import { failedNotification } from '~/stores/AppUi/AppUi';
 
 const TYPE_TAB_ALL = 'all';
 const typeTabsUi = {
-	root: 'w-auto max-w-full',
-	list: 'inline-flex w-auto max-w-full flex-wrap gap-0.5 p-1.5 shadow-sm ring-1 ring-default/50',
+	root: 'w-auto max-w-full overflow-x-auto',
+	list: 'inline-flex w-auto min-w-max gap-0.5 p-1.5 ring-1 ring-inset ring-default/50',
 	trigger: 'grow-0 whitespace-nowrap px-3.5 py-2 text-sm',
 	leadingIcon: 'size-5',
 } as const;

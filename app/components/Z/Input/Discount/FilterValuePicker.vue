@@ -688,8 +688,8 @@ onBeforeUnmount(() => {
 
 .category-item--active {
 	background-color: color-mix(in srgb, var(--ui-primary) 10%, var(--ui-bg));
-	color: var(--ui-primary);
-	font-weight: 500;
+	color: var(--ui-text-highlighted);
+	font-weight: 600;
 }
 
 </style>

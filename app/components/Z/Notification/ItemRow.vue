@@ -108,7 +108,6 @@ const itemMeta = computed(() => formatItemMeta(props.item));
 	color: var(--ui-text-muted);
 }
 
-.z-notification-item-row--read .z-notification-item-row__title,
 .z-notification-item-row--read .z-notification-item-row__line,
 .z-notification-item-row--read .z-notification-item-row__meta,
 .z-notification-item-row--read .z-notification-item-row__trailing {
@@ -161,6 +160,7 @@ const itemMeta = computed(() => formatItemMeta(props.item));
 }
 
 .z-notification-item-row__title {
+	color: var(--ui-text-toned);
 	font-size: 0.85rem;
 	font-weight: 700;
 }
