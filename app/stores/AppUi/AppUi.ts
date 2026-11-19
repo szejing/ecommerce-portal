@@ -51,6 +51,7 @@ const default_navigations = [
 				icon: ICONS.CALENDAR,
 				to: '/appointments',
 			},
+			{ label: 'nav.events', icon: ICONS.CALENDAR, to: '/events', value: 'events' },
 			// Sales
 			{
 				label: 'nav.orders',

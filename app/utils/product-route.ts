@@ -23,7 +23,7 @@ export function productDetailPath(product: ProductRouteSource): string {
 /** Catalog detail path for an order/sale line; null when prod_code is missing. */
 export function orderItemDetailPath(item: OrderItemRouteSource): string | null {
 	const code = item.prod_code?.trim();
-	if (!code) return null;
+	if (!code || item.line_type === LineType.TICKET) return null;
 
 	return productDetailPath({
 		code,

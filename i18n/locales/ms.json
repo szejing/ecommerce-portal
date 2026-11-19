@@ -352,6 +352,7 @@
 		}
 	},
 	"nav": {
+		"events": "Acara",
 		"platform": "Platform",
 		"merchants": "Merchant",
 		"announcements": "Pengumuman",

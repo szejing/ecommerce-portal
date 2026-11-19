@@ -352,6 +352,7 @@
 		}
 	},
 	"nav": {
+		"events": "Events",
 		"platform": "Platform",
 		"merchants": "Merchants",
 		"announcements": "Announcements",

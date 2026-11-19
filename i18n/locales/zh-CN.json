@@ -352,6 +352,7 @@
 		}
 	},
 	"nav": {
+		"events": "活动",
 		"platform": "平台",
 		"merchants": "商家",
 		"announcements": "公告",

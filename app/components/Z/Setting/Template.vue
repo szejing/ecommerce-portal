@@ -188,6 +188,20 @@ const getBooleanSettingValue = (template: SettingTempl): boolean => {
 };
 
 const getSelectItems = (template: SettingTempl) => {
+	const dataSource = template.data_source?.trim();
+	if (dataSource?.startsWith('[')) {
+		try {
+			const options: unknown = JSON.parse(dataSource);
+			if (Array.isArray(options)) {
+				return options.filter((item): item is SelectSettingItem =>
+					item && typeof item.label === 'string' && typeof item.value === 'string',
+				);
+			}
+		} catch {
+			return [];
+		}
+	}
+
 	const orderCompletionItems = getOrderCompletionValidationItems(template.data_source);
 	if (orderCompletionItems.length) {
 		return orderCompletionItems.map((item): SelectSettingItem => ({ ...item }));
