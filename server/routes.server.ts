@@ -1,6 +1,20 @@
 import { API_PATH } from 'yeppi-common';
 
 export const Routes = {
+	Events: {
+		List: () => `events`,
+		Detail: (id: string) => `events/${id}`,
+		Policy: (id: string) => `events/${id}/policy`,
+		Status: (id: string) => `events/${id}/status`,
+		TicketTypes: (id: string) => `events/${id}/ticket-types`,
+		TicketType: (id: string, typeId: string) => `events/${id}/ticket-types/${typeId}`,
+		Tickets: (id: string) => `events/${id}/tickets`,
+		AdmissionHistory: (id: string, ticketId: string) => `events/${id}/tickets/${ticketId}/admissions`,
+		RefundPreview: (id: string) => `events/${id}/tickets/refund/preview`,
+		Refund: (id: string) => `events/${id}/tickets/refund`,
+		EmailPreview: (id: string) => `events/${id}/tickets/update-email/preview`,
+		EmailSend: (id: string) => `events/${id}/tickets/update-email/send`,
+	},
 	MerchantInfo: {
 		Many: () => `${API_PATH.INFO}`,
 		SaveMany: () => `${API_PATH.INFO}`,

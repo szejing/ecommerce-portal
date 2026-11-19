@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { parseAbsolute, parseDateTime, toCalendarDateTime } from '@internationalized/date';
-import { EventStatus, ParticipantInformationPolicy } from 'yeppi-common';
+import { EventStatus, ParticipantInformationPolicy, UserRoles } from 'yeppi-common';
+import { useAuthStore } from '~/stores/Auth/Auth';
 
 type TicketType = {
 	id: string; code: string; name: string; currency_code: string;
@@ -14,13 +15,16 @@ type EventDetail = {
 	policy_url: string | null; ticket_types: TicketType[];
 };
 type TicketRow = {
-	id: string; order_no: string; participant_name: string | null; status: string; refunded: boolean; record_type: 'order' | 'sale';
+	id: string; order_no: string; participant_name: string | null; status: string; refunded: boolean; record_type: 'order' | 'sale'; holder_customer_no: string | null;
 };
 const route = useRoute();
 const id = String(route.params.id);
 const isNew = id === 'new';
 const api = `/merchant/events/${id}`;
 const toast = useToast();
+const auth = useAuthStore();
+const canManageMoney = computed(() => auth.user?.role === UserRoles.MERCHANT_ADMIN);
+const historyTicketId = ref<string>();
 const requestFetch = useRequestFetch();
 const activeTab = ref('details');
 const busy = ref(false);
@@ -29,10 +33,6 @@ const cancelling = ref(false);
 const policyFile = ref<File>();
 const emailOpen = ref(false);
 const refundOpen = ref(false);
-const emailDraft = reactive({ subject: '', message: '' });
-const emailPreview = ref<{ subject: string; message: string; recipient_count: number }>();
-const emailResult = ref<{ sent: number; failed: number; skipped: number }>();
-const emailRequest = ref('');
 const refundTickets = ref<TicketRow[]>([]);
 const refundReference = ref('');
 const refundRequest = ref('');
@@ -40,12 +40,6 @@ const refundQuote = ref<{ amount: number; cash_charge_max: number; currency_code
 const cashChargeRefund = ref(0);
 const refundTotal = computed(() => Math.round(((refundQuote.value?.amount ?? 0) + Number(cashChargeRefund.value)) * 100) / 100);
 const orderFilter = computed(() => refundTickets.value[0]?.order_no);
-watch(emailDraft, () => {
-	emailPreview.value = undefined;
-	emailResult.value = undefined;
-	emailRequest.value = '';
-});
-
 const editType = ref<string | null>(null);
 const typeOpen = ref(false);
 const ticketPage = ref(1);
@@ -145,24 +139,6 @@ async function setStatus(status: EventStatus) {
 	});
 }
 
-async function previewEmail() {
-	await run(async () => {
-		emailPreview.value = await $fetch(`${api}/tickets/update-email/preview`, {
-			method: 'POST', body: emailDraft,
-		});
-		emailRequest.value ||= crypto.randomUUID();
-	});
-}
-
-async function sendEmail() {
-	if (!emailPreview.value || !emailRequest.value) return;
-	await run(async () => {
-		emailResult.value = await $fetch(`${api}/tickets/update-email/send`, {
-			method: 'POST', body: { ...emailDraft, request_id: emailRequest.value },
-		});
-	});
-}
-
 function toggleRefund(ticket: TicketRow, checked: boolean | 'indeterminate') {
 	if (checked === true) refundTickets.value.push(ticket);
 	else refundTickets.value = refundTickets.value.filter((row) => row.id !== ticket.id);
@@ -234,7 +210,7 @@ async function uploadPolicy() {
 					<UBadge v-if="data" class="mt-2 capitalize" variant="soft" :color="cancelled ? 'error' : data.status === EventStatus.PUBLISHED ? 'success' : 'neutral'">{{ data.status }}</UBadge>
 				</div>
 				<div v-if="data" class="flex flex-wrap gap-2">
-					<UButton variant="outline" icon="i-lucide-mail" @click="failure = ''; emailOpen = true">Send update email</UButton>
+					<UButton v-if="canManageMoney" variant="outline" icon="i-lucide-mail" @click="emailOpen = true">Send update email</UButton>
 					<UButton v-if="data.status === EventStatus.DRAFT" :disabled="!data.ticket_types.some(row => row.is_active)" :loading="busy" @click="setStatus(EventStatus.PUBLISHED)">Publish event</UButton>
 					<UButton v-if="!cancelled" color="error" variant="soft" @click="cancelling = true">Cancel event</UButton>
 				</div>
@@ -303,7 +279,7 @@ async function uploadPolicy() {
 				<template #header>
 					<div class="flex flex-wrap items-center justify-between gap-3">
 						<h2 class="font-semibold text-highlighted">Participants</h2>
-						<UButton color="error" variant="soft" :disabled="!refundTickets.length" @click="openRefund">Record refund</UButton>
+						<UButton v-if="canManageMoney" color="error" variant="soft" :disabled="!refundTickets.length" @click="openRefund">Record refund</UButton>
 					</div>
 				</template>
 				<p v-if="ticketStatus === 'pending'" role="status" class="text-sm text-muted">Loading tickets…</p>
@@ -314,13 +290,15 @@ async function uploadPolicy() {
 				<ul v-else class="divide-y divide-default">
 					<li v-for="ticket in ticketList.tickets" :key="ticket.id" class="flex flex-wrap items-center justify-between gap-2 py-3">
 						<div class="flex items-center gap-3">
-							<UCheckbox v-if="!ticket.refunded" :model-value="refundTickets.some(row => row.id === ticket.id)"
+							<UCheckbox v-if="canManageMoney && !ticket.refunded" :model-value="refundTickets.some(row => row.id === ticket.id)"
 								:disabled="!!orderFilter && orderFilter !== ticket.order_no" :aria-label="`Select ticket for ${ticket.participant_name || ticket.order_no}`"
 								@update:model-value="toggleRefund(ticket, $event)" />
 							<div><p class="font-medium">{{ ticket.participant_name || 'Unnamed participant' }}</p>
+								<p v-if="ticket.holder_customer_no" class="text-sm text-muted">Holder #{{ ticket.holder_customer_no }}</p>
 								<NuxtLink :to="`/orders/${ticket.order_no}?type=${ticket.record_type}`" class="text-sm text-primary hover:underline">Order #{{ ticket.order_no }}</NuxtLink>
 							</div>
 						</div>
+						<UButton variant="ghost" size="sm" @click="historyTicketId = ticket.id">Admission history</UButton>
 						<UBadge variant="soft" :color="ticket.refunded ? 'error' : 'neutral'" class="capitalize">{{ ticket.refunded ? 'Refunded' : ticket.status.replaceAll('_', ' ') }}</UBadge>
 					</li>
 				</ul>
@@ -343,23 +321,8 @@ async function uploadPolicy() {
 				</UForm>
 			</template>
 		</UModal>
-		<UModal v-model:open="emailOpen" title="Send event update" description="The message goes to buyers and current ticket holders.">
-			<template #body>
-				<UForm :state="emailDraft" class="space-y-4" @submit="previewEmail">
-					<UAlert v-if="failure" color="error" :title="failure" />
-					<UFormField label="Subject" name="subject" required><UInput v-model="emailDraft.subject" required maxlength="150" class="w-full" :disabled="busy" /></UFormField>
-					<UFormField label="Message" name="message" required><UTextarea v-model="emailDraft.message" required maxlength="6000" class="w-full" :disabled="busy" /></UFormField>
-					<UButton type="submit" variant="soft" :loading="busy">Preview recipients</UButton>
-					<div v-if="emailPreview" class="space-y-2 rounded-lg bg-elevated p-4">
-						<p class="font-medium">{{ emailPreview.subject }}</p>
-						<p class="whitespace-pre-wrap break-words text-sm">{{ emailPreview.message }}</p>
-						<p class="text-sm text-muted">{{ emailPreview.recipient_count }} recipients</p>
-					</div>
-					<UAlert v-if="emailResult" color="neutral" :title="`${emailResult.sent} sent · ${emailResult.failed} failed · ${emailResult.skipped} already handled`" />
-					<UButton v-if="emailPreview && (!emailResult || emailResult.failed)" :disabled="!emailPreview.recipient_count" :loading="busy" @click="sendEmail">{{ emailResult ? 'Retry failed sends' : 'Send update email' }}</UButton>
-				</UForm>
-			</template>
-		</UModal>
+		<ZModalEventAdmissionHistory v-if="!isNew" v-model="historyTicketId" :event-id="id" />
+		<ZModalEventUpdateEmail v-if="canManageMoney && !isNew" v-model="emailOpen" :event-id="id" />
 		<UModal v-model:open="refundOpen" title="Record ticket refund" description="Confirm you have already returned the money to the original payer. The selected tickets will no longer admit.">
 			<template #body>
 				<UForm :state="{ refundReference }" class="space-y-4" @submit="recordRefund">

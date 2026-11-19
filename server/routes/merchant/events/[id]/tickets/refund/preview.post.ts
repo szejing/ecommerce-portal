@@ -1,6 +1,7 @@
+import { Routes } from '#root/server/routes.server';
 import { signedFetch } from '#root/server/base_api';
 
 export default defineEventHandler(async (event) => {
 	const id = encodeURIComponent(getRouterParam(event, 'id') || '');
-	return signedFetch(event, `events/${id}/tickets/refund/preview`, { method: 'POST', body: await readBody(event) });
+	return signedFetch(event, Routes.Events.RefundPreview(id), { method: 'POST', body: await readBody(event) });
 });

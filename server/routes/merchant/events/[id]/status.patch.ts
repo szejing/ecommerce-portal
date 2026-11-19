@@ -1,6 +1,7 @@
+import { Routes } from '#root/server/routes.server';
 import { signedFetch } from '#root/server/base_api';
 
 export default defineEventHandler(async (event) => {
 	const id = encodeURIComponent(getRouterParam(event, 'id') || '');
-	return signedFetch(event, `events/${id}/status`, { method: 'PATCH', body: await readBody(event) });
+	return signedFetch(event, Routes.Events.Status(id), { method: 'PATCH', body: await readBody(event) });
 });
