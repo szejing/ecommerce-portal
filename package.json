@@ -54,7 +54,7 @@
 		"vee-validate": "^4.15.1",
 		"vue": "latest",
 		"vue-router": "latest",
-		"yeppi-common": "git+https://github.com/szejing/yeppi-common.git#745bca4bd50f560bb5fe3566d8d033f9ff0be840",
+		"yeppi-common": "git+https://github.com/szejing/yeppi-common.git#76207df93b6272d5070c5d989153af0ac52a507a",
 		"zod": "^4.0.17"
 	},
 	"devDependencies": {
