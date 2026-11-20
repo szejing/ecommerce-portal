@@ -16,6 +16,7 @@ type EventDetail = {
 type TicketRow = {
 	id: string; order_no: string; participant_name: string | null; status: string; refunded: boolean; record_type: 'order' | 'sale'; holder_customer_no: string | null;
 };
+type ScheduleField = 'starts_at' | 'ends_at' | 'sales_start' | 'sales_end' | 'early_bird_start' | 'early_bird_end';
 type RefundQuote = { amount: number; cash_charge_max: number; currency_code: string };
 
 export function useEventEditor(id: string) {
@@ -55,23 +56,21 @@ export function useEventEditor(id: string) {
 	watch([activeTab, ticketPage], () => {
 		if (activeTab.value === 'participants') void loadTickets();
 	});
+	const inputDate = (value: string | null | undefined, timezone: string) => value
+		? toCalendarDateTime(parseAbsolute(value, timezone)).toString().slice(0, 16)
+		: '';
+
 	function initialForm(event?: EventDetail | null) {
 		const timezone = event?.timezone ?? 'Asia/Kuala_Lumpur';
-		const inputDate = (value?: string | null) => value
-			? toCalendarDateTime(parseAbsolute(value, timezone)).toString().slice(0, 16)
-			: '';
 		return {
 			name: event?.name ?? '', venue: event?.venue ?? '', description: event?.description ?? '',
 			timezone,
-			starts_at: inputDate(event?.starts_at), ends_at: inputDate(event?.ends_at),
-			sales_start: inputDate(event?.sales_start), sales_end: inputDate(event?.sales_end),
-			early_bird_start: inputDate(event?.early_bird_start), early_bird_end: inputDate(event?.early_bird_end),
+			starts_at: inputDate(event?.starts_at, timezone), ends_at: inputDate(event?.ends_at, timezone),
+			sales_start: inputDate(event?.sales_start, timezone), sales_end: inputDate(event?.sales_end, timezone),
+			early_bird_start: inputDate(event?.early_bird_start, timezone), early_bird_end: inputDate(event?.early_bird_end, timezone),
 			participant_policy: event?.participant_policy ?? 'inherit',
 		};
 	}
-	const iso = (value: string, timezone: string) => value
-		? parseDateTime(value).toDate(timezone, 'reject').toISOString()
-		: null;
 	const form = reactive(initialForm(data.value));
 	if (!isNew && !data.value) {
 		const stop = watch(data, (event) => {
@@ -108,13 +107,22 @@ export function useEventEditor(id: string) {
 		}
 	}
 
+	function scheduleValue(field: ScheduleField) {
+		const current = data.value;
+		const value = form[field];
+		if (current && form.timezone === current.timezone && value === inputDate(current[field], current.timezone)) {
+			return current[field];
+		}
+		return value ? parseDateTime(value).toDate(form.timezone, 'reject').toISOString() : null;
+	}
+
 	async function save() {
 		await run(async () => {
 			const event = await $fetch<EventDetail>(isNew ? '/merchant/events' : api, {
 				method: isNew ? 'POST' : 'PATCH',
-				body: { ...form, starts_at: iso(form.starts_at, form.timezone), ends_at: iso(form.ends_at, form.timezone),
-					sales_start: iso(form.sales_start, form.timezone), sales_end: iso(form.sales_end, form.timezone),
-					early_bird_start: iso(form.early_bird_start, form.timezone), early_bird_end: iso(form.early_bird_end, form.timezone),
+				body: { ...form, starts_at: scheduleValue('starts_at'), ends_at: scheduleValue('ends_at'),
+					sales_start: scheduleValue('sales_start'), sales_end: scheduleValue('sales_end'),
+					early_bird_start: scheduleValue('early_bird_start'), early_bird_end: scheduleValue('early_bird_end'),
 					participant_policy: form.participant_policy === 'inherit' ? null : form.participant_policy },
 			});
 			toast.add({ title: t('eventManagement.saved'), color: 'primary' });
