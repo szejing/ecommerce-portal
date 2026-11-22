@@ -1,7 +1,7 @@
 <template>
 	<div class="space-y-3">
-		<p class="text-sm text-neutral-600 dark:text-neutral-400">
-			{{ t('components.productUpdate.productTypeDescription') }}
+		<p v-if="!includesService" class="text-sm text-neutral-600 dark:text-neutral-400">
+			{{ t('components.productUpdate.productTypeGoodsOrEvent') }}
 		</p>
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 			<button
@@ -23,7 +23,7 @@
 					<UIcon :name="iconForType(type)" class="w-5 h-5" />
 				</div>
 				<div class="min-w-0 flex-1">
-					<span class="block font-semibold capitalize">{{ type.value }}</span>
+					<span class="block font-semibold">{{ productTypeFilterLabel(type.value, t) }}</span>
 					<span
 						class="mt-0.5 block text-xs"
 						:class="productTypeId === type.id ? 'text-primary-600 dark:text-primary-300' : 'text-neutral-500 dark:text-neutral-400'"
@@ -44,12 +44,22 @@
 
 <script lang="ts" setup>
 import type { ProductType } from '~/utils/types/product-type';
-import { ICONS } from '~/utils/icons';
+import { ProductType as ProductKind } from 'yeppi-common';
+import { productTypeFilterIcon, productTypeFilterLabel } from '~/utils/product-type-label';
 
 const productTypeStore = useProductTypeStore();
-const { prod_types: items } = storeToRefs(productTypeStore);
+const { prod_types } = storeToRefs(productTypeStore);
 
-const props = defineProps<{ typeId: number | undefined }>();
+const props = defineProps<{ typeId: number | undefined; allowedValues?: string[] }>();
+
+const items = computed(() => {
+	const all = prod_types.value;
+	const allowed = props.allowedValues;
+	if (!allowed?.length) return all;
+	return all.filter((type) => allowed.includes(type.value));
+});
+
+const includesService = computed(() => items.value.some((type) => type.value === ProductKind.SERVICE));
 
 const emit = defineEmits(['update:typeId']);
 
@@ -67,10 +77,7 @@ function selectType(id: number) {
 }
 
 function iconForType(type: ProductType): string {
-	const v = type.value.toLowerCase();
-	if (v.includes('item') || v.includes('product') || v.includes('physical')) return ICONS.CUBE;
-	if (v.includes('service')) return 'i-heroicons-wrench-screwdriver';
-	return ICONS.CUBE;
+	return productTypeFilterIcon(type.value);
 }
 
 const { t } = useI18n();
@@ -79,6 +86,7 @@ function descriptionForType(type: ProductType): string {
 	const v = type.value.toLowerCase();
 	if (v.includes('item') || v.includes('product') || v.includes('physical')) return t('components.selectMenu.productTypeItemDesc');
 	if (v.includes('service')) return t('components.selectMenu.productTypeServiceDesc');
+	if (v.includes('event')) return t('components.selectMenu.productTypeEventDesc');
 	return type.value;
 }
 </script>

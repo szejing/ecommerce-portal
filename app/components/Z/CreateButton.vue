@@ -1,7 +1,7 @@
 <template>
 	<div class="flex items-center gap-3">
 		<UButton color="success" @click="handleClick">
-			<UIcon :name="ICONS.ADD_OUTLINE" class="w-4 h-4" />
+			<UIcon :name="icon ?? ICONS.ADD_OUTLINE" class="w-4 h-4" />
 			{{ label }}
 		</UButton>
 	</div>
@@ -18,6 +18,8 @@ const props = withDefaults(
 		to?: string;
 		/** Button label (e.g. "Add Product", "Add Category"). Defaults to translated "Create". */
 		label?: string;
+		/** Replaces the default plus icon. */
+		icon?: string;
 	}>(),
 	{},
 );

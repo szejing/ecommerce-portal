@@ -46,6 +46,8 @@
 						:code-disabled="true"
 						:show-long-description="showLongDescription"
 						:show-inventory="showSimpleProductInventory"
+						:allowed-type-values="savedTypeValues"
+						:field-noun="formSections.fieldNoun"
 						@update:thumbnail="updateThumbnail"
 						@update:images="updateImages"
 						@delete:thumbnail="deleteThumbnail"
@@ -74,6 +76,7 @@
 						</template>
 						<ZInputProductAdditionalInfo
 							:product="productForAdditionalInfo"
+							:section="formSections.showBooking ? 'booking' : 'variations'"
 							@update:variations="updateProductVariations"
 							@update:variants="updateProductVariants"
 							@update:metadata="updateProductMetadata"
@@ -105,8 +108,9 @@ import type { Image } from '~/utils/types/image';
 import type { FormErrorEvent } from '#ui/types';
 import type { ProductVariationInput } from '~/utils/types/product-variation';
 import { transformProductToUpdate as buildProductUpdate } from '~/utils/product-transform';
-import { GROUP_CODE, PRODUCT, ProductType } from 'yeppi-common';
+import { GROUP_CODE, PRODUCT } from 'yeppi-common';
 import { clearedProductInventory, productInventoryFromFirstVariant } from '~/utils/product-variant-list';
+import { catalogSectionsForKind } from '~/utils/catalog-form';
 
 const { t } = useI18n();
 const updateProductSchema = computed(() => createUpdateProductValidation(t));
@@ -133,13 +137,12 @@ const brands = ref<Brand[]>(props.product.brands ?? []);
 // Local form state typed as ProductUpdate
 const formState = ref<ProductUpdate>(transformProductToUpdate(props.product));
 
-const isServiceProduct = computed(() => {
-	const kind = productTypeStore.prod_types.find((pt) => pt.id === formState.value.type_id)?.value;
-	return kind === ProductType.SERVICE;
-});
+const savedKind = computed(() => productTypeStore.prod_types.find((pt) => pt.id === formState.value.type_id)?.value);
+const savedTypeValues = computed(() => (savedKind.value ? [savedKind.value] : undefined));
+const formSections = computed(() => catalogSectionsForKind(savedKind.value));
 
 const showSimpleProductInventory = computed(
-	() => !isServiceProduct.value && !(formState.value.variants && formState.value.variants.length > 0),
+	() => formSections.value.showInventory && !(formState.value.variants && formState.value.variants.length > 0),
 );
 // Watch for prop changes and update form state
 watch(
@@ -195,7 +198,7 @@ const sections = computed(() => [
 		description: t('pages.pricingDesc'),
 		required: true,
 	},
-	...[{ id: 'section-additional-info', number: 4, name: t('pages.additionalInfo'), description: t('pages.additionalInfoDesc'), required: false }],
+	{ id: 'section-additional-info', number: 4, name: t('pages.additionalInfo'), description: t('pages.additionalInfoDesc'), required: false },
 ]);
 
 // Scroll to section
@@ -449,6 +452,7 @@ const doUpdateProduct = async () => {
 		const success = await productStore.updateProduct({
 			code: formState.value.code!,
 			...formState.value,
+			type_id: undefined,
 		});
 		if (success) {
 			// const product = await productStore.getProduct(formState.value.code!);

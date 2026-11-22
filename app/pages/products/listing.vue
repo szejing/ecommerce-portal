@@ -13,7 +13,8 @@
 					@download-template="downloadProductImportTemplate"
 					@import="importProductFile"
 				/>
-				<ZCreateButton to="/products/create" :label="t('common.addProduct')" />
+				<ZCreateButton to="/products/create" :label="t('common.addProduct')" :icon="ICONS.CUBE" />
+				<ZCreateButton to="/products/create-service" :label="t('common.addService')" :icon="ICONS.SERVICE" />
 			</div>
 		</template>
 		<template #toolbar>

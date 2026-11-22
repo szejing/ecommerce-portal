@@ -58,6 +58,7 @@ export const ICONS = {
 	PALETTE: 'i-heroicons-swatch',
 	RESIZE: 'i-heroicons-arrows-pointing-out',
 	CUBE: 'i-heroicons-cube',
+	SERVICE: 'i-heroicons-wrench-screwdriver',
 	STAR: 'i-heroicons-star',
 	SCALE: 'i-heroicons-scale',
 	DOCUMENT: 'i-heroicons-document',
