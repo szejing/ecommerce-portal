@@ -14,11 +14,12 @@
 		<template #toolbar>
 			<ZSectionFilterCustomers />
 		</template>
-		<div class="space-y-6">
+		<div class="space-y-3 lg:space-y-6">
 			<!-- Table Controls -->
 			<ZTableToolbar
 				v-model="filter.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
+				class="hidden lg:flex"
 				:page-size-options="options_page_size"
 				:export-enabled="false"
 				:exporting="customerStore.exporting"
@@ -38,7 +39,21 @@
 				</div>
 			</template>
 
-			<UCard v-else :ui="{ body: 'p-0 sm:p-0' }">
+			<section v-else ref="mobileContent" class="lg:hidden" :aria-label="t('nav.customers')" :aria-busy="loading">
+				<UEmpty v-if="!customers.length" icon="i-heroicons-user-group" :title="t('pages.noCustomersFound')" :description="t('pages.tryAdjustingFilters')" />
+				<ul v-else class="divide-y divide-default border-y border-default">
+					<li v-for="customer in customers" :key="customer.customer_no">
+						<ZRecordLink :to="customerPath(customer)">
+							<span class="block text-sm font-semibold text-highlighted">{{ customer.name || customer.customer_no }}</span>
+							<span v-if="customer.name" class="block text-xs text-muted">{{ customer.customer_no }}</span>
+							<span v-if="customer.phone_no" class="block text-sm text-muted">{{ [customer.dial_code, customer.phone_no].filter(Boolean).join(' ') }}</span>
+							<span v-if="customer.email_address" class="block text-sm text-muted">{{ customer.email_address }}</span>
+						</ZRecordLink>
+					</li>
+				</ul>
+			</section>
+
+			<UCard v-if="!initialize" class="hidden lg:block" :ui="{ body: 'p-0 sm:p-0' }">
 				<UTable :data="customers" :columns="visibleColumns" :loading="loading" @select="selectCustomer">
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
@@ -50,8 +65,8 @@
 				</UTable>
 			</UCard>
 
-			<div v-if="!initialize && customers.length > 0" class="section-pagination">
-				<UPagination v-model="filter.current_page" :items-per-page="filter.page_size" :total="total_customers" @update:page="updatePage" />
+			<div v-if="!initialize && (customers.length > 0 || filter.current_page > 1)" class="section-pagination">
+				<ZPagination :page="filter.current_page" :items-per-page="filter.page_size" :total="total_customers" @update:page="updatePage" />
 			</div>
 		</div>
 	</ZPagePanel>
@@ -80,10 +95,17 @@ const { selectedColumnKeys, visibleColumns } = useTableColumnVisibility(customer
 useHead({ title: () => t('pages.customersTitle') });
 
 const customerStore = useCustomerStore();
-const { loading, customers, filter, total_customers, exporting, importing, processing } = storeToRefs(customerStore);
+const { loading, customers, filter, total_customers, importing, processing } = storeToRefs(customerStore);
 const initialize = ref(true);
 const overlay = useOverlay();
 const importLoadingModal = overlay.create(ZModalImporting, { props: { key: 'customer-import-loading' } });
+
+const mobileContent = useTemplateRef('mobileContent');
+const restoreMobileScroll = useMobileListScroll(
+	'customers-listing-mobile-scroll',
+	mobileContent,
+	path => customers.value.some(customer => customerPath(customer) === path),
+);
 
 onMounted(async () => {
 	initialize.value = true;
@@ -91,6 +113,7 @@ onMounted(async () => {
 		await customerStore.getCustomers();
 	} finally {
 		initialize.value = false;
+		await restoreMobileScroll();
 	}
 });
 
@@ -105,11 +128,13 @@ watch(
 	},
 );
 
+const customerPath = (customer: Customer) => `/customers/${encodeURIComponent(customer.customer_no)}`;
+
 const selectCustomer = async (e: Event, row: TableRow<Customer>) => {
 	const customer = row.original;
 	if (!customer) return;
 
-	navigateTo(`/customers/${encodeURIComponent(customer.customer_no)}`);
+	navigateTo(customerPath(customer));
 };
 
 const updatePage = async (page: number) => {

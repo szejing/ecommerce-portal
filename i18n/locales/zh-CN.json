@@ -1,4 +1,29 @@
 {
+	"analyticsMobile": {
+		"reportOptions": "报表选项",
+		"visibleFields": "显示字段",
+		"exportCsv": "导出 CSV",
+		"noRowsToExport": "没有可导出的匹配记录。",
+		"exporting": "正在准备 CSV…",
+		"resetFilters": "重置",
+		"applyFilters": "应用筛选",
+		"editFilters": "编辑筛选"
+	},
+	"catalogMobile": {
+		"expandCategory": "展开{category}的子分类",
+		"collapseCategory": "收起{category}的子分类",
+		"rowsPerPage": "每页行数",
+		"searchTags": "搜索标签…"
+	},
+	"portalMobile": {
+		"actions": "页面操作",
+		"filters": "筛选",
+		"reportTable": "报表表格",
+		"pagination": "结果分页",
+		"previous": "上一页",
+		"next": "下一页",
+		"pageCount": "第 {page} 页，共 {total} 页"
+	},
 	"productMobileListing": {
 		"search": "搜索名称、编码或 SKU",
 		"filters": "筛选",

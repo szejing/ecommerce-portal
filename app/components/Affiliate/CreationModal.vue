@@ -131,7 +131,7 @@ const onSubmit = async () => {
     @after:leave="resetForm"
   >
     <template #body>
-      <UForm :state="form" class="space-y-4" @submit="onSubmit">
+      <UForm :state="form" class="mobile-form-controls space-y-4" @submit="onSubmit">
         <UFormField :label="t('affiliate.customer')" name="user_id" required>
           <USelectMenu
             v-model="form.user_id"

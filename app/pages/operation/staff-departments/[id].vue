@@ -38,8 +38,8 @@
 					</UTable>
 
 					<div v-if="department_users.length > 0" class="section-pagination pt-4">
-						<UPagination
-							v-model="department_users_filter.current_page"
+						<ZPagination
+							:page="department_users_filter.current_page"
 							:items-per-page="department_users_filter.page_size"
 							:total="department_users_total"
 							@update:page="updateDepartmentUsersPage"

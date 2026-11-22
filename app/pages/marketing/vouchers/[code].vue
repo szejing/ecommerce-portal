@@ -7,7 +7,7 @@
 
 		<template #footer>
 			<div v-if="current_voucher" class="w-full backdrop-blur-sm border-t border-neutral-200 dark:border-neutral-800 shadow-md z-50">
-				<div class="mx-auto px-4 sm:px-6 py-4">
+				<div class="mx-auto px-3 py-2 sm:px-6 md:py-4">
 					<div class="hidden md:flex justify-between items-center gap-3">
 						<UButton color="error" variant="ghost" size="lg" :loading="saving" @click="deleteVoucher">
 							<UIcon :name="ICONS.TRASH" />
@@ -24,20 +24,16 @@
 						</div>
 					</div>
 
-					<div class="md:hidden flex flex-col gap-2">
-						<UButton color="success" size="md" class="w-full" :loading="saving" @click="saveVoucher">
-							<UIcon :name="ICONS.CHECK_ROUNDED" class="w-4 h-4" />
-							<span class="text-sm">{{ t('components.voucherForm.updateVoucher') }}</span>
+					<div class="flex flex-wrap gap-2 md:hidden">
+						<UButton color="error" variant="ghost" class="justify-center" :loading="saving" @click="deleteVoucher">
+							{{ t('common.delete') }}
 						</UButton>
-						<div class="flex gap-2">
-							<UButton color="error" variant="ghost" size="sm" class="flex-1" :loading="saving" @click="deleteVoucher">
-								<UIcon :name="ICONS.TRASH" class="w-4 h-4" />
-								<span class="text-xs">{{ t('common.delete') }}</span>
-							</UButton>
-							<UButton color="neutral" variant="outline" size="sm" class="flex-1" @click="cancel">
-								<span class="text-xs">{{ t('common.cancel') }}</span>
-							</UButton>
-						</div>
+						<UButton color="neutral" variant="outline" class="justify-center" @click="cancel">
+							{{ t('common.cancel') }}
+						</UButton>
+						<UButton color="success" class="flex-1 justify-center" :loading="saving" @click="saveVoucher">
+							{{ t('components.voucherForm.updateVoucher') }}
+						</UButton>
 					</div>
 				</div>
 			</div>

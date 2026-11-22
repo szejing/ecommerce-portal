@@ -209,7 +209,7 @@
 					</p>
 					<div class="flex items-center gap-3">
 						<USelectMenu v-model="pageSize" value-key="value" :items="pageSizeItems" @update:model-value="page = 1" />
-						<UPagination v-model:page="page" :items-per-page="itemsPerPage" :total="total" />
+						<ZPagination v-model:page="page" :items-per-page="itemsPerPage" :total="total" />
 					</div>
 				</div>
 			</div>

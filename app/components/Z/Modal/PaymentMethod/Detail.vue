@@ -1,7 +1,7 @@
 <template>
 	<UModal :title="t('pages.paymentMethodDetail')" :ui="{ content: 'w-full sm:max-w-2xl' }">
 		<template #body>
-			<UForm ref="formRef" :state="state" class="space-y-5" @submit="onSubmit">
+			<UForm ref="formRef" :state="state" class="mobile-form-controls space-y-5" @submit="onSubmit">
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<UFormField :label="t('common.code')" name="code">
 						<UInput v-model="state.code" disabled />
@@ -34,8 +34,8 @@
 
 				<UFormField :label="t('pages.logo')" name="logo">
 					<ZDropzone
-						class="max-w-full sm:max-w-[200px]"
 						:key="logoDropzoneKey"
+						class="max-w-full sm:max-w-[200px]"
 						:existing-images="logoExistingImages"
 						:multiple="false"
 						:disabled="updating || logoUploading"
@@ -59,7 +59,7 @@
 		</template>
 
 		<template #footer>
-			<div class="flex justify-end gap-3 w-full">
+			<div class="flex w-full flex-wrap justify-end gap-2 max-lg:[&_button]:min-h-11 lg:gap-3">
 				<UButton color="neutral" variant="soft" @click="emit('cancel')">{{ t('common.cancel') }}</UButton>
 				<UButton color="primary" variant="solid" :loading="updating || logoUploading" @click="submitForm">{{ t('common.save') }}</UButton>
 			</div>

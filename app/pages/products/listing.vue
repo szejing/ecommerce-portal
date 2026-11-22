@@ -60,7 +60,6 @@
 							:page-size-options="options_page_size"
 							:export-enabled="true"
 							:exporting="exporting"
-							controls="outline"
 							:column-options="columnOptions"
 							@update:model-value="productStore.setPageSize"
 							@export="exportProducts"
@@ -128,7 +127,7 @@
 					<p class="text-sm text-muted">
 						{{ t('pages.showingProducts', { from: pageRange.from, to: pageRange.to, total: total_products }) }}
 					</p>
-					<UPagination
+					<ZPagination
 						:page="filters.current_page"
 						:items-per-page="filters.page_size"
 						:total="total_products"
@@ -244,9 +243,10 @@ const importActionOptions = computed(() => ({
 	importSources: productImportSources.value,
 	sourceModalTitle: t('import.selectTemplate'),
 }));
-const router = useRouter();
 const mobileContent = useTemplateRef('mobileContent');
-const mobileScroll = useState<{ position: number; top: number } | undefined>('products-listing-mobile-scroll');
+const restoreMobileScroll = useMobileListScroll('products-listing-mobile-scroll', mobileContent, (path) =>
+	products.value.some((product) => productDetailPath(product) === path),
+);
 
 const initialize = ref(true);
 const showTypeFilter = computed(() => product_types.value.length > 1);
@@ -282,28 +282,13 @@ watch(listFailure, (failure) => {
 	if (failure) failedNotification(failure.message);
 });
 
-onBeforeRouteLeave((to) => {
-	if (!products.value.some(product => productDetailPath(product) === to.path)) return;
-	const position = router.options.history.state.position;
-	const body = mobileContent.value?.closest<HTMLElement>('[data-slot="body"]');
-	if (typeof position === 'number' && body && mobileContent.value?.getClientRects().length) {
-		mobileScroll.value = { position, top: body.scrollTop };
-	}
-});
-
 onMounted(async () => {
 	initialize.value = true;
 	try {
 		await productStore.refreshListing();
 	} finally {
 		initialize.value = false;
-		const saved = mobileScroll.value;
-		if (saved && saved.position === router.options.history.state.position) {
-			mobileScroll.value = undefined;
-			await nextTick();
-			const body = mobileContent.value?.closest<HTMLElement>('[data-slot="body"]');
-			if (body && mobileContent.value?.getClientRects().length) body.scrollTop = saved.top;
-		}
+		await restoreMobileScroll();
 	}
 });
 

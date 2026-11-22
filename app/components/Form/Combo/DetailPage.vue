@@ -7,7 +7,7 @@
 
 		<template #footer>
 			<div v-if="current_product" class="w-full backdrop-blur-sm border-t border-default shadow-md z-50">
-				<div class="mx-auto px-4 sm:px-6 py-4">
+				<div class="mx-auto px-3 py-2 md:px-6 md:py-4">
 					<div class="hidden md:flex justify-between items-center gap-3">
 						<UButton color="error" variant="ghost" size="lg" :loading="updating" class="opacity-50 hover:opacity-100 cursor-pointer" @click="deleteCombo">
 							<UIcon :name="ICONS.TRASH" />
@@ -25,7 +25,7 @@
 					</div>
 
 					<div class="md:hidden flex flex-col gap-2">
-						<UButton color="success" size="md" class="w-full opacity-50 hover:opacity-100 cursor-pointer" :loading="updating" @click="updateCombo">
+						<UButton color="success" size="md" class="w-full cursor-pointer" :loading="updating" @click="updateCombo">
 							<UIcon :name="ICONS.CHECK_ROUNDED" />
 							<span class="text-sm">{{ t('combo.update') }}</span>
 						</UButton>
@@ -38,7 +38,7 @@
 								:loading="updating"
 								@click="deleteCombo"
 							>
-								<UIcon :name="ICONS.SAVE" class="w-4 h-4" />
+								<UIcon :name="ICONS.TRASH" class="w-4 h-4" />
 								<span class="text-xs">{{ t('common.delete') }}</span>
 							</UButton>
 							<UButton color="neutral" variant="outline" size="sm" class="flex-1 cursor-pointer" @click="cancel">

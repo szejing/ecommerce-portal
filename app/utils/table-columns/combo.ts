@@ -73,9 +73,7 @@ export function getComboColumns(t: TranslateFn): TableColumn<Product>[] {
 				return h(
 					'div',
 					{ class: 'flex flex-wrap items-center gap-1' },
-					labels.map((label) =>
-						h(UBadge, { variant: 'subtle', color: 'info', class: 'max-w-full whitespace-normal' }, () => label),
-					),
+					labels.map((label) => h(UBadge, { variant: 'subtle', color: 'info', class: 'max-w-full whitespace-normal' }, () => label)),
 				);
 			},
 		},
@@ -127,7 +125,7 @@ export function getComboColumns(t: TranslateFn): TableColumn<Product>[] {
 			cell: ({ row }) => {
 				const isArchived = row.original.is_active === false;
 				const isPublished = row.original.status === ProductStatus.PUBLISHED;
-				const color = isArchived ? 'neutral' : isPublished ? 'primary' : 'warning';
+				const color = isArchived ? 'neutral' : isPublished ? 'success' : 'warning';
 				const label = t(isArchived ? 'combo.archived' : isPublished ? 'combo.published' : 'combo.hidden');
 				return h(UBadge, { color, variant: 'subtle' }, () => label);
 			},

@@ -13,7 +13,7 @@
 			</div>
 		</template>
 
-		<div class="space-y-6 py-2 px-4">
+		<div class="space-y-4 lg:space-y-6 lg:px-4 lg:py-2">
 			<div v-if="showStatusSwitch" class="w-full flex flex-wrap items-center gap-4 justify-end">
 				<UFormField :name="fieldName('is_disabled')">
 					<USwitch v-model="voucherActive" :label="voucherStatusLabel" />
@@ -23,7 +23,7 @@
 				<UFormField :label="t('form.code')" :name="fieldName('code')" :required="!codeDisabled">
 					<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ t('components.voucherForm.codeHint') }}</p>
 					<UInput
-						class="uppercase"
+						class="w-full uppercase" :ui="{ base: 'max-lg:min-h-11 max-lg:text-base' }"
 						:model-value="state.code"
 						:disabled="codeDisabled"
 						autocapitalize="characters"
@@ -34,7 +34,7 @@
 
 				<UFormField :label="t('form.description')" :name="fieldName('description')">
 					<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ t('components.voucherForm.descriptionHint') }}</p>
-					<UInput v-model="state.description" />
+					<UInput v-model="state.description" class="w-full" :ui="{ base: 'max-lg:min-h-11 max-lg:text-base' }" />
 				</UFormField>
 			</div>
 
@@ -106,7 +106,7 @@
 							:ui="{ label: 'sr-only' }"
 						>
 							<UPopover v-model:open="startsAtPopoverOpen" :content="{ align: 'start' }" :modal="true">
-								<UButton icon="i-lucide-calendar" color="neutral" variant="outline" size="sm" class="w-full min-w-0 justify-between group">
+								<UButton icon="i-lucide-calendar" color="neutral" variant="outline" size="sm" class="w-full min-w-0 justify-between group max-lg:min-h-11">
 									<span class="truncate">{{ startsAtButtonLabel }}</span>
 									<UIcon name="i-lucide-chevron-down" class="shrink-0 size-4 text-dimmed group-data-[state=open]:rotate-180 transition-transform" />
 								</UButton>
@@ -121,7 +121,6 @@
 							</UPopover>
 						</UFormField>
 
-						<span class="text-center text-sm text-muted tabular-nums sm:hidden" aria-hidden="true">-</span>
 						<span class="hidden sm:inline text-sm text-muted tabular-nums shrink-0 select-none" aria-hidden="true">-</span>
 
 						<UFormField
@@ -131,7 +130,7 @@
 							:ui="{ label: 'sr-only' }"
 						>
 							<UPopover v-model:open="endsAtPopoverOpen" :content="{ align: 'start' }" :modal="true">
-								<UButton icon="i-lucide-calendar" color="neutral" variant="outline" size="sm" class="w-full min-w-0 justify-between group">
+								<UButton icon="i-lucide-calendar" color="neutral" variant="outline" size="sm" class="w-full min-w-0 justify-between group max-lg:min-h-11">
 									<span class="truncate">{{ endsAtButtonLabel }}</span>
 									<UIcon name="i-lucide-chevron-down" class="shrink-0 size-4 text-dimmed group-data-[state=open]:rotate-180 transition-transform" />
 								</UButton>

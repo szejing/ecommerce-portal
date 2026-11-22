@@ -1,10 +1,24 @@
 <template>
-	<ZPagePanel id="analytics-orders-summary" :title="t('pages.analyticsOrdersSummary')" back-to="/analytics/orders">
+	<ZPagePanel id="analytics-orders-summary" desktop-toolbar :title="t('pages.analyticsOrdersSummary')" back-to="/analytics/orders">
 		<template #toolbar>
 			<ZSectionFilterOrderSumm />
 		</template>
 
-		<div class="space-y-6">
+		<div class="min-w-0 space-y-3 lg:space-y-6">
+			<ZAnalyticsReportMobileControls
+				v-model:filters-open="filtersOpen"
+				v-model:selected-column-keys="selectedColumnKeys"
+				:filters="order_summ.filter"
+				:fields="['status']"
+				:page-size="order_summ.page_size"
+				:column-options="columnOptions"
+				:loading="order_summ.loading"
+				:exporting="order_summ.exporting"
+				:total="order_summ.total_data"
+				@apply-filters="applyMobileFilters"
+				@update:page-size="setMobilePageSize"
+				@export="exportSummary"
+			/>
 			<ZTableToolbar
 				v-model:selected-column-keys="selectedColumnKeys"
 				:model-value="order_summ.page_size"
@@ -12,22 +26,24 @@
 				:export-enabled="true"
 				:exporting="order_summ.exporting"
 				:column-options="columnOptions"
+				class="max-lg:hidden"
 				@update:model-value="orderSummStore.setPageSize"
 				@export="exportSummary"
 			/>
 
 			<UCard class="overflow-hidden" :ui="{ body: 'p-0 sm:p-0' }">
-				<UTable
+				<ZAnalyticsReportTable
+					role="region" tabindex="0" :aria-label="t('portalMobile.reportTable')"
 					:data="rows"
-					:columns="visibleDailyColumns"
-					:loading="loading"
-					:ui="{
+					:columns="visibleDailyColumns" :column-options="columnOptions" :primary-keys="['biz_date', 'status', 'net_amt', 'total_orders', 'total_qty']"
+					:empty-title="t('pages.noOrderSummaryFound')" :loading="loading" :ui="{
 						root: 'relative overflow-auto',
 						base: 'min-w-[980px]',
 						th: 'whitespace-nowrap',
 						td: 'whitespace-nowrap',
 						tfoot: 'bg-elevated/50 border-t border-default',
 					}"
+					@edit-filters="filtersOpen = true"
 				>
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
@@ -36,11 +52,11 @@
 							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
-				</UTable>
+				</ZAnalyticsReportTable>
 			</UCard>
 
 			<div v-if="data.length > 0" class="section-pagination">
-				<UPagination :page="current_page" :items-per-page="order_summ.page_size" :total="order_summ.total_data" @update:page="orderSummStore.setPage" />
+				<ZPagination :page="current_page" :items-per-page="order_summ.page_size" :total="order_summ.total_data" @update:page="orderSummStore.setPage" />
 			</div>
 		</div>
 	</ZPagePanel>
@@ -60,6 +76,7 @@ useHead({ title: () => t('pages.orderSummaryTitle') });
 
 const orderSummStore = useSummOrderStore();
 const { order_summ, filters, listFailure } = storeToRefs(orderSummStore);
+const { filtersOpen, applyMobileFilters, setMobilePageSize } = useAnalyticsReportControls(order_summ, orderSummStore.refreshListing);
 const loading = computed(() => order_summ.value.loading);
 
 watch(listFailure, (failure) => {

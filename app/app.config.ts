@@ -24,6 +24,13 @@ export default defineAppConfig({
 		input: {
 			slots: {
 				root: 'w-full',
+				base: 'max-lg:min-h-11 max-lg:text-base',
+			},
+		},
+
+		textarea: {
+			slots: {
+				base: 'max-lg:text-base',
 			},
 		},
 
@@ -133,6 +140,9 @@ export default defineAppConfig({
 		// table
 		table: {
 			slots: {
+				root: 'max-lg:max-w-full max-lg:min-w-0 max-lg:overscroll-x-contain',
+				th: 'max-lg:px-3 max-lg:py-2.5',
+				td: 'max-lg:px-3 max-lg:py-2.5',
 				tr: 'cursor-pointer',
 			},
 		},

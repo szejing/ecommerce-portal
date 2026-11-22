@@ -1,12 +1,11 @@
 <template>
-	<div class="flex flex-wrap gap-2" role="tablist" :aria-label="t('pages.appointmentStatusFilter')">
+	<div class="flex flex-wrap gap-2" role="group" :aria-label="t('pages.appointmentStatusFilter')">
 		<button
 			v-for="chip in chips"
 			:key="chip.value"
 			type="button"
-			role="tab"
-			:aria-selected="modelValue === chip.value"
-			class="inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+			:aria-pressed="modelValue === chip.value"
+			class="inline-flex min-h-11 cursor-pointer lg:min-h-10 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
 			:class="chipClass(chip)"
 			@click="$emit('update:modelValue', chip.value)"
 		>

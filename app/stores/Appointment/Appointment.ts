@@ -44,7 +44,7 @@ let appointmentFilterTimer: ReturnType<typeof setTimeout> | undefined;
 
 const appointmentDateFilter = (start: Date, end?: Date): string => {
 	if (!end) return `start_date_time le '${getFormattedDate(start, 'yyyy-MM-dd')}'`;
-	const endBound = getFormattedDate(endOfDay(end), "yyyy-MM-dd'T'HH:mm:ss");
+	const endBound = getFormattedDate(endOfDay(end), 'yyyy-MM-dd\'T\'HH:mm:ss');
 	return `(start_date_time between '${getFormattedDate(start, 'yyyy-MM-dd')}' and '${endBound}')`;
 };
 
@@ -85,6 +85,8 @@ export const useAppointmentStore = defineStore('appointmentStore', {
 		setSearch(search: string) {
 			this.filter.query = search;
 			this.filter.current_page = 1;
+			this.listingGeneration++;
+			this.loading = true;
 			if (appointmentFilterTimer) clearTimeout(appointmentFilterTimer);
 			appointmentFilterTimer = setTimeout(() => {
 				appointmentFilterTimer = undefined;
@@ -129,6 +131,8 @@ export const useAppointmentStore = defineStore('appointmentStore', {
 		},
 
 		async refreshListing(): Promise<AppointmentRefreshOutcome> {
+			if (appointmentFilterTimer) clearTimeout(appointmentFilterTimer);
+			appointmentFilterTimer = undefined;
 			const generation = ++this.listingGeneration;
 			this.loading = true;
 			this.listFailure = undefined;

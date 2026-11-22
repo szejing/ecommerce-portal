@@ -1,4 +1,29 @@
 {
+	"analyticsMobile": {
+		"reportOptions": "Pilihan laporan",
+		"visibleFields": "Medan yang dipaparkan",
+		"exportCsv": "Eksport CSV",
+		"noRowsToExport": "Tiada rekod sepadan untuk dieksport.",
+		"exporting": "Menyediakan CSV…",
+		"resetFilters": "Tetapkan semula",
+		"applyFilters": "Gunakan penapis",
+		"editFilters": "Edit penapis"
+	},
+	"catalogMobile": {
+		"expandCategory": "Tunjukkan subkategori {category}",
+		"collapseCategory": "Sembunyikan subkategori {category}",
+		"rowsPerPage": "Baris setiap halaman",
+		"searchTags": "Cari tag…"
+	},
+	"portalMobile": {
+		"actions": "Tindakan halaman",
+		"filters": "Penapis",
+		"reportTable": "Jadual laporan",
+		"pagination": "Halaman hasil",
+		"previous": "Sebelumnya",
+		"next": "Seterusnya",
+		"pageCount": "Halaman {page} daripada {total}"
+	},
 	"productMobileListing": {
 		"search": "Cari nama, kod atau SKU",
 		"filters": "Penapis",

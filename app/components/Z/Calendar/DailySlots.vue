@@ -10,27 +10,27 @@
 				v-for="item in rows"
 				:key="item.appointment.code"
 				type="button"
-				class="w-full flex items-center gap-4 px-4 py-4 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-inset"
+				class="grid min-h-16 w-full grid-cols-[4.5rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1 px-3 py-3 text-left lg:flex lg:items-center lg:gap-4 lg:px-4 lg:py-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-inset"
 				:class="[
 					selectedCode === item.appointment.code ? 'bg-primary-50 dark:bg-primary-900/20' : '',
-					item.isPast ? 'opacity-50' : '',
+					item.isPast ? 'lg:opacity-50' : '',
 				]"
 				@click="$emit('select', item.appointment)"
 			>
 				<!-- Time & duration -->
-				<div class="shrink-0 w-24 sm:w-28">
+				<div class="min-w-0 shrink-0 lg:w-28">
 					<p class="text-sm font-semibold text-gray-900 dark:text-white">{{ item.timeText }}</p>
-					<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ item.durationText }}</p>
+					<p v-if="item.durationText" class="mt-0.5 text-xs text-muted">{{ item.durationText }}</p>
 				</div>
 				<!-- Client & service -->
 				<div class="flex-1 min-w-0">
-					<p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ item.appointment.customer_name }}</p>
-					<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+					<p class="text-sm font-semibold text-highlighted wrap-anywhere lg:truncate">{{ item.appointment.customer_name || item.appointment.code }}</p>
+					<p class="mt-0.5 text-sm text-muted wrap-anywhere lg:truncate">
 						{{ item.appointment.appt_desc || t('pages.noDescription') }}
 					</p>
 				</div>
 				<!-- Status badge -->
-				<div class="shrink-0">
+				<div class="col-start-2 shrink-0 justify-self-start">
 					<UBadge
 						:color="item.statusColor"
 						variant="subtle"
@@ -99,10 +99,10 @@ onUnmounted(() => {
 const rows = computed(() => {
 	return props.appointments.map((appointment) => {
 		const start = new Date(appointment.start_date_time);
-		const end = new Date(appointment.end_date_time);
 		const timeText = format(start, 'h:mm a');
-		const minutes = appointment.duration ?? Math.round((end.getTime() - start.getTime()) / 60_000);
-		const durationText = formatDurationMinutes(minutes);
+		const end = appointment.end_date_time ? new Date(appointment.end_date_time) : undefined;
+		const minutes = appointment.duration ?? (end ? Math.round((end.getTime() - start.getTime()) / 60_000) : undefined);
+		const durationText = minutes != null && Number.isFinite(minutes) && minutes > 0 ? formatDurationMinutes(minutes) : '';
 		const statusColor = props.getStatusColor(appointment.status);
 		return {
 			appointment,

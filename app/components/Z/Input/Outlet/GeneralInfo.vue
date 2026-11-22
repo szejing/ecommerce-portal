@@ -16,7 +16,7 @@
 			<UInput v-model="description" :trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined" :placeholder="t('components.zInput.descriptionPlaceholder')" />
 		</UFormField>
 
-		<UFormField :label="t('common.phoneNo')" name="dial_code" :class="['col-span-2', isUpdate ? 'lg:col-span-3' : 'lg:col-span-2']" required>
+		<UFormField :label="t('common.phoneNo')" name="dial_code" :class="['sm:col-span-2', isUpdate ? 'lg:col-span-3' : 'lg:col-span-2']" required>
 			<p class="text-xs text-neutral-500 dark:text-neutral-400 my-1">{{ t('components.outletForm.generalPhoneHint') }}</p>
 			<UFormField name="phone_no" required>
 				<div>
@@ -34,6 +34,7 @@
 
 <script lang="ts" setup>
 import { ICONS } from '~/utils/icons';
+
 const { t } = useI18n();
 const props = defineProps({
 	code: String,

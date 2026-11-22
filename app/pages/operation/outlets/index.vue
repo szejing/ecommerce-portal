@@ -1,17 +1,25 @@
 <template>
-	<ZPagePanel id="operation-outlets" :title="t('nav.outlets')" back-to="/operation">
+	<ZPagePanel id="operation-outlets" :title="t('nav.outlets')" back-to="/operation" inline-mobile-actions>
 		<template #navbar-right>
-			<ZCreateButton to="/operation/outlets/create" :label="t('common.addOutlet')" />
+			<ZCreateButton class="hidden lg:flex" to="/operation/outlets/create" :label="t('common.addOutlet')" />
+			<UButton
+				to="/operation/outlets/create"
+				color="success"
+				:label="t('productMobileListing.add')"
+				:aria-label="t('common.addOutlet')"
+				class="min-h-11 min-w-11 justify-center lg:hidden"
+			/>
 		</template>
 		<template #toolbar>
 			<ZSectionFilterOutlet />
 		</template>
 
-		<div class="space-y-6">
+		<div class="flex min-w-0 flex-col gap-3 lg:gap-6">
 			<!-- Table Controls -->
 			<ZTableToolbar
 				v-model="filter.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
+				desktop-columns
 				:page-size-options="options_page_size"
 				:export-enabled="true"
 				:exporting="exporting"
@@ -21,7 +29,7 @@
 			/>
 
 			<template v-if="initialize">
-				<div class="rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
+				<div class="hidden lg:block rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
 					<div class="grid grid-cols-[1fr_auto] gap-4 p-4">
 						<USkeleton class="h-4 w-24" />
 						<USkeleton class="h-4 w-16" />
@@ -33,7 +41,7 @@
 				</div>
 			</template>
 
-			<UCard v-else :ui="{ body: 'p-0 sm:p-0' }">
+			<UCard v-else class="hidden lg:block" :ui="{ body: 'p-0 sm:p-0' }">
 				<UTable :data="outlets" :columns="visibleColumns" :loading="loading" loading-state="loading" @select="openOutlet">
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
@@ -45,9 +53,27 @@
 				</UTable>
 			</UCard>
 
+			<ZMobileRecordList
+				v-slot="{ item }"
+				:items="outlets"
+				item-key="code"
+				:label="t('nav.outlets')"
+				:empty-title="t('pages.noOutletsFound')"
+				:loading="initialize || loading"
+				record-path-prefix="/operation/outlets/"
+			>
+				<ZRecordLink :to="`/operation/outlets/${encodeURIComponent(item.code)}`">
+					<span class="block text-sm font-semibold text-highlighted">{{ item.description || item.code }}</span>
+					<span v-if="item.code" class="block text-xs text-muted">{{ item.code }}</span>
+					<template #trailing>
+						<span class="text-xs text-muted wrap-anywhere">{{ [item.city, item.state].filter(Boolean).join(', ') }}</span>
+					</template>
+				</ZRecordLink>
+			</ZMobileRecordList>
+
 			<!-- Pagination  -->
-			<div v-if="!initialize && outlets.length > 0" class="section-pagination">
-				<UPagination v-model="filter.current_page" :items-per-page="filter.page_size" :total="total_outlets" @update:page="updatePage" />
+			<div v-if="!initialize && (outlets.length > 0 || filter.current_page > 1)" class="section-pagination">
+				<ZPagination :page="filter.current_page" :items-per-page="filter.page_size" :total="total_outlets" :disabled="loading" @update:page="updatePage" />
 			</div>
 		</div>
 	</ZPagePanel>

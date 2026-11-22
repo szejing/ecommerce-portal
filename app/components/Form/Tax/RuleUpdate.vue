@@ -6,9 +6,9 @@
 
 			<!-- *********************** Details *********************** -->
 
-			<div class="flex items-center justify-between mt-6">
+			<div class="mt-4 flex flex-wrap items-center justify-between gap-2 lg:mt-6">
 				<h3 class="text-sm font-medium text-neutral-700 dark:text-neutral-300">{{ t('components.taxForm.taxRuleDetails') }}</h3>
-				<UButton size="sm" color="success" variant="ghost" @click="emits('select-detail', undefined)">{{ t('components.taxForm.addRuleDetail') }}</UButton>
+				<UButton size="sm" color="success" variant="ghost" class="max-lg:min-h-11" @click="emits('select-detail', undefined)">{{ t('components.taxForm.addRuleDetail') }}</UButton>
 			</div>
 
 			<div v-if="current_tax_rule.details && current_tax_rule.details.length > 0" class="space-y-3 mt-4">
@@ -16,14 +16,13 @@
 					<div
 						v-for="(detail, index) in current_tax_rule.details"
 						:key="index"
-						class="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
-						@click="emits('select-detail', detail)"
+						class="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg"
 					>
-						<div class="flex-1 min-w-0">
-							<div class="flex items-center space-x-4">
-								<p class="text-sm font-medium text-neutral-900 dark:text-white truncate">
+						<button type="button" class="min-h-11 min-w-0 flex-1 rounded text-start focus-visible:outline-2 focus-visible:outline-primary" @click="emits('select-detail', detail)">
+							<span class="flex flex-wrap items-center gap-x-4 gap-y-1">
+								<span class="text-sm font-medium text-neutral-900 dark:text-white wrap-anywhere">
 									{{ detail.tax_code ?? detail.tax?.code ?? t('components.taxForm.noTaxCode') }}
-								</p>
+								</span>
 
 								<UBadge v-if="detail.tax_condition?.amount_type" :label="`${detail.tax_condition.amount_type}`" size="xs" color="info" variant="soft" />
 								<UBadge v-if="detail.tax_condition?.rate" :label="`${detail.tax_condition.rate}%`" size="xs" color="success" variant="soft" />
@@ -34,20 +33,20 @@
 									color="neutral"
 									variant="soft"
 								/>
-							</div>
-							<p class="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+							</span>
+							<span class="block text-xs text-neutral-500 dark:text-neutral-400 wrap-anywhere">
 								{{ detail.description || t('components.taxForm.noDescription') }}
-							</p>
-							<div class="flex items-center space-x-2">
-								<p v-if="detail.tax_condition?.starts_at" class="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+							</span>
+							<span class="flex flex-wrap items-center gap-2">
+								<span v-if="detail.tax_condition?.starts_at" class="block text-xs text-neutral-500 dark:text-neutral-400 wrap-anywhere">
 									{{ t('components.taxForm.startsAt') }}: {{ getFormattedDate(detail.tax_condition?.starts_at, 'dd MMM yyyy') }}
-								</p>
-								<p v-if="detail.tax_condition?.ends_at" class="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+								</span>
+								<span v-if="detail.tax_condition?.ends_at" class="block text-xs text-neutral-500 dark:text-neutral-400 wrap-anywhere">
 									{{ t('components.taxForm.endsAt') }}: {{ getFormattedDate(detail.tax_condition?.ends_at, 'dd MMM yyyy') }}
-								</p>
-							</div>
-						</div>
-						<UButton icon="i-heroicons-trash" size="xs" color="error" variant="ghost" @click="deleteDetail(index)" />
+								</span>
+							</span>
+						</button>
+						<UButton icon="i-heroicons-trash" size="xs" color="error" variant="ghost" class="shrink-0 max-lg:min-h-11 max-lg:min-w-11 max-lg:justify-center" :aria-label="t('common.delete')" @click.stop="deleteDetail(index)" />
 					</div>
 				</div>
 			</div>
@@ -63,7 +62,7 @@
 
 			<!-- *********************** General Info *********************** -->
 			<div class="flex-center text-center mt-3">
-				<UButton size="md" color="success" variant="solid" type="submit" block :loading="updating">{{ t('components.taxForm.update') }}</UButton>
+				<UButton size="md" color="success" variant="solid" type="submit" class="max-lg:min-h-11" block :loading="updating">{{ t('components.taxForm.update') }}</UButton>
 			</div>
 		</UForm>
 	</div>

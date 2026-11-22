@@ -1,5 +1,5 @@
 <template>
-	<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+	<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 		<div class="flex min-w-0 items-center gap-3">
 			<div class="flex size-9 shrink-0 items-center justify-center rounded-md border border-default bg-default">
 				<Icon name="i-heroicons-calendar-days" class="text-base text-muted" />
@@ -11,17 +11,17 @@
 		</div>
 
 		<div class="grid w-full grid-cols-3 divide-x divide-default sm:flex sm:w-auto sm:justify-end">
-			<div class="flex flex-col px-3 first:pl-0 last:pr-0 sm:px-4">
-				<span class="text-xs text-muted">{{ primaryStatLabel }}</span>
-				<span class="text-sm font-semibold tabular-nums text-highlighted">{{ primaryCount }}</span>
+			<div class="flex min-w-0 flex-col px-2 first:pl-0 last:pr-0 sm:px-4">
+				<span class="text-xs text-muted wrap-anywhere">{{ primaryStatLabel }}</span>
+				<span class="text-sm font-semibold tabular-nums text-highlighted wrap-anywhere">{{ primaryCount }}</span>
 			</div>
-			<div class="flex flex-col px-3 first:pl-0 last:pr-0 sm:px-4">
-				<span class="text-xs text-muted">{{ t('table.totalItems') }}</span>
-				<span class="text-sm font-semibold tabular-nums text-highlighted">{{ totalItems }}</span>
+			<div class="flex min-w-0 flex-col px-2 first:pl-0 last:pr-0 sm:px-4">
+				<span class="text-xs text-muted wrap-anywhere">{{ t('table.totalItems') }}</span>
+				<span class="text-sm font-semibold tabular-nums text-highlighted wrap-anywhere">{{ totalItems }}</span>
 			</div>
-			<div class="flex flex-col px-3 first:pl-0 last:pr-0 sm:px-4">
-				<span class="text-xs text-muted">{{ t('table.netAmt') }}</span>
-				<span class="text-sm font-semibold tabular-nums text-primary">{{ formatCurrency(netAmt, currencyCode) }}</span>
+			<div class="flex min-w-0 flex-col px-2 first:pl-0 last:pr-0 sm:px-4">
+				<span class="text-xs text-muted wrap-anywhere">{{ t('table.netAmt') }}</span>
+				<span class="text-sm font-semibold tabular-nums text-primary wrap-anywhere">{{ formatCurrency(netAmt, currencyCode) }}</span>
 			</div>
 		</div>
 	</div>

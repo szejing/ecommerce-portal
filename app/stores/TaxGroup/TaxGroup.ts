@@ -41,13 +41,8 @@ export const useTaxGroupStore = defineStore('taxGroupStore', {
 
 		async updatePageSize(size: number) {
 			this.filter.page_size = size;
-
-			if (this.filter.page_size > this.tax_groups.length) {
-				this.filter.current_page = 1;
-				return;
-			}
-
-			this.getTaxGroups();
+			this.filter.current_page = 1;
+			await this.getTaxGroups();
 		},
 
 		async updatePage(page: number) {
@@ -64,7 +59,9 @@ export const useTaxGroupStore = defineStore('taxGroupStore', {
 			this.loading = true;
 			const { $api } = useNuxtApp();
 			try {
+				const search = this.filter.query.trim();
 				const { data, '@odata.count': total } = await $api.taxGroup.getMany({
+					...(search ? { $search: search } : {}),
 					$top: this.filter.page_size,
 					$count: true,
 					$skip: (this.filter.current_page - 1) * this.filter.page_size,
@@ -120,6 +117,7 @@ export const useTaxGroupStore = defineStore('taxGroupStore', {
 					this.getTaxGroups();
 				}
 				this.resetNewTaxGroup();
+				return data.tax_group;
 			} catch (err: unknown | ErrorResponse) {
 				const message = (err as ErrorResponse).message ?? 'Failed to process tax group';
 				failedNotification(message);

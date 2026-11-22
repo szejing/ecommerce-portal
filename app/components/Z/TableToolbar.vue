@@ -1,8 +1,15 @@
 <template>
-	<div class="flex items-center gap-3 justify-between sm:justify-end">
+	<div class="flex items-center justify-between gap-3 max-lg:flex-wrap sm:justify-end">
 		<div class="flex items-center gap-2">
 			<span class="text-sm text-gray-600 dark:text-gray-400">{{ t('common.show') }}</span>
-			<USelect :model-value="modelValue" :items="pageSizeOptions" size="sm" class="w-20" @update:model-value="$emit('update:modelValue', $event)" />
+			<USelect
+				:model-value="modelValue"
+				:items="pageSizeOptions"
+				:aria-label="t('catalogMobile.rowsPerPage')"
+				size="sm"
+				class="w-20 max-lg:min-h-11"
+				@update:model-value="$emit('update:modelValue', $event)"
+			/>
 			<span class="text-sm text-gray-600 dark:text-gray-400">{{ t('common.entries') }}</span>
 		</div>
 
@@ -12,6 +19,7 @@
 			:disabled="exporting"
 			:loading="exporting"
 			size="sm"
+			class="max-lg:min-h-11"
 			v-bind="controls === 'outline' ? { color: 'primary' as const, icon: 'i-heroicons-arrow-down-tray' } : {}"
 			@click="$emit('export')"
 		>
@@ -29,8 +37,9 @@
 			icon="i-heroicons-view-columns"
 			color="neutral"
 			size="sm"
-			:variant="controls === 'outline' ? 'outline' : 'ghost'"
-			class="w-fit min-w-0 font-medium text-xs sm:min-w-0"
+			variant="outline"
+			class="w-fit min-w-0 font-medium text-xs max-lg:min-h-11"
+			:class="{ 'max-lg:hidden': desktopColumns }"
 			:ui="{ content: 'w-56 max-h-60 overflow-y-auto' }"
 		>
 			{{ t('components.selectMenu.showColumns') }}
@@ -53,8 +62,8 @@ const props = withDefaults(
 		pageSizeOptions: number[];
 		exportEnabled?: boolean;
 		exporting?: boolean;
-		/** Outline matches the products listing toolbar. Default keeps the quieter listing controls. */
 		controls?: 'default' | 'outline';
+		desktopColumns?: boolean;
 		columnOptions?: ColumnOption[];
 		selectedColumnKeys?: string[];
 	}>(),

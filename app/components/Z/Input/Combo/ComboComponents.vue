@@ -1,13 +1,57 @@
 <template>
 	<div class="space-y-3">
-		<div class="flex items-center justify-between gap-3">
+		<div class="flex flex-wrap items-center justify-between gap-3">
 			<div class="min-w-0">
 				<h3 id="combo-included-items-heading" class="text-lg font-semibold">{{ t('combo.includedItems') }}</h3>
 				<p class="text-xs text-neutral-500 mt-0.5">{{ t('combo.includedItemsHint') }}</p>
 			</div>
-			<UButton icon="i-lucide-plus" :label="t('combo.addItems')" size="sm" class="shrink-0" @click="openAddItems" />
+			<UButton icon="i-lucide-plus" :label="t('combo.addItems')" size="sm" class="shrink-0 max-lg:min-h-11" @click="openAddItems" />
 		</div>
+		<ul v-if="rows.length" class="divide-y divide-default rounded-lg border border-default lg:hidden" aria-labelledby="combo-included-items-heading">
+			<li v-for="component in rows" :key="rowId(component)" class="space-y-2 p-3">
+				<div class="flex items-start justify-between gap-2">
+					<div class="min-w-0 wrap-anywhere">
+						<p class="font-medium text-highlighted">{{ itemLabel(component).name }}</p>
+						<p v-if="itemLabel(component).variant" class="text-sm text-muted">{{ itemLabel(component).variant }}</p>
+						<p class="text-sm text-muted">{{ t('combo.unitPrice') }} · {{ formatMoney(unitPrice(component)) }}</p>
+					</div>
+					<UButton
+						icon="i-lucide-trash-2"
+						color="error"
+						variant="ghost"
+						class="min-h-11 min-w-11 shrink-0 justify-center"
+						:aria-label="t('combo.removeItem') + ' · ' + itemLabel(component).name"
+						@click="removeComponent(rowId(component))"
+					/>
+				</div>
+				<div class="flex flex-wrap items-center justify-between gap-2">
+					<div class="flex items-center gap-1.5">
+						<UButton
+							icon="i-lucide-minus"
+							color="neutral"
+							variant="soft"
+							class="min-h-11 min-w-11 justify-center"
+							:disabled="component.quantity <= 1"
+							:aria-label="t('combo.decreaseQty') + ' · ' + itemLabel(component).name"
+							@click="setQuantity(rowId(component), component.quantity - 1)"
+						/>
+						<span class="min-w-6 text-center tabular-nums" aria-live="polite">{{ component.quantity }}</span>
+						<UButton
+							icon="i-lucide-plus"
+							color="neutral"
+							variant="soft"
+							class="min-h-11 min-w-11 justify-center"
+							:aria-label="t('combo.increaseQty') + ' · ' + itemLabel(component).name"
+							@click="setQuantity(rowId(component), component.quantity + 1)"
+						/>
+					</div>
+					<p class="text-sm font-medium">{{ formatLineTotal(component) }}</p>
+				</div>
+			</li>
+		</ul>
+
 		<UTable
+			class="hidden lg:block"
 			:data="rows"
 			:columns="columns"
 			:get-row-id="rowId"

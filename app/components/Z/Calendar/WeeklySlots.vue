@@ -180,20 +180,20 @@
 				</div>
 				<!-- Appointments -->
 				<div v-if="(blocksByDay.get(dayIndex) ?? []).length > 0" class="divide-y divide-gray-100 dark:divide-gray-800">
-					<div
+					<button
 						v-for="block in blocksByDay.get(dayIndex) ?? []"
 						:key="block.appointment.code"
-						class="flex items-start gap-3 px-3 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors"
+						type="button"
+						class="flex min-h-16 w-full items-start gap-3 px-3 py-3 text-left focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors"
 						:class="[
 							selectedCode === block.appointment.code ? 'bg-primary-50/50 dark:bg-primary-900/10' : '',
-							block.isPast ? 'opacity-50' : '',
 						]"
 						@click="$emit('select', block.appointment)"
 					>
-						<div class="w-1 self-stretch rounded-full shrink-0 mt-0.5" :class="block.borderClass.replace('border-l-', 'bg-')" />
+						<div class="w-1 self-stretch rounded-full shrink-0 mt-0.5" :class="bgStripMap[block.statusColor]" />
 						<div class="flex-1 min-w-0">
-							<div class="flex items-center justify-between gap-2">
-								<p class="font-medium text-sm text-gray-900 dark:text-white truncate">{{ block.appointment.customer_name }}</p>
+							<div class="flex flex-wrap items-center gap-2">
+								<p class="font-medium text-sm text-highlighted wrap-anywhere">{{ block.appointment.customer_name }}</p>
 								<UBadge :color="block.statusColor" variant="subtle" size="xs" class="shrink-0">
 									{{ t('options.' + block.appointment.status.toLowerCase()) }}
 								</UBadge>
@@ -202,17 +202,17 @@
 								<UIcon name="i-heroicons-clock" class="w-3 h-3 shrink-0" />
 								{{ block.timeText }}
 							</p>
-							<p v-if="block.appointment.customer_phone" class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
+							<p v-if="block.appointment.customer_phone" class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 wrap-anywhere">
 								{{ block.appointment.customer_phone }}
 							</p>
-							<p v-if="block.appointment.appt_desc" class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
+							<p v-if="block.appointment.appt_desc" class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 wrap-anywhere">
 								{{ block.appointment.appt_desc }}
 							</p>
 						</div>
-					</div>
+					</button>
 				</div>
 				<!-- Empty day -->
-				<div v-else class="px-3 py-4 text-center">
+				<div v-else class="px-3 py-2">
 					<p class="text-xs text-gray-400 dark:text-gray-500">{{ t('pages.noAppointmentsFound') }}</p>
 				</div>
 			</div>
@@ -382,7 +382,11 @@ const blocksByDay = computed(() => {
 
 	for (const appointment of props.appointments) {
 		const start = new Date(appointment.start_date_time).getTime();
-		const end = new Date(appointment.end_date_time).getTime();
+		if (!Number.isFinite(start)) continue;
+		const endDate = appointment.end_date_time ? new Date(appointment.end_date_time).getTime() : NaN;
+		const durationEnd = appointment.duration && appointment.duration > 0 ? start + appointment.duration * 60_000 : null;
+		const knownEnd = Number.isFinite(endDate) && endDate > start ? endDate : durationEnd;
+		const end = knownEnd ?? start + 1;
 
 		for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
 			const dayBaseMs = dayStarts[dayIndex] ?? 0;
@@ -394,7 +398,9 @@ const blocksByDay = computed(() => {
 			const clipEndMs = Math.min(end, dayEndMs);
 			const topPx = ((clipStartMs - dayStartMs) / rangeMs) * totalHeightPx.value;
 			const heightPx = Math.max(4, ((clipEndMs - clipStartMs) / rangeMs) * totalHeightPx.value);
-			const timeText = `${format(clipStartMs, 'h:mm a')} – ${format(clipEndMs, 'h:mm a')}`;
+			const timeText = knownEnd
+				? `${format(clipStartMs, 'h:mm a')} – ${format(clipEndMs, 'h:mm a')}`
+				: format(clipStartMs, 'h:mm a');
 			const statusColor = props.getStatusColor(appointment.status) as BadgeColor;
 			const borderClass = borderClassMap[statusColor] ?? borderClassMap.primary ?? '';
 			const timeTextClass = timeTextClassMap[statusColor] ?? timeTextClassMap.primary ?? 'text-primary-600 dark:text-primary-400';

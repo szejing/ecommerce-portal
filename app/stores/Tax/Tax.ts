@@ -45,13 +45,8 @@ export const useTaxStore = defineStore('taxStore', {
 
 		async updatePageSize(size: number) {
 			this.filter.page_size = size;
-
-			if (this.filter.page_size > this.taxes.length) {
-				this.filter.current_page = 1;
-				return;
-			}
-
-			this.getTaxes();
+			this.filter.current_page = 1;
+			await this.getTaxes();
 		},
 
 		async updatePage(page: number) {

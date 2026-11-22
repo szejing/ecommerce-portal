@@ -54,13 +54,8 @@ export const useOutletStore = defineStore('outletStore', {
 
 		async updatePageSize(size: number) {
 			this.filter.page_size = size;
-
-			if (this.filter.page_size > this.outlets.length) {
-				this.filter.current_page = 1;
-				return;
-			}
-
-			this.getOutlets();
+			this.filter.current_page = 1;
+			await this.getOutlets();
 		},
 
 		async updatePage(page: number) {

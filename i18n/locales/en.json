@@ -1,4 +1,29 @@
 {
+	"analyticsMobile": {
+		"reportOptions": "Report options",
+		"visibleFields": "Visible fields",
+		"exportCsv": "Export CSV",
+		"noRowsToExport": "No matching rows to export.",
+		"exporting": "Preparing CSV…",
+		"resetFilters": "Reset",
+		"applyFilters": "Apply filters",
+		"editFilters": "Edit filters"
+	},
+	"catalogMobile": {
+		"expandCategory": "Show children of {category}",
+		"collapseCategory": "Hide children of {category}",
+		"rowsPerPage": "Rows per page",
+		"searchTags": "Search tags…"
+	},
+	"portalMobile": {
+		"actions": "Page actions",
+		"filters": "Filters",
+		"reportTable": "Report table",
+		"pagination": "Result pages",
+		"previous": "Previous",
+		"next": "Next",
+		"pageCount": "Page {page} of {total}"
+	},
 	"productMobileListing": {
 		"search": "Search name, code or SKU",
 		"filters": "Filters",

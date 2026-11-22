@@ -131,8 +131,8 @@
 									</template>
 								</UTable>
 								<div v-if="customer_appointments.length > appointmentsPagination.page_size" class="flex justify-end pt-4">
-									<UPagination
-										v-model="appointmentsPagination.current_page"
+									<ZPagination
+										:page="appointmentsPagination.current_page"
 										:items-per-page="appointmentsPagination.page_size"
 										:total="customer_appointments.length"
 										@update:page="updateAppointmentsPage"
@@ -158,8 +158,8 @@
 									</template>
 								</UTable>
 								<div v-if="customer_orders.length > ordersPagination.page_size" class="flex justify-end pt-4">
-									<UPagination
-										v-model="ordersPagination.current_page"
+									<ZPagination
+										:page="ordersPagination.current_page"
 										:items-per-page="ordersPagination.page_size"
 										:total="customer_orders.length"
 										@update:page="updateOrdersPage"

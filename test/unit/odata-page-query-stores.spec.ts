@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, defineStore, setActivePinia } from 'pinia';
+import { AllocationType } from 'yeppi-common';
 
 const { failedNotification, successNotification } = vi.hoisted(() => ({
 	failedNotification: vi.fn(),
@@ -144,6 +145,54 @@ describe('useDiscountStore fetchDiscountsForSelect', () => {
 		const store = useDiscountStore();
 		store.filter.status = 'inactive';
 		await store.getDiscounts();
+
+		expect(getMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				$filter: 'is_disabled eq true',
+			}),
+		);
+	});
+});
+
+describe('useVoucherStore getVouchers', () => {
+	const getMany = vi.fn();
+
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		vi.clearAllMocks();
+		(globalThis as unknown as { defineStore: typeof defineStore }).defineStore =
+			defineStore;
+		(globalThis as unknown as { useNuxtApp: () => unknown }).useNuxtApp = () =>
+			({
+				$api: {
+					voucher: { getMany },
+				},
+			}) as unknown;
+	});
+
+	it('combines listing allocation with the active status filter', async () => {
+		getMany.mockResolvedValue({ data: [], '@odata.count': 0 });
+
+		const { useVoucherStore } = await import('../../app/stores/voucher/voucher');
+		const store = useVoucherStore();
+		store.filter.listing_allocation = AllocationType.BILL;
+		store.filter.status = 'active';
+		await store.getVouchers();
+
+		expect(getMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				$filter: "discount.allocation eq 'bill' and is_disabled eq false",
+			}),
+		);
+	});
+
+	it('filters inactive vouchers without an allocation predicate', async () => {
+		getMany.mockResolvedValue({ data: [], '@odata.count': 0 });
+
+		const { useVoucherStore } = await import('../../app/stores/voucher/voucher');
+		const store = useVoucherStore();
+		store.filter.status = 'inactive';
+		await store.getVouchers();
 
 		expect(getMany).toHaveBeenCalledWith(
 			expect.objectContaining({

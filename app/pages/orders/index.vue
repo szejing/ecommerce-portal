@@ -5,7 +5,7 @@
 		</template>
 
 		<div class="space-y-4">
-			<div class="flex justify-end">
+			<div class="hidden justify-end lg:flex">
 				<ZTableToolbar
 					v-model:selected-column-keys="selectedColumnKeys"
 					:model-value="pageSize"
@@ -18,7 +18,17 @@
 				/>
 			</div>
 
-			<template v-if="loading">
+			<UButton
+				:label="t('common.export')"
+				:loading="exporting"
+				variant="ghost"
+				color="neutral"
+				icon="i-heroicons-arrow-down-tray"
+				class="min-h-11 lg:hidden"
+				@click="exportOrders"
+			/>
+
+			<template v-if="initialize || loading">
 				<div class="rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
 					<div class="grid grid-cols-4 gap-4 p-4">
 						<USkeleton v-for="i in 4" :key="i" class="h-4 flex-1 min-w-0" />
@@ -29,8 +39,31 @@
 				</div>
 			</template>
 
+			<section v-else ref="mobileContent" class="lg:hidden" :aria-label="t('nav.orders')">
+				<UEmpty v-if="!orders.length" icon="i-heroicons-shopping-cart" :title="t('pages.noOrdersFound')" :description="t('pages.tryAdjustingFilters')" />
+				<ul v-else class="divide-y divide-default border-y border-default">
+					<li v-for="order in orders" :key="`${order.type}:${order.order_no}`">
+						<ZRecordLink :to="orderPath(order)">
+							<span class="block text-sm font-semibold text-highlighted">#{{ order.order_no }}</span>
+							<span v-if="order.customer?.name || order.customer?.email_address" class="block text-sm text-muted">
+								{{ formatCustomerNameEmail(order.customer?.name, order.customer?.email_address) }}
+							</span>
+							<span class="block text-xs text-muted">{{ order.order_date_time }}</span>
+							<template #trailing>
+								<UBadge :color="getOrderStatusColor(order.status)" variant="subtle" class="whitespace-normal">
+									{{ getOrderStatusOption(t, order.status)?.label ?? order.status }}
+								</UBadge>
+								<span v-if="order.currency?.code && order.payable_total != null" class="text-sm font-medium tabular-nums">
+									{{ formatCurrency(order.payable_total, order.currency.code) }}
+								</span>
+							</template>
+						</ZRecordLink>
+					</li>
+				</ul>
+			</section>
+
 			<!-- Orders Table -->
-			<UCard :ui="{ body: 'p-0 sm:p-0' }">
+			<UCard class="hidden lg:block" :ui="{ body: 'p-0 sm:p-0' }">
 				<UTable
 					v-if="!initialize && !loading"
 					v-model:sorting="sorting"
@@ -51,11 +84,11 @@
 
 			<!-- Pagination -->
 			<div
-				v-if="!initialize && !loading && orders.length > 0"
+				v-if="!initialize && !loading && (orders.length > 0 || page > 1)"
 				class="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 px-4 py-3"
 			>
-				<div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-					<div class="text-sm text-gray-700 dark:text-gray-300">
+				<div class="flex min-w-0 flex-1 flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+					<div v-if="orders.length" class="text-sm text-gray-700 dark:text-gray-300">
 						{{
 							t('pages.showingToOf', {
 								from: (page - 1) * pageSize + 1,
@@ -64,7 +97,7 @@
 							})
 						}}
 					</div>
-					<UPagination :page="page" :total="total" :page-size="pageSize" show-last show-first size="sm" @update:page="orderStore.setPage" />
+					<ZPagination :page="page" :total="total" :items-per-page="pageSize" size="sm" @update:page="orderStore.setPage" />
 				</div>
 			</div>
 		</div>
@@ -72,7 +105,9 @@
 </template>
 
 <script lang="ts" setup>
-import { options_page_size } from '~/utils/options';
+import { formatCurrency, getOrderStatusColor } from 'yeppi-common';
+import { options_page_size, getOrderStatusOption } from '~/utils/options';
+import { formatCustomerNameEmail } from '~/utils/format-customer-name-email';
 import { getOrderColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import type { TableRow } from '@nuxt/ui';
@@ -130,6 +165,13 @@ watch(listFailure, (failure) => {
 
 const initialize = ref(true);
 
+const mobileContent = useTemplateRef('mobileContent');
+const restoreMobileScroll = useMobileListScroll(
+	'orders-listing-mobile-scroll',
+	mobileContent,
+	path => orders.value.some(order => orderPath(order).split('?')[0] === path),
+);
+
 onMounted(async () => {
 	orderStore.hydrateFromQuery(route.query);
 	initialize.value = true;
@@ -137,6 +179,7 @@ onMounted(async () => {
 		await orderStore.refreshListing();
 	} finally {
 		initialize.value = false;
+		await restoreMobileScroll();
 	}
 });
 
@@ -161,11 +204,13 @@ const exportOrders = () => {
 	exportModal.open();
 };
 
+const orderPath = (order: OrderHistory) => `/orders/${encodeURIComponent(order.order_no)}?type=${order.type}`;
+
 const selectOrder = async (e: Event, row: TableRow<OrderHistory>) => {
 	const order = row.original;
 	if (!order) return;
 
-	navigateTo(`/orders/${encodeURIComponent(order.order_no)}?type=${order.type}`);
+	navigateTo(orderPath(order));
 };
 </script>
 

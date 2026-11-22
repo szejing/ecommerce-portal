@@ -4,11 +4,12 @@
 			<ZSectionFilterPaymentTypeGroups />
 		</template>
 
-		<div class="space-y-6">
+		<div class="flex min-w-0 flex-col gap-3 lg:gap-6">
 			<!-- Table Controls -->
 			<ZTableToolbar
 				v-model="filter.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
+				desktop-columns
 				:page-size-options="options_page_size"
 				:export-enabled="true"
 				:exporting="exporting"
@@ -18,7 +19,7 @@
 			/>
 
 			<template v-if="initialize">
-				<div class="rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
+				<div class="hidden lg:block rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
 					<div class="grid grid-cols-[1fr_auto] gap-4 p-4">
 						<USkeleton class="h-4 w-24" />
 						<USkeleton class="h-4 w-16" />
@@ -29,7 +30,7 @@
 					</div>
 				</div>
 			</template>
-			<UTable v-else :data="payment_type_groups" :columns="visibleColumns" :loading="loading">
+			<UTable v-else class="hidden lg:block" :data="payment_type_groups" :columns="visibleColumns" :loading="loading">
 				<template #empty>
 					<div class="flex flex-col items-center justify-center py-12 gap-3">
 						<UIcon :name="ICONS.PAYMENT_METHODS" class="w-12 h-12 text-gray-400" />
@@ -39,8 +40,22 @@
 				</template>
 			</UTable>
 
-			<div v-if="!initialize && payment_type_groups.length > 0" class="section-pagination">
-				<UPagination v-model="filter.current_page" :items-per-page="filter.page_size" :total="total_payment_type_groups" @update:page="updatePage" />
+			<ZMobileRecordList
+				v-slot="{ item }"
+				:items="payment_type_groups"
+				item-key="code"
+				:label="t('nav.paymentTypes')"
+				:empty-title="t('pages.noPaymentTypesFound')"
+				:loading="initialize || loading"
+			>
+				<div class="min-h-16 px-2 py-2.5 wrap-anywhere">
+					<span class="block text-sm font-semibold text-highlighted">{{ item.short_desc || item.desc || item.code }}</span>
+					<span v-if="item.code" class="block text-xs text-muted">{{ item.code }}</span>
+				</div>
+			</ZMobileRecordList>
+
+			<div v-if="!initialize && (payment_type_groups.length > 0 || filter.current_page > 1)" class="section-pagination">
+				<ZPagination :page="filter.current_page" :items-per-page="filter.page_size" :total="total_payment_type_groups" :disabled="loading" @update:page="updatePage" />
 			</div>
 		</div>
 	</ZPagePanel>
