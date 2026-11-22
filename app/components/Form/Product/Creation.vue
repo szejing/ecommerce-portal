@@ -51,6 +51,8 @@
 						:code-disabled="false"
 						:show-long-description="showLongDescription"
 						:show-inventory="showSimpleProductInventory"
+						:allowed-type-values="allowedTypeValues"
+						:field-noun="formSections.fieldNoun"
 						@update:thumbnail="updateThumbnail"
 						@update:images="updateImages"
 						@delete:thumbnail="deleteThumbnail"
@@ -80,6 +82,7 @@
 
 						<ZInputProductAdditionalInfo
 							:product="new_product"
+							:section="formSections.showBooking ? 'booking' : 'variations'"
 							@update:variations="updateProductVariations"
 							@update:variants="updateProductVariants"
 							@update:metadata="updateProductMetadata"
@@ -114,9 +117,10 @@ import type { ProductVariationInput } from '~/utils/types/product-variation';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
 import { GROUP_CODE, PRODUCT, ProductType } from 'yeppi-common';
 import { clearedProductInventory, normalizeSalePrice, productInventoryFromFirstVariant } from '~/utils/product-variant-list';
+import { catalogSectionsForKind, typeIdForSurface, typesForSurface, type CatalogCreateSurface } from '~/utils/catalog-form';
 
 const overlay = useOverlay();
-const props = defineProps<{ returnTo?: string }>();
+const props = defineProps<{ returnTo?: string; surface: CatalogCreateSurface }>();
 const formRef = ref();
 
 // Store
@@ -128,13 +132,29 @@ const showLongDescription = computed(
 	() => !settingsStore.getSetting(GROUP_CODE.PRODUCT, PRODUCT.HIDE_LONG_DESC)?.getBoolean(),
 );
 
-const isServiceProduct = computed(() => {
+const formKind = computed(() => {
+	if (props.surface === 'service') return ProductType.SERVICE;
 	const kind = productTypeStore.prod_types.find((pt) => pt.id === new_product.value.type_id)?.value;
-	return kind === ProductType.SERVICE;
+	if (kind === ProductType.EVENT) return ProductType.EVENT;
+	return ProductType.ITEM;
 });
 
+const formSections = computed(() => catalogSectionsForKind(formKind.value));
+const allowedTypeValues = computed(() => typesForSurface(props.surface, productTypeStore.prod_types).map((type) => type.value));
+
+watch(
+	() => [props.surface, productTypeStore.prod_types, new_product.value.type_id] as const,
+	() => {
+		const next = typeIdForSurface(props.surface, productTypeStore.prod_types, new_product.value.type_id);
+		if (next != null && next !== new_product.value.type_id) {
+			new_product.value.type_id = next;
+		}
+	},
+	{ immediate: true },
+);
+
 const showSimpleProductInventory = computed(
-	() => !isServiceProduct.value && !(new_product.value.variants && new_product.value.variants.length > 0),
+	() => formSections.value.showInventory && !(new_product.value.variants && new_product.value.variants.length > 0),
 );
 
 const toast = useToast();
@@ -452,6 +472,12 @@ const hasZeroOrigSellPrice = () => {
 };
 
 const doCreateProduct = async () => {
+	const stampedTypeId = typeIdForSurface(props.surface, productTypeStore.prod_types, new_product.value.type_id);
+	if (stampedTypeId == null) {
+		failedNotification(t('pages.productTypeNotReady'));
+		return;
+	}
+	new_product.value.type_id = stampedTypeId;
 	// Process the data
 	const prodPrice: PriceInput[] = [];
 	new_product.value.price_types?.forEach((price) => {

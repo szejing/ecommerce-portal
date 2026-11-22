@@ -270,6 +270,14 @@ class ProductModule extends HttpFactory {
 		return await consumeProductImportStream(response.body, options.onProgress);
 	}
 
+	async exportProducts(): Promise<Blob> {
+		return this.call<Blob>({
+			method: 'POST',
+			url: this.RESOURCE.Export(),
+			fetchOptions: { responseType: 'blob' },
+		});
+	}
+
 	async downloadImportTemplate(): Promise<Blob> {
 		return await this.call<Blob>({
 			method: 'GET',

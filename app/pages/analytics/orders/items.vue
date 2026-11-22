@@ -1,10 +1,24 @@
 <template>
-	<ZPagePanel id="analytics-orders-items" :title="t('pages.analyticsOrdersItems')" back-to="/analytics/orders">
+	<ZPagePanel id="analytics-orders-items" desktop-toolbar :title="t('pages.analyticsOrdersItems')" back-to="/analytics/orders">
 		<template #toolbar>
 			<ZSectionFilterOrderSummItems />
 		</template>
 
-		<div class="space-y-6">
+		<div class="min-w-0 space-y-3 lg:space-y-6">
+			<ZAnalyticsReportMobileControls
+				v-model:filters-open="filtersOpen"
+				v-model:selected-column-keys="selectedColumnKeys"
+				:filters="order_summ_item.filter"
+				:fields="['item_status']"
+				:page-size="order_summ_item.page_size"
+				:column-options="columnOptions"
+				:loading="order_summ_item.loading"
+				:exporting="order_summ_item.exporting"
+				:total="order_summ_item.total_data"
+				@apply-filters="applyMobileFilters"
+				@update:page-size="setMobilePageSize"
+				@export="exportToCsv"
+			/>
 			<ZTableToolbar
 				v-model="order_summ_item.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
@@ -12,6 +26,7 @@
 				:export-enabled="true"
 				:exporting="order_summ_item.exporting"
 				:column-options="columnOptions"
+				class="max-lg:hidden"
 				@update:model-value="updatePageSize"
 				@export="exportToCsv"
 			/>
@@ -20,11 +35,11 @@
 				v-if="groupedByDate.length === 0"
 				class="overflow-hidden"
 				:ui="{
-					header: 'bg-elevated/40 px-4 py-3 sm:px-6',
+					header: 'bg-elevated/40 px-3 py-2 lg:px-6 lg:py-3',
 					body: 'p-0 sm:p-0',
 				}"
 			>
-				<UTable :data="[]" :columns="visibleColumns" :loading="is_loading" :ui="orderItemTableUi">
+				<ZAnalyticsReportTable role="region" tabindex="0" :aria-label="t('portalMobile.reportTable')" :data="[]" :columns="visibleColumns" :column-options="columnOptions" :primary-keys="['prod_name', 'prod_variant_code', 'item_status', 'net_amt', 'total_qty']" :empty-title="t('pages.noOrderItemSummaryFound')" :loading="is_loading" :ui="orderItemTableUi" @edit-filters="filtersOpen = true">
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.REPORT_ORDER" class="w-12 h-12 text-gray-400" />
@@ -32,7 +47,7 @@
 							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
-				</UTable>
+				</ZAnalyticsReportTable>
 			</UCard>
 
 			<UCard
@@ -40,7 +55,7 @@
 				:key="group.date"
 				class="overflow-hidden"
 				:ui="{
-					header: 'bg-elevated/40 px-4 py-3 sm:px-6',
+					header: 'bg-elevated/40 px-3 py-2 lg:px-6 lg:py-3',
 					body: 'p-0 sm:p-0',
 				}"
 			>
@@ -56,11 +71,11 @@
 					/>
 				</template>
 
-				<UTable :data="group.items" :columns="visibleColumns" :loading="is_loading" :ui="orderItemTableUi" />
+				<ZAnalyticsReportTable :data="group.items" :columns="visibleColumns" :column-options="columnOptions" :primary-keys="['prod_name', 'prod_variant_code', 'item_status', 'net_amt', 'total_qty']" :loading="is_loading" :ui="orderItemTableUi" />
 			</UCard>
 
 			<div v-if="data.length > 0" class="section-pagination">
-				<UPagination v-model="current_page" :items-per-page="order_summ_item.page_size" :total="order_summ_item.total_data" @update:page="updatePage" />
+				<ZPagination :page="current_page" :items-per-page="order_summ_item.page_size" :total="order_summ_item.total_data" @update:page="updatePage" />
 			</div>
 		</div>
 	</ZPagePanel>
@@ -83,6 +98,7 @@ useHead({ title: () => t('pages.orderItemSummary') });
 
 const orderSummStore = useSummOrderStore();
 const { order_summ_item } = storeToRefs(orderSummStore);
+const { filtersOpen, applyMobileFilters, setMobilePageSize } = useAnalyticsReportControls(order_summ_item, orderSummStore.getOrderItemSummary);
 const orderItemTableUi = {
 	root: 'relative overflow-auto',
 	base: 'min-w-[1180px]',

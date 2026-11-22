@@ -36,10 +36,7 @@ export const useAffiliateStore = defineStore('affiliateStore', {
 	actions: {
 		async updatePageSize(size: number) {
 			this.filter.page_size = size;
-			if (this.filter.page_size > this.affiliates.length) {
-				this.filter.current_page = 1;
-				return;
-			}
+			this.filter.current_page = 1;
 			await this.getAffiliates();
 		},
 

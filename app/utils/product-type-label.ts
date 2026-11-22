@@ -14,7 +14,7 @@ export function productTypeFilterLabel(value: string, t: (key: string) => string
 export function productTypeFilterIcon(value: string): string {
 	const kind = value.toLowerCase();
 	if (kind === ProductType.ITEM) return ICONS.CUBE;
-	if (kind === ProductType.SERVICE) return 'i-heroicons-wrench-screwdriver';
+	if (kind === ProductType.SERVICE) return ICONS.SERVICE;
 	if (kind === ProductType.EVENT) return ICONS.CALENDAR;
 	return ICONS.TAG;
 }

@@ -1,12 +1,12 @@
 <template>
 	<ZPagePanel id="settings" :title="t('nav.settings')">
-		<div class="space-y-4">
+		<div class="space-y-3 lg:space-y-4">
 			<div class="space-y-1">
-				<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('nav.settings') }}</h2>
-				<p class="text-gray-500 dark:text-gray-400">{{ t('pages.settingsDesc') }}</p>
+				<h2 class="sr-only font-bold lg:not-sr-only lg:text-3xl text-gray-900 dark:text-white">{{ t('nav.settings') }}</h2>
+				<p class="text-sm text-muted lg:text-base">{{ t('pages.settingsDesc') }}</p>
 			</div>
 
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+			<div class="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-6">
 				<ZSettingsGroup
 					v-for="group in settingsGroups"
 					:key="group.title"
@@ -15,6 +15,7 @@
 					:icon="group.icon"
 					:color="group.color"
 					:items="group.items"
+					compact-on-mobile
 				/>
 			</div>
 		</div>

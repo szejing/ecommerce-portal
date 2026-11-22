@@ -3,13 +3,13 @@
 		<!-- Compact Filter Grid -->
 		<div class="flex w-full min-w-0 flex-wrap items-end gap-2">
 			<!-- Date Range Filter -->
-			<div class="flex shrink-0 flex-col gap-1.5">
+			<div class="hidden shrink-0 flex-col gap-1.5 lg:flex">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.dateRange') }}</label>
 				<ZDateRange :model-value="filters.dateRange" @update:model-value="orderStore.setDateRange" />
 			</div>
 
 			<ZSectionFilterStatuses
-				class="w-56 shrink-0"
+				class="hidden w-56 shrink-0 lg:flex"
 				show-label
 				:label="t('components.filter.status')"
 				:model-value="filters.statuses"
@@ -20,18 +20,50 @@
 			/>
 
 			<!-- Order Number Search -->
-			<div class="flex min-w-48 flex-1 basis-64 flex-col gap-1.5">
-				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.orderNo') }}</label>
+			<div class="flex min-w-0 flex-1 flex-col gap-1.5 lg:min-w-48 lg:basis-64">
+				<label class="text-xs font-medium text-gray-700 max-lg:sr-only dark:text-gray-300" for="order-list-search">{{ t('components.filter.orderNo') }}</label>
 				<UInput
+					id="order-list-search"
+					type="search"
 					:model-value="filters.search"
 					:placeholder="t('components.filter.searchOrderNo')"
 					:icon="ICONS.SEARCH_ROUNDED"
 					@update:model-value="orderStore.setSearch"
+					@keyup.enter="orderStore.refreshListing"
 				/>
 			</div>
 
+			<UDrawer :title="t('portalMobile.filters')" :close="{ class: 'min-h-11 min-w-11 justify-center' }">
+				<UButton color="neutral" variant="outline" :icon="ICONS.FILTER" :label="t('portalMobile.filters')" class="min-h-11 lg:hidden" />
+				<template #body>
+					<div class="space-y-4 pb-[env(safe-area-inset-bottom)]">
+						<div class="space-y-1.5">
+							<p class="text-sm font-medium">{{ t('components.filter.dateRange') }}</p>
+							<ZDateRange :model-value="filters.dateRange" @update:model-value="orderStore.setDateRange" />
+						</div>
+						<ZSectionFilterStatuses
+							show-label
+							:label="t('components.filter.status')"
+							:model-value="filters.statuses"
+							:items="statusItems"
+							:get-color="getOrderStatusColor"
+							:placeholder="t('components.selectMenu.selectOrderStatus')"
+							@update:model-value="onStatuses"
+						/>
+						<UButton
+							variant="outline"
+							color="neutral"
+							:disabled="is_loading"
+							:label="t('components.filter.clear')"
+							class="min-h-11"
+							@click="orderStore.clearFilters"
+						/>
+					</div>
+				</template>
+			</UDrawer>
+
 			<!-- Actions -->
-			<div class="flex shrink-0 items-end gap-2">
+			<div class="hidden shrink-0 items-end gap-2 lg:flex">
 				<div class="flex gap-2">
 					<UButton variant="outline" color="neutral" :disabled="is_loading" @click="orderStore.clearFilters">
 						<UIcon name="i-heroicons-arrow-path" class="w-4 h-4" />
@@ -46,7 +78,7 @@
 		</div>
 
 		<!-- Active Filters Display -->
-		<div v-if="hasActiveFilters" class="flex flex-wrap gap-2 items-center">
+		<div v-if="hasActiveFilters" class="hidden flex-wrap items-center gap-2 lg:flex">
 			<span class="text-xs text-gray-600 dark:text-gray-400">{{ t('components.filter.activeFilters') }}</span>
 			<UBadge
 				v-if="filters.dateRange && (filters.dateRange.start || filters.dateRange.end)"

@@ -27,12 +27,29 @@ let productImportElapsedTimer: ReturnType<typeof setInterval> | undefined;
 
 const PRODUCT_IMPORT_ELAPSED_TICK_MS = 1000;
 
+function downloadProductFile(blob: Blob, filename: string) {
+	const url = URL.createObjectURL(blob);
+	const link = document.createElement('a');
+	link.href = url;
+	link.download = filename;
+	document.body.appendChild(link);
+	try {
+		link.click();
+	} finally {
+		link.remove();
+		URL.revokeObjectURL(url);
+	}
+}
+
 // Aborting a fetch rejects with a DOMException, which is not an Error instance everywhere.
 function isAbortError(error: unknown): boolean {
 	return typeof error === 'object' && error !== null && (error as { name?: string }).name === 'AbortError';
 }
 
+export type ProductListingSort = 'recent' | 'name';
+
 type ProductFilter = {
+	sort: ProductListingSort;
 	query: string;
 	status: ProductStatus | undefined;
 	type_id: number | undefined;
@@ -48,6 +65,7 @@ type ComboFilter = {
 };
 
 const initialEmptyProductFilter: ProductFilter = {
+	sort: 'recent',
 	query: '',
 	status: undefined,
 	type_id: undefined,
@@ -233,12 +251,7 @@ export const useProductStore = defineStore('productStore', {
 
 		setSearch(search: string) {
 			this.filter.query = search;
-			this.filter.current_page = 1;
-			if (productFilterTimer) clearTimeout(productFilterTimer);
-			productFilterTimer = setTimeout(() => {
-				productFilterTimer = undefined;
-				void this.refreshListing();
-			}, PRODUCT_FILTER_DEBOUNCE_MS);
+			this.scheduleListingRefresh();
 		},
 
 		setStatus(status: ProductStatus | undefined) {
@@ -247,14 +260,24 @@ export const useProductStore = defineStore('productStore', {
 			void this.refreshListing();
 		},
 
+		async applyListingOptions(status: ProductStatus | undefined, sort: ProductListingSort): Promise<ProductRefreshOutcome> {
+			this.filter.status = status;
+			this.filter.sort = sort;
+			this.filter.current_page = 1;
+			return this.refreshListing();
+		},
+
 		setTypeId(typeId: number | undefined) {
 			this.filter.type_id = typeId;
+			this.scheduleListingRefresh();
+		},
+
+		scheduleListingRefresh() {
 			this.filter.current_page = 1;
+			this.listingGeneration++;
+			this.loading = true;
 			if (productFilterTimer) clearTimeout(productFilterTimer);
-			productFilterTimer = setTimeout(() => {
-				productFilterTimer = undefined;
-				void this.refreshListing();
-			}, PRODUCT_FILTER_DEBOUNCE_MS);
+			productFilterTimer = setTimeout(() => void this.refreshListing(), PRODUCT_FILTER_DEBOUNCE_MS);
 		},
 
 		async setPage(page: number): Promise<ProductRefreshOutcome> {
@@ -269,35 +292,40 @@ export const useProductStore = defineStore('productStore', {
 		},
 
 		async clearFilters(): Promise<ProductRefreshOutcome> {
-			if (productFilterTimer) clearTimeout(productFilterTimer);
-			productFilterTimer = undefined;
 			this.filter.query = '';
 			this.filter.status = undefined;
 			this.filter.type_id = undefined;
+			this.filter.sort = 'recent';
 			this.filter.current_page = 1;
 			return this.refreshListing();
 		},
 
 		async refreshListing(): Promise<ProductRefreshOutcome> {
+			if (productFilterTimer) clearTimeout(productFilterTimer);
+			productFilterTimer = undefined;
 			const generation = ++this.listingGeneration;
 			this.loading = true;
 			this.listFailure = undefined;
 			const { $api } = useNuxtApp();
 			try {
-				const { query, status, type_id } = this.filter;
+				const { query, status, type_id, sort } = this.filter;
 				const queryParams: ProductListingQuery = {
 					$top: this.filter.page_size,
 					$count: true,
 					$skip: (this.filter.current_page - 1) * this.filter.page_size,
 					$expand: PRODUCT_LISTING_EXPAND.join(','),
-					$orderby: 'updated_at desc',
+					$orderby: sort === 'name' ? 'name asc,code asc' : 'updated_at desc,code asc',
 					...buildProductListingQueryExtras({ status, type_id }),
 				};
 				if (query.trim()) queryParams.$search = query.trim();
 				const resp = await $api.product.getMany(queryParams);
 				if (generation !== this.listingGeneration) return { status: 'stale' };
 				const items = resp.data ?? resp.value ?? [];
-				const total = resp['@odata.count'] ?? resp.count ?? 0;
+				const total = resp['@odata.count'] ?? resp.count;
+				if (typeof total === 'number' && items.length === 0) {
+					const lastPage = Math.max(1, Math.ceil(total / this.filter.page_size));
+					if (this.filter.current_page > lastPage) return this.setPage(lastPage);
+				}
 				this.products = Array.isArray(items) ? items : [];
 				this.total_products = typeof total === 'number' ? total : 0;
 				this.product_types = Array.isArray(resp.product_types) ? resp.product_types : [];
@@ -620,14 +648,7 @@ export const useProductStore = defineStore('productStore', {
 
 			try {
 				const blob = await $api.product.downloadImportTemplate();
-				const url = window.URL.createObjectURL(blob);
-				const link = document.createElement('a');
-				link.href = url;
-				link.download = `product_import_template_${getFormattedDate(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`;
-				document.body.appendChild(link);
-				link.click();
-				document.body.removeChild(link);
-				window.URL.revokeObjectURL(url);
+				downloadProductFile(blob, `product_import_template_${getFormattedDate(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`);
 				successNotification('Product import template downloaded');
 			} catch (err: unknown | ErrorResponse) {
 				const message = (err as ErrorResponse).message ?? 'Failed to download product import template';
@@ -638,16 +659,17 @@ export const useProductStore = defineStore('productStore', {
 		},
 
 		async exportProducts() {
-			// this.exporting = true;
-			// const { $api } = useNuxtApp();
-			// try {
-			// 	const data = await $api.product.exportProducts();
-			// } catch (err: any) {
-			// 	console.error(err);
-			// 	failedNotification(err.message);
-			// } finally {
-			// 	this.exporting = false;
-			// }
+			if (this.exporting) return;
+			const { $api, $i18n } = useNuxtApp();
+			this.exporting = true;
+			try {
+				const blob = await $api.product.exportProducts();
+				downloadProductFile(blob, `products_${getFormattedDate(new Date(), 'yyyyMMdd_HHmmss')}.csv`);
+			} catch (err: unknown | ErrorResponse) {
+				failedNotification((err as ErrorResponse).message ?? $i18n.t('productMobileListing.exportFailed'));
+			} finally {
+				this.exporting = false;
+			}
 		},
 	},
 });

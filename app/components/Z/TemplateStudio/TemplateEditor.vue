@@ -1,13 +1,13 @@
 <template>
 	<UCard :ui="{ body: 'p-0 sm:p-0' }">
 		<div v-if="templateName || $slots.actions" class="flex flex-col gap-4 border-b border-default px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-			<h2 v-if="templateName" class="truncate text-lg font-semibold text-default">{{ templateName }}</h2>
-			<div v-if="$slots.actions" class="flex flex-wrap gap-2 lg:justify-end">
+			<h2 v-if="templateName" class="min-w-0 wrap-anywhere text-lg font-semibold text-default">{{ templateName }}</h2>
+			<div v-if="$slots.actions" class="flex flex-wrap gap-2 max-lg:[&_button]:min-h-11 lg:justify-end">
 				<slot name="actions" />
 			</div>
 		</div>
 
-		<UTabs v-model="activeTab" :items="tabItems" class="w-full px-4 py-4 sm:px-6">
+		<UTabs v-model="activeTab" :items="tabItems" class="w-full min-w-0 px-3 py-3 lg:px-6 lg:py-4" :ui="{ list: 'max-lg:flex-wrap', trigger: 'max-lg:min-h-11' }">
 			<template #content>
 				<slot name="content">
 					<div class="py-10 text-center text-sm text-muted">{{ t('components.templateStudio.contentComingSoon') }}</div>

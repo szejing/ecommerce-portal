@@ -107,14 +107,14 @@
 								<span class="text-xs text-neutral-400">{{ props.feeCurrencyPrefix }}</span>
 							</template>
 						</UInput>
-						<UButton color="primary" variant="soft" size="sm" @click="applyFeeToAll">
+						<UButton color="primary" variant="soft" size="sm" class="max-lg:min-h-11" @click="applyFeeToAll">
 							{{ t('components.variantList.applyToAll') }}
 						</UButton>
 					</div>
 
-					<div class="border border-neutral-200 dark:border-neutral-700 rounded-lg overflow-x-auto">
-						<table class="w-full text-sm">
-							<thead class="bg-neutral-50 dark:bg-neutral-900/40 border-b border-neutral-200 dark:border-neutral-700">
+					<div class="min-w-0 rounded-lg border border-default lg:overflow-x-auto">
+						<table class="w-full text-sm max-lg:block">
+							<thead class="max-lg:sr-only bg-neutral-50 dark:bg-neutral-900/40 border-b border-neutral-200 dark:border-neutral-700">
 								<tr>
 									<th class="text-left px-3 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-200">
 										<div class="flex items-center gap-1">
@@ -140,39 +140,38 @@
 									</th>
 								</tr>
 							</thead>
-							<tbody>
+							<tbody class="max-lg:block">
 								<tr
 									v-for="mid in state.shipping_method_ids"
 									:key="mid"
-									class="border-b border-neutral-100 dark:border-neutral-800 last:border-b-0 hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30"
+									class="border-b border-neutral-100 max-lg:block max-lg:py-2 dark:border-neutral-800 last:border-b-0 hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30"
 								>
-									<td class="px-3 py-2 text-neutral-900 dark:text-neutral-100 font-medium align-middle">
+									<td class="px-3 py-2 text-neutral-900 dark:text-neutral-100 font-medium align-middle max-lg:block max-lg:wrap-anywhere">
 										{{ methodLabel(mid) }}
 									</td>
-									<td class="px-3 py-2 align-top">
-										<UFormField v-slot="{ error }" :name="`method_pricing.${mid}.estimated_days`" :label="undefined" class="[&_.ui-form-field-label]:sr-only">
+									<td class="px-3 py-2 align-top max-lg:block">
+										<UFormField v-slot="{ error }" :name="`method_pricing.${mid}.estimated_days`" :label="t('components.shippingZoneForm.perMethodColumnEstDays')" :ui="{ label: 'lg:sr-only' }">
 											<UInput
 												v-model.number="state.method_pricing[mid]!.estimated_days"
 												type="number"
 												min="0"
 												step="1"
 												size="sm"
-												class="max-w-32"
+												class="w-full lg:max-w-32"
 												:trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined"
 											/>
 										</UFormField>
 									</td>
-									<td class="px-3 py-2 align-top">
+									<td class="px-3 py-2 align-top max-lg:block">
 										<UFormField
 											v-slot="{ error }"
 											:name="`method_pricing.${mid}.order_cutoff_time`"
-											:label="undefined"
-											class="[&_.ui-form-field-label]:sr-only"
+											:label="t('components.shippingZoneForm.perMethodColumnOrderCutoff')" :ui="{ label: 'lg:sr-only' }"
 										>
 											<UInputTime
 												:model-value="parseOrderCutoffTime(state.method_pricing[mid]!.order_cutoff_time)"
 												size="sm"
-												class="max-w-32"
+												class="w-full lg:max-w-32"
 												:hour-cycle="24"
 												:color="error ? 'error' : 'neutral'"
 												:highlight="!!error"
@@ -180,15 +179,15 @@
 											/>
 										</UFormField>
 									</td>
-									<td class="px-3 py-2 align-top">
-										<UFormField v-slot="{ error }" :name="`method_pricing.${mid}.fee`" :label="undefined" class="[&_.ui-form-field-label]:sr-only">
+									<td class="px-3 py-2 align-top max-lg:block">
+										<UFormField v-slot="{ error }" :name="`method_pricing.${mid}.fee`" :label="t('components.shippingZoneForm.perMethodColumnFee')" :ui="{ label: 'lg:sr-only' }">
 											<UInput
 												v-model.number="state.method_pricing[mid]!.fee"
 												type="number"
 												min="0"
 												step="0.01"
 												size="sm"
-												class="max-w-44"
+												class="w-full lg:max-w-44"
 												:ui="{ base: 'ps-12' }"
 												:trailing-icon="error ? ICONS.ERROR_OUTLINE : undefined"
 											>

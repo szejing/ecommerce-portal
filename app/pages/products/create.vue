@@ -1,3 +1,3 @@
 <template>
-	<FormProductCreatePage />
+	<FormProductCreatePage surface="product" />
 </template>

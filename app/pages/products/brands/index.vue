@@ -1,15 +1,22 @@
 <template>
-	<ZPagePanel id="products-brands" :title="t('nav.brands')" back-to="/products">
+	<ZPagePanel id="products-brands" inline-mobile-actions :title="t('nav.brands')" back-to="/products">
 		<template #navbar-right>
-			<ZCreateButton to="/products/brands/create" :label="t('common.addBrand')" />
+			<ZCreateButton class="hidden lg:flex" to="/products/brands/create" :label="t('common.addBrand')" />
+			<UButton
+				to="/products/brands/create"
+				:label="t('productMobileListing.add')"
+				:aria-label="t('common.addBrand')"
+				class="min-h-11 min-w-11 justify-center lg:hidden"
+			/>
 		</template>
 		<template #toolbar>
 			<ZSectionFilterBrands />
 		</template>
-		<div class="space-y-6">
+		<div class="space-y-3 lg:space-y-6">
 			<ZTableToolbar
 				v-model="filter.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
+				class="hidden lg:flex"
 				:page-size-options="options_page_size"
 				:export-enabled="true"
 				:exporting="exporting"
@@ -31,8 +38,28 @@
 				</div>
 			</template>
 
-			<UCard v-else :ui="{ body: 'p-0 sm:p-0' }">
-				<UTable :data="getDisplayBrands" :columns="visibleColumns" :loading="loading" @select="selectBrand">
+			<section v-else class="lg:hidden" :aria-label="t('nav.brands')" :aria-busy="loading">
+				<ZLoading v-if="loading" />
+				<UEmpty v-else-if="!getDisplayBrands.length" :icon="ICONS.ADDITIONAL" :title="t('pages.noBrandsFound')" :description="t('pages.tryAdjustingFilters')" />
+				<ul v-else class="divide-y divide-default border-y border-default">
+					<li v-for="brand in getDisplayBrands" :key="brand.code">
+						<ZRecordLink @click="openBrand(brand)">
+							<span class="block text-sm font-semibold text-highlighted">{{ brand.description || brand.code }}</span>
+							<span v-if="brand.description" class="block text-xs text-muted">{{ brand.code }}</span>
+							<template #trailing>
+								<span class="text-sm tabular-nums">
+									<span class="sr-only">{{ t('table.noOfItems') }}</span>
+									{{ brand.total_products ?? 0 }}
+								</span>
+								<UBadge v-if="brand.is_active === false" color="neutral" variant="subtle" size="sm">{{ t('common.inactive') }}</UBadge>
+							</template>
+						</ZRecordLink>
+					</li>
+				</ul>
+			</section>
+
+			<UCard v-if="!initialize" class="hidden lg:block" :ui="{ body: 'p-0 sm:p-0' }">
+				<UTable :data="getDisplayBrands" :columns="visibleColumns" :loading="loading" @select="(_event, row) => openBrand(row.original)">
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.ADDITIONAL" class="w-12 h-12 text-gray-400" />
@@ -44,8 +71,15 @@
 			</UCard>
 
 			<!-- Pagination  -->
-			<div v-if="!initialize && getDisplayBrands.length > 0" class="section-pagination">
-				<UPagination v-model="filter.current_page" :items-per-page="filter.page_size" :total="total_brands" @update:page="updatePage" />
+			<div v-if="!initialize && (getDisplayBrands.length > 0 || filter.current_page > 1)" class="section-pagination flex-wrap items-center gap-2">
+				<USelect
+					:model-value="filter.page_size"
+					:items="options_page_size"
+					:aria-label="t('catalogMobile.rowsPerPage')"
+					class="min-h-11 lg:hidden"
+					@update:model-value="brandStore.updatePageSize"
+				/>
+				<ZPagination :page="filter.current_page" :items-per-page="filter.page_size" :total="total_brands" @update:page="updatePage" />
 			</div>
 		</div>
 	</ZPagePanel>
@@ -58,13 +92,12 @@ import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import type { Brand } from '~/utils/types/brand';
 import { options_page_size } from '~/utils/options';
 import { ICONS } from '~/utils/icons';
+import { failedNotification } from '~/stores/AppUi/AppUi';
 
 const BRAND_COLUMN_LABELS = {
 	code: 'table.code',
 	total_products: 'table.noOfItems',
 } as const;
-import type { TableRow } from '@nuxt/ui';
-import { failedNotification } from '~/stores/AppUi/AppUi';
 
 const overlay = useOverlay();
 const brandStore = useBrandStore();
@@ -87,9 +120,7 @@ onMounted(async () => {
 	}
 });
 
-const deleteBrand = async (row: TableRow<Brand>) => {
-	const brand = row.original;
-
+const deleteBrand = async (brand: Brand) => {
 	const hasProducts = false;
 
 	const confirmModal = overlay.create(ZModalConfirmation, {
@@ -109,10 +140,7 @@ const deleteBrand = async (row: TableRow<Brand>) => {
 	confirmModal.open();
 };
 
-const selectBrand = async (e: Event, row: TableRow<Brand>) => {
-	const brand = row.original;
-	if (!brand) return;
-
+const openBrand = async (brand: Brand) => {
 	if (brand.is_internal) {
 		failedNotification(t('pages.internalBrandsCannotBeEdited'));
 		return;
@@ -127,7 +155,7 @@ const selectBrand = async (e: Event, row: TableRow<Brand>) => {
 			},
 			onDelete: async () => {
 				brandModal.close();
-				await deleteBrand(row);
+				await deleteBrand(brand);
 			},
 			onCancel: () => {
 				brandModal.close();

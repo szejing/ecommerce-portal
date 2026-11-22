@@ -1,17 +1,25 @@
 <template>
-	<ZPagePanel id="taxes-groups" :title="t('nav.taxGroups')" back-to="/settings/taxes">
+	<ZPagePanel id="taxes-groups" :title="t('nav.taxGroups')" back-to="/settings/taxes" inline-mobile-actions>
 		<template #navbar-right>
-			<ZCreateButton to="/products/create" :label="t('common.addTaxGroup')" />
+			<ZCreateButton class="hidden lg:flex" :label="t('common.addTaxGroup')" @click="createOpen = true" />
+			<UButton
+				color="success"
+				:label="t('productMobileListing.add')"
+				:aria-label="t('common.addTaxGroup')"
+				class="min-h-11 min-w-11 justify-center lg:hidden"
+				@click="createOpen = true"
+			/>
 		</template>
 		<template #toolbar>
 			<ZSectionFilterTaxGroups />
 		</template>
 
-		<div class="space-y-6">
+		<div class="flex min-w-0 flex-col gap-3 lg:gap-6">
 			<!-- Table Controls -->
 			<ZTableToolbar
 				v-model="filter.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
+				desktop-columns
 				:page-size-options="options_page_size"
 				:export-enabled="true"
 				:exporting="exporting"
@@ -21,7 +29,7 @@
 			/>
 
 			<!-- Table  -->
-			<UTable :data="tax_groups" :columns="visibleColumns" :loading="loading" @select="selectTaxGroup">
+			<UTable class="hidden lg:block" :data="tax_groups" :columns="visibleColumns" :loading="loading" @select="selectTaxGroup">
 				<template #empty>
 					<div class="flex flex-col items-center justify-center py-12 gap-3">
 						<UIcon :name="ICONS.TAX" class="w-12 h-12 text-gray-400" />
@@ -31,11 +39,31 @@
 				</template>
 			</UTable>
 
+			<ZMobileRecordList
+				v-slot="{ item }"
+				:items="tax_groups"
+				item-key="code"
+				:label="t('nav.taxGroups')"
+				:empty-title="t('pages.noTaxGroupsFound')"
+				:loading="loading"
+			>
+				<ZRecordLink @click="openTaxGroup(item)">
+					<span class="block text-sm font-semibold text-highlighted">{{ item.description || item.code }}</span>
+					<span v-if="item.code" class="block text-xs text-muted">{{ item.code }}</span>
+					<span class="block text-xs text-muted">{{ item.taxes?.map((tax) => tax.code).join(', ') }}</span>
+				</ZRecordLink>
+			</ZMobileRecordList>
+
 			<!-- Pagination  -->
-			<div v-if="tax_groups.length > 0" class="section-pagination">
-				<UPagination v-model="filter.current_page" :items-per-page="filter.page_size" :total="total_tax_groups" @update:page="updatePage" />
+			<div v-if="(tax_groups.length > 0 || filter.current_page > 1)" class="section-pagination">
+				<ZPagination :page="filter.current_page" :items-per-page="filter.page_size" :total="total_tax_groups" :disabled="loading" @update:page="updatePage" />
 			</div>
 		</div>
+		<UModal v-model:open="createOpen" :title="t('common.addTaxGroup')">
+			<template #body>
+				<FormTaxGroupCreation @saved="createOpen = false" />
+			</template>
+		</UModal>
 	</ZPagePanel>
 </template>
 
@@ -49,6 +77,7 @@ import { options_page_size } from '~/utils/options';
 import { ICONS } from '~/utils/icons';
 
 const overlay = useOverlay();
+const createOpen = ref(false);
 const taxGroupStore = useTaxGroupStore();
 const { loading, tax_groups, filter, total_tax_groups, exporting } = storeToRefs(taxGroupStore);
 
@@ -85,10 +114,9 @@ const deleteTaxGroup = async (code: string) => {
 	confirmModal.open();
 };
 
-const selectTaxGroup = async (e: Event, row: TableRow<TaxGroup>) => {
-	const taxGroup = row.original;
-	if (!taxGroup) return;
+const selectTaxGroup = (_event: Event, row: TableRow<TaxGroup>) => openTaxGroup(row.original);
 
+const openTaxGroup = async (taxGroup: TaxGroup) => {
 	const taxGroupModal = overlay.create(ZModalTaxGroupDetail, {
 		props: {
 			taxGroup: JSON.parse(JSON.stringify(taxGroup)),

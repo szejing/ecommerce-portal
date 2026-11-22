@@ -1,17 +1,25 @@
 <template>
-	<ZPagePanel id="crm-users" :title="t('nav.staffs')" back-to="/operation">
+	<ZPagePanel id="crm-users" :title="t('nav.staffs')" back-to="/operation" inline-mobile-actions>
 		<template #navbar-right>
-			<ZCreateButton to="/operation/staff/create" :label="t('common.addStaff')" />
+			<ZCreateButton class="hidden lg:flex" to="/operation/staff/create" :label="t('common.addStaff')" />
+			<UButton
+				to="/operation/staff/create"
+				color="success"
+				:label="t('productMobileListing.add')"
+				:aria-label="t('common.addStaff')"
+				class="min-h-11 min-w-11 justify-center lg:hidden"
+			/>
 		</template>
 		<template #toolbar>
 			<ZSectionFilterCrmUsers />
 		</template>
 
-		<div class="space-y-6">
+		<div class="flex min-w-0 flex-col gap-3 lg:gap-6">
 			<!-- Table controls: page size -->
 			<ZTableToolbar
 				v-model="filter.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
+				desktop-columns
 				:page-size-options="options_page_size"
 				:export-enabled="false"
 				:column-options="columnOptions"
@@ -19,7 +27,7 @@
 			/>
 
 			<template v-if="initialize">
-				<div class="rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
+				<div class="hidden lg:block rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
 					<div class="grid grid-cols-5 gap-4 p-4">
 						<USkeleton v-for="i in 5" :key="i" class="h-4 flex-1 min-w-0" />
 					</div>
@@ -29,7 +37,7 @@
 				</div>
 			</template>
 
-			<UCard v-else :ui="{ body: 'p-0 sm:p-0' }">
+			<UCard v-else class="hidden lg:block" :ui="{ body: 'p-0 sm:p-0' }">
 				<UTable :data="crm_users" :columns="visibleColumns" :loading="loading" :ui="{ tr: 'cursor-pointer' }" @select="selectCrmUser">
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
@@ -45,9 +53,30 @@
 				</UTable>
 			</UCard>
 
+			<ZMobileRecordList
+				v-slot="{ item }"
+				:items="crm_users"
+				item-key="id"
+				:label="t('nav.staffs')"
+				:empty-title="t('pages.noCrmUsersFound')"
+				:loading="initialize || loading"
+				record-path-prefix="/operation/staff/"
+			>
+				<ZRecordLink :to="`/operation/staff/${encodeURIComponent(item.id)}`">
+					<span class="block text-sm font-semibold text-highlighted">{{ item.name || item.email_address }}</span>
+					<span v-if="item.email_address" class="block text-xs text-muted">{{ item.email_address }}</span>
+					<template #trailing>
+						<UBadge :color="item.is_active ? 'success' : 'neutral'" variant="subtle" size="sm">
+							{{ t(item.is_active ? 'common.active' : 'common.inactive') }}
+						</UBadge>
+						<span class="text-xs text-muted wrap-anywhere">{{ roleLabel(item.role, t) }}</span>
+					</template>
+				</ZRecordLink>
+			</ZMobileRecordList>
+
 			<!-- Pagination -->
-			<div v-if="!initialize && crm_users.length > 0" class="section-pagination">
-				<UPagination v-model="filter.current_page" :items-per-page="filter.page_size" :total="total_count" @update:page="updatePage" />
+			<div v-if="!initialize && (crm_users.length > 0 || filter.current_page > 1)" class="section-pagination">
+				<ZPagination :page="filter.current_page" :items-per-page="filter.page_size" :total="total_count" :disabled="loading" @update:page="updatePage" />
 			</div>
 		</div>
 	</ZPagePanel>
@@ -57,6 +86,7 @@
 import { options_page_size } from '~/utils/options';
 import { getCrmUserColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
+import { roleLabel } from '~/utils/options/user-roles';
 import type { CRMUser } from '~/utils/types/crm-user';
 import type { TableRow } from '@nuxt/ui';
 import { useCRMUserStore } from '~/stores/CRMUser/CRMUser';

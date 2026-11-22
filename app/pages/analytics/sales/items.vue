@@ -1,10 +1,24 @@
 <template>
-	<ZPagePanel id="analytics-sales-items" :title="t('pages.analyticsSalesItems')" back-to="/analytics/sales">
+	<ZPagePanel id="analytics-sales-items" desktop-toolbar :title="t('pages.analyticsSalesItems')" back-to="/analytics/sales">
 		<template #toolbar>
 			<ZSectionFilterSaleSummItems />
 		</template>
 
-		<div class="space-y-6">
+		<div class="min-w-0 space-y-3 lg:space-y-6">
+			<ZAnalyticsReportMobileControls
+				v-model:filters-open="filtersOpen"
+				v-model:selected-column-keys="selectedColumnKeys"
+				:filters="sale_summ_items.filter"
+				:fields="['item_status']"
+				:page-size="sale_summ_items.page_size"
+				:column-options="columnOptions"
+				:loading="sale_summ_items.loading"
+				:exporting="sale_summ_items.exporting"
+				:total="sale_summ_items.total_data"
+				@apply-filters="applyMobileFilters"
+				@update:page-size="setMobilePageSize"
+				@export="salesSummStore.exportSaleItemSummary('matching')"
+			/>
 			<ZTableToolbar
 				v-model="sale_summ_items.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
@@ -12,6 +26,7 @@
 				:export-enabled="true"
 				:exporting="sale_summ_items.exporting"
 				:column-options="columnOptions"
+				class="max-lg:hidden"
 				@update:model-value="updatePageSize"
 				@export="salesSummStore.exportSaleItemSummary"
 			/>
@@ -20,11 +35,11 @@
 				v-if="groupedByDate.length === 0"
 				class="overflow-hidden"
 				:ui="{
-					header: 'bg-elevated/40 px-4 py-3 sm:px-6',
+					header: 'bg-elevated/40 px-3 py-2 lg:px-6 lg:py-3',
 					body: 'p-0 sm:p-0',
 				}"
 			>
-				<UTable :data="[]" :columns="visibleColumns" :loading="loading" :ui="salesItemTableUi">
+				<ZAnalyticsReportTable role="region" tabindex="0" :aria-label="t('portalMobile.reportTable')" :data="[]" :columns="visibleColumns" :column-options="columnOptions" :primary-keys="['prod_name', 'prod_variant_code', 'item_status', 'net_amt', 'total_qty']" :empty-title="t('pages.noSalesItemSummaryFound')" :loading="loading" :ui="salesItemTableUi" @edit-filters="filtersOpen = true">
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.REPORT_SALES" class="w-12 h-12 text-gray-400" />
@@ -32,7 +47,7 @@
 							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
-				</UTable>
+				</ZAnalyticsReportTable>
 			</UCard>
 
 			<UCard
@@ -40,7 +55,7 @@
 				:key="group.date"
 				class="overflow-hidden"
 				:ui="{
-					header: 'bg-elevated/40 px-4 py-3 sm:px-6',
+					header: 'bg-elevated/40 px-3 py-2 lg:px-6 lg:py-3',
 					body: 'p-0 sm:p-0',
 				}"
 			>
@@ -56,11 +71,11 @@
 					/>
 				</template>
 
-				<UTable :data="group.items" :columns="visibleColumns" :loading="loading" :ui="salesItemTableUi" />
+				<ZAnalyticsReportTable :data="group.items" :columns="visibleColumns" :column-options="columnOptions" :primary-keys="['prod_name', 'prod_variant_code', 'item_status', 'net_amt', 'total_qty']" :loading="loading" :ui="salesItemTableUi" />
 			</UCard>
 
 			<div v-if="data.length > 0" class="section-pagination">
-				<UPagination v-model="current_page" :items-per-page="sale_summ_items.page_size" :total="sale_summ_items.total_data" @update:page="updatePage" />
+				<ZPagination :page="current_page" :items-per-page="sale_summ_items.page_size" :total="sale_summ_items.total_data" @update:page="updatePage" />
 			</div>
 		</div>
 	</ZPagePanel>
@@ -83,6 +98,7 @@ useHead({ title: () => t('pages.saleItemSummary') });
 
 const salesSummStore = useSummSaleStore();
 const { sale_summ_items, loading } = storeToRefs(salesSummStore);
+const { filtersOpen, applyMobileFilters, setMobilePageSize } = useAnalyticsReportControls(sale_summ_items, salesSummStore.getSaleItemSummary);
 const salesItemTableUi = {
 	root: 'relative overflow-auto',
 	base: 'min-w-[1180px]',

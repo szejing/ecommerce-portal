@@ -48,7 +48,7 @@
 
 			<!-- Pagination  -->
 			<div v-if="prod_variations.length > 0" class="section-pagination">
-				<UPagination v-model="filter.current_page" :items-per-page="filter.page_size" :total="total_variations" @update:page="updatePage" />
+				<ZPagination :page="filter.current_page" :items-per-page="filter.page_size" :total="total_variations" @update:page="updatePage" />
 			</div>
 		</div>
 	</ZPagePanel>

@@ -10,13 +10,18 @@
 			<div class="space-y-6 pt-4">
 				<ZInputProductAdditionalInfoTabSectionHeader
 					:icon="ICONS.LAYERS"
-					title-key="components.productUpdate.productVariants"
-					description-key="components.productUpdate.addOptionsVariations"
-					tooltip-key="components.productUpdate.variantsTooltip"
+					:title-key="variationCopy.titleKey"
+					:description-key="variationCopy.descriptionKey"
+					:tooltip-key="variationCopy.tooltipKey"
 				/>
 
 				<!-- Variations Input -->
-				<ZInputProductVariations :variations="product.variations" :variant-count="product.variants?.length ?? 0" @update:variations="updateProductVariations" />
+				<ZInputProductVariations
+					:variations="product.variations"
+					:variant-count="product.variants?.length ?? 0"
+					:name-placeholder-key="variationCopy.namePlaceholderKey"
+					@update:variations="updateProductVariations"
+				/>
 
 				<!-- Variant List (auto-generated) -->
 				<ZInputProductVariantList
@@ -69,7 +74,7 @@
 import type { ProductCreate } from '~/utils/types/form/product-creation';
 import type { Product, ProductVariantInput } from '~/utils/types/product';
 import type { ProductVariationInput } from '~/utils/types/product-variation';
-import { ProductType } from 'yeppi-common';
+import { variationCopyKeys } from '~/utils/catalog-form';
 import { ICONS } from '~/utils/icons';
 
 const props = defineProps({
@@ -77,11 +82,16 @@ const props = defineProps({
 		type: Object as PropType<ProductCreate | Product>,
 		required: true,
 	},
+	section: {
+		type: String as PropType<'booking' | 'variations'>,
+		default: 'variations',
+	},
 });
 
 const emit = defineEmits(['update:variations', 'update:variants', 'delete:variant', 'update:metadata', 'update:appointmentDepositAmt']);
 const { t } = useI18n();
-const productTypeStore = useProductTypeStore();
+
+const variationCopy = computed(() => variationCopyKeys(props.section === 'booking' ? 'service' : 'product'));
 
 const product = computed({
 	get() {
@@ -90,20 +100,6 @@ const product = computed({
 	set(_) {},
 });
 
-// Show service tab when canonical kind is SERVICE (merchant type matched by enum value).
-const shouldShowService = computed(() => {
-	const p = product.value as ProductCreate | Product;
-	let kind: string | undefined;
-
-	if ('type_id' in p && p.type_id != null) {
-		kind = productTypeStore.prod_types.find((pt) => pt.id === p.type_id)?.value;
-	} else if ('type' in p && typeof p.type === 'string') {
-		kind = p.type as string;
-	}
-	return kind === ProductType.SERVICE;
-});
-
-// Build tabs array with dynamic badges
 const product_additional_info = computed(() => {
 	const tabs = [];
 
@@ -114,16 +110,13 @@ const product_additional_info = computed(() => {
 			icon: ICONS.LAYERS,
 		});
 
-	// Conditionally add service for kind SERVICE
-	if (shouldShowService.value) {
+	if (props.section === 'booking')
 		tabs.push({
 			label: t('components.productUpdate.serviceTab'),
 			slot: 'service',
 			icon: ICONS.SETTINGS_ROUNDED,
 		});
-	}
 
-	// Always add tax
 	tabs.push({
 		label: t('nav.tax'),
 		slot: 'tax',

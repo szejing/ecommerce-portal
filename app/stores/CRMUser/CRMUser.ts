@@ -52,10 +52,7 @@ export const useCRMUserStore = defineStore('crmUserStore', {
 	actions: {
 		async updatePageSize(size: number) {
 			this.filter.page_size = size;
-			if (this.filter.page_size > this.crm_users.length) {
-				this.filter.current_page = 1;
-				return;
-			}
+			this.filter.current_page = 1;
 			await this.getCrmUsers();
 		},
 

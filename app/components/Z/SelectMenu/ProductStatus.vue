@@ -16,7 +16,7 @@
 					{{ selectedLabel }}
 				</UBadge>
 			</span>
-			<span v-else class="text-neutral-400">{{ t('components.selectMenu.selectStatus') }}</span>
+			<span v-else :class="emptyLabel ? 'text-default' : 'text-neutral-400'">{{ closedLabel }}</span>
 		</template>
 
 		<template #item="{ item }">
@@ -33,7 +33,7 @@ import { getProductStatusOptions, getProductStatusColor } from '~/utils/options'
 
 const { t } = useI18n();
 
-const props = defineProps<{ status: ProductStatus | undefined }>();
+const props = defineProps<{ status: ProductStatus | undefined; emptyLabel?: string }>();
 const emit = defineEmits(['update:status']);
 
 const items = computed(() => getProductStatusOptions(t));
@@ -48,6 +48,7 @@ const status = computed({
 });
 
 const selectedLabel = computed(() => items.value.find((i) => i.value === status.value)?.label ?? status.value ?? '');
+const closedLabel = computed(() => props.emptyLabel || t('components.selectMenu.selectStatus'));
 </script>
 
 <style scoped></style>

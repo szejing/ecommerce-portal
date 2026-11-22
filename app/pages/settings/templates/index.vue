@@ -1,8 +1,8 @@
 <template>
 	<ZPagePanel id="settings-templates" :title="t('nav.templateStudio')" back-to="/settings" grow>
-		<div class="space-y-6 p-4 sm:p-6">
+		<div class="mobile-form-controls min-w-0 space-y-3 lg:space-y-6 lg:p-6">
 			<div class="space-y-2">
-				<h1 class="text-2xl font-bold text-default sm:text-3xl">{{ t('nav.templateStudio') }}</h1>
+				<h1 class="sr-only font-bold text-default lg:not-sr-only lg:text-3xl">{{ t('nav.templateStudio') }}</h1>
 				<p class="max-w-3xl text-sm text-muted sm:text-base">{{ t('pages.templateStudioDesc') }}</p>
 			</div>
 

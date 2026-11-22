@@ -1,5 +1,5 @@
 <template>
-	<div v-if="requests.length > 0" class="mt-4 rounded-lg">
+	<div v-if="requests.length > 0" class="min-w-0 rounded-lg">
 		<UCard
 			class="border border-warning/70"
 			:ui="{
@@ -64,8 +64,8 @@
 						<UButton
 							color="warning"
 							variant="soft"
-							size="sm"
 							icon="i-heroicons-arrow-right"
+							class="min-h-11 min-w-11 justify-center"
 							:aria-label="t('pages.viewCustomerRequest')"
 							@click.stop="openRequest(order, request)"
 						/>

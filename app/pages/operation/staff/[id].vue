@@ -4,16 +4,16 @@
 			<FormCrmUserUpdateLoading />
 		</div>
 
-		<div v-else class="space-y-6 max-w-3xl">
+		<div v-else class="mobile-form-controls max-w-3xl space-y-3 lg:space-y-6">
 			<!-- User info card: view / edit -->
 			<UCard>
 				<template #header>
-					<div class="flex items-center justify-between">
+					<div class="flex flex-wrap items-center justify-between gap-2">
 						<h2 class="flex items-center text-lg font-semibold text-neutral-900 dark:text-neutral-100">
 							<UIcon name="i-heroicons-user" class="w-5 h-5 inline-block mr-2" />
 							{{ t('pages.crmUserDetailUserInformation') }}
 						</h2>
-						<div class="flex items-center gap-2">
+						<div class="flex flex-wrap items-center gap-2 max-lg:[&_button]:min-h-11">
 							<UButton v-if="canEditCurrentUser" color="success" :loading="updating" :disabled="!hasChanges" @click="editFormRef?.submit()">
 								<UIcon :name="ICONS.SAVE" class="w-4 h-4" />
 								{{ t('common.save') }}
@@ -51,31 +51,31 @@
 					<div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
 						<div>
 							<span class="text-neutral-500 dark:text-neutral-400">{{ t('components.crmUserForm.name') }}</span>
-							<p class="font-medium text-neutral-900 dark:text-neutral-100">
+							<p class="font-medium wrap-anywhere text-neutral-900 dark:text-neutral-100">
 								{{ current_crm_user.name || '—' }}
 							</p>
 						</div>
 						<div>
 							<span class="text-neutral-500 dark:text-neutral-400">{{ t('components.crmUserForm.role') }}</span>
-							<p class="font-medium text-neutral-900 dark:text-neutral-100">
+							<p class="font-medium wrap-anywhere text-neutral-900 dark:text-neutral-100">
 								{{ current_crm_user.role ? roleLabel(current_crm_user.role, t) : '—' }}
 							</p>
 						</div>
 						<div class="sm:col-span-2">
 							<span class="text-neutral-500 dark:text-neutral-400">{{ t('components.crmUserForm.email') }}</span>
-							<p class="font-medium text-neutral-900 dark:text-neutral-100">
+							<p class="font-medium wrap-anywhere text-neutral-900 dark:text-neutral-100">
 								{{ current_crm_user.email_address || '—' }}
 							</p>
 						</div>
 						<div>
 							<span class="text-neutral-500 dark:text-neutral-400">{{ t('components.crmUserForm.staffDepartment') }}</span>
-							<p class="font-medium text-neutral-900 dark:text-neutral-100">
+							<p class="font-medium wrap-anywhere text-neutral-900 dark:text-neutral-100">
 								{{ currentStaffDepartmentName }}
 							</p>
 						</div>
 						<div>
 							<span class="text-neutral-500 dark:text-neutral-400">{{ t('components.crmUserForm.phone') }}</span>
-							<p class="font-medium text-neutral-900 dark:text-neutral-100">
+							<p class="font-medium wrap-anywhere text-neutral-900 dark:text-neutral-100">
 								{{ current_crm_user.dial_code && current_crm_user.phone_no ? `${current_crm_user.dial_code} ${current_crm_user.phone_no}` : '—' }}
 							</p>
 						</div>
@@ -111,7 +111,7 @@
 
 <script lang="ts" setup>
 import { UserRoles } from 'yeppi-common';
-import { type CrmUserUpdate } from '~/utils/types/crm-user';
+import type { CrmUserUpdate } from '~/utils/types/crm-user';
 import { useCRMUserStore } from '~/stores/CRMUser/CRMUser';
 import { useStaffDepartmentStore } from '~/stores/StaffDepartment/StaffDepartment';
 import { roleLabel } from '~/utils/options/user-roles';

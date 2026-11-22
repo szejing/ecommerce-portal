@@ -546,6 +546,14 @@ describe('ProductModule', () => {
 		expect(fetchLog).toHaveLength(0);
 	});
 
+	it('exports the catalogue CSV through the merchant proxy', async () => {
+		await mod.exportProducts();
+
+		expect(lastFetch().url).toBe('/merchant/products/export');
+		expect(lastFetch().opts.method).toBe('POST');
+		expect(lastFetch().opts.responseType).toBe('blob');
+	});
+
 	it('downloadImportTemplate uses blob response', async () => {
 		await mod.downloadImportTemplate();
 

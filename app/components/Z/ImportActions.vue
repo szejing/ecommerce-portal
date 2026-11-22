@@ -1,17 +1,17 @@
 <template>
 	<div class="flex flex-wrap items-center gap-2">
-		<UButton color="secondary" variant="soft" :loading="downloadingTemplate" class="cursor-pointer" @click="emit('downloadTemplate')">
+		<UButton color="secondary" variant="soft" :loading="downloadingTemplate" class="cursor-pointer" :class="{ 'min-h-11': touchFriendly }" @click="emit('downloadTemplate')">
 			<UIcon :name="ICONS.EXCEL" class="w-4 h-4" />
 			{{ templateLabel }}
 		</UButton>
-		<UButton color="primary" variant="soft" :loading="importing" class="cursor-pointer" @click="startImport">
+		<UButton color="primary" variant="soft" :loading="importing" class="cursor-pointer" :class="{ 'min-h-11': touchFriendly }" @click="startImport">
 			<UIcon :name="ICONS.UPLOAD" class="w-4 h-4" />
 			{{ importLabel }}
 		</UButton>
 		<input ref="fileInputRef" type="file" class="hidden" :accept="accept" @change="onFileChange" />
 		<UModal v-model:open="sourceModalOpen" :title="sourceModalTitle" :ui="{ content: 'w-full sm:max-w-lg' }">
 			<template #body>
-				<div class="flex flex-row gap-2">
+				<div class="flex gap-2" :class="touchFriendly ? 'flex-col sm:flex-row' : 'flex-row'">
 					<UButton
 						v-for="source in importSources"
 						:key="source.value"
@@ -43,6 +43,7 @@ const props = withDefaults(
 	defineProps<{
 		accept: string;
 		downloadingTemplate?: boolean;
+		touchFriendly?: boolean;
 		importing?: boolean;
 		isAllowedFile?: (file: File) => boolean;
 		formatErrorMessage?: string;

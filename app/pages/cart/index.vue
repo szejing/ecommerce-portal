@@ -1,18 +1,3 @@
 <template>
-	<div>
-		<UBreadcrumb :links="links" />
-		<h1>Cart</h1>
-	</div>
+	<ZPagePanel id="cart" title="Cart" />
 </template>
-
-<script lang="ts" setup>
-const links = [
-	{
-		label: 'Overview',
-		icon: ICONS.DASHBOARD_ROUNDED,
-		to: '/',
-	},
-];
-</script>
-
-<style scoped></style>

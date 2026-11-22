@@ -2,18 +2,42 @@
 	<UModal
 		:title="t('combo.addItems')"
 		:close="{ onClick: () => settle(undefined) }"
-		:ui="{ content: 'w-full sm:max-w-2xl md:max-w-3xl' }"
+		:ui="{ content: 'w-full sm:max-w-2xl md:max-w-3xl', footer: 'max-lg:pb-[max(0.75rem,env(safe-area-inset-bottom))]' }"
 		@update:open="onOpenChange"
 	>
 		<template #body>
 			<div class="space-y-4">
-				<div class="flex flex-wrap gap-2">
-					<UInput v-model="search" icon="i-lucide-search" :placeholder="t('combo.searchProducts')" class="flex-1" />
-					<USelect v-model="category" :items="categoryItems" :placeholder="t('combo.category')" class="w-44" />
+				<div class="flex flex-col gap-2 lg:flex-row lg:flex-wrap">
+					<UInput v-model="search" type="search" :aria-label="t('combo.searchProducts')" icon="i-lucide-search" :placeholder="t('combo.searchProducts')" class="flex-1" />
+					<USelect v-model="category" :items="categoryItems" :placeholder="t('combo.category')" class="min-h-11 w-full lg:min-h-0 lg:w-44" :aria-label="t('combo.category')" />
 				</div>
 				<p v-if="error" class="text-sm text-error">{{ error }}</p>
 				<div class="overflow-hidden rounded-lg border border-default">
+					<div class="max-h-[min(38dvh,20rem)] overflow-y-auto overscroll-contain lg:hidden" :aria-busy="loading">
+						<ZLoading v-if="loading" />
+						<p v-else-if="!choices.length" class="py-6 text-center text-sm text-muted">{{ t('combo.noMatchingProducts') }}</p>
+						<ul v-else class="divide-y divide-default">
+							<li v-for="product in choices" :key="rowId(product)">
+								<button
+									type="button"
+									class="flex min-h-14 w-full items-center gap-3 px-3 py-2 text-start focus-visible:outline-2 focus-visible:outline-primary"
+									:aria-pressed="selected?.code === product.code"
+									:class="{ 'bg-elevated': selected?.code === product.code }"
+									@click="selectProduct(product)"
+								>
+									<ZImage :src="product.thumbnail?.url || ''" :width="36" :height="36" />
+									<span class="min-w-0 flex-1 wrap-anywhere">
+										<span class="block text-sm font-semibold">{{ product.name || product.code }}</span>
+										<span v-if="product.name" class="block text-xs text-muted">{{ product.code }}</span>
+									</span>
+									<UIcon v-if="selected?.code === product.code" name="i-lucide-check" class="size-5 shrink-0 text-primary" aria-hidden="true" />
+								</button>
+							</li>
+						</ul>
+					</div>
+
 					<UTable
+						class="hidden lg:block"
 						:data="choices"
 						:columns="columns"
 						:loading="loading"
@@ -39,19 +63,19 @@
 					</UTable>
 				</div>
 				<div v-if="total > 0" class="flex justify-end">
-					<UPagination v-model:page="page" :items-per-page="PAGE_SIZE" :total="total" />
+					<ZPagination v-model:page="page" :items-per-page="PAGE_SIZE" :total="total" />
 				</div>
 				<UFormField v-if="selected?.variants?.length" :label="t('combo.exactVariant')" required>
 					<USelect
 						v-model="variantCode"
 						:items="selected.variants.map((v) => ({ label: v.name ?? v.variant_code, value: v.variant_code }))"
-						class="w-full"
+						class="min-h-11 w-full lg:min-h-0"
 					/>
 				</UFormField>
 			</div>
 		</template>
 		<template #footer>
-			<UButton :label="t('combo.addItems')" icon="i-lucide-plus" :disabled="!canAdd" @click="confirmAdd" />
+			<UButton class="max-lg:min-h-11 max-lg:w-full max-lg:justify-center" :label="t('combo.addItems')" icon="i-lucide-plus" :disabled="!canAdd" @click="confirmAdd" />
 		</template>
 	</UModal>
 </template>
@@ -148,7 +172,7 @@ async function load() {
 			$count: true,
 			...(searchTerm ? { $search: searchTerm } : {}),
 			$expand: 'type,variants,variants.price_types,thumbnail,categories,price_types',
-			$filter: `is_active eq true${category.value !== 'all' ? ` and categories/code eq '${category.value.replaceAll("'", "''")}'` : ''}`,
+			$filter: `is_active eq true${category.value !== 'all' ? ` and categories/code eq '${category.value.replaceAll('\'', '\'\'')}'` : ''}`,
 		});
 		if (current !== generation) return;
 		products.value = response.data ?? response.value ?? [];

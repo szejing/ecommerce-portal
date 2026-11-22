@@ -41,7 +41,7 @@
 			</UCard>
 
 			<div v-if="!initialize && getDisplayDepartments.length > 0" class="section-pagination">
-				<UPagination v-model="filter.current_page" :items-per-page="filter.page_size" :total="total_count" @update:page="updatePage" />
+				<ZPagination :page="filter.current_page" :items-per-page="filter.page_size" :total="total_count" @update:page="updatePage" />
 			</div>
 		</div>
 	</ZPagePanel>

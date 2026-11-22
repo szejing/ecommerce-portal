@@ -8,7 +8,7 @@
 					</span>
 					<UInput
 						v-model="variation.name"
-						:placeholder="t('components.variations.variationNamePlaceholder')"
+						:placeholder="t(namePlaceholderKey)"
 						:maxlength="14"
 						size="md"
 						class="max-w-48"
@@ -65,6 +65,10 @@ const props = defineProps({
 	variantCount: {
 		type: Number,
 		default: 0,
+	},
+	namePlaceholderKey: {
+		type: String,
+		default: 'components.variations.variationNamePlaceholder',
 	},
 });
 

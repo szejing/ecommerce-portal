@@ -1,6 +1,6 @@
 <template>
 	<ZPagePanel id="affiliate-detail" :title="pageTitle" back-to="/marketing/affiliates">
-		<div v-if="loading && !current_affiliate" class="w-full animate-in fade-in duration-200 space-y-6 max-w-3xl">
+		<div v-if="loading && !current_affiliate" class="w-full animate-in fade-in duration-200 max-w-3xl space-y-3 lg:space-y-6">
 			<div class="space-y-4">
 				<USkeleton class="h-8 w-48" />
 				<USkeleton class="h-4 w-full" />
@@ -8,35 +8,35 @@
 			</div>
 		</div>
 
-		<div v-else-if="current_affiliate" class="space-y-6 max-w-3xl">
-			<UCard>
+		<div v-else-if="current_affiliate" class="max-w-3xl space-y-3 lg:space-y-6">
+			<UCard :ui="{ header: 'max-lg:p-3', body: 'max-lg:p-3' }">
 				<template #header>
-					<h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{{ t('nav.affiliates') }} - {{ current_affiliate.slug }}</h2>
+					<h2 class="text-base font-semibold wrap-anywhere lg:text-lg text-neutral-900 dark:text-neutral-100">{{ t('nav.affiliates') }} - {{ current_affiliate.slug }}</h2>
 				</template>
 				<dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<div>
 						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ t('affiliate.slug') }}</dt>
-						<dd class="mt-1 text-sm text-neutral-900 dark:text-neutral-100">{{ current_affiliate.slug }}</dd>
+						<dd class="mt-1 text-sm wrap-anywhere text-neutral-900 dark:text-neutral-100">{{ current_affiliate.slug }}</dd>
 					</div>
 					<div>
 						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">User ID</dt>
-						<dd class="mt-1 text-sm text-neutral-900 dark:text-neutral-100">{{ current_affiliate.user_id }}</dd>
+						<dd class="mt-1 text-sm wrap-anywhere text-neutral-900 dark:text-neutral-100">{{ current_affiliate.user_id }}</dd>
 					</div>
 					<div>
 						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ t('affiliate.tier') }}</dt>
-						<dd class="mt-1 text-sm text-neutral-900 dark:text-neutral-100">{{ current_affiliate.tier?.name ?? '—' }}</dd>
+						<dd class="mt-1 text-sm wrap-anywhere text-neutral-900 dark:text-neutral-100">{{ current_affiliate.tier?.name ?? '—' }}</dd>
 					</div>
 					<div>
 						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ t('affiliate.referrals') }}</dt>
-						<dd class="mt-1 text-sm text-neutral-900 dark:text-neutral-100">{{ current_affiliate.total_referrals_count ?? 0 }}</dd>
+						<dd class="mt-1 text-sm wrap-anywhere text-neutral-900 dark:text-neutral-100">{{ current_affiliate.total_referrals_count ?? 0 }}</dd>
 					</div>
 					<div>
 						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ t('affiliate.balance') }}</dt>
-						<dd class="mt-1 text-sm text-neutral-900 dark:text-neutral-100">{{ current_affiliate.current_balance ?? 0 }}</dd>
+						<dd class="mt-1 text-sm wrap-anywhere text-neutral-900 dark:text-neutral-100">{{ current_affiliate.current_balance ?? 0 }}</dd>
 					</div>
 					<div>
 						<dt class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{{ t('affiliate.createdAt') }}</dt>
-						<dd class="mt-1 text-sm text-neutral-900 dark:text-neutral-100">
+						<dd class="mt-1 text-sm wrap-anywhere text-neutral-900 dark:text-neutral-100">
 							{{ current_affiliate.created_at ? new Date(current_affiliate.created_at).toLocaleString() : '—' }}
 						</dd>
 					</div>

@@ -11,6 +11,7 @@
 			<div :class="getInputType(template) === InputTypeEnum.BOOLEAN ? 'w-auto shrink-0' : 'w-full sm:min-w-[50%] sm:w-auto sm:text-end'">
 				<UInput
 					v-if="getInputType(template) === InputTypeEnum.TEXT"
+					:aria-label="template.set_desc"
 					type="text"
 					:model-value="getTextSettingValue(template)"
 					:disabled="template.is_disabled"
@@ -19,6 +20,7 @@
 				/>
 				<UInput
 					v-if="getInputType(template) === InputTypeEnum.NUMBER"
+					:aria-label="template.set_desc"
 					type="number"
 					:model-value="getTextSettingValue(template)"
 					:disabled="template.is_disabled"
@@ -27,12 +29,14 @@
 				/>
 				<USwitch
 					v-if="getInputType(template) === InputTypeEnum.BOOLEAN"
+					:aria-label="template.set_desc"
 					:model-value="getBooleanSettingValue(template)"
 					:disabled="template.is_disabled"
 					@update:model-value="(value) => updateSettingValue(template, value)"
 				/>
 				<UTextarea
 					v-if="getInputType(template) === InputTypeEnum.TEXTAREA"
+					:aria-label="template.set_desc"
 					:model-value="getTextSettingValue(template)"
 					:disabled="template.is_disabled"
 					:placeholder="template.default_val"
@@ -41,6 +45,7 @@
 				/>
 				<UInput
 					v-if="getInputType(template) === InputTypeEnum.MASKEDTEXTBOX"
+					:aria-label="template.set_desc"
 					type="text"
 					:model-value="getTextSettingValue(template)"
 					:disabled="template.is_disabled"
@@ -48,11 +53,12 @@
 					@update:model-value="(value) => updateSettingValue(template, value)"
 				/>
 				<div v-if="getInputType(template) === InputTypeEnum.GETFILENAME" class="space-y-1">
-					<UInput type="file" :disabled="template.is_disabled" @change="handleFileChange(template, $event)" />
+					<UInput type="file" :aria-label="template.set_desc" :disabled="template.is_disabled" @change="handleFileChange(template, $event)" />
 					<p v-if="getTextSettingValue(template)" class="text-xs text-gray-500">Current: {{ getTextSettingValue(template) }}</p>
 				</div>
 				<USelect
 					v-if="getInputType(template) === InputTypeEnum.SELECT"
+					:aria-label="template.set_desc"
 					:model-value="getTextSettingValue(template)"
 					:items="getSelectItems(template)"
 					value-key="value"
@@ -69,6 +75,7 @@
 				</USelect>
 				<USelect
 					v-if="getInputType(template) === InputTypeEnum.SELECT_MULTI"
+					:aria-label="template.set_desc"
 					multiple
 					:model-value="getMultiSelectSettingValue(template)"
 					:items="getSelectItems(template)"
@@ -88,7 +95,7 @@
 						</UBadge>
 					</template>
 				</USelect>
-				<div v-if="getInputType(template) === InputTypeEnum.OAUTH" class="flex justify-end gap-2">
+				<div v-if="getInputType(template) === InputTypeEnum.OAUTH" class="flex flex-wrap justify-end gap-2 max-lg:[&_a]:min-h-11 max-lg:[&_button]:min-h-11">
 					<UButton
 						v-if="!isOauthConnected(template)"
 						data-testid="oauth-connect"
@@ -317,7 +324,6 @@ const handleFileChange = (template: SettingTempl, event: Event) => {
 		updateSettingValue(template, file.name);
 	}
 };
-
 </script>
 
 <style scoped>

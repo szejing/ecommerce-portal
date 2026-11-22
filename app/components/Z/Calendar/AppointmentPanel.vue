@@ -21,10 +21,10 @@
 		</template>
 	</USlideover>
 
-	<UDrawer v-else v-model:open="open" :title="title" direction="bottom" handle-only>
+	<UDrawer v-else v-model:open="open" :title="title" direction="bottom" handle-only :ui="{ header: 'sr-only', container: 'p-3' }">
 		<button type="button" class="sr-only" tabindex="-1" aria-hidden="true">{{ title }}</button>
 		<template #body>
-			<div class="max-h-[min(82dvh,48rem)] overflow-y-auto overscroll-contain pb-4">
+			<div class="pb-[max(0.75rem,env(safe-area-inset-bottom))]">
 				<ZCalendarAppointmentPanelBody
 					:appointment="appointment"
 					:day-date="dayDate"
@@ -62,13 +62,13 @@ const props = defineProps<{
 
 const emit = defineEmits<{
 	'update:open': [open: boolean];
-	close: [];
-	back: [];
-	previous: [];
-	next: [];
-	edit: [appointment: Appointment];
-	delete: [code: string];
-	select: [appointment: Appointment];
+	'close': [];
+	'back': [];
+	'previous': [];
+	'next': [];
+	'edit': [appointment: Appointment];
+	'delete': [code: string];
+	'select': [appointment: Appointment];
 }>();
 
 const { t } = useI18n();

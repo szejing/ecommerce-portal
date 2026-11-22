@@ -1,25 +1,25 @@
 <template>
-	<ZPagePanel id="settings-store-profile" :title="t('nav.storeProfile')" back-to="/settings">
+	<ZPagePanel id="settings-store-profile" inline-mobile-actions :title="t('nav.storeProfile')" back-to="/settings">
 		<template v-if="isPageContentReady" #navbar-right>
-			<UButton color="neutral" variant="ghost" @click="onCancel">{{ t('common.cancel') }}</UButton>
-			<UButton color="success" :loading="merchantInfoStore.loading" :disabled="!isDirty" @click="onSave">
+			<UButton color="neutral" variant="ghost" class="max-lg:min-h-11" @click="onCancel">{{ t('common.cancel') }}</UButton>
+			<UButton color="success" class="max-lg:min-h-11" :loading="merchantInfoStore.loading" :disabled="!isDirty" @click="onSave">
 				<UIcon :name="ICONS.SAVE" class="w-4 h-4" />
 				{{ t('common.save') }}
 			</UButton>
 		</template>
 
-		<div v-if="!isPageContentReady" class="space-y-6 p-6">
+		<div v-if="!isPageContentReady" class="space-y-3 lg:space-y-6 lg:p-6">
 			<div class="space-y-2">
 				<USkeleton class="h-9 w-64 max-w-full" />
 				<USkeleton class="h-4 w-full max-w-lg" />
 			</div>
-			<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-				<div v-for="i in 4" :key="i" class="flex min-w-0 flex-col gap-2.5 rounded-xl border border-default p-4">
+			<div class="grid grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-4">
+				<div v-for="i in 4" :key="i" class="flex min-w-0 flex-col gap-1.5 rounded-xl border lg:gap-2.5 border-default p-4">
 					<USkeleton class="h-3 w-20" />
 					<USkeleton class="h-6 w-full" />
 				</div>
 			</div>
-			<UCard :ui="{ body: 'p-6' }">
+			<UCard :ui="{ body: 'p-3 lg:p-6' }">
 				<div class="space-y-6">
 					<USkeleton class="h-6 w-48" />
 					<div class="max-w-full sm:max-w-[200px]">
@@ -50,7 +50,7 @@
 				</div>
 			</UCard>
 		</div>
-		<div v-else class="space-y-6">
+		<div v-else class="mobile-form-controls space-y-3 lg:space-y-6">
 			<!-- Only while store is hidden — unhide here; when listed, use Hide store button instead -->
 			<div
 				v-if="hideStore"
@@ -82,7 +82,7 @@
 
 			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<div class="min-w-0 space-y-2">
-					<h2 class="text-3xl font-bold text-gray-900 dark:text-white">{{ t('nav.storeProfile') }}</h2>
+					<h2 class="sr-only font-bold lg:not-sr-only lg:text-3xl text-gray-900 dark:text-white">{{ t('nav.storeProfile') }}</h2>
 					<p class="text-gray-600 dark:text-gray-400">{{ t('pages.storeProfileDesc') }}</p>
 				</div>
 				<UButton
@@ -92,7 +92,7 @@
 					:loading="merchantInfoStore.updating"
 					:disabled="merchantInfoStore.updating"
 					icon="i-heroicons-eye-slash"
-					class="shrink-0 self-start opacity-40 hover:opacity-100"
+					class="min-h-11 shrink-0 self-start lg:min-h-0 lg:opacity-40 lg:hover:opacity-100"
 					@click="onHideStoreClick"
 				>
 					{{ t('pages.storeProfilePage.hideStoreButton') }}
@@ -100,28 +100,28 @@
 			</div>
 
 			<!-- Merchant ID | Account Type | Expired Date | Account Status – card based, tinted backgrounds -->
-			<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+			<div class="grid grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-4">
 				<div
-					class="flex min-w-0 flex-col gap-2.5 rounded-xl border border-primary-200/50 bg-primary-50/80 p-4 dark:border-primary-800/50 dark:bg-primary-950/40"
+					class="flex min-w-0 flex-col gap-1.5 rounded-xl border lg:gap-2.5 border-primary-200/50 bg-primary-50/80 p-3 lg:p-4 dark:border-primary-800/50 dark:bg-primary-950/40"
 				>
 					<span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 wrap-break-word leading-tight">
 						{{ t('pages.storeProfilePage.merchantId') }}
 					</span>
-					<span class="text-lg font-semibold font-mono text-primary-700 dark:text-primary-300">{{ merchantId }}</span>
+					<span class="text-lg font-semibold font-mono wrap-anywhere text-primary-700 dark:text-primary-300">{{ merchantId }}</span>
 				</div>
-				<div class="flex min-w-0 flex-col gap-2.5 rounded-xl border p-4" :class="accountStatusCardBg">
+				<div class="flex min-w-0 flex-col gap-1.5 rounded-xl border lg:gap-2.5 p-4" :class="accountStatusCardBg">
 					<span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 wrap-break-word leading-tight">
 						{{ t('pages.storeProfilePage.accountStatus') }}
 					</span>
 					<span class="text-lg font-semibold capitalize" :class="accountStatusTextClass">{{ accountStatusLabel }}</span>
 				</div>
-				<div class="flex min-w-0 flex-col gap-2.5 rounded-xl border p-4" :class="accountTypeCardBg">
+				<div class="flex min-w-0 flex-col gap-1.5 rounded-xl border lg:gap-2.5 p-4" :class="accountTypeCardBg">
 					<span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 wrap-break-word leading-tight">
 						{{ t('pages.storeProfilePage.accountType') }}
 					</span>
 					<span class="text-lg font-semibold" :class="accountTypeTextClass">{{ accountType }}</span>
 				</div>
-				<div class="flex min-w-0 flex-col gap-2.5 rounded-xl border p-4" :class="expiredDateCardBg">
+				<div class="flex min-w-0 flex-col gap-1.5 rounded-xl border lg:gap-2.5 p-4" :class="expiredDateCardBg">
 					<span class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 wrap-break-word leading-tight">
 						{{ t('pages.storeProfilePage.expiredDate') }}
 					</span>
@@ -136,7 +136,7 @@
 					<h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('pages.storeProfilePage.merchantInformation') }}</h3>
 
 					<!-- Identity -->
-					<section class="space-y-4 rounded-xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
+					<section class="space-y-4 rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 lg:p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
 						<h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">
 							{{ t('pages.storeProfilePage.sectionIdentity') }}
 						</h4>
@@ -236,7 +236,7 @@
 					</section>
 
 					<!-- Contact -->
-					<section class="space-y-4 rounded-xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
+					<section class="space-y-4 rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 lg:p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
 						<h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">
 							{{ t('pages.storeProfilePage.sectionContact') }}
 						</h4>
@@ -308,7 +308,7 @@
 					</section>
 
 					<!-- Address -->
-					<section class="space-y-4 rounded-xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
+					<section class="space-y-4 rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 lg:p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
 						<h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ t('common.address') }}</h4>
 
 						<div
@@ -392,7 +392,7 @@
 					</section>
 
 					<!-- Operating hours -->
-					<section class="rounded-xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
+					<section class="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 lg:p-4 dark:border-slate-700/60 dark:bg-slate-900/40">
 						<ZFormStoreOperatingHours
 							:off-days="operationOffDaysArray"
 							:start-time="getMerchantValue(GROUP_CODE.INFO, MERCHANT.OPERATION_START_TIME) || null"

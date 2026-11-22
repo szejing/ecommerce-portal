@@ -30,13 +30,8 @@ export const usePaymentTypeStore = defineStore('paymentTypeStore', {
 	actions: {
 		async updatePageSize(size: number) {
 			this.filter.page_size = size;
-
-			if (this.filter.page_size > this.payment_type_groups.length) {
-				this.filter.current_page = 1;
-				return;
-			}
-
-			this.getPaymentTypeGroups();
+			this.filter.current_page = 1;
+			await this.getPaymentTypeGroups();
 		},
 
 		async updatePage(page: number) {

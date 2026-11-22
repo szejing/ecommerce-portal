@@ -1,13 +1,13 @@
 <template>
-	<div class="h-screen flex justify-center">
-		<div class="platform-shell-hero hidden sm:flex w-full h-full flex-col items-center justify-center">
-			<img class="my-2 text-center mx-auto w-100" :src="logoSrc" :alt="logoAlt" @click="navigateTo('/')" />
+	<div class="min-h-dvh flex justify-center">
+		<div class="platform-shell-hero hidden lg:flex w-full self-stretch flex-col items-center justify-center">
+			<img class="my-2 text-center mx-auto w-full max-w-100 px-6" :src="logoSrc" :alt="logoAlt" @click="navigateTo('/')" />
 		</div>
-		<div class="w-full sm:w-[60%] min-h-screen px-10 flex flex-col relative">
-			<div class="absolute top-10 right-10">
-				<USelect :model-value="locale" :items="localeItems" size="sm" class="w-36" @update:model-value="switchLocale" />
+		<div class="w-full lg:w-[60%] min-h-dvh px-4 py-4 sm:px-10 flex flex-col relative">
+			<div class="self-end lg:absolute lg:top-10 lg:right-10">
+				<USelect :model-value="locale" :items="localeItems" size="sm" class="w-36 max-lg:min-h-11" @update:model-value="switchLocale" />
 			</div>
-			<div class="flex-1 flex justify-center items-center w-full">
+			<div class="flex-1 flex justify-center items-center w-full py-5 lg:py-0">
 				<div class="w-full">
 					<FormLogin />
 				</div>

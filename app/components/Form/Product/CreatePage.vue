@@ -1,7 +1,7 @@
 <template>
-	<ZPagePanel id="product-create" :title="t('pages.addNewProduct')" back-to="/products" grow>
+	<ZPagePanel id="product-create" :title="pageTitle" back-to="/products/listing" grow>
 		<div class="container w-full mx-auto">
-			<FormProductCreation ref="formRef" />
+			<FormProductCreation ref="formRef" :surface="surface" />
 		</div>
 
 		<template #footer>
@@ -19,7 +19,7 @@
 
 							<UButton color="success" variant="solid" size="lg" :loading="adding" @click="() => onSubmit()">
 								<UIcon :name="ICONS.CHECK_ROUNDED" />
-								{{ t('pages.createProductButton') }}
+								{{ t(isService ? 'pages.createServiceButton' : 'pages.createProductButton') }}
 							</UButton>
 						</div>
 					</div>
@@ -28,7 +28,7 @@
 					<div class="md:hidden flex flex-col gap-2">
 						<UButton color="success" size="md" class="w-full" :loading="adding" @click="() => onSubmit()">
 							<UIcon :name="ICONS.CHECK_ROUNDED" class="w-4 h-4" />
-							<span class="text-sm">{{ t('pages.createProductButton') }}</span>
+							<span class="text-sm">{{ t(isService ? 'pages.createServiceButton' : 'pages.createProductButton') }}</span>
 						</UButton>
 						<div class="flex gap-2">
 							<UButton color="neutral" variant="soft" size="sm" class="flex-1" :loading="adding" @click="() => saveDraft()">
@@ -49,13 +49,20 @@
 <script lang="ts" setup>
 import { ICONS } from '~/utils/icons';
 import { failedNotification, successNotification } from '~/stores/AppUi/AppUi';
+import { type CatalogCreateSurface, typeIdForSurface } from '~/utils/catalog-form';
+
+const props = defineProps<{ surface: CatalogCreateSurface }>();
 
 const productStore = useProductStore();
+const productTypeStore = useProductTypeStore();
+productStore.resetNewProduct();
 const { adding, new_product } = storeToRefs(productStore);
 const formRef = ref<{ submit: () => void } | null>(null);
 
 const { t } = useI18n();
-useHead({ title: () => t('pages.createProductTitle') });
+const isService = computed(() => props.surface === 'service');
+const pageTitle = computed(() => t(isService.value ? 'pages.addNewService' : 'pages.addNewProduct'));
+useHead({ title: () => t(isService.value ? 'pages.createServiceTitle' : 'pages.createProductTitle') });
 
 const isDirty = computed(() => {
 	const p = new_product.value;
@@ -67,6 +74,12 @@ useLeavePageGuard(isDirty, {
 });
 
 const saveDraft = async () => {
+	const stampedTypeId = typeIdForSurface(props.surface, productTypeStore.prod_types, new_product.value.type_id);
+	if (stampedTypeId == null) {
+		failedNotification(t('pages.productTypeNotReady'));
+		return;
+	}
+	new_product.value.type_id = stampedTypeId;
 	const outcome = await productStore.saveNewDraft();
 	if (outcome.status === 'completed') {
 		successNotification(t('product.notifications.draftSaved', { code: outcome.product.code }));

@@ -66,4 +66,20 @@ describe('ZInputProductBasicInfoSection descriptions', () => {
 		expect(wrapper.text()).not.toContain('Long Description');
 		expect(wrapper.find('.long-desc-editor-stub').exists()).toBe(false);
 	});
+
+	it('shows the type card and service labels on the service form', async () => {
+		const state = reactive<ProductBasicInfoState>(baseState());
+
+		const wrapper = await mountSuspended(ZInputProductBasicInfoSection, {
+			props: { state, fieldNoun: 'service', allowedTypeValues: ['service'] },
+			...mountOptions,
+		});
+
+		expect(wrapper.find('[data-testid="product-type-locked"]').exists()).toBe(false);
+		const typeCard = wrapper.findComponent({ name: 'ZSelectMenuProductType' });
+		expect(typeCard.exists()).toBe(true);
+		expect(typeCard.props('allowedValues')).toEqual(['service']);
+		expect(wrapper.text()).toContain('Service Code');
+		expect(wrapper.text()).toContain('Service Name');
+	});
 });

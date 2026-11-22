@@ -199,7 +199,7 @@ export const useSummSaleStore = defineStore('summSaleStore', {
 			return this.exportSummary();
 		},
 
-		async exportSummary(): Promise<SummSaleExportOutcome> {
+		async exportSummary(scope: 'page' | 'matching' = 'page'): Promise<SummSaleExportOutcome> {
 			this.sale_summ.exporting = true;
 			const { $api } = useNuxtApp();
 			let objectUrl: string | undefined;
@@ -207,8 +207,12 @@ export const useSummSaleStore = defineStore('summSaleStore', {
 				const blob = await $api.summSales.exportSalesSummary({
 					$filter: buildSummSaleBillFilter(this.sale_summ.filter),
 					$orderby: 'biz_date desc,status asc',
-					$top: this.sale_summ.page_size,
-					$skip: (this.sale_summ.current_page - 1) * this.sale_summ.page_size,
+					...(scope === 'page'
+						? {
+								$top: this.sale_summ.page_size,
+								$skip: (this.sale_summ.current_page - 1) * this.sale_summ.page_size,
+							}
+						: {}),
 				});
 				if (!blob) return { status: 'failed', failure: { kind: 'export_empty' } };
 				objectUrl = URL.createObjectURL(blob);
@@ -293,7 +297,7 @@ export const useSummSaleStore = defineStore('summSaleStore', {
 			}
 		},
 
-		async exportSaleItemSummary() {
+		async exportSaleItemSummary(scope: 'page' | 'matching' = 'page') {
 			this.sale_summ_items.exporting = true;
 			const { $api } = useNuxtApp();
 			try {
@@ -322,8 +326,12 @@ export const useSummSaleStore = defineStore('summSaleStore', {
 					$filter: filter,
 					$orderby: 'biz_date desc',
 					$count: true,
-					$top: this.sale_summ_items.page_size,
-					$skip: (this.sale_summ_items.current_page - 1) * this.sale_summ_items.page_size,
+					...(scope === 'page'
+						? {
+								$top: this.sale_summ_items.page_size,
+								$skip: (this.sale_summ_items.current_page - 1) * this.sale_summ_items.page_size,
+							}
+						: {}),
 				});
 
 				if (blob) {
@@ -420,7 +428,7 @@ export const useSummSaleStore = defineStore('summSaleStore', {
 			}
 		},
 
-		async exportSalePaymentSummary() {
+		async exportSalePaymentSummary(scope: 'page' | 'matching' = 'page') {
 			this.sale_summ_payments.exporting = true;
 			const { $api } = useNuxtApp();
 			try {
@@ -454,8 +462,12 @@ export const useSummSaleStore = defineStore('summSaleStore', {
 					$filter: filter,
 					$orderby: 'biz_date desc',
 					$count: true,
-					$top: this.sale_summ_payments.page_size,
-					$skip: (this.sale_summ_payments.current_page - 1) * this.sale_summ_payments.page_size,
+					...(scope === 'page'
+						? {
+								$top: this.sale_summ_payments.page_size,
+								$skip: (this.sale_summ_payments.current_page - 1) * this.sale_summ_payments.page_size,
+							}
+						: {}),
 				});
 
 				if (blob) {
@@ -526,7 +538,7 @@ export const useSummSaleStore = defineStore('summSaleStore', {
 			}
 		},
 
-		async exportSaleCustomerSummary() {
+		async exportSaleCustomerSummary(scope: 'page' | 'matching' = 'page') {
 			this.sale_summ_customer.exporting = true;
 			const { $api } = useNuxtApp();
 
@@ -549,8 +561,12 @@ export const useSummSaleStore = defineStore('summSaleStore', {
 					$filter: filter,
 					$orderby: 'biz_date desc',
 					$count: true,
-					$top: this.sale_summ_customer.page_size,
-					$skip: (this.sale_summ_customer.current_page - 1) * this.sale_summ_customer.page_size,
+					...(scope === 'page'
+						? {
+								$top: this.sale_summ_customer.page_size,
+								$skip: (this.sale_summ_customer.current_page - 1) * this.sale_summ_customer.page_size,
+							}
+						: {}),
 				});
 
 				if (blob) {

@@ -28,12 +28,12 @@
 					</UFormField>
 				</div>
 
-				<UFormField name="type_id" :label="t('components.productUpdate.productType')" required>
-					<ZSelectMenuProductType v-model:type-id="state.type_id" />
+				<UFormField name="type_id">
+					<ZSelectMenuProductType v-model:type-id="state.type_id" :allowed-values="allowedTypeValues" />
 				</UFormField>
 
 				<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-					<UFormField name="code" :label="t('components.productUpdate.productCode')">
+					<UFormField name="code" :label="t(fieldNoun === 'service' ? 'components.productUpdate.serviceCode' : 'components.productUpdate.productCode')">
 						<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.uniqueIdentifier') }}</p>
 						<UInput
 							:model-value="state.code"
@@ -42,7 +42,11 @@
 							@update:model-value="onCodeInput($event)"
 						/>
 					</UFormField>
-					<UFormField name="name" :label="t('components.productUpdate.productName')" required>
+					<UFormField
+						name="name"
+						:label="t(fieldNoun === 'service' ? 'components.productUpdate.serviceName' : 'components.productUpdate.productName')"
+						required
+					>
 						<p class="text-xs text-neutral-500 my-1">{{ t('components.productUpdate.nameCustomersSee') }}</p>
 						<UInput v-model="state.name" :placeholder="t('components.productUpdate.productNamePlaceholder')" />
 					</UFormField>
@@ -176,8 +180,10 @@ const props = withDefaults(
 		codeDisabled?: boolean;
 		showLongDescription?: boolean;
 		showInventory?: boolean;
+		allowedTypeValues?: string[];
+		fieldNoun?: 'product' | 'service';
 	}>(),
-	{ codeDisabled: false, showLongDescription: true, showInventory: false },
+	{ codeDisabled: false, showLongDescription: true, showInventory: false, fieldNoun: 'product' },
 );
 
 const emit = defineEmits<{

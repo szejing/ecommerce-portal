@@ -1,22 +1,43 @@
 <template>
 	<div class="flex w-full min-w-0 flex-col gap-2">
 		<div class="flex w-full min-w-0 flex-wrap items-end gap-2">
-			<div class="flex min-w-48 flex-1 basis-64 flex-col gap-1.5">
-				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.searchLabel') }}</label>
+			<div class="flex min-w-0 flex-1 lg:min-w-48 lg:basis-64 flex-col gap-1.5">
+				<label class="text-xs font-medium text-gray-700 max-lg:sr-only dark:text-gray-300">{{ t('components.filter.searchLabel') }}</label>
 				<UInput
 					:model-value="combo_filters.query"
+					type="search"
+					:aria-label="t('components.filter.searchLabel')"
 					:placeholder="t('components.filter.searchCombo')"
 					:icon="ICONS.SEARCH_ROUNDED"
 					@update:model-value="productStore.setComboSearch"
 				/>
 			</div>
 
-			<div class="flex w-44 shrink-0 flex-col gap-1.5">
+			<div class="hidden w-44 shrink-0 flex-col gap-1.5 lg:flex">
 				<label class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ t('components.filter.status') }}</label>
 				<ZSelectMenuProductStatus :status="combo_filters.status" @update:status="productStore.setComboStatus" />
 			</div>
 
-			<div class="flex shrink-0 items-end gap-2">
+			<UDrawer :title="t('portalMobile.filters')" :close="{ class: 'min-h-11 min-w-11 justify-center' }">
+				<UButton color="neutral" variant="outline" :icon="ICONS.FILTER" :label="t('portalMobile.filters')" class="min-h-11 shrink-0 lg:hidden" />
+				<template #body>
+					<div class="space-y-3 pb-[env(safe-area-inset-bottom)]">
+						<UFormField :label="t('components.filter.status')">
+							<ZSelectMenuProductStatus :status="combo_filters.status" class="min-h-11 w-full" @update:status="productStore.setComboStatus" />
+						</UFormField>
+						<UButton
+							v-if="combo_filters.status"
+							color="neutral"
+							variant="outline"
+							:label="t('components.filter.clear')"
+							class="min-h-11"
+							@click="productStore.setComboStatus(undefined)"
+						/>
+					</div>
+				</template>
+			</UDrawer>
+
+			<div class="hidden shrink-0 items-end gap-2 lg:flex">
 				<div class="flex gap-2">
 					<UButton variant="outline" color="neutral" :disabled="is_loading" @click="productStore.clearComboFilters">
 						<UIcon name="i-heroicons-arrow-path" class="w-4 h-4" />
@@ -30,7 +51,7 @@
 			</div>
 		</div>
 
-		<div v-if="hasActiveFilters" class="flex flex-wrap gap-2 items-center">
+		<div v-if="hasActiveFilters" class="hidden flex-wrap items-center gap-2 lg:flex">
 			<span class="text-xs text-gray-600 dark:text-gray-400">{{ t('components.filter.activeFilters') }}</span>
 			<UBadge v-if="combo_filters.query" color="info" variant="subtle" size="sm" @click="productStore.setComboSearch('')">
 				{{ t('components.filter.search') }}: {{ combo_filters.query }}

@@ -1,7 +1,7 @@
 <template>
 	<div class="flex w-full min-w-0 flex-col gap-2">
 		<div class="flex w-full min-w-0 flex-wrap items-center gap-2">
-			<div class="flex flex-wrap gap-1.5" role="group" :aria-label="t('components.filter.view')">
+			<div class="hidden flex-wrap gap-1.5 lg:flex" role="group" :aria-label="t('components.filter.view')">
 				<UButton
 					v-for="tab in viewTabs"
 					:key="tab.value"
@@ -16,19 +16,43 @@
 				/>
 			</div>
 
-			<ZDateRange class="shrink-0" :model-value="filters.date_range" hide-presets @update:model-value="appointmentStore.setDateRange" />
+			<ZDateRange class="hidden shrink-0 lg:flex" :model-value="filters.date_range" hide-presets @update:model-value="appointmentStore.setDateRange" />
 
 			<UInput
 				:model-value="filters.query"
 				:placeholder="t('components.filter.searchByNamePhone')"
 				:aria-label="t('components.filter.searchLabel')"
 				:icon="ICONS.SEARCH_ROUNDED"
-				class="min-w-48 flex-1 basis-56"
-				@update:model-value="appointmentStore.setSearch"
+				type="search"
+				class="min-w-0 flex-1 lg:min-w-48 lg:basis-56"
+				@update:model-value="setSearch"
 			/>
+			<UDrawer :title="t('portalMobile.filters')" :close="{ class: 'min-h-11 min-w-11 justify-center' }">
+				<UButton color="neutral" variant="outline" :icon="ICONS.FILTER" :label="t('portalMobile.filters')" class="min-h-11 shrink-0 lg:hidden" />
+				<template #body>
+					<div class="space-y-4 pb-[env(safe-area-inset-bottom)]">
+						<div class="space-y-2">
+							<p class="text-sm font-medium">{{ t('components.filter.dateRange') }}</p>
+							<ZDateRange :model-value="filters.date_range" hide-presets @update:model-value="appointmentStore.setDateRange" />
+						</div>
+						<slot name="mobile-status" />
+					</div>
+				</template>
+			</UDrawer>
 		</div>
 
-		<div v-if="hasActiveFilters" class="flex flex-wrap items-center gap-2">
+		<div class="flex flex-wrap items-center justify-between gap-2 lg:hidden">
+			<USelect
+				:model-value="filter.view"
+				:items="viewTabs"
+				:aria-label="t('components.filter.view')"
+				class="min-h-11 w-44 shrink-0"
+				@update:model-value="selectView"
+			/>
+			<slot name="mobile-action" />
+		</div>
+
+		<div v-if="hasActiveFilters" class="hidden lg:flex flex-wrap items-center gap-2">
 			<span class="text-xs text-gray-600 dark:text-gray-400">{{ t('components.filter.activeFilters') }}</span>
 			<UBadge v-if="filters.query" color="info" variant="subtle" size="sm" @click="appointmentStore.setSearch('')">
 				{{ t('components.filter.search') }}: {{ filters.query }}
@@ -43,6 +67,7 @@
 </template>
 
 <script lang="ts" setup>
+import { useMediaQuery } from '@vueuse/core';
 import type { AppointmentView } from '~/stores/Appointment/Appointment';
 import { ICONS } from '~/utils/icons';
 
@@ -56,6 +81,14 @@ const viewTabs = computed(() => [
 
 const appointmentStore = useAppointmentStore();
 const { filter, filters } = storeToRefs(appointmentStore);
+const isDesktop = useMediaQuery('(min-width: 1024px)', { ssrWidth: 1024 });
+
+function setSearch(query: string) {
+	if (!isDesktop.value && query.trim() && !filters.value.query.trim()) {
+		selectView('listing');
+	}
+	appointmentStore.setSearch(query);
+}
 
 const hasActiveFilters = computed(() => Boolean(filters.value.query) || (filters.value.status && filters.value.status !== 'All'));
 

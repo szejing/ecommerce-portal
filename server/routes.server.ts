@@ -38,6 +38,7 @@ export const Routes = {
 		Single: (code: string) => `${API_PATH.PROD}/${code}`,
 		BySlug: (slug: string) => `${API_PATH.PROD}/by-slug/${encodeURIComponent(slug)}`,
 		Many: () => `${API_PATH.PROD}/`,
+		Export: () => `${API_PATH.PROD}/export`,
 		Import: () => `${API_PATH.PROD}/import`,
 		ImportTemplate: () => `${API_PATH.PROD}/import/template`,
 		Update: (code: string) => `${API_PATH.PROD}/${code}`,

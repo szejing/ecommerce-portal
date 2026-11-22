@@ -43,13 +43,8 @@ export const useTaxRuleStore = defineStore('taxRuleStore', {
 
 		async updatePageSize(size: number) {
 			this.filter.page_size = size;
-
-			if (this.filter.page_size > this.tax_rules.length) {
-				this.filter.current_page = 1;
-				return;
-			}
-
-			this.getTaxRules();
+			this.filter.current_page = 1;
+			await this.getTaxRules();
 		},
 
 		async updatePage(page: number) {
@@ -66,7 +61,9 @@ export const useTaxRuleStore = defineStore('taxRuleStore', {
 			this.loading = true;
 			const { $api } = useNuxtApp();
 			try {
+				const search = this.filter.query.trim();
 				const { data, '@odata.count': total } = await $api.taxRule.getMany({
+					...(search ? { $search: search } : {}),
 					$top: this.filter.page_size,
 					$count: true,
 					$skip: (this.filter.current_page - 1) * this.filter.page_size,

@@ -1,5 +1,5 @@
 <template>
-	<section class="space-y-4" aria-labelledby="shipment-workflow-title">
+	<section v-if="desktop" class="hidden space-y-4 lg:block" aria-labelledby="shipment-workflow-title">
 		<div class="rounded-lg border border-default bg-default p-4 sm:p-5">
 			<h2 id="shipment-workflow-title" class="sr-only">{{ t('shipmentArrangement.workflow.title') }}</h2>
 			<ol class="grid gap-5 lg:grid-cols-3 lg:gap-6">
@@ -47,9 +47,46 @@
 
 		<UAlert color="warning" variant="soft" icon="i-lucide-triangle-alert" :description="t('shipmentArrangement.workflow.consequence')" />
 	</section>
+	<section v-else class="space-y-2 rounded-lg border border-default bg-default p-3 lg:hidden" :aria-label="t('shipmentArrangement.workflow.title')">
+		<div class="grid grid-cols-2 gap-2">
+			<UButton
+				data-testid="workflow-export"
+				class="min-h-11 min-w-0 justify-center whitespace-normal"
+				icon="i-lucide-download"
+				:label="t('shipmentArrangement.workflow.exportTitle')"
+				:disabled="pendingCount === 0"
+				:loading="exporting"
+				@click="emit('export')"
+			/>
+			<UButton
+				data-testid="workflow-import"
+				class="min-h-11 min-w-0 justify-center whitespace-normal"
+				color="primary"
+				variant="outline"
+				icon="i-lucide-upload"
+				:label="t('shipmentArrangement.workflow.upload')"
+				:loading="importing"
+				@click="emit('import')"
+			/>
+		</div>
+		<details>
+			<summary class="min-h-11 cursor-pointer py-3 text-sm font-medium text-primary">
+				{{ t('shipmentArrangement.workflow.title') }}
+			</summary>
+			<ol class="list-decimal space-y-2 ps-5 text-sm">
+				<li v-for="step in steps" :key="step.number">
+					<p class="font-medium text-default">{{ step.title }}</p>
+					<p class="text-muted">{{ step.body }}</p>
+				</li>
+			</ol>
+			<UAlert color="warning" variant="soft" class="mt-3" icon="i-lucide-triangle-alert" :description="t('shipmentArrangement.workflow.consequence')" />
+		</details>
+	</section>
 </template>
 
 <script setup lang="ts">
+import { useMediaQuery } from '@vueuse/core';
+
 const props = withDefaults(
 	defineProps<{
 		pendingCount: number;
@@ -68,6 +105,7 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+const desktop = useMediaQuery('(min-width: 1024px)', { ssrWidth: 1024 });
 const steps = computed(() => [
 	{
 		number: 1,

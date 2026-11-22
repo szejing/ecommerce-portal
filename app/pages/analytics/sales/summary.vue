@@ -1,33 +1,49 @@
 <template>
-	<ZPagePanel id="analytics-sales-summary" :title="t('pages.analyticsSalesSummary')" back-to="/analytics/sales">
+	<ZPagePanel id="analytics-sales-summary" desktop-toolbar :title="t('pages.analyticsSalesSummary')" back-to="/analytics/sales">
 		<template #toolbar>
 			<ZSectionFilterSaleSumm />
 		</template>
 
-		<div class="space-y-6">
-			<ZTableToolbar
-				:model-value="sale_summ.page_size"
+		<div class="min-w-0 space-y-3 lg:space-y-6">
+			<ZAnalyticsReportMobileControls
+				v-model:filters-open="filtersOpen"
 				v-model:selected-column-keys="selectedColumnKeys"
+				:filters="sale_summ.filter"
+				:fields="['status']"
+				:page-size="sale_summ.page_size"
+				:column-options="columnOptions"
+				:loading="sale_summ.loading"
+				:exporting="sale_summ.exporting"
+				:total="sale_summ.total_data"
+				@apply-filters="applyMobileFilters"
+				@update:page-size="setMobilePageSize"
+				@export="exportSummary('matching')"
+			/>
+			<ZTableToolbar
+				v-model:selected-column-keys="selectedColumnKeys"
+				:model-value="sale_summ.page_size"
 				:page-size-options="options_page_size"
 				:export-enabled="true"
 				:exporting="sale_summ.exporting"
 				:column-options="columnOptions"
+				class="max-lg:hidden"
 				@update:model-value="salesSummStore.setPageSize"
 				@export="exportSummary"
 			/>
 
 			<UCard class="overflow-hidden" :ui="{ body: 'p-0 sm:p-0' }">
-				<UTable
+				<ZAnalyticsReportTable
+					role="region" tabindex="0" :aria-label="t('portalMobile.reportTable')"
 					:data="rows"
-					:columns="visibleDailyColumns"
-					:loading="loading"
-					:ui="{
+					:columns="visibleDailyColumns" :column-options="columnOptions" :primary-keys="['biz_date', 'status', 'net_amt', 'total_txns', 'total_qty']"
+					:empty-title="t('pages.noSalesSummaryFound')" :loading="loading" :ui="{
 						root: 'relative overflow-auto',
 						base: 'min-w-[980px]',
 						th: 'whitespace-nowrap',
 						td: 'whitespace-nowrap',
 						tfoot: 'bg-elevated/50 border-t border-default',
 					}"
+					@edit-filters="filtersOpen = true"
 				>
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
@@ -36,11 +52,11 @@
 							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
-				</UTable>
+				</ZAnalyticsReportTable>
 			</UCard>
 
 			<div v-if="data.length > 0" class="section-pagination">
-				<UPagination :page="current_page" :items-per-page="sale_summ.page_size" :total="sale_summ.total_data" @update:page="salesSummStore.setPage" />
+				<ZPagination :page="current_page" :items-per-page="sale_summ.page_size" :total="sale_summ.total_data" @update:page="salesSummStore.setPage" />
 			</div>
 		</div>
 	</ZPagePanel>
@@ -60,6 +76,7 @@ useHead({ title: () => t('pages.saleSummaryTitle') });
 
 const salesSummStore = useSummSaleStore();
 const { sale_summ, filters, listFailure } = storeToRefs(salesSummStore);
+const { filtersOpen, applyMobileFilters, setMobilePageSize } = useAnalyticsReportControls(sale_summ, salesSummStore.refreshListing);
 const loading = computed(() => sale_summ.value.loading);
 
 watch(listFailure, (failure) => {
@@ -95,8 +112,8 @@ const rows = computed(() =>
 	}),
 );
 
-const exportSummary = async () => {
-	const outcome = await salesSummStore.exportSummary();
+const exportSummary = async (scope: 'page' | 'matching' = 'page') => {
+	const outcome = await salesSummStore.exportSummary(scope);
 	if (outcome.status === 'completed') successNotification(t('summSale.notifications.exported'));
 	else if (outcome.failure.kind === 'export_empty') failedNotification(t('summSale.notifications.exportFailed'));
 	else failedNotification(outcome.failure.message);

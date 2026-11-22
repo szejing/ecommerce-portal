@@ -1,7 +1,7 @@
 <template>
 	<div class="w-full">
 		<UForm ref="formRef" :schema="outletSchema" :state="formState" class="grid grid-cols-1 lg:grid-cols-12 gap-6" @submit="onSubmit">
-			<div class="lg:col-span-9 space-y-6">
+			<div class="min-w-0 space-y-3 lg:col-span-9 lg:space-y-6">
 				<div class="space-y-3">
 					<div class="flex items-center gap-2">
 						<UIcon :name="ICONS.OUTLET" class="w-5 h-5 text-primary-500" />

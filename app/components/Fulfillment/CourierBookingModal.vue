@@ -279,6 +279,7 @@ watchDebounced(
 <template>
 	<UModal
 		v-model:open="open"
+		:ui="{ header: 'max-lg:p-3', body: 'max-lg:p-3', footer: 'max-lg:p-3 max-lg:pb-[max(0.75rem,env(safe-area-inset-bottom))]' }"
 		:title="t('components.fulfillment.courierBooking.title')"
 		:description="
 			activeTarget ? t('components.fulfillment.courierBooking.description', { orderNo: activeTarget.orderNo, batchNo: activeTarget.batchNo }) : undefined
@@ -290,35 +291,35 @@ watchDebounced(
 				{{ t('components.fulfillment.courierBooking.queueProgress', { current: queueIndex + 1, total: targets.length }) }}
 			</div>
 
-			<div class="space-y-4">
+			<div class="mobile-form-controls space-y-3 lg:space-y-4">
 				<div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-					<label class="space-y-1 text-sm">
+					<label class="block min-w-0 space-y-1 text-sm">
 						<span>{{ t('components.fulfillment.courierBooking.weightKg') }}</span>
-						<UInput v-model="parcel.weight_kg" type="number" min="0" step="0.01" data-testid="courier-booking-weight" />
+						<UInput v-model="parcel.weight_kg" type="number" min="0" inputmode="decimal" class="w-full" step="0.01" data-testid="courier-booking-weight" />
 					</label>
-					<label class="space-y-1 text-sm">
+					<label class="block min-w-0 space-y-1 text-sm">
 						<span>{{ t('components.fulfillment.courierBooking.widthCm') }}</span>
-						<UInput v-model="parcel.width_cm" type="number" min="0" step="0.1" data-testid="courier-booking-width" />
+						<UInput v-model="parcel.width_cm" type="number" min="0" inputmode="decimal" class="w-full" step="0.1" data-testid="courier-booking-width" />
 					</label>
-					<label class="space-y-1 text-sm">
+					<label class="block min-w-0 space-y-1 text-sm">
 						<span>{{ t('components.fulfillment.courierBooking.heightCm') }}</span>
-						<UInput v-model="parcel.height_cm" type="number" min="0" step="0.1" data-testid="courier-booking-height" />
+						<UInput v-model="parcel.height_cm" type="number" min="0" inputmode="decimal" class="w-full" step="0.1" data-testid="courier-booking-height" />
 					</label>
-					<label class="space-y-1 text-sm">
+					<label class="block min-w-0 space-y-1 text-sm">
 						<span>{{ t('components.fulfillment.courierBooking.lengthCm') }}</span>
-						<UInput v-model="parcel.length_cm" type="number" min="0" step="0.1" data-testid="courier-booking-length" />
+						<UInput v-model="parcel.length_cm" type="number" min="0" inputmode="decimal" class="w-full" step="0.1" data-testid="courier-booking-length" />
 					</label>
 				</div>
 
 				<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-					<label class="space-y-1 text-sm">
+					<label class="block min-w-0 space-y-1 text-sm">
 						<span>{{ t('components.fulfillment.courierBooking.collectionDate') }}</span>
 						<UPopover v-model:open="collectionDatePopoverOpen" :content="{ align: 'start' }" :modal="true">
 							<UButton
 								icon="i-lucide-calendar"
 								color="neutral"
 								variant="outline"
-								class="w-full min-w-0 justify-between group"
+								class="w-full min-w-0 justify-between group max-lg:min-h-11"
 								data-testid="courier-booking-collection-date"
 							>
 								<span class="truncate">{{ collectionDateLabel }}</span>
@@ -331,7 +332,7 @@ watchDebounced(
 							</template>
 						</UPopover>
 					</label>
-					<label class="space-y-1 text-sm">
+					<label class="block min-w-0 space-y-1 text-sm">
 						<span>{{ t('components.fulfillment.courierBooking.handover') }}</span>
 						<USelect v-model="handover" :items="handoverOptions" value-key="value" label-key="label" class="w-full" data-testid="courier-booking-handover" />
 					</label>
@@ -348,6 +349,7 @@ watchDebounced(
 					"
 					value-key="value"
 					:placeholder="t('components.fulfillment.courierBooking.selectService')"
+					:aria-label="t('components.fulfillment.courierBooking.selectService')"
 					class="w-full"
 					data-testid="courier-booking-service"
 					@update:model-value="rememberServiceId"
@@ -376,7 +378,7 @@ watchDebounced(
 		</template>
 
 		<template #footer>
-			<div class="flex-jbetween-icenter w-full">
+			<div class="flex w-full flex-wrap items-center justify-between gap-2 max-lg:[&_button]:min-h-11">
 				<div class="flex flex-wrap items-center gap-2">
 					<UButton
 						color="neutral"
@@ -393,7 +395,7 @@ watchDebounced(
 						{{ t('components.fulfillment.courierBooking.walletBalance', { amount: wallet.balance, currency: wallet.currency }) }}
 					</p>
 				</div>
-				<div class="flex gap-2">
+				<div class="flex flex-1 justify-end gap-2 lg:flex-none">
 					<UButton color="neutral" variant="ghost" :disabled="saving" @click="emit('close', false)">
 						{{ t('common.cancel') }}
 					</UButton>

@@ -8,22 +8,24 @@
 				value-attribute="value"
 				color="neutral"
 				variant="outline"
-				class="min-w-40"
+				class="min-h-11 min-w-0 flex-1"
+				:aria-label="rangeLabel"
 				:ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform' }"
 				@update:model-value="onPresetSelect"
 			/>
 			<UPopover v-model:open="popoverOpen" :content="{ align: 'end' }" :modal="true">
-				<UButton icon="i-lucide-calendar" color="neutral" variant="outline" size="md" class="shrink-0" />
+				<UButton icon="i-lucide-calendar" color="neutral" variant="outline" size="md" class="min-h-11 min-w-11 shrink-0 justify-center" :aria-label="`${t('components.dateRange.custom')} · ${rangeLabel}`" />
 				<template #content>
 					<div class="p-2">
 						<ZDateRangePicker :model-value="draftForPicker" @update:model-value="onDraftUpdate" @close="applyCalendar" />
 						<div class="flex justify-end gap-2 pt-2 border-t border-default mt-2">
-							<UButton :label="t('common.cancel')" color="neutral" variant="ghost" @click="popoverOpen = false" />
-							<UButton :label="t('common.apply')" color="primary" @click="applyCalendar" />
+							<UButton :label="t('common.cancel')" color="neutral" variant="ghost" class="max-lg:min-h-11" @click="popoverOpen = false" />
+							<UButton :label="t('common.apply')" color="primary" class="max-lg:min-h-11" @click="applyCalendar" />
 						</div>
 					</div>
 				</template>
 			</UPopover>
+			<p v-if="selectedPresetKey === 'custom'" class="basis-full text-xs text-muted">{{ rangeLabel }}</p>
 		</template>
 		<!-- Desktop: optional preset buttons + date range popover; mobile w/ hidePresets: popover only (same as desktop row) -->
 		<template v-else>
@@ -38,7 +40,7 @@
 				/>
 			</template>
 			<UPopover v-model:open="popoverOpen" :content="{ align: 'end' }" :modal="true">
-				<UButton icon="i-lucide-calendar" color="neutral" variant="outline" class="min-w-56 justify-between group">
+				<UButton icon="i-lucide-calendar" color="neutral" variant="outline" class="group min-w-0 justify-between max-lg:min-h-11 lg:min-w-56">
 					<span class="truncate">
 						{{ rangeLabel }}
 					</span>
@@ -48,8 +50,8 @@
 					<div class="p-2">
 						<ZDateRangePicker :model-value="draftForPicker" @update:model-value="onDraftUpdate" @close="applyCalendar" />
 						<div class="flex justify-end gap-2 pt-2 border-t border-default mt-2">
-							<UButton :label="t('common.cancel')" color="neutral" variant="ghost" @click="popoverOpen = false" />
-							<UButton :label="t('common.apply')" color="primary" @click="applyCalendar" />
+							<UButton :label="t('common.cancel')" color="neutral" variant="ghost" class="max-lg:min-h-11" @click="popoverOpen = false" />
+							<UButton :label="t('common.apply')" color="primary" class="max-lg:min-h-11" @click="applyCalendar" />
 						</div>
 					</div>
 				</template>

@@ -1,10 +1,10 @@
 <template>
-	<ZPagePanel id="analytics-sales" :title="t('nav.analytics')" back-to="/analytics">
-		<div class="flex flex-col gap-8 lg:gap-10">
+	<ZPagePanel id="analytics-sales" :title="t('pages.salesAnalytics')" back-to="/analytics">
+		<div class="flex min-w-0 flex-col gap-5 lg:gap-10">
 			<!-- Title + date -->
-			<div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
+			<div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
 				<div class="min-w-0 space-y-1.5">
-					<h2 class="text-2xl font-semibold tracking-tight text-highlighted sm:text-3xl">{{ t('pages.salesAnalytics') }}</h2>
+					<h2 class="sr-only font-semibold tracking-tight text-highlighted lg:not-sr-only lg:text-3xl">{{ t('pages.salesAnalytics') }}</h2>
 					<p class="max-w-2xl text-sm leading-relaxed text-muted sm:text-base">{{ t('pages.salesDashboardDesc') }}</p>
 				</div>
 				<div class="w-full max-w-md shrink-0 lg:w-auto lg:max-w-none">
@@ -26,39 +26,39 @@
 						v-for="link in salesReportLinks"
 						:key="link.to"
 						:to="{ path: link.to, query: formatRangeQuery(range) }"
-						class="group flex flex-col gap-2 rounded-lg border border-default bg-default/40 p-4 transition-all hover:border-primary/40 hover:bg-elevated/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+						class="group grid min-h-11 min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-default bg-default/40 p-2.5 transition-colors lg:flex lg:flex-col lg:items-stretch lg:gap-2 lg:p-4 hover:border-primary/40 hover:bg-elevated/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
 					>
-						<div class="flex items-start justify-between gap-2">
-							<div class="flex size-10 shrink-0 items-center justify-center rounded-lg" :class="link.iconWrapClass">
+						<div class="contents lg:flex lg:items-start lg:justify-between lg:gap-2">
+							<div class="flex size-8 lg:size-10 shrink-0 items-center justify-center rounded-lg" :class="link.iconWrapClass">
 								<UIcon :name="link.icon" class="size-5" :class="link.iconClass" />
 							</div>
 							<UIcon
 								name="i-heroicons-chevron-right-20-solid"
-								class="size-4 shrink-0 text-dimmed opacity-60 transition-opacity group-hover:text-primary group-hover:opacity-100"
+								class="col-start-3 row-start-1 size-4 shrink-0 text-dimmed opacity-60 transition-opacity group-hover:text-primary group-hover:opacity-100"
 							/>
 						</div>
-						<div class="min-w-0">
-							<p class="font-semibold text-highlighted group-hover:text-primary">{{ link.title }}</p>
-							<p class="mt-0.5 line-clamp-2 text-xs leading-snug text-muted">{{ link.description }}</p>
+						<div class="col-start-2 row-start-1 min-w-0">
+							<p class="text-sm font-semibold text-highlighted group-hover:text-primary lg:text-base">{{ link.title }}</p>
+							<p class="mt-0.5 text-xs leading-snug text-muted lg:line-clamp-2">{{ link.description }}</p>
 						</div>
 					</NuxtLink>
 				</div>
 			</section>
 
 			<!-- KPIs -->
-			<section aria-labelledby="sales-analytics-overview-heading" class="space-y-4">
+			<section aria-labelledby="sales-analytics-overview-heading" class="space-y-2 lg:space-y-4">
 				<h3 id="sales-analytics-overview-heading" class="text-sm font-semibold text-highlighted">
 					{{ t('pages.salesAnalyticsSectionOverview') }}
 				</h3>
-				<ZDashboardStats :stats="salesStats" />
+				<ZDashboardStats compact-on-mobile :stats="salesStats" />
 			</section>
 
 			<!-- Chart -->
-			<section aria-labelledby="sales-analytics-trend-heading" class="space-y-4">
+			<section aria-labelledby="sales-analytics-trend-heading" class="space-y-2 lg:space-y-4">
 				<h3 id="sales-analytics-trend-heading" class="text-sm font-semibold text-highlighted">
 					{{ t('pages.salesAnalyticsSectionTrend') }}
 				</h3>
-				<UCard ref="chartCardRef" :ui="{ root: 'overflow-visible', body: '!px-0 !pt-0 !pb-3' }">
+				<UCard ref="chartCardRef" :ui="{ root: 'min-w-0 overflow-visible', header: 'max-lg:p-3', body: '!px-0 !pt-0 !pb-3' }">
 					<template #header>
 						<div class="space-y-1">
 							<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -73,29 +73,38 @@
 						</div>
 					</template>
 					<ClientOnly>
-						<VisXYContainer :data="chartData" :padding="{ top: 40 }" class="h-72 sm:h-80" :width="chartWidth">
+						<VisXYContainer :data="chartData" :padding="chartTicks ? { top: 24, left: 12, right: 12 } : { top: 40 }" class="h-48 sm:h-72 lg:h-80" :width="chartWidth">
 							<VisLine :x="chartX" :y="chartY" color="var(--ui-primary)" />
 							<VisArea :x="chartX" :y="chartY" color="var(--ui-primary)" :opacity="0.1" />
-							<VisAxis type="x" :x="chartX" :tick-format="chartXTicks" />
+							<VisAxis type="x" :x="chartX" :tick-values="chartTicks" :tick-format="chartXTicks" />
 							<VisCrosshair color="var(--ui-primary)" :template="chartTooltipTemplate" />
 							<VisTooltip />
 						</VisXYContainer>
 						<template #fallback>
-							<div class="flex h-72 items-center justify-center text-muted sm:h-80">
+							<div class="flex h-48 items-center justify-center text-muted sm:h-72 lg:h-80">
 								<UIcon name="i-heroicons-chart-bar" class="size-12 opacity-50" />
 							</div>
 						</template>
 					</ClientOnly>
+					<details v-if="chartData.length" class="border-t border-default px-3 lg:hidden">
+						<summary class="min-h-11 cursor-pointer py-3 text-sm font-medium text-primary">{{ t('common.details') }}</summary>
+						<dl class="divide-y divide-default">
+							<div v-for="point in chartData" :key="point.date" class="flex flex-wrap justify-between gap-2 py-2 text-sm">
+								<dt class="text-muted">{{ getFormattedDate(parseDate(point.date), 'dd MMM yyyy') }}</dt>
+								<dd class="font-medium tabular-nums">{{ formatCurrency(point.amount, primaryCurrency) }}</dd>
+							</div>
+						</dl>
+					</details>
 				</UCard>
 			</section>
 
 			<!-- Top lists -->
-			<section aria-labelledby="sales-analytics-highlights-heading" class="space-y-4">
+			<section aria-labelledby="sales-analytics-highlights-heading" class="space-y-2 lg:space-y-4">
 				<h3 id="sales-analytics-highlights-heading" class="text-sm font-semibold text-highlighted">
 					{{ t('pages.salesAnalyticsSectionHighlights') }}
 				</h3>
 				<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-					<UCard>
+					<UCard :ui="{ header: 'max-lg:p-3', body: 'max-lg:p-3' }">
 						<template #header>
 							<div class="flex items-center gap-2">
 								<UIcon name="i-heroicons-cube" class="size-5 text-primary" />
@@ -109,13 +118,13 @@
 							<li
 								v-for="(product, i) in top_purchased_products.slice(0, 8)"
 								:key="product.prod_code"
-								class="flex items-center justify-between gap-3 py-3 first:pt-0"
+								class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2 first:pt-0 lg:flex-nowrap lg:py-3"
 							>
 								<div class="flex min-w-0 items-center gap-3">
 									<span class="w-6 shrink-0 text-xs font-medium text-muted">{{ i + 1 }}</span>
-									<span class="truncate font-medium text-highlighted">{{ product.prod_name }}</span>
+									<span class="min-w-0 wrap-anywhere font-medium text-highlighted lg:truncate">{{ product.prod_name }}</span>
 								</div>
-								<div class="flex shrink-0 items-center gap-2 text-sm">
+								<div class="flex min-w-0 flex-wrap items-center gap-2 text-sm wrap-anywhere lg:shrink-0">
 									<span class="text-muted">{{ product.total_qty }} {{ t('table.qty') }}</span>
 									<span class="font-medium">{{ formatCurrency(product.total_net_amt, 'MYR') }}</span>
 								</div>
@@ -123,7 +132,7 @@
 						</ul>
 					</UCard>
 
-					<UCard>
+					<UCard :ui="{ header: 'max-lg:p-3', body: 'max-lg:p-3' }">
 						<template #header>
 							<div class="flex items-center gap-2">
 								<UIcon name="i-heroicons-users" class="size-5 text-primary" />
@@ -137,13 +146,13 @@
 							<li
 								v-for="(customer, i) in top_purchased_customers.slice(0, 8)"
 								:key="customer.customer_no"
-								class="flex items-center justify-between gap-3 py-3 first:pt-0"
+								class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2 first:pt-0 lg:flex-nowrap lg:py-3"
 							>
 								<div class="flex min-w-0 items-center gap-3">
 									<span class="w-6 shrink-0 text-xs font-medium text-muted">{{ i + 1 }}</span>
-									<span class="truncate font-medium text-highlighted">{{ customer.customer_name }}</span>
+									<span class="min-w-0 wrap-anywhere font-medium text-highlighted lg:truncate">{{ customer.customer_name }}</span>
 								</div>
-								<div class="flex shrink-0 items-center gap-2 text-sm">
+								<div class="flex min-w-0 flex-wrap items-center gap-2 text-sm wrap-anywhere lg:shrink-0">
 									<span class="text-muted">{{ customer.total_orders }} {{ t('pages.ordersLabel') }}</span>
 									<span class="font-medium">{{ formatCurrency(customer.total_spent, 'MYR') }}</span>
 								</div>
@@ -252,9 +261,16 @@ const salesStats = computed(() => {
 const chartX = (_: { date: string; amount: number }, i: number) => i;
 const chartY = (d: { date: string; amount: number }) => d.amount;
 
+const chartTicks = computed(() => {
+	if (chartWidth.value >= 480) return undefined;
+	const last = chartData.value.length - 1;
+	if (last < 0) return [];
+	return [...new Set([0.25, 0.5, 0.75].map((fraction) => Math.round(last * fraction)))];
+});
+
 const chartXTicks = (i: number) => {
-	if (i === 0 || i === chartData.value.length - 1 || !chartData.value[i]) return '';
-	return getFormattedDate(parseDate(chartData.value[i].date), 'dd MMM yyyy');
+	if (!chartData.value[i] || (!chartTicks.value && (i === 0 || i === chartData.value.length - 1))) return '';
+	return getFormattedDate(parseDate(chartData.value[i].date), chartTicks.value ? 'dd MMM' : 'dd MMM yyyy');
 };
 
 const chartTooltipTemplate = (d: { date: string; amount: number }) =>
