@@ -1,4 +1,24 @@
 {
+	"productMobileListing": {
+		"search": "搜索名称、编码或 SKU",
+		"filters": "筛选",
+		"filtersCount": "筛选（{count}）",
+		"sort": "排序方式",
+		"recent": "最近更新",
+		"name": "名称 A–Z",
+		"add": "添加",
+		"more": "更多",
+		"results": "目录结果",
+		"loadFailed": "无法加载商品和服务。",
+		"exportFailed": "无法导出商品和服务。",
+		"sku": "SKU {sku}",
+		"skus": "{count} 个 SKU",
+		"matchingSkus": "{count} 个匹配的 SKU",
+		"pagination": "结果分页",
+		"previous": "上一页",
+		"next": "下一页",
+		"page": "第 {page} 页，共 {total} 页"
+	},
 	"combo": {
 		"title": "套餐",
 		"create": "创建套餐",

@@ -1,4 +1,24 @@
 {
+	"productMobileListing": {
+		"search": "Search name, code or SKU",
+		"filters": "Filters",
+		"filtersCount": "Filters ({count})",
+		"sort": "Sort by",
+		"recent": "Recently updated",
+		"name": "Name A–Z",
+		"add": "Add",
+		"more": "More",
+		"results": "Catalogue results",
+		"loadFailed": "Unable to load products and services.",
+		"exportFailed": "Unable to export products and services.",
+		"sku": "SKU {sku}",
+		"skus": "{count} SKUs",
+		"matchingSkus": "{count} matching SKUs",
+		"pagination": "Result pages",
+		"previous": "Previous",
+		"next": "Next",
+		"page": "Page {page} of {total}"
+	},
 	"combo": {
 		"title": "Combos",
 		"create": "Create combo",

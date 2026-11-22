@@ -1,10 +1,13 @@
 <template>
-	<ZPagePanel id="products-listing" :title="t('nav.products')" :description="t('pages.productsListingDesc')">
+	<ZPagePanel id="products-listing" :title="t('nav.products')" :description="t('pages.productsListingDesc')" compact-on-mobile>
 		<template #navbar-right>
-			<div class="flex flex-wrap items-center gap-2">
+			<div class="hidden flex-wrap items-center gap-2 lg:flex">
 				<ZCreateButton to="/products/create" :label="t('common.addProduct')" :icon="ICONS.CUBE" />
 				<ZCreateButton to="/products/create-service" :label="t('common.addService')" :icon="ICONS.SERVICE" />
 			</div>
+			<UDropdownMenu :items="mobileCreateItems" :content="{ align: 'end' }" :ui="{ item: 'min-h-11' }">
+				<UButton class="min-h-11 min-w-11 justify-center lg:hidden" :aria-label="t('productMobileListing.add')" :label="t('productMobileListing.add')" />
+			</UDropdownMenu>
 		</template>
 		<template #toolbar>
 			<div class="flex flex-col gap-3">
@@ -26,17 +29,7 @@
 						<UButton variant="outline" color="neutral" :icon="ICONS.REFRESH" @click="productStore.clearFilters">
 							{{ t('components.filter.clear') }}
 						</UButton>
-						<ZImportActions
-							:downloading-template="downloading_template"
-							:importing="importing"
-							:accept="PRODUCT_IMPORT_ACCEPT"
-							:is-allowed-file="isAllowedProductImportFile"
-							:format-error-message="PRODUCT_IMPORT_FORMAT_ERROR_MESSAGE"
-							:import-sources="productImportSources"
-							:source-modal-title="t('import.selectTemplate')"
-							@download-template="downloadProductImportTemplate"
-							@import="importProductFile"
-						/>
+						<ZImportActions v-bind="importActionOptions" @download-template="downloadProductImportTemplate" @import="importProductFile" />
 					</div>
 				</div>
 
@@ -92,7 +85,23 @@
 				</div>
 			</div>
 		</template>
-		<div>
+		<div ref="mobileContent" class="lg:hidden">
+			<ProductMobileListing v-model:selected-type="selectedTypeTab" :initialize="initialize" :type-options="showTypeFilter ? typeTabItems : []">
+				<template #more>
+					<ZImportActions touch-friendly v-bind="importActionOptions" @download-template="downloadProductImportTemplate" @import="importProductFile" />
+					<UButton
+						:loading="exporting"
+						:disabled="exporting"
+						:label="t('common.export')"
+						icon="i-heroicons-arrow-down-tray"
+						variant="outline"
+						class="min-h-11"
+						@click="exportProducts"
+					/>
+				</template>
+			</ProductMobileListing>
+		</div>
+		<div class="hidden lg:block">
 			<template v-if="initialize">
 				<div class="divide-y divide-default overflow-hidden rounded-lg">
 					<div class="grid grid-cols-4 gap-4 p-4">
@@ -143,7 +152,7 @@ import { options_page_size } from '~/utils/options';
 import { getProductColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import type { Product } from '~/utils/types/product';
-import type { TableRow } from '@nuxt/ui';
+import type { DropdownMenuItem, TableRow } from '@nuxt/ui';
 import { ZModalImporting, ZModalLoading } from '#components';
 import {
 	PRODUCT_IMPORT_ACCEPT,
@@ -222,6 +231,23 @@ const {
 	downloading_template,
 	listFailure,
 } = storeToRefs(productStore);
+const mobileCreateItems = computed<DropdownMenuItem[]>(() => [
+	{ label: t('common.addProduct'), icon: ICONS.CUBE, to: '/products/create' },
+	{ label: t('common.addService'), icon: ICONS.SERVICE, to: '/products/create-service' },
+]);
+const importActionOptions = computed(() => ({
+	downloadingTemplate: downloading_template.value,
+	importing: importing.value,
+	accept: PRODUCT_IMPORT_ACCEPT,
+	isAllowedFile: isAllowedProductImportFile,
+	formatErrorMessage: PRODUCT_IMPORT_FORMAT_ERROR_MESSAGE,
+	importSources: productImportSources.value,
+	sourceModalTitle: t('import.selectTemplate'),
+}));
+const router = useRouter();
+const mobileContent = useTemplateRef('mobileContent');
+const mobileScroll = useState<{ position: number; top: number } | undefined>('products-listing-mobile-scroll');
+
 const initialize = ref(true);
 const showTypeFilter = computed(() => product_types.value.length > 1);
 const pageRange = computed(() => listingRange(filters.value.current_page, filters.value.page_size, total_products.value));
@@ -256,12 +282,28 @@ watch(listFailure, (failure) => {
 	if (failure) failedNotification(failure.message);
 });
 
+onBeforeRouteLeave((to) => {
+	if (!products.value.some(product => productDetailPath(product) === to.path)) return;
+	const position = router.options.history.state.position;
+	const body = mobileContent.value?.closest<HTMLElement>('[data-slot="body"]');
+	if (typeof position === 'number' && body && mobileContent.value?.getClientRects().length) {
+		mobileScroll.value = { position, top: body.scrollTop };
+	}
+});
+
 onMounted(async () => {
 	initialize.value = true;
 	try {
 		await productStore.refreshListing();
 	} finally {
 		initialize.value = false;
+		const saved = mobileScroll.value;
+		if (saved && saved.position === router.options.history.state.position) {
+			mobileScroll.value = undefined;
+			await nextTick();
+			const body = mobileContent.value?.closest<HTMLElement>('[data-slot="body"]');
+			if (body && mobileContent.value?.getClientRects().length) body.scrollTop = saved.top;
+		}
 	}
 });
 

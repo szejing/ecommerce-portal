@@ -4,24 +4,26 @@
 			<UDashboardNavbar
 				:title="description ? undefined : title"
 				:as="description ? { title: 'div' } : undefined"
+				:class="{ 'max-lg:px-2': compactOnMobile }"
 				:ui="{
 					right: 'gap-3',
-					title: description ? 'flex min-w-0 flex-col items-start gap-0.5 overflow-visible font-normal whitespace-normal' : undefined,
+					toggle: compactOnMobile ? 'max-lg:min-h-11 max-lg:min-w-11 max-lg:justify-center' : undefined,
+					title: description ? ['flex min-w-0 flex-col items-start gap-0.5 overflow-visible font-normal whitespace-normal', compactOnMobile && 'max-lg:overflow-hidden'] : undefined,
 				}"
 			>
 				<template v-if="description" #title>
-					<h1 class="truncate text-xl font-semibold leading-tight text-highlighted">{{ title }}</h1>
-					<p class="truncate text-sm font-normal leading-snug text-muted">{{ description }}</p>
+					<h1 class="truncate text-xl font-semibold leading-tight text-highlighted" :class="{ 'max-lg:max-w-full max-lg:text-sm': compactOnMobile }">{{ title }}</h1>
+					<p class="truncate text-sm font-normal leading-snug text-muted" :class="{ 'max-lg:hidden': compactOnMobile }">{{ description }}</p>
 				</template>
 				<template v-if="$slots.leading" #leading>
 					<slot name="leading" />
 				</template>
 				<template #right>
-					<div class="page-panel-actions">
+					<div class="flex items-center gap-3" :class="{ 'max-lg:gap-1': compactOnMobile }">
 						<slot v-if="$slots['navbar-right']" name="navbar-right" />
 
 						<UPopover v-if="!isMasterSession" v-model:open="notificationPopoverOpen" :content="{ align: 'end' }">
-							<UButton class="notification-btn" color="secondary" variant="soft" square :aria-label="t('notifications.open')" @click="refreshNotifications">
+							<UButton class="notification-btn" :class="{ 'max-lg:min-h-11 max-lg:min-w-11 max-lg:justify-center': compactOnMobile }" color="secondary" variant="soft" square :aria-label="t('notifications.open')" @click="refreshNotifications">
 								<UIcon :name="ICONS.BELL" class="size-5" />
 								<!-- ClientOnly: unreadCount is filled by client-only 02.init-app before hydrate; SSR always has 0 -->
 								<ClientOnly>
@@ -72,7 +74,7 @@
 					</div>
 				</template>
 			</UDashboardNavbar>
-			<UDashboardToolbar v-if="$slots.toolbar || backTo" :ui="toolbarFill ? { left: 'min-w-0 flex-1' } : undefined">
+			<UDashboardToolbar v-if="$slots.toolbar || backTo" :class="{ 'max-lg:hidden': compactOnMobile && !backTo }" :ui="toolbarFill ? { left: 'min-w-0 flex-1' } : undefined">
 				<template #left>
 					<div :class="toolbarFill ? 'w-full min-w-0 py-1.5' : 'py-2 space-y-2'">
 						<ZBackButton v-if="backTo" :fallback-to="backTo" labeled />
@@ -109,6 +111,8 @@ withDefaults(
 		grow?: boolean;
 		/** Stretch the toolbar slot across the panel so filters are not stuck on the left. */
 		toolbarFill?: boolean;
+		/** Compact navbar and desktop-only toolbar for pages with their own mobile controls. */
+		compactOnMobile?: boolean;
 	}>(),
 	{ grow: false, toolbarFill: true },
 );
@@ -153,12 +157,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-panel-actions {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-}
-
 .notification-btn {
 	position: relative;
 }

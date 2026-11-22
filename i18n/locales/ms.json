@@ -1,4 +1,24 @@
 {
+	"productMobileListing": {
+		"search": "Cari nama, kod atau SKU",
+		"filters": "Penapis",
+		"filtersCount": "Penapis ({count})",
+		"sort": "Isih mengikut",
+		"recent": "Baru dikemas kini",
+		"name": "Nama A–Z",
+		"add": "Tambah",
+		"more": "Lagi",
+		"results": "Hasil katalog",
+		"loadFailed": "Gagal memuatkan produk dan perkhidmatan.",
+		"exportFailed": "Gagal mengeksport produk dan perkhidmatan.",
+		"sku": "SKU {sku}",
+		"skus": "{count} SKU",
+		"matchingSkus": "{count} SKU sepadan",
+		"pagination": "Halaman hasil",
+		"previous": "Sebelumnya",
+		"next": "Seterusnya",
+		"page": "Halaman {page} daripada {total}"
+	},
 	"combo": {
 		"title": "Kombo",
 		"create": "Cipta kombo",
