@@ -1172,6 +1172,7 @@
 		"noSalesDetailListingFound": "未找到销售明细列表数据。",
 		"tryAdjustingFilters": "尝试调整筛选条件以查看更多结果。",
 		"noOrdersFound": "未找到订单。",
+		"hideCompletedOrders": "隐藏已完成",
 		"noProductsFound": "未找到产品。",
 		"noCombosFound": "未找到套餐。",
 		"noBrandsFound": "未找到品牌。",

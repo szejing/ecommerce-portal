@@ -1,25 +1,30 @@
 <!-- eslint-disable indent -->
 <template>
-	<div class="relative">
-		<div class="absolute top-0 right-0 z-1">
+	<div class="relative min-w-0">
+		<div class="mb-2 flex justify-end lg:absolute lg:top-1 lg:right-1 lg:z-10 lg:mb-0">
 			<UPopover v-model:open="customizeOpen" :content="{ align: 'end' }">
-				<UButton icon="i-heroicons-cog-6-tooth" color="neutral" variant="ghost" size="xs" :aria-label="t('pages.dashboardStatsCustomize')" />
+				<UButton
+					icon="i-heroicons-cog-6-tooth"
+					color="neutral"
+					variant="ghost"
+					:aria-label="t('pages.dashboardStatsCustomize')"
+					class="min-h-11 min-w-11 justify-center lg:min-h-8 lg:min-w-8"
+				/>
 				<template #content>
 					<div class="p-3 min-w-56">
 						<p class="text-xs font-medium text-muted uppercase mb-2">
 							{{ t('pages.dashboardStatsCustomize') }}
 						</p>
 						<div class="space-y-1.5">
-							<label v-for="key in ALL_DASHBOARD_STAT_KEYS" :key="key" class="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-elevated cursor-pointer">
+							<label v-for="key in ALL_DASHBOARD_STAT_KEYS" :key="key" class="flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-2 hover:bg-elevated">
 								<UCheckbox :model-value="isSelected(key)" @update:model-value="toggleStat(key)" />
 								<span class="text-sm">{{ statLabel(key) }}</span>
 							</label>
 						</div>
 						<UButton
-							class="mt-3 w-full"
+							class="mt-3 min-h-11 w-full"
 							color="neutral"
 							variant="soft"
-							size="xs"
 							:label="t('pages.dashboardStatsReset')"
 							@click="
 								resetToDefault();
@@ -30,7 +35,7 @@
 				</template>
 			</UPopover>
 		</div>
-		<ZDashboardStats :stats="visibleStatsForGrid" />
+		<ZDashboardStats compact-on-mobile :stats="visibleStatsForGrid" />
 	</div>
 </template>
 
