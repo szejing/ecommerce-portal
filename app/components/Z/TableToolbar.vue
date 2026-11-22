@@ -6,8 +6,16 @@
 			<span class="text-sm text-gray-600 dark:text-gray-400">{{ t('common.entries') }}</span>
 		</div>
 
-		<UButton v-if="exportEnabled" variant="outline" :disabled="exporting" :loading="exporting" size="sm" @click="$emit('export')">
-			<UIcon :name="ICONS.EXCEL" class="w-4 h-4" />
+		<UButton
+			v-if="exportEnabled"
+			variant="outline"
+			:disabled="exporting"
+			:loading="exporting"
+			size="sm"
+			v-bind="controls === 'outline' ? { color: 'primary' as const, icon: 'i-heroicons-arrow-down-tray' } : {}"
+			@click="$emit('export')"
+		>
+			<UIcon v-if="controls !== 'outline'" :name="ICONS.EXCEL" class="size-4" />
 			{{ t('common.export') }}
 		</UButton>
 
@@ -18,17 +26,21 @@
 			multiple
 			value-key="key"
 			label-key="label"
+			icon="i-heroicons-view-columns"
+			color="neutral"
+			size="sm"
+			:variant="controls === 'outline' ? 'outline' : 'ghost'"
+			class="w-fit min-w-0 font-medium text-xs sm:min-w-0"
 			:ui="{ content: 'w-56 max-h-60 overflow-y-auto' }"
 		>
-			<UButton icon="i-heroicons-view-columns" color="neutral" variant="ghost" size="xs">
-				{{ t('components.selectMenu.showColumns') }}
-			</UButton>
+			{{ t('components.selectMenu.showColumns') }}
 		</USelectMenu>
 	</div>
 </template>
 
 <script lang="ts" setup>
 import { ICONS } from '~/utils/icons';
+
 const { t } = useI18n();
 type ColumnOption = {
 	key: string;
@@ -41,12 +53,15 @@ const props = withDefaults(
 		pageSizeOptions: number[];
 		exportEnabled?: boolean;
 		exporting?: boolean;
+		/** Outline matches the products listing toolbar. Default keeps the quieter listing controls. */
+		controls?: 'default' | 'outline';
 		columnOptions?: ColumnOption[];
 		selectedColumnKeys?: string[];
 	}>(),
 	{
 		exportEnabled: true,
 		exporting: false,
+		controls: 'default',
 		columnOptions: () => [],
 		selectedColumnKeys: () => [],
 	},

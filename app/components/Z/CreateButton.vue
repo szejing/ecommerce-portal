@@ -1,6 +1,6 @@
 <template>
 	<div class="flex items-center gap-3">
-		<UButton color="success" @click="handleClick">
+		<UButton :color="color" :variant="variant" @click="handleClick">
 			<UIcon :name="icon ?? ICONS.ADD_OUTLINE" class="w-4 h-4" />
 			{{ label }}
 		</UButton>
@@ -20,8 +20,13 @@ const props = withDefaults(
 		label?: string;
 		/** Replaces the default plus icon. */
 		icon?: string;
+		color?: 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral';
+		variant?: 'solid' | 'outline' | 'soft' | 'subtle' | 'ghost' | 'link';
 	}>(),
-	{},
+	{
+		color: 'success',
+		variant: 'solid',
+	},
 );
 
 const emit = defineEmits<{ click: [] }>();

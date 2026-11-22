@@ -54,6 +54,7 @@ export const ICONS = {
 	ALERT: 'i-heroicons-exclamation-triangle',
 	SPARKLES: 'i-heroicons-sparkles',
 	REFRESH: 'i-heroicons-arrow-path',
+	FILTER: 'i-heroicons-funnel',
 	BARCODE: 'i-heroicons-qr-code',
 	PALETTE: 'i-heroicons-swatch',
 	RESIZE: 'i-heroicons-arrows-pointing-out',

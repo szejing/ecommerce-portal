@@ -1,7 +1,18 @@
 <template>
 	<UDashboardPanel :id="id" :grow="grow">
 		<template #header>
-			<UDashboardNavbar :title="title" :ui="{ right: 'gap-3' }">
+			<UDashboardNavbar
+				:title="description ? undefined : title"
+				:as="description ? { title: 'div' } : undefined"
+				:ui="{
+					right: 'gap-3',
+					title: description ? 'flex min-w-0 flex-col items-start gap-0.5 overflow-visible font-normal whitespace-normal' : undefined,
+				}"
+			>
+				<template v-if="description" #title>
+					<h1 class="truncate text-xl font-semibold leading-tight text-highlighted">{{ title }}</h1>
+					<p class="truncate text-sm font-normal leading-snug text-muted">{{ description }}</p>
+				</template>
 				<template v-if="$slots.leading" #leading>
 					<slot name="leading" />
 				</template>
@@ -90,6 +101,8 @@ withDefaults(
 	defineProps<{
 		id: string;
 		title: string;
+		/** Secondary line under the navbar title. */
+		description?: string;
 		/** When provided, ZBackButton is shown in the toolbar (avoids conflict with navbar burger on mobile). */
 		backTo?: string;
 		/** When true, the panel grows to fill available space. */

@@ -38,5 +38,8 @@ describe('ZTableToolbar', () => {
 		expect(menu.props('items')).toEqual(columnOptions);
 		expect(menu.props('multiple')).toBe(true);
 		expect(menu.props('modelValue')).toEqual(['order_no']);
+		expect(menu.props('size')).toBe('sm');
+		expect(menu.props('icon')).toBe('i-heroicons-view-columns');
+		expect(menu.findComponent({ name: 'UButton' }).exists()).toBe(false);
 	});
 });
