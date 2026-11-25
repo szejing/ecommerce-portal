@@ -1,13 +1,7 @@
 <template>
 	<ZPagePanel inline-mobile-actions id="email-blast" :title="t('nav.emailBlast')" back-to="/announcements">
 		<template #navbar-right>
-			<UButton
-				class="min-h-11 lg:hidden"
-				color="neutral"
-				variant="soft"
-				icon="i-lucide-eye"
-				@click="previewOpen = true"
-			>
+			<UButton class="min-h-11 lg:hidden" color="neutral" variant="soft" icon="i-lucide-eye" @click="previewOpen = true">
 				{{ t('platformAnnouncements.common.preview') }}
 			</UButton>
 		</template>
@@ -46,20 +40,13 @@
 							:description="t('platformAnnouncements.email.bodyHelp')"
 							:error="errors.body_html"
 						>
-							<ZAnnouncementHtmlEditor
-								v-model="form.body_html"
-								:aria-label="t('platformAnnouncements.email.body')"
-							/>
+							<ZAnnouncementHtmlEditor v-model="form.body_html" :aria-label="t('platformAnnouncements.email.body')" />
 						</UFormField>
 						<div class="grid gap-4 sm:grid-cols-2">
 							<UFormField :label="t('platformAnnouncements.email.ctaLabel')" name="cta_label" :error="errors.cta">
 								<UInput v-model="form.cta_label" class="w-full" :placeholder="t('platformAnnouncements.email.ctaLabelPlaceholder')" />
 							</UFormField>
-							<UFormField
-								:label="t('platformAnnouncements.email.ctaUrl')"
-								name="cta_url"
-								:description="t('platformAnnouncements.email.ctaHelp')"
-							>
+							<UFormField :label="t('platformAnnouncements.email.ctaUrl')" name="cta_url" :description="t('platformAnnouncements.email.ctaHelp')">
 								<UInput v-model="form.cta_url" class="w-full" placeholder="https://" />
 							</UFormField>
 						</div>
@@ -70,13 +57,7 @@
 							:error="errors.scheduled_at"
 						>
 							<UPopover v-model:open="schedulePopoverOpen" class="w-full sm:w-56" :content="{ align: 'start' }" :modal="true">
-								<UButton
-									type="button"
-									icon="i-lucide-calendar"
-									color="neutral"
-									variant="outline"
-									class="w-full min-h-11 min-w-0 justify-between group"
-								>
+								<UButton type="button" icon="i-lucide-calendar" color="neutral" variant="outline" class="w-full min-h-11 min-w-0 justify-between group">
 									<span class="truncate">{{ scheduleLabel }}</span>
 									<UIcon name="i-lucide-chevron-down" class="size-5 shrink-0 text-dimmed transition-transform group-data-[state=open]:rotate-180" />
 								</UButton>
@@ -91,13 +72,7 @@
 							</UPopover>
 						</UFormField>
 						<div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-							<UButton
-								type="button"
-								color="neutral"
-								variant="soft"
-								class="min-h-11 justify-center"
-								@click="fillSample"
-							>
+							<UButton type="button" color="neutral" variant="soft" class="min-h-11 justify-center" @click="fillSample">
 								{{ t('platformAnnouncements.common.useSample') }}
 							</UButton>
 							<UButton type="submit" color="primary" class="min-h-11 justify-center" :loading="saving" :disabled="saving">
@@ -109,13 +84,7 @@
 
 				<div class="space-y-2">
 					<h2 class="text-sm font-semibold text-default">{{ t('platformAnnouncements.email.recent') }}</h2>
-					<UAlert
-						v-if="loadError"
-						color="error"
-						variant="soft"
-						icon="i-lucide-circle-alert"
-						:description="loadError"
-					>
+					<UAlert v-if="loadError" color="error" variant="soft" icon="i-lucide-circle-alert" :description="loadError">
 						<template #actions>
 							<UButton color="error" variant="outline" size="sm" @click="loadBlasts">
 								{{ t('common.refresh') }}
@@ -127,11 +96,7 @@
 						<USkeleton class="h-14 w-full" />
 					</div>
 					<ul v-else class="divide-y divide-default rounded-lg border border-default">
-						<li
-							v-for="blast in blasts"
-							:key="blast.id"
-							class="flex flex-col gap-3 p-3 text-sm sm:flex-row sm:items-center sm:justify-between"
-						>
+						<li v-for="blast in blasts" :key="blast.id" class="flex flex-col gap-3 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
 							<div class="min-w-0 space-y-1">
 								<p class="truncate font-medium text-default">{{ blast.subject }}</p>
 								<div class="flex flex-wrap items-center gap-2">
@@ -182,12 +147,7 @@
 			</aside>
 		</div>
 
-		<USlideover
-			v-model:open="previewOpen"
-			side="bottom"
-			:title="t('platformAnnouncements.email.previewTitle')"
-			:ui="{ content: 'max-h-[85vh]' }"
-		>
+		<USlideover v-model:open="previewOpen" side="bottom" :title="t('platformAnnouncements.email.previewTitle')" :ui="{ content: 'max-h-[85vh]' }">
 			<template #body>
 				<ZAnnouncementEmailPreview
 					:subject="form.subject"
@@ -236,9 +196,7 @@ const form = reactive({
 const scheduledDate = ref<Date | null>(null);
 const schedulePopoverOpen = ref(false);
 const scheduleMinDate = computed(() => startOfDay(new Date()));
-const scheduleLabel = computed(() => scheduledDate.value
-	? getFormattedDate(scheduledDate.value, 'dd-MM-yyyy')
-	: t('common.notSet'));
+const scheduleLabel = computed(() => (scheduledDate.value ? getFormattedDate(scheduledDate.value, 'dd-MM-yyyy') : t('common.notSet')));
 
 const errors = reactive({
 	subject: '',
@@ -261,13 +219,15 @@ const steps = computed(() => [
 	t('platformAnnouncements.email.how4'),
 ]);
 
-const sampleBody = computed(() => emailSampleHtml({
-	hello: t('platformAnnouncements.email.sampleHello'),
-	before: t('platformAnnouncements.email.sampleMaintenanceBefore'),
-	when: t('platformAnnouncements.email.sampleMaintenanceWhen'),
-	after: t('platformAnnouncements.email.sampleMaintenanceAfter'),
-	safe: t('platformAnnouncements.email.sampleSafe'),
-}));
+const sampleBody = computed(() =>
+	emailSampleHtml({
+		hello: t('platformAnnouncements.email.sampleHello'),
+		before: t('platformAnnouncements.email.sampleMaintenanceBefore'),
+		when: t('platformAnnouncements.email.sampleMaintenanceWhen'),
+		after: t('platformAnnouncements.email.sampleMaintenanceAfter'),
+		safe: t('platformAnnouncements.email.sampleSafe'),
+	}),
+);
 
 const guideItems = computed<AccordionItem[]>(() => [
 	{
@@ -355,9 +315,7 @@ async function onSubmit() {
 			scheduled_at: scheduled ? scheduled.toISOString() : null,
 			send_now: !scheduled,
 		});
-		successNotification(scheduled
-			? t('platformAnnouncements.email.scheduled')
-			: t('platformAnnouncements.email.sent'));
+		successNotification(scheduled ? t('platformAnnouncements.email.scheduled') : t('platformAnnouncements.email.sent'));
 		form.subject = '';
 		form.body_html = '';
 		form.cta_label = '';

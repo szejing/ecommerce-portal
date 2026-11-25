@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<!--
+  PROTOTYPE — throwaway. Not a portal route.
+  Question: does the agreed Counter Sale wizard feel right on a phone before we build it?
+  One layout (the one already chosen). Open this file in a browser.
+-->
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Counter Sale prototype</title>
+	<style>
+		:root {
+			--bg: #f5f5f5;
+			--surface: #ffffff;
+			--text: #1f2326;
+			--muted: #61676d;
+			--border: #e8e8e8;
+			--accent: #f37323;
+			--fill: #c2410c;
+			--on-fill: #ffffff;
+			--danger: #b91c1c;
+			--shadow: 0 8px 24px rgba(21, 20, 20, 0.08);
+			--radius: 16px;
+			color-scheme: light;
+		}
+
+		:root[data-theme="dark"] {
+			--bg: #151414;
+			--surface: #1f2326;
+			--text: #f5f5f5;
+			--muted: #c4c4c4;
+			--border: #3e4348;
+			--shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+			color-scheme: dark;
+		}
+
+		* { box-sizing: border-box; }
+
+		body {
+			margin: 0;
+			background: var(--bg);
+			color: var(--text);
+			font-family: Lato, "Segoe UI", sans-serif;
+			line-height: 1.4;
+		}
+
+		button, input, select { font: inherit; color: inherit; }
+
+		button { cursor: pointer; }
+
+		button:focus-visible, input:focus-visible, select:focus-visible {
+			outline: 2px solid var(--accent);
+			outline-offset: 2px;
+		}
+
+		button:disabled { cursor: not-allowed; }
+
+		.chrome {
+			max-width: 720px;
+			margin: 0 auto;
+			padding: 12px 16px 0;
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+			align-items: center;
+		}
+
+		.chrome p {
+			margin: 0;
+			flex: 1 1 220px;
+			color: var(--muted);
+			font-size: 13px;
+		}
+
+		.chrome button, .seg button {
+			min-height: 40px;
+			padding: 0 12px;
+			border-radius: 999px;
+			border: 1px solid var(--border);
+			background: var(--surface);
+		}
+
+		.chrome button[aria-pressed="true"], .seg button[aria-pressed="true"] {
+			border-color: var(--fill);
+			color: var(--fill);
+		}
+
+		.seg { display: flex; gap: 8px; }
+
+		.stage {
+			display: flex;
+			justify-content: center;
+			padding: 12px 0 24px;
+		}
+
+		.device {
+			width: min(100%, 420px);
+			min-height: 100dvh;
+			background: var(--surface);
+			display: flex;
+			flex-direction: column;
+		}
+
+		@media (min-width: 720px) {
+			.device {
+				height: min(880px, calc(100dvh - 88px));
+				min-height: 0;
+				border: 1px solid var(--border);
+				border-radius: 28px;
+				box-shadow: var(--shadow);
+				overflow: hidden;
+			}
+		}
+
+		.top {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			min-height: 56px;
+			padding: max(8px, env(safe-area-inset-top)) 8px 8px;
+			border-bottom: 1px solid var(--border);
+		}
+
+		.top h1 {
+			margin: 0;
+			flex: 1;
+			font-size: 18px;
+			font-weight: 700;
+		}
+
+		.step {
+			margin-right: 8px;
+			color: var(--muted);
+			font-size: 14px;
+		}
+
+		.icon-btn {
+			width: 48px;
+			height: 48px;
+			border: 0;
+			border-radius: 12px;
+			background: transparent;
+			display: grid;
+			place-items: center;
+		}
+
+		.icon-btn:active { background: var(--bg); }
+
+		.scroll {
+			flex: 1;
+			overflow: auto;
+			padding: 8px 16px 16px;
+		}
+
+		.meta {
+			width: 100%;
+			min-height: 48px;
+			margin-top: 8px;
+			padding: 0 4px;
+			border: 0;
+			background: transparent;
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			text-align: left;
+			border-radius: 12px;
+		}
+
+		.meta:active { background: var(--bg); }
+
+		.meta span { color: var(--muted); }
+
+		.field {
+			display: block;
+			margin-top: 12px;
+		}
+
+		.field span, .section-label {
+			display: block;
+			margin: 16px 0 8px;
+			font-size: 14px;
+			font-weight: 700;
+		}
+
+		input[type="search"], input[type="text"], input[type="email"], input[type="date"], select, .mobile input {
+			width: 100%;
+			min-height: 48px;
+			padding: 0 12px;
+			border: 1px solid var(--border);
+			border-radius: 12px;
+			background: var(--surface);
+		}
+
+		.mobile { display: flex; gap: 8px; }
+
+		.mobile select { width: 108px; }
+
+		.results, .notice {
+			margin: 8px 0 0;
+			padding: 0;
+			list-style: none;
+			border: 1px solid var(--border);
+			border-radius: 12px;
+			overflow: hidden;
+		}
+
+		.results button, .line {
+			width: 100%;
+			min-height: 56px;
+			padding: 8px 12px;
+			border: 0;
+			border-bottom: 1px solid var(--border);
+			background: var(--surface);
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			text-align: left;
+		}
+
+		.results li:last-child button, .lines .line:last-child { border-bottom: 0; }
+
+		.results button:active { background: var(--bg); }
+
+		.thumb {
+			width: 40px;
+			height: 40px;
+			border-radius: 8px;
+			background: var(--bg);
+			flex: none;
+		}
+
+		.grow { flex: 1; min-width: 0; }
+
+		.grow strong, .grow small { display: block; }
+
+		.grow small, .hint, .notice { color: var(--muted); font-size: 13px; }
+
+		.notice {
+			padding: 12px;
+			border-color: var(--danger);
+			color: var(--danger);
+		}
+
+		.stepper { display: flex; align-items: center; gap: 8px; }
+
+		.stepper button {
+			width: 48px;
+			height: 48px;
+			border-radius: 12px;
+			border: 1px solid var(--border);
+			background: var(--surface);
+			font-size: 20px;
+		}
+
+		.stepper button:active { background: var(--bg); }
+
+		.stepper output {
+			min-width: 1.5ch;
+			text-align: center;
+			font-weight: 700;
+		}
+
+		.dock {
+			border-top: 1px solid var(--border);
+			padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+			background: var(--surface);
+		}
+
+		.totals {
+			display: flex;
+			justify-content: space-between;
+			align-items: baseline;
+			margin-bottom: 8px;
+		}
+
+		.totals strong { font-size: 20px; }
+
+		.primary, .secondary {
+			width: 100%;
+			min-height: 52px;
+			border-radius: 14px;
+			font-weight: 700;
+		}
+
+		.primary {
+			border: 0;
+			background: var(--fill);
+			color: var(--on-fill);
+		}
+
+		.primary:disabled { opacity: 0.45; }
+
+		.primary:active:not(:disabled) { filter: brightness(0.92); }
+
+		.secondary {
+			margin-bottom: 8px;
+			border: 1px solid var(--fill);
+			background: transparent;
+			color: var(--fill);
+		}
+
+		.payable { margin: 12px 0 20px; }
+
+		.payable p { margin: 0; color: var(--muted); }
+
+		.payable strong {
+			display: block;
+			font-size: 40px;
+			line-height: 1.1;
+			letter-spacing: -0.03em;
+		}
+
+		.choice {
+			width: 100%;
+			min-height: 72px;
+			margin-top: 12px;
+			padding: 12px 16px;
+			border-radius: 16px;
+			border: 1px solid var(--border);
+			background: var(--surface);
+			display: flex;
+			gap: 12px;
+			align-items: center;
+			text-align: left;
+		}
+
+		.choice[aria-pressed="true"] { border: 2px solid var(--accent); }
+
+		.radio {
+			width: 22px;
+			height: 22px;
+			border-radius: 50%;
+			border: 2px solid var(--muted);
+			flex: none;
+		}
+
+		.choice[aria-pressed="true"] .radio {
+			border-color: var(--fill);
+			box-shadow: inset 0 0 0 5px var(--fill);
+		}
+
+		.choice small { display: block; color: var(--muted); }
+
+		.done { padding-top: 32px; text-align: center; }
+
+		.mark {
+			width: 72px;
+			height: 72px;
+			margin: 0 auto 16px;
+			border-radius: 50%;
+			background: var(--fill);
+			display: grid;
+			place-items: center;
+		}
+
+		.done h2 { margin: 0 0 16px; font-size: 28px; }
+
+		.card {
+			text-align: left;
+			border: 1px solid var(--border);
+			border-radius: 16px;
+			padding: 4px 16px;
+			margin-bottom: 16px;
+		}
+
+		.card div {
+			display: flex;
+			justify-content: space-between;
+			gap: 12px;
+			padding: 12px 0;
+			border-bottom: 1px solid var(--border);
+		}
+
+		.card div:last-child, .card p { border: 0; }
+
+		.card p { margin: 0; padding: 4px 0 12px; color: var(--muted); }
+
+		.link {
+			margin-top: 4px;
+			min-height: 48px;
+			width: 100%;
+			border: 0;
+			background: transparent;
+			color: var(--fill);
+			font-weight: 700;
+		}
+
+		.state {
+			max-width: 720px;
+			margin: 0 auto 32px;
+			padding: 0 16px;
+		}
+
+		.state pre {
+			margin: 8px 0 0;
+			padding: 12px;
+			overflow: auto;
+			border-radius: 12px;
+			background: var(--surface);
+			border: 1px solid var(--border);
+			font-size: 12px;
+		}
+
+		.hidden { display: none; }
+
+		@media (prefers-reduced-motion: reduce) {
+			* { transition: none !important; }
+		}
+	</style>
+</head>
+<body>
+	<div class="chrome">
+		<p>Prototype only. This is the agreed Counter Sale wizard, for a phone. It does not save anything.</p>
+		<button type="button" id="theme" aria-pressed="false">Dark</button>
+		<div class="seg" role="group" aria-label="Outlet count">
+			<button type="button" id="outlets-many" aria-pressed="true">Several outlets</button>
+			<button type="button" id="outlets-one" aria-pressed="false">One outlet</button>
+		</div>
+		<button type="button" id="fail" aria-pressed="false">Fail next payment</button>
+	</div>
+
+	<div class="stage">
+		<main class="device" aria-live="polite">
+			<header class="top">
+				<button type="button" class="icon-btn" id="back" aria-label="Back">
+					<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
+				</button>
+				<h1 id="title">New sale</h1>
+				<div class="step" id="step-label">1 of 3</div>
+			</header>
+
+			<div class="scroll" id="scroll">
+				<section id="screen-items">
+					<button type="button" class="meta" id="date-row">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+						<span id="date-label">Today</span>
+					</button>
+					<input class="hidden" id="date" type="date" aria-label="Business date" />
+					<button type="button" class="meta" id="outlet-row">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 21h18M6 21V8l6-5 6 5v13"/><path d="M10 21v-6h4v6"/></svg>
+						<span id="outlet-label">HQ · Merchant HQ Outlet</span>
+					</button>
+					<label class="field">
+						<span class="section-label" style="margin-top:8px">Product</span>
+						<input id="search" type="search" placeholder="Search product" autocomplete="off" />
+					</label>
+					<ul class="results hidden" id="results"></ul>
+					<p class="notice hidden" id="refuse" role="alert"></p>
+					<div class="lines" id="lines"></div>
+					<p class="section-label">Customer</p>
+					<div class="mobile">
+						<select id="dial" aria-label="Dial code">
+							<option value="60">+60</option>
+							<option value="65">+65</option>
+							<option value="62">+62</option>
+						</select>
+						<input id="mobile" type="text" inputmode="numeric" autocomplete="tel" placeholder="Mobile number" aria-label="Mobile number" />
+					</div>
+					<p class="hint" id="customer-hint"></p>
+					<label class="field"><span class="hidden">Name</span><input id="name" type="text" placeholder="Name (optional)" aria-label="Name, optional" /></label>
+					<label class="field"><span class="hidden">Email</span><input id="email" type="email" placeholder="Email (optional)" aria-label="Email, optional" autocomplete="email" /></label>
+				</section>
+
+				<section id="screen-pay" class="hidden">
+					<div class="payable">
+						<p>Payable total</p>
+						<strong id="pay-total">RM 0.00</strong>
+						<p id="pay-caption">Pickup</p>
+					</div>
+					<button type="button" class="choice" id="pay-cash" aria-pressed="true">
+						<span class="radio" aria-hidden="true"></span>
+						<span><strong>Cash</strong><small>Customer pays now</small></span>
+					</button>
+					<button type="button" class="choice" id="pay-transfer" aria-pressed="false">
+						<span class="radio" aria-hidden="true"></span>
+						<span><strong>Bank transfer</strong><small>Already paid</small></span>
+					</button>
+					<label class="field hidden" id="ref-field">
+						<span>Reference (optional)</span>
+						<input id="reference" type="text" autocomplete="off" />
+					</label>
+					<p class="notice hidden" id="pay-error" role="alert"></p>
+				</section>
+
+				<section id="screen-done" class="hidden done">
+					<div class="mark" aria-hidden="true">
+						<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="m5 12 5 5L20 7"/></svg>
+					</div>
+					<h2>Sale complete</h2>
+					<div class="card">
+						<div><span>Invoice</span><strong id="invoice"></strong></div>
+						<div><span>Order</span><strong id="order-no"></strong></div>
+						<p id="done-phone"></p>
+					</div>
+					<p class="hint" id="receipt-status"></p>
+				</section>
+			</div>
+
+			<footer class="dock" id="dock"></footer>
+		</main>
+	</div>
+
+	<details class="state">
+		<summary>Prototype state</summary>
+		<pre id="dump"></pre>
+	</details>
+
+	<script>
+		const catalog = [
+			{ code: 'MUG', name: 'Ceramic mug', price: 24, kind: 'product', stock: 20 },
+			{ code: 'GIFT', name: 'Gift set', price: 89, kind: 'combo', stock: 5 },
+			{ code: 'TOTE', name: 'Linen tote', price: 36, kind: 'product', stock: 8 },
+			{ code: 'VASE', name: 'Sold-out vase', price: 50, kind: 'product', stock: 0 },
+			{ code: 'LAMP', name: 'Upcoming lamp', price: 120, kind: 'preorder', stock: 0 },
+			{ code: 'MASSAGE', name: 'Chair massage', price: 80, kind: 'service', stock: 9 }
+		];
+		const known = { dial: '60', mobile: '123456789', name: 'Aina Rahman', email: 'aina@example.com' };
+		const outlets = [
+			{ code: 'HQ', name: 'Merchant HQ Outlet' },
+			{ code: 'KL', name: 'Bangsar' }
+		];
+
+		const state = {
+			step: 1,
+			date: todayISO(),
+			outlet: 'HQ',
+			severalOutlets: true,
+			lines: [],
+			dial: '60',
+			mobile: '',
+			name: '',
+			email: '',
+			method: 'cash',
+			reference: '',
+			query: '',
+			refuse: '',
+			failNext: false,
+			sale: null,
+			receipt: '',
+			busy: false
+		};
+
+		const $ = (id) => document.getElementById(id);
+
+		function todayISO() {
+			const d = new Date();
+			const m = String(d.getMonth() + 1).padStart(2, '0');
+			const day = String(d.getDate()).padStart(2, '0');
+			return d.getFullYear() + '-' + m + '-' + day;
+		}
+
+		function money(n) {
+			return 'RM ' + n.toFixed(2);
+		}
+
+		function digits(value) {
+			return value.replace(/\D/g, '');
+		}
+
+		function payable() {
+			const sub = state.lines.reduce((sum, line) => sum + line.price * line.qty, 0);
+			const tax = Math.round(sub * 0.06 * 100) / 100;
+			return { sub, tax, total: Math.round((sub + tax) * 100) / 100, qty: state.lines.reduce((sum, line) => sum + line.qty, 0) };
+		}
+
+		function mobileOk() {
+			const n = digits(state.mobile);
+			return n.length >= 6 && n.length <= 15;
+		}
+
+		function dateLabel() {
+			if (state.date === todayISO()) return 'Today · ' + prettyDate(state.date);
+			return prettyDate(state.date);
+		}
+
+		function prettyDate(iso) {
+			const [y, m, d] = iso.split('-').map(Number);
+			return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+		}
+
+		function render() {
+			$('title').textContent = state.step === 1 ? 'New sale' : state.step === 2 ? 'Payment' : 'Sale complete';
+			$('step-label').textContent = state.step + ' of 3';
+			$('step-label').classList.toggle('hidden', state.step === 3);
+			$('back').classList.toggle('hidden', state.step === 3);
+			$('screen-items').classList.toggle('hidden', state.step !== 1);
+			$('screen-pay').classList.toggle('hidden', state.step !== 2);
+			$('screen-done').classList.toggle('hidden', state.step !== 3);
+			$('date').max = todayISO();
+			$('date').value = state.date;
+			$('date-label').textContent = dateLabel();
+			const outlet = outlets.find((item) => item.code === state.outlet) || outlets[0];
+			$('outlet-label').textContent = outlet.code + ' · ' + outlet.name;
+			$('outlet-row').classList.toggle('hidden', !state.severalOutlets);
+			renderResults();
+			renderLines();
+			$('refuse').textContent = state.refuse;
+			$('refuse').classList.toggle('hidden', !state.refuse);
+			if (document.activeElement !== $('dial')) $('dial').value = state.dial;
+			if (document.activeElement !== $('mobile')) $('mobile').value = state.mobile;
+			if (document.activeElement !== $('name')) $('name').value = state.name;
+			if (document.activeElement !== $('email')) $('email').value = state.email;
+			if (document.activeElement !== $('search')) $('search').value = state.query;
+			if (document.activeElement !== $('reference')) $('reference').value = state.reference;
+			const match = mobileOk() && state.dial === known.dial && digits(state.mobile) === known.mobile;
+			$('customer-hint').textContent = match ? 'Saved customer · ' + known.name : '';
+			const bill = payable();
+			$('pay-total').textContent = money(bill.total);
+			$('pay-caption').textContent = bill.qty + (bill.qty === 1 ? ' item' : ' items') + ' · Pickup · Tax ' + money(bill.tax);
+			$('pay-cash').setAttribute('aria-pressed', String(state.method === 'cash'));
+			$('pay-transfer').setAttribute('aria-pressed', String(state.method === 'transfer'));
+			$('ref-field').classList.toggle('hidden', state.method !== 'transfer');
+			$('pay-error').classList.toggle('hidden', !$('pay-error').textContent);
+			if (state.sale) {
+				$('invoice').textContent = state.sale.invoice;
+				$('order-no').textContent = state.sale.orderNo;
+				$('done-phone').textContent = '+' + state.sale.dial + ' ' + state.sale.mobile;
+			}
+			$('receipt-status').textContent = state.receipt;
+			renderDock(bill);
+			$('dump').textContent = JSON.stringify({
+				step: state.step,
+				date: state.date,
+				outlet: state.severalOutlets ? state.outlet : outlets[0].code,
+				lines: state.lines.map((line) => ({ code: line.code, qty: line.qty, lineTotal: line.price * line.qty })),
+				customer: { dial: state.dial, mobile: digits(state.mobile), name: state.name, email: state.email },
+				method: state.method,
+				reference: state.reference,
+				payable: bill.total,
+				sale: state.sale
+			}, null, 2);
+		}
+
+		function renderResults() {
+			const list = $('results');
+			const q = state.query.trim().toLowerCase();
+			list.innerHTML = '';
+			if (!q) {
+				list.classList.add('hidden');
+				return;
+			}
+			const hits = catalog.filter((item) => item.name.toLowerCase().includes(q) || item.code.toLowerCase().includes(q));
+			if (!hits.length) {
+				list.classList.remove('hidden');
+				list.innerHTML = '<li><div class="line"><span class="grow"><small>No matching product</small></span></div></li>';
+				return;
+			}
+			list.classList.remove('hidden');
+			hits.forEach((item) => {
+				const li = document.createElement('li');
+				const button = document.createElement('button');
+				button.type = 'button';
+				button.innerHTML = '<span class="thumb" aria-hidden="true"></span><span class="grow"><strong></strong><small></small></span>';
+				button.querySelector('strong').textContent = item.name;
+				button.querySelector('small').textContent = item.kind === 'combo' ? 'Combo · ' + money(item.price) : money(item.price);
+				button.addEventListener('click', () => addItem(item));
+				li.appendChild(button);
+				list.appendChild(li);
+			});
+		}
+
+		function renderLines() {
+			const host = $('lines');
+			host.innerHTML = '';
+			state.lines.forEach((line) => {
+				const row = document.createElement('div');
+				row.className = 'line';
+				row.innerHTML = '<span class="thumb" aria-hidden="true"></span><span class="grow"><strong></strong><small></small></span><div class="stepper"><button type="button" data-dir="-1" aria-label=""></button><output></output><button type="button" data-dir="1" aria-label=""></button></div>';
+				row.querySelector('strong').textContent = line.name;
+				const kind = line.kind === 'combo' ? 'Combo · ' : '';
+				row.querySelector('small').textContent = kind + money(line.price * line.qty);
+				const [minus, plus] = row.querySelectorAll('button');
+				minus.textContent = '−';
+				plus.textContent = '+';
+				minus.setAttribute('aria-label', 'Decrease ' + line.name);
+				plus.setAttribute('aria-label', 'Increase ' + line.name);
+				row.querySelector('output').textContent = String(line.qty);
+				minus.addEventListener('click', () => changeQty(line.code, -1));
+				plus.addEventListener('click', () => changeQty(line.code, 1));
+				host.appendChild(row);
+			});
+		}
+
+		function renderDock(bill) {
+			const dock = $('dock');
+			dock.innerHTML = '';
+			if (state.step === 1) {
+				dock.innerHTML = '<div class="totals"><span></span><strong></strong></div>';
+				dock.querySelector('span').textContent = bill.qty + (bill.qty === 1 ? ' item' : ' items');
+				dock.querySelector('strong').textContent = money(bill.total);
+				const button = document.createElement('button');
+				button.type = 'button';
+				button.className = 'primary';
+				button.textContent = 'Continue to payment';
+				button.disabled = bill.qty < 1 || !mobileOk();
+				button.addEventListener('click', () => { state.step = 2; $('pay-error').textContent = ''; render(); });
+				dock.appendChild(button);
+			} else if (state.step === 2) {
+				const button = document.createElement('button');
+				button.type = 'button';
+				button.className = 'primary';
+				button.textContent = state.busy ? 'Taking payment' : 'Take payment';
+				button.disabled = state.busy;
+				button.setAttribute('aria-busy', String(state.busy));
+				button.addEventListener('click', takePayment);
+				dock.appendChild(button);
+			} else {
+				if (state.sale && state.sale.email) {
+					const send = document.createElement('button');
+					send.type = 'button';
+					send.className = 'secondary';
+					send.textContent = 'Send receipt';
+					send.addEventListener('click', () => {
+						state.receipt = 'Receipt sent to ' + state.sale.email;
+						render();
+					});
+					dock.appendChild(send);
+				}
+				const again = document.createElement('button');
+				again.type = 'button';
+				again.className = 'primary';
+				again.textContent = 'New sale';
+				again.addEventListener('click', resetSale);
+				dock.appendChild(again);
+				const open = document.createElement('button');
+				open.type = 'button';
+				open.className = 'link';
+				open.textContent = 'Open sale';
+				open.addEventListener('click', () => {
+					state.receipt = 'Would open sale ' + state.sale.invoice;
+					render();
+				});
+				dock.appendChild(open);
+			}
+		}
+
+		function addItem(item) {
+			state.query = '';
+			$('search').value = '';
+			if (item.kind === 'preorder') {
+				state.refuse = item.name + ' is a pre-order. The customer is taking the goods now.';
+				render();
+				return;
+			}
+			if (item.kind === 'service') {
+				state.refuse = item.name + ' is a service. This sale is for goods only.';
+				render();
+				return;
+			}
+			if (item.stock < 1) {
+				state.refuse = item.name + ' is out of stock.';
+				render();
+				return;
+			}
+			const existing = state.lines.find((line) => line.code === item.code);
+			if (existing) {
+				if (existing.qty + 1 > item.stock) {
+					state.refuse = 'Only ' + item.stock + ' available.';
+					render();
+					return;
+				}
+				existing.qty += 1;
+			} else {
+				const currency = state.lines[0] ? 'MYR' : 'MYR';
+				if (currency) {
+					state.lines.push({ code: item.code, name: item.name, price: item.price, qty: 1, kind: item.kind, stock: item.stock });
+				}
+			}
+			state.refuse = '';
+			render();
+		}
+
+		function changeQty(code, delta) {
+			const line = state.lines.find((item) => item.code === code);
+			if (!line) return;
+			const next = line.qty + delta;
+			if (next > line.stock) {
+				state.refuse = 'Only ' + line.stock + ' available.';
+				render();
+				return;
+			}
+			state.refuse = '';
+			if (next < 1) state.lines = state.lines.filter((item) => item.code !== code);
+			else line.qty = next;
+			render();
+		}
+
+		function takePayment() {
+			state.busy = true;
+			$('pay-error').textContent = '';
+			render();
+			window.setTimeout(() => {
+				state.busy = false;
+				if (state.failNext) {
+					state.failNext = false;
+					$('fail').setAttribute('aria-pressed', 'false');
+					$('pay-error').textContent = 'Could not complete the sale. Nothing was saved.';
+					$('pay-error').classList.remove('hidden');
+					render();
+					return;
+				}
+				state.sale = {
+					invoice: 'INV-1042',
+					orderNo: '#10482',
+					dial: state.dial,
+					mobile: state.mobile,
+					email: state.email.trim()
+				};
+				state.receipt = '';
+				state.step = 3;
+				render();
+			}, 500);
+		}
+
+		function resetSale() {
+			state.step = 1;
+			state.date = todayISO();
+			state.outlet = 'HQ';
+			state.lines = [];
+			state.dial = '60';
+			state.mobile = '';
+			state.name = '';
+			state.email = '';
+			state.method = 'cash';
+			state.reference = '';
+			state.query = '';
+			state.refuse = '';
+			state.sale = null;
+			state.receipt = '';
+			$('search').value = '';
+			$('pay-error').textContent = '';
+			render();
+		}
+
+		$('back').addEventListener('click', () => {
+			if (state.step === 2) state.step = 1;
+			else if (state.step === 1) state.receipt = 'Would return to the orders list. The basket is discarded.';
+			render();
+		});
+
+		$('date-row').addEventListener('click', () => $('date').showPicker ? $('date').showPicker() : $('date').click());
+		$('date').addEventListener('change', () => {
+			if ($('date').value && $('date').value <= todayISO()) state.date = $('date').value;
+			render();
+		});
+
+		$('outlet-row').addEventListener('click', () => {
+			const index = outlets.findIndex((item) => item.code === state.outlet);
+			state.outlet = outlets[(index + 1) % outlets.length].code;
+			render();
+		});
+
+		$('search').addEventListener('input', () => {
+			state.query = $('search').value;
+			state.refuse = '';
+			render();
+		});
+
+		function onCustomer(event) {
+			state.dial = $('dial').value;
+			state.mobile = $('mobile').value;
+			state.name = $('name').value;
+			state.email = $('email').value;
+			const fromMobile = event.target === $('dial') || event.target === $('mobile');
+			if (fromMobile && state.dial === known.dial && digits(state.mobile) === known.mobile) {
+				if (!state.name) state.name = known.name;
+				if (!state.email) state.email = known.email;
+			}
+			render();
+		}
+		['dial', 'mobile', 'name', 'email'].forEach((id) => $(id).addEventListener('input', onCustomer));
+
+		$('pay-cash').addEventListener('click', () => { state.method = 'cash'; render(); });
+		$('pay-transfer').addEventListener('click', () => { state.method = 'transfer'; render(); });
+		$('reference').addEventListener('input', () => { state.reference = $('reference').value; render(); });
+
+		$('theme').addEventListener('click', () => {
+			const dark = document.documentElement.getAttribute('data-theme') !== 'dark';
+			document.documentElement.toggleAttribute('data-theme', dark);
+			if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+			else document.documentElement.removeAttribute('data-theme');
+			$('theme').setAttribute('aria-pressed', String(dark));
+		});
+
+		$('outlets-many').addEventListener('click', () => {
+			state.severalOutlets = true;
+			$('outlets-many').setAttribute('aria-pressed', 'true');
+			$('outlets-one').setAttribute('aria-pressed', 'false');
+			render();
+		});
+		$('outlets-one').addEventListener('click', () => {
+			state.severalOutlets = false;
+			state.outlet = 'HQ';
+			$('outlets-many').setAttribute('aria-pressed', 'false');
+			$('outlets-one').setAttribute('aria-pressed', 'true');
+			render();
+		});
+		$('fail').addEventListener('click', () => {
+			state.failNext = !state.failNext;
+			$('fail').setAttribute('aria-pressed', String(state.failNext));
+		});
+
+		render();
+	</script>
+</body>
+</html>

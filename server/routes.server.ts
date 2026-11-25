@@ -122,6 +122,8 @@ export const Routes = {
 		PaymentStatus: (order_no: string) => `${API_PATH.ORDERS}/${order_no}/payment-status`,
 		Process: () => `${API_PATH.ORDERS}/process`,
 		Export: () => `${API_PATH.ORDERS}/export`,
+		CounterSale: () => `${API_PATH.ORDERS}/counter-sale`,
+		CounterSaleQuote: () => `${API_PATH.ORDERS}/counter-sale/quote`,
 	},
 	Notifications: {
 		Many: () => `${API_PATH.NOTIFICATIONS}`,

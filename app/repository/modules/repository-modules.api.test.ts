@@ -282,6 +282,22 @@ describe('OrderModule', () => {
 		expect(lastFetch().opts.body).toEqual({ action: OrderResendEmailAction.SHIPPED });
 	});
 
+	it('posts a counter sale and its quote', async () => {
+		const body = {
+			biz_date: '2026-11-24',
+			payment_method: 'CASH',
+			customer: { dial_code: '60', phone_no: '123456789' },
+			items: [{ prod_code: 'MUG', qty: 1 }],
+		};
+		await mod.quoteCounterSale(body);
+		expect(lastFetch().url).toBe(MerchantRoutes.Orders.CounterSaleQuote());
+		expect(lastFetch().opts.method).toBe('POST');
+		expect(lastFetch().opts.body).toEqual(body);
+		await mod.createCounterSale(body);
+		expect(lastFetch().url).toBe(MerchantRoutes.Orders.CounterSale());
+		expect(lastFetch().opts.body).toEqual(body);
+	});
+
 	it('generatePayment posts to encoded order generate-payment route', async () => {
 		await mod.generatePayment('ORD/1');
 		expect(lastFetch().url).toBe(MerchantRoutes.Orders.GeneratePayment(encodeURIComponent('ORD/1')));

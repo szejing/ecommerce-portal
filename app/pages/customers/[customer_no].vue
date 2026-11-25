@@ -40,6 +40,7 @@
 							<span class="text-sm text-muted"> {{ t('pages.totalSpend') }}: {{ formatCurrency(current_customer.total_spent ?? 0, 'MYR') }} </span>
 						</div>
 					</div>
+					<UButton :label="t('pages.newSale')" icon="i-heroicons-plus" class="min-h-11" @click="onOrder" />
 				</div>
 			</UCard>
 
@@ -321,7 +322,17 @@ const onEdit = () => {
 };
 
 const onOrder = () => {
-	// TODO: navigate to create order with customer pre-filled
+	const customer = current_customer.value;
+	if (!customer) return;
+	navigateTo({
+		path: '/orders/create',
+		query: {
+			dial_code: customer.dial_code ?? '',
+			phone_no: customer.phone_no ?? '',
+			name: customer.name ?? '',
+			email: customer.email_address ?? '',
+		},
+	});
 };
 
 const onAppointment = () => {

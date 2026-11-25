@@ -138,6 +138,8 @@ const MerchantRoutes = {
 		PaymentStatus: (order_no: string) => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.ORDERS}/${order_no}/payment-status`,
 		Process: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.ORDERS}/process`,
 		Export: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.ORDERS}/export`,
+		CounterSale: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.ORDERS}/counter-sale`,
+		CounterSaleQuote: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.ORDERS}/counter-sale/quote`,
 	},
 	Notifications: {
 		Many: () => `${prefix}/${API_PATH.MERCHANT}/${API_PATH.NOTIFICATIONS}/many`,

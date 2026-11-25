@@ -1,22 +1,31 @@
 <template>
-	<ZPagePanel id="orders" :title="t('nav.orders')">
+	<ZPagePanel id="orders" inline-mobile-actions :title="t('nav.orders')">
+		<template #navbar-right>
+			<ZCreateButton class="hidden lg:flex" to="/orders/create" :label="t('pages.newSale')" color="success" />
+			<UButton
+				to="/orders/create"
+				color="success"
+				:label="t('productMobileListing.add')"
+				:aria-label="t('pages.newSale')"
+				class="min-h-11 min-w-11 justify-center lg:hidden"
+			/>
+		</template>
 		<template #toolbar>
 			<ZSectionFilterOrders />
 		</template>
 
 		<div class="space-y-4">
-			<div class="hidden justify-end lg:flex">
-				<ZTableToolbar
-					v-model:selected-column-keys="selectedColumnKeys"
-					:model-value="pageSize"
-					:page-size-options="options_page_size"
-					:export-enabled="true"
-					:exporting="exporting"
-					:column-options="columnOptions"
-					@update:model-value="orderStore.setPageSize"
-					@export="exportOrders"
-				/>
-			</div>
+			<ZTableToolbar
+				v-model:selected-column-keys="selectedColumnKeys"
+				class="hidden lg:flex"
+				:model-value="pageSize"
+				:page-size-options="options_page_size"
+				:export-enabled="true"
+				:exporting="exporting"
+				:column-options="columnOptions"
+				@update:model-value="orderStore.setPageSize"
+				@export="exportOrders"
+			/>
 
 			<UButton
 				:label="t('common.export')"
