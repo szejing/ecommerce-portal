@@ -1,16 +1,17 @@
 <template>
 	<div class="flex items-center justify-between gap-3 max-lg:flex-wrap sm:justify-end">
-		<div class="flex items-center gap-2">
-			<span class="text-sm text-gray-600 dark:text-gray-400">{{ t('common.show') }}</span>
+		<div class="flex items-center gap-1.5 lg:gap-2">
+			<span class="text-xs text-muted lg:text-sm">{{ t('common.show') }}</span>
 			<USelect
 				:model-value="modelValue"
 				:items="pageSizeOptions"
 				:aria-label="t('catalogMobile.rowsPerPage')"
-				size="sm"
-				class="w-20 max-lg:min-h-11"
+				size="xs"
+				class="w-16 lg:w-20"
+				:ui="{ base: 'lg:min-h-8 lg:px-2.5 lg:text-sm' }"
 				@update:model-value="$emit('update:modelValue', $event)"
 			/>
-			<span class="text-sm text-gray-600 dark:text-gray-400">{{ t('common.entries') }}</span>
+			<span class="text-xs text-muted lg:text-sm">{{ t('common.entries') }}</span>
 		</div>
 
 		<UButton
@@ -18,12 +19,12 @@
 			variant="outline"
 			:disabled="exporting"
 			:loading="exporting"
-			size="sm"
-			class="max-lg:min-h-11"
+			size="xs"
+			class="lg:h-8 lg:min-h-8 lg:px-2.5 lg:text-sm"
 			v-bind="controls === 'outline' ? { color: 'primary' as const, icon: 'i-heroicons-arrow-down-tray' } : {}"
 			@click="$emit('export')"
 		>
-			<UIcon v-if="controls !== 'outline'" :name="ICONS.EXCEL" class="size-4" />
+			<UIcon v-if="controls !== 'outline'" :name="ICONS.EXCEL" class="size-3.5 lg:size-4" />
 			{{ t('common.export') }}
 		</UButton>
 
@@ -36,11 +37,11 @@
 			label-key="label"
 			icon="i-heroicons-view-columns"
 			color="neutral"
-			size="sm"
+			size="xs"
 			variant="outline"
-			class="w-fit min-w-0 font-medium text-xs max-lg:min-h-11"
+			class="w-fit min-w-0 font-medium text-xs lg:h-8 lg:min-h-8 lg:text-sm"
 			:class="{ 'max-lg:hidden': desktopColumns }"
-			:ui="{ content: 'w-56 max-h-60 overflow-y-auto' }"
+			:ui="{ base: 'lg:px-2.5', content: 'w-56 max-h-60 overflow-y-auto' }"
 		>
 			{{ t('components.selectMenu.showColumns') }}
 		</USelectMenu>

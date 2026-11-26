@@ -6,19 +6,15 @@
 					<p class="notifications-kicker">{{ t('notifications.actionCenter') }}</p>
 					<h1>{{ t('notifications.allTitle') }}</h1>
 				</div>
-				<UButton color="neutral" variant="soft" :icon="ICONS.REFRESH" :loading="loading" @click="loadNotifications">
+				<UButton color="neutral" variant="soft" :icon="ICONS.REFRESH" :loading="loading" class="min-h-11 self-start" @click="loadNotifications">
 					{{ t('common.refresh') }}
 				</UButton>
 			</div>
 
 			<template v-if="loading">
-				<div class="rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
-					<div class="grid grid-cols-3 gap-4 p-4">
-						<USkeleton v-for="i in 3" :key="i" class="h-4 flex-1 min-w-0" />
-					</div>
-					<div v-for="i in 5" :key="i" class="grid grid-cols-3 gap-4 p-4 items-center">
-						<USkeleton v-for="j in 3" :key="j" class="h-4 flex-1 min-w-0" />
-					</div>
+				<div class="space-y-2" role="status">
+					<span class="sr-only">{{ t('common.loading') }}</span>
+					<USkeleton v-for="i in 5" :key="i" class="h-16 w-full" />
 				</div>
 			</template>
 
@@ -31,7 +27,39 @@
 							<h2>{{ group.label }}</h2>
 						</div>
 
-						<UCard class="notifications-table" :ui="{ body: 'p-0 sm:p-0' }">
+						<ul class="divide-y divide-default border-y border-default lg:hidden">
+							<li v-for="row in group.items" :key="row.key">
+								<button
+									type="button"
+									class="flex min-h-16 w-full items-start gap-2 px-1 py-3 text-start focus-visible:outline-2 focus-visible:outline-primary"
+									:class="row.isRead ? 'text-muted' : 'bg-primary/10'"
+									@click="openDisplayRow(row)"
+								>
+									<span
+										:class="[
+											'mt-1.5 size-2 shrink-0 rounded-full',
+											row.isRead ? 'bg-accented' : `notifications-row__dot--${row.severity}`,
+										]"
+										aria-hidden="true"
+									/>
+									<span class="min-w-0 flex-1 wrap-anywhere">
+										<span v-if="row.ref_no !== '-'" class="block text-sm font-semibold text-highlighted"># {{ row.ref_no }}</span>
+										<span class="block text-sm">{{ row.descriptionPrefix ?? row.description }}</span>
+										<span class="mt-1 flex flex-wrap items-center gap-1">
+											<UBadge v-if="row.statusBadge" :color="row.statusBadge.color" variant="subtle" size="sm">
+												{{ row.statusBadge.label }}
+											</UBadge>
+											<UBadge v-if="row.referenceBadge" :color="row.referenceBadge.color" variant="subtle" size="sm">
+												{{ row.referenceBadge.label }}
+											</UBadge>
+										</span>
+										<span class="mt-1 block text-xs text-muted">{{ row.lastUpdated }}</span>
+									</span>
+								</button>
+							</li>
+						</ul>
+
+						<UCard class="notifications-table hidden lg:block" :ui="{ body: 'p-0 sm:p-0' }">
 							<UTable
 								:data="group.items"
 								:columns="notificationColumns"
@@ -163,17 +191,21 @@ const openNotification = async (type: NotificationType, item: NotificationItem) 
 	await navigateTo(updated.action?.url ?? item.action?.url ?? '/notifications');
 };
 
-const selectNotificationRow = (_event: Event, row: TableRow<NotificationDisplayRow>) => {
+const openDisplayRow = (row: NotificationDisplayRow) => {
 	if (rowSelectLocked.value) {
 		return;
 	}
 
-	if (row.original.type === NotificationType.PLATFORM_ANNOUNCEMENT) {
-		void openInAppNotification(row.original.item);
+	if (row.type === NotificationType.PLATFORM_ANNOUNCEMENT) {
+		void openInAppNotification(row.item);
 		return;
 	}
 
-	void openNotification(row.original.type, row.original.item);
+	void openNotification(row.type, row.item);
+};
+
+const selectNotificationRow = (_event: Event, row: TableRow<NotificationDisplayRow>) => {
+	openDisplayRow(row.original);
 };
 
 const getItemTime = (item: NotificationItem) => new Date(item.updated_at ?? item.created_at ?? item.scheduled_at ?? 0).getTime();

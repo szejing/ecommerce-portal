@@ -1,15 +1,23 @@
 <template>
-	<ZPagePanel id="products-options" :title="t('nav.options')">
+	<ZPagePanel id="products-options" :title="t('nav.options')" inline-mobile-actions>
 		<template #navbar-right>
-			<ZCreateButton to="/products/options/create" :label="t('common.addOption')" />
+			<ZCreateButton class="hidden lg:flex" to="/products/options/create" :label="t('common.addOption')" />
+			<UButton
+				to="/products/options/create"
+				color="success"
+				:label="t('productMobileListing.add')"
+				:aria-label="t('common.addOption')"
+				class="min-h-11 min-w-11 justify-center lg:hidden"
+			/>
 		</template>
 		<template #toolbar>
 			<ZSectionFilterBrands />
 		</template>
-		<div class="space-y-6">
+		<div class="flex min-w-0 flex-col gap-3 lg:gap-6">
 			<ZTableToolbar
 				v-model="filter.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
+				desktop-columns
 				:page-size-options="options_page_size"
 				:export-enabled="true"
 				:exporting="exporting"
@@ -19,7 +27,7 @@
 			/>
 
 			<template v-if="initialize">
-				<div class="rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
+				<div class="hidden rounded-lg overflow-hidden divide-y divide-neutral-200 lg:block dark:divide-neutral-700">
 					<!-- Header: Name | Values -->
 					<div class="grid grid-cols-[1fr_1fr] gap-4 p-4">
 						<USkeleton class="h-4 w-24" />
@@ -36,7 +44,7 @@
 					</div>
 				</div>
 			</template>
-			<UTable v-else :data="prod_variations" :columns="visibleColumns" :loading="loading" @select="selectProductOption">
+			<UTable v-else class="hidden lg:block" :data="prod_variations" :columns="visibleColumns" :loading="loading" @select="selectProductOption">
 				<template #empty>
 					<div class="flex flex-col items-center justify-center py-12 gap-3">
 						<UIcon :name="ICONS.ADDITIONAL" class="w-12 h-12 text-gray-400" />
@@ -45,6 +53,25 @@
 					</div>
 				</template>
 			</UTable>
+
+			<ZMobileRecordList
+				v-slot="{ item }"
+				:items="prod_variations"
+				item-key="id"
+				:label="t('nav.options')"
+				:empty-title="t('pages.noOptionsFound')"
+				:loading="initialize || loading"
+			>
+				<ZRecordLink @click="openProductOption(item)">
+					<span class="block text-sm font-semibold text-highlighted">{{ item.name }}</span>
+					<span v-if="item.options.length" class="mt-1 flex flex-wrap gap-1">
+						<UBadge v-for="option in item.options" :key="option.id" color="info" variant="subtle" size="sm">
+							{{ option.value }}
+						</UBadge>
+					</span>
+					<span v-else class="block text-xs text-muted">{{ t('table.noOptions') }}</span>
+				</ZRecordLink>
+			</ZMobileRecordList>
 
 			<!-- Pagination  -->
 			<div v-if="prod_variations.length > 0" class="section-pagination">
@@ -91,12 +118,7 @@ onMounted(async () => {
 	}
 });
 
-const deleteProductOption = async (row: TableRow<ProductVariation>) => {
-	const option = row.original;
-
-	if (!option) return;
-
-	const hasProducts = false;
+const deleteProductOption = async (option: ProductVariation) => {
 	const confirmModal = overlay.create(ZModalConfirmation, {
 		props: {
 			message: 'Are you sure you want to delete this option?',
@@ -114,11 +136,7 @@ const deleteProductOption = async (row: TableRow<ProductVariation>) => {
 	confirmModal.open();
 };
 
-const selectProductOption = async (e: Event, row: TableRow<ProductVariation>) => {
-	const option = row.original;
-
-	if (!option) return;
-
+const openProductOption = (option: ProductVariation) => {
 	const optionModal = overlay.create(ZModalOptionDetail, {
 		props: {
 			productOption: JSON.parse(JSON.stringify(option)),
@@ -128,7 +146,7 @@ const selectProductOption = async (e: Event, row: TableRow<ProductVariation>) =>
 			},
 			onDelete: async () => {
 				optionModal.close();
-				await deleteProductOption(row);
+				await deleteProductOption(option);
 			},
 			onCancel: () => {
 				optionModal.close();
@@ -137,6 +155,12 @@ const selectProductOption = async (e: Event, row: TableRow<ProductVariation>) =>
 	});
 
 	optionModal.open();
+};
+
+const selectProductOption = async (_e: Event, row: TableRow<ProductVariation>) => {
+	const option = row.original;
+	if (!option) return;
+	openProductOption(option);
 };
 
 const updatePage = async (page: number) => {

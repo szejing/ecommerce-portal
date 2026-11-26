@@ -5,7 +5,7 @@
 			<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 				<USkeleton class="h-64 rounded-lg" />
 				<div class="lg:col-span-2 space-y-4">
-					<USkeleton class="h-10 w-96" />
+					<USkeleton class="h-10 w-full max-w-sm" />
 					<USkeleton class="h-48 rounded-lg" />
 				</div>
 			</div>
@@ -40,7 +40,7 @@
 							<span class="text-sm text-muted"> {{ t('pages.totalSpend') }}: {{ formatCurrency(current_customer.total_spent ?? 0, 'MYR') }} </span>
 						</div>
 					</div>
-					<UButton :label="t('pages.newSale')" icon="i-heroicons-plus" class="min-h-11" @click="onOrder" />
+					<UButton :label="t('pages.newSale')" icon="i-heroicons-plus" class="min-h-11 w-full sm:w-auto" @click="onOrder" />
 				</div>
 			</UCard>
 
@@ -79,7 +79,12 @@
 
 				<!-- Right: Tabs -->
 				<UCard class="lg:col-span-2">
-					<UTabs v-model="activeTab" :items="tabItems" class="w-full">
+					<UTabs
+						v-model="activeTab"
+						:items="tabItems"
+						class="w-full min-w-0"
+						:ui="{ list: 'max-lg:w-full max-lg:overflow-x-auto', trigger: 'max-lg:min-h-11 max-lg:shrink-0' }"
+					>
 						<!-- Overview -->
 						<template #overview>
 							<div class="space-y-6 py-2">
@@ -118,7 +123,35 @@
 						<!-- Appointments -->
 						<template #appointments>
 							<div class="py-2">
-								<UTable :data="pagedCustomerAppointments" :columns="appointmentColumns" :loading="appointmentsLoading">
+								<div v-if="appointmentsLoading" class="space-y-2 lg:hidden" role="status">
+									<span class="sr-only">{{ t('common.loading') }}</span>
+									<USkeleton v-for="index in 3" :key="index" class="h-16 w-full" />
+								</div>
+								<div v-else-if="!pagedCustomerAppointments.length" class="flex flex-col items-center justify-center gap-3 py-12 lg:hidden">
+									<UIcon name="i-heroicons-calendar-days" class="h-16 w-16 text-neutral-300" />
+									<div class="text-center">
+										<p class="font-medium text-default">{{ t('pages.noAppointmentsFoundForCustomer') }}</p>
+										<p class="mt-1 max-w-sm text-sm text-muted">{{ t('pages.noAppointmentsFoundForCustomerDescription') }}</p>
+									</div>
+								</div>
+								<ul v-else class="divide-y divide-default border-y border-default lg:hidden">
+									<li v-for="appointment in pagedCustomerAppointments" :key="appointment.code" class="space-y-1 py-3">
+										<div class="flex items-start justify-between gap-2">
+											<span class="min-w-0 text-sm font-semibold text-highlighted wrap-anywhere">
+												{{ appointment.appt_desc || appointment.code }}
+											</span>
+											<UBadge :color="getAppointmentStatusColor(appointment.status)" variant="subtle" class="shrink-0">
+												{{ t('options.' + appointment.status.toLowerCase()) }}
+											</UBadge>
+										</div>
+										<p class="text-xs text-muted">{{ appointment.code }}</p>
+										<p class="text-xs text-muted">{{ formatAppointmentWhen(appointment) }}</p>
+										<p v-if="appointment.duration != null" class="text-xs text-muted">
+											{{ t('pages.durationMinutes', { n: appointment.duration }) }}
+										</p>
+									</li>
+								</ul>
+								<UTable class="hidden lg:block" :data="pagedCustomerAppointments" :columns="appointmentColumns" :loading="appointmentsLoading">
 									<template #empty>
 										<div class="flex flex-col items-center justify-center py-12 gap-3">
 											<UIcon name="i-heroicons-calendar-days" class="w-16 h-16 text-neutral-300" />
@@ -145,7 +178,35 @@
 						<!-- Orders -->
 						<template #orders>
 							<div class="py-2">
-								<UTable :data="pagedCustomerOrders" :columns="orderColumns" :loading="loading" :ui="{ tr: 'cursor-pointer' }" @select="selectOrder">
+								<div v-if="loading && !pagedCustomerOrders.length" class="space-y-2 lg:hidden" role="status">
+									<span class="sr-only">{{ t('common.loading') }}</span>
+									<USkeleton v-for="index in 3" :key="index" class="h-16 w-full" />
+								</div>
+								<div v-else-if="!pagedCustomerOrders.length" class="flex flex-col items-center justify-center gap-3 py-12 lg:hidden">
+									<UIcon name="i-heroicons-shopping-cart" class="h-16 w-16 text-neutral-300" />
+									<div class="text-center">
+										<p class="font-medium text-default">{{ t('pages.noOrdersFoundForCustomer') }}</p>
+										<p class="mt-1 max-w-sm text-sm text-muted">{{ t('pages.noOrdersFoundForCustomerDescription') }}</p>
+									</div>
+								</div>
+								<ul v-else class="divide-y divide-default border-y border-default lg:hidden">
+									<li v-for="order in pagedCustomerOrders" :key="`${order.type}:${order.order_no}`">
+										<ZRecordLink :to="`/orders/${encodeURIComponent(order.order_no)}?type=${order.type}`">
+											<span class="block text-sm font-semibold text-highlighted">#{{ order.order_no }}</span>
+											<span class="block text-xs text-muted">{{ formatOrderDate(order) }}</span>
+											<span class="block text-sm text-muted wrap-anywhere">{{ formatOrderItemsSummary(order.items) }}</span>
+											<template #trailing>
+												<UBadge v-if="order.status" :color="getOrderStatusColor(order.status) ?? 'neutral'" variant="subtle" class="whitespace-normal">
+													{{ getOrderStatusOption(t, order.status)?.label ?? order.status }}
+												</UBadge>
+												<span class="text-sm font-medium tabular-nums">
+													{{ formatCurrency(order.net_total ?? 0, order.currency?.code ?? 'MYR') }}
+												</span>
+											</template>
+										</ZRecordLink>
+									</li>
+								</ul>
+								<UTable class="hidden lg:block" :data="pagedCustomerOrders" :columns="orderColumns" :loading="loading" :ui="{ tr: 'cursor-pointer' }" @select="selectOrder">
 									<template #empty>
 										<div class="flex flex-col items-center justify-center py-12 gap-3">
 											<UIcon name="i-heroicons-shopping-cart" class="w-16 h-16 text-neutral-300" />
@@ -186,6 +247,7 @@
 import type { TableRow } from '@nuxt/ui';
 import { formatCurrency } from 'yeppi-common';
 import type { ItemModel } from '~/utils/models';
+import { getAppointmentStatusColor, getOrderStatusColor, getOrderStatusOption } from '~/utils/options';
 import { getCustomerAppointmentColumns, getCustomerOrderHistoryColumns } from '~/utils/table-columns';
 import type { Appointment } from '~/utils/types/appointment';
 import type { OrderHistory } from '~/utils/types/order-history';
@@ -269,6 +331,26 @@ const pagedCustomerAppointments = computed(() => {
 
 const updateAppointmentsPage = (page: number) => {
 	appointmentsPagination.current_page = page;
+};
+
+const formatAppointmentWhen = (appointment: Appointment): string => {
+	if (!appointment.start_date_time) return '—';
+	try {
+		return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(appointment.start_date_time));
+	} catch {
+		return String(appointment.start_date_time);
+	}
+};
+
+const formatOrderDate = (order: OrderHistory): string => {
+	const value = order.order_date_time;
+	if (!value) return '—';
+	try {
+		const date = typeof value === 'string' ? new Date(value) : value;
+		return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date);
+	} catch {
+		return String(value);
+	}
 };
 
 const formatOrderItemsSummary = (items: ItemModel[] | undefined): string => {
