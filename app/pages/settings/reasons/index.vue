@@ -1,16 +1,24 @@
 <template>
-	<ZPagePanel id="settings-reasons" :title="t('pages.reasonsListingTitle')" back-to="/settings/system">
+	<ZPagePanel id="settings-reasons" :title="t('pages.reasonsListingTitle')" back-to="/settings/system" inline-mobile-actions>
 		<template #navbar-right>
-			<ZCreateButton to="/settings/reasons/create" :label="t('common.create')" />
+			<ZCreateButton class="hidden lg:flex" to="/settings/reasons/create" :label="t('common.create')" />
+			<UButton
+				to="/settings/reasons/create"
+				color="success"
+				:label="t('productMobileListing.add')"
+				:aria-label="t('common.create')"
+				class="min-h-11 min-w-11 justify-center lg:hidden"
+			/>
 		</template>
 		<template #toolbar>
 			<ZSectionFilterReasons />
 		</template>
 
-		<div class="space-y-6">
+		<div class="flex min-w-0 flex-col gap-3 lg:gap-6">
 			<ZTableToolbar
 				v-model="filter.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
+				desktop-columns
 				:page-size-options="options_page_size"
 				:export-enabled="true"
 				:exporting="exporting"
@@ -20,7 +28,7 @@
 			/>
 
 			<template v-if="initialize">
-				<div class="rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
+				<div class="hidden lg:block rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
 					<div class="grid grid-cols-[1fr_auto] gap-4 p-4">
 						<USkeleton class="h-4 w-24" />
 						<USkeleton class="h-4 w-16" />
@@ -31,7 +39,7 @@
 					</div>
 				</div>
 			</template>
-			<UTable v-else :data="getDisplayReasons" :columns="visibleColumns" :loading="loading" @select="selectReason">
+			<UTable v-else class="hidden lg:block" :data="getDisplayReasons" :columns="visibleColumns" :loading="loading" @select="selectReason">
 				<template #empty>
 					<div class="flex flex-col items-center justify-center py-12 gap-3">
 						<UIcon :name="ICONS.ADDITIONAL" class="w-12 h-12 text-gray-400" />
@@ -41,8 +49,28 @@
 				</template>
 			</UTable>
 
-			<div v-if="!initialize && getDisplayReasons.length > 0" class="section-pagination">
-				<UPagination v-model="filter.current_page" :items-per-page="filter.page_size" :total="total_reasons" @update:page="updatePage" />
+			<ZMobileRecordList
+				v-slot="{ item }"
+				:items="getDisplayReasons"
+				item-key="code"
+				:label="t('pages.reasonsListingTitle')"
+				:empty-title="t('pages.noReasonsFound')"
+				:loading="initialize || loading"
+				record-path-prefix="/settings/reasons/"
+			>
+				<ZRecordLink :to="`/settings/reasons/${encodeURIComponent(item.code)}`">
+					<span class="block text-sm font-semibold text-highlighted">{{ item.description || item.code }}</span>
+					<span v-if="item.code" class="block text-xs text-muted">{{ item.code }}</span>
+					<template #trailing>
+						<UBadge :color="item.is_active ? 'success' : 'neutral'" variant="subtle" size="sm">
+							{{ t(item.is_active ? 'common.active' : 'common.inactive') }}
+						</UBadge>
+					</template>
+				</ZRecordLink>
+			</ZMobileRecordList>
+
+			<div v-if="!initialize && (getDisplayReasons.length > 0 || filter.current_page > 1)" class="section-pagination">
+				<ZPagination :page="filter.current_page" :items-per-page="filter.page_size" :total="total_reasons" :disabled="loading" @update:page="updatePage" />
 			</div>
 		</div>
 	</ZPagePanel>

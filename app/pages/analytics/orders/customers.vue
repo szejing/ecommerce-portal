@@ -1,10 +1,24 @@
 <template>
-	<ZPagePanel id="analytics-orders-customers" :title="t('pages.analyticsOrdersCustomers')" back-to="/analytics/orders">
+	<ZPagePanel id="analytics-orders-customers" desktop-toolbar :title="t('pages.analyticsOrdersCustomers')" back-to="/analytics/orders">
 		<template #toolbar>
 			<ZSectionFilterOrderSummCustomers />
 		</template>
 
-		<div class="space-y-6">
+		<div class="min-w-0 space-y-3 lg:space-y-6">
+			<ZAnalyticsReportMobileControls
+				v-model:filters-open="filtersOpen"
+				v-model:selected-column-keys="selectedColumnKeys"
+				:filters="order_summ_customer.filter"
+				:fields="['status']"
+				:page-size="order_summ_customer.page_size"
+				:column-options="columnOptions"
+				:loading="order_summ_customer.loading"
+				:exporting="order_summ_customer.exporting"
+				:total="order_summ_customer.total_data"
+				@apply-filters="applyMobileFilters"
+				@update:page-size="setMobilePageSize"
+				@export="exportOrderCustomerSummaryToCsv"
+			/>
 			<ZTableToolbar
 				v-model="order_summ_customer.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
@@ -12,12 +26,13 @@
 				:export-enabled="true"
 				:exporting="order_summ_customer.exporting"
 				:column-options="columnOptions"
+				class="max-lg:hidden"
 				@update:model-value="updatePageSize"
 				@export="exportOrderCustomerSummaryToCsv"
 			/>
 
 			<UCard class="w-full overflow-hidden" :ui="{ body: 'p-0 sm:p-0' }">
-				<UTable :data="data" :columns="visibleColumns" :loading="is_loading" :ui="orderCustomerTableUi">
+				<ZAnalyticsReportTable role="region" tabindex="0" :aria-label="t('portalMobile.reportTable')" :data="data" :columns="visibleColumns" :column-options="columnOptions" :primary-keys="['customer', 'biz_date', 'status', 'net_amt', 'total_txns']" :empty-title="t('pages.noDataFound')" :loading="is_loading" :ui="orderCustomerTableUi" @edit-filters="filtersOpen = true">
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.REPORT_ORDER" class="w-12 h-12 text-gray-400" />
@@ -25,11 +40,11 @@
 							<p class="text-xs text-gray-500 dark:text-gray-500">{{ t('pages.tryAdjustingFilters') }}</p>
 						</div>
 					</template>
-				</UTable>
+				</ZAnalyticsReportTable>
 			</UCard>
 
 			<div v-if="data.length > 0" class="section-pagination">
-				<UPagination v-model="current_page" :items-per-page="order_summ_customer.page_size" :total="order_summ_customer.total_data" @update:page="updatePage" />
+				<ZPagination :page="current_page" :items-per-page="order_summ_customer.page_size" :total="order_summ_customer.total_data" @update:page="updatePage" />
 			</div>
 		</div>
 	</ZPagePanel>
@@ -54,6 +69,7 @@ onMounted(async () => {
 
 const orderSummStore = useSummOrderStore();
 const { order_summ_customer } = storeToRefs(orderSummStore);
+const { filtersOpen, applyMobileFilters, setMobilePageSize } = useAnalyticsReportControls(order_summ_customer, orderSummStore.getOrderCustomerSummary);
 const orderCustomerTableUi = {
 	root: 'relative w-full overflow-auto',
 	base: 'w-full',

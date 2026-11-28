@@ -1,8 +1,9 @@
 <template>
-	<UCalendar v-model="internalRange" range :number-of-months="2" :min-value="minDateValue" :max-value="maxDateValue" />
+	<UCalendar v-model="internalRange" range :number-of-months="isWide ? 2 : 1" :min-value="minDateValue" :max-value="maxDateValue" />
 </template>
 
 <script setup lang="ts">
+import { useMediaQuery } from '@vueuse/core';
 import { CalendarDate, type DateValue } from '@internationalized/date';
 
 defineOptions({
@@ -13,6 +14,8 @@ export interface DateRange {
 	start: Date | null;
 	end: Date | null;
 }
+
+const isWide = useMediaQuery('(min-width: 640px)', { ssrWidth: 640 });
 
 const props = defineProps({
 	modelValue: {

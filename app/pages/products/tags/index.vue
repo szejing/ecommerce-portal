@@ -1,20 +1,27 @@
 <template>
-	<ZPagePanel id="products-tags" :title="t('nav.tags')" back-to="/products">
+	<ZPagePanel id="products-tags" inline-mobile-actions :title="t('nav.tags')" back-to="/products">
 		<template #navbar-right>
-			<ZCreateButton to="/products/tags/create" :label="t('common.addTag')" />
+			<ZCreateButton class="hidden lg:flex" to="/products/tags/create" :label="t('common.addTag')" />
+			<UButton
+				to="/products/tags/create"
+				:label="t('productMobileListing.add')"
+				:aria-label="t('common.addTag')"
+				class="min-h-11 min-w-11 justify-center lg:hidden"
+			/>
 		</template>
 		<template #toolbar>
 			<ZSectionFilterTags />
 		</template>
-		<div class="space-y-6">
+		<div class="space-y-3 lg:space-y-6">
 			<ZTableToolbar
 				v-model="filter.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
+				class="hidden lg:flex"
 				:page-size-options="options_page_size"
 				:export-enabled="true"
 				:exporting="exporting"
 				:column-options="columnOptions"
-				@update:model-value="tagsStore.updatePage"
+				@update:model-value="tagsStore.updatePageSize"
 				@export="exportTags"
 			/>
 
@@ -31,8 +38,27 @@
 				</div>
 			</template>
 
-			<UCard v-else :ui="{ body: 'p-0 sm:p-0' }">
-				<UTable :data="getDisplayTags" :columns="visibleColumns" :loading="loading" @select="selectTag">
+			<section v-else class="lg:hidden" :aria-label="t('nav.tags')" :aria-busy="loading">
+				<ZLoading v-if="loading" />
+				<UEmpty v-else-if="!getDisplayTags.length" :icon="ICONS.TAG" :title="t('pages.noTagsFound')" :description="t('pages.tryAdjustingFilters')" />
+				<ul v-else class="divide-y divide-default border-y border-default">
+					<li v-for="tag in getDisplayTags" :key="tag.id">
+						<ZRecordLink @click="openTag(tag)">
+							<span class="block text-sm font-semibold text-highlighted">{{ tag.value }}</span>
+							<template #trailing>
+								<span class="text-sm tabular-nums">
+									<span class="sr-only">{{ t('table.noOfItems') }}</span>
+									{{ tag.total_products ?? 0 }}
+								</span>
+								<UBadge v-if="tag.is_active === false" color="neutral" variant="subtle" size="sm">{{ t('common.inactive') }}</UBadge>
+							</template>
+						</ZRecordLink>
+					</li>
+				</ul>
+			</section>
+
+			<UCard v-if="!initialize" class="hidden lg:block" :ui="{ body: 'p-0 sm:p-0' }">
+				<UTable :data="getDisplayTags" :columns="visibleColumns" :loading="loading" @select="(_event, row) => openTag(row.original)">
 					<template #empty>
 						<div class="flex flex-col items-center justify-center py-12 gap-3">
 							<UIcon :name="ICONS.ADDITIONAL" class="w-12 h-12 text-gray-400" />
@@ -44,8 +70,15 @@
 			</UCard>
 
 			<!-- Pagination  -->
-			<div v-if="!initialize && getDisplayTags.length > 0" class="section-pagination">
-				<UPagination v-model="filter.current_page" :items-per-page="filter.page_size" :total="total_tags" @update:page="updatePage" />
+			<div v-if="!initialize && (getDisplayTags.length > 0 || filter.current_page > 1)" class="section-pagination flex-wrap items-center gap-2">
+				<USelect
+					:model-value="filter.page_size"
+					:items="options_page_size"
+					:aria-label="t('catalogMobile.rowsPerPage')"
+					class="min-h-11 lg:hidden"
+					@update:model-value="tagsStore.updatePageSize"
+				/>
+				<ZPagination :page="filter.current_page" :items-per-page="filter.page_size" :total="total_tags" @update:page="updatePage" />
 			</div>
 		</div>
 	</ZPagePanel>
@@ -57,7 +90,6 @@ import { getTagColumns } from '~/utils/table-columns';
 import { columnOptionsFromLabelMap } from '~/utils/table-columns/visibility';
 import type { Tag } from '~/utils/types/tag';
 import { options_page_size } from '~/utils/options';
-import type { TableRow } from '@nuxt/ui';
 import { failedNotification } from '~/stores/AppUi/AppUi';
 import { ICONS } from '~/utils/icons';
 
@@ -87,9 +119,7 @@ onMounted(async () => {
 	}
 });
 
-const deleteTag = async (row: TableRow<Tag>) => {
-	const tag = row.original;
-
+const deleteTag = async (tag: Tag) => {
 	const hasProducts = tag?.total_products && tag.total_products > 0;
 
 	const confirmModal = overlay.create(ZModalConfirmation, {
@@ -109,10 +139,7 @@ const deleteTag = async (row: TableRow<Tag>) => {
 	confirmModal.open();
 };
 
-const selectTag = async (e: Event, row: TableRow<Tag>) => {
-	const tag = row.original;
-	if (!tag) return;
-
+const openTag = async (tag: Tag) => {
 	if (tag.is_internal) {
 		failedNotification(t('pages.internalTagsCannotBeEdited'));
 		return;
@@ -127,7 +154,7 @@ const selectTag = async (e: Event, row: TableRow<Tag>) => {
 			},
 			onDelete: async () => {
 				tagModal.close();
-				await deleteTag(row);
+				await deleteTag(tag);
 			},
 			onCancel: () => {
 				tagModal.close();

@@ -4,14 +4,14 @@
 		data-testid="import-preview-modal"
 		:data-open="String(open)"
 		:title="t('shipmentArrangement.preview.title')"
-		:ui="{ content: 'w-[calc(100vw-1.5rem)] max-w-6xl sm:w-full' }"
+		:ui="{ content: 'w-[calc(100vw-1.5rem)] max-w-6xl sm:w-full', body: 'max-lg:p-3', footer: 'max-lg:p-3' }"
 	>
 		<template #body>
 			<div class="space-y-4">
-				<div v-if="props.preview" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-					<div v-for="stat in summary" :key="stat.label" class="rounded-md border border-default bg-elevated/40 p-3">
+				<div v-if="props.preview" class="grid grid-cols-3 gap-2 lg:gap-3">
+					<div v-for="stat in summary" :key="stat.label" class="min-w-0 rounded-md border border-default bg-elevated/40 p-2 wrap-anywhere lg:p-3">
 						<p class="text-xs font-medium text-muted">{{ stat.label }}</p>
-						<p class="mt-1 text-xl font-semibold text-default">{{ stat.value }}</p>
+						<p class="mt-1 text-lg font-semibold tabular-nums text-default lg:text-xl">{{ stat.value }}</p>
 					</div>
 				</div>
 
@@ -40,10 +40,6 @@
 					</li>
 				</ul>
 
-				<div v-if="props.preview" class="max-w-full overflow-x-auto rounded-md border border-default">
-					<UTable :data="props.preview.rows" :columns="previewColumns" class="min-w-[52rem]" />
-				</div>
-
 				<UAlert
 					v-if="props.preview && !props.applyResult"
 					color="warning"
@@ -51,11 +47,42 @@
 					icon="i-lucide-triangle-alert"
 					:description="t('shipmentArrangement.preview.applyWarning')"
 				/>
+
+				<div v-if="props.preview" class="hidden max-w-full overflow-x-auto rounded-md border border-default lg:block">
+					<UTable :data="props.preview.rows" :columns="previewColumns" class="min-w-[52rem]" />
+				</div>
+
+				<ul v-if="props.preview" class="divide-y divide-default rounded-md border border-default lg:hidden">
+					<li v-for="row in props.preview.rows" :key="row.row_number" class="space-y-2 p-3 wrap-anywhere">
+						<div class="flex flex-wrap items-center justify-between gap-2">
+							<p class="text-sm font-semibold text-highlighted">{{ row.order_no }} · #{{ row.batch_no }}</p>
+							<UBadge
+								variant="soft"
+								:color="row.status === 'error' ? 'error' : row.status === 'warning' ? 'warning' : 'success'"
+								:label="t(`shipmentArrangement.preview.rowStatus.${row.status}`)"
+							/>
+						</div>
+						<dl class="grid grid-cols-2 gap-2 text-sm">
+							<div class="min-w-0">
+								<dt class="text-xs text-muted">{{ t('shipmentArrangement.table.courier') }}</dt>
+								<dd>{{ row.courier || '—' }}</dd>
+							</div>
+							<div class="min-w-0">
+								<dt class="text-xs text-muted">{{ t('shipmentArrangement.table.tracking') }}</dt>
+								<dd>{{ row.tracking_no || '—' }}</dd>
+							</div>
+						</dl>
+						<p class="text-xs text-muted">{{ t('shipmentArrangement.table.row') }} {{ row.row_number }}</p>
+						<ul v-if="row.messages.length" class="list-disc space-y-0.5 ps-4 text-xs text-muted">
+							<li v-for="(message, index) in row.messages" :key="index">{{ message }}</li>
+						</ul>
+					</li>
+				</ul>
 			</div>
 		</template>
 
 		<template #footer>
-			<div class="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+			<div class="flex w-full flex-wrap justify-end gap-2">
 				<UButton
 					class="min-h-11 justify-center"
 					color="neutral"
@@ -70,7 +97,7 @@
 				<UButton
 					v-if="!props.applyResult"
 					data-testid="apply-shipments"
-					class="min-h-11 justify-center"
+					class="min-h-11 flex-1 justify-center sm:flex-none"
 					:disabled="props.eligibleCount === 0"
 					:loading="props.applying"
 					:label="t('shipmentArrangement.preview.applyCount', { count: props.eligibleCount })"

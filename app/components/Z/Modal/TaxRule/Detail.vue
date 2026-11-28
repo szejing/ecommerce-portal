@@ -6,7 +6,7 @@
 		}"
 	>
 		<template #body>
-			<UForm :schema="detailSchema" :state="state.detail" class="space-y-4" @submit="onSubmit">
+			<UForm :schema="detailSchema" :state="state.detail" class="mobile-form-controls space-y-4" @submit="onSubmit">
 				<!-- *********************** Tax Detail *********************** -->
 				<div class="space-y-4">
 					<div class="flex-jbetween-icenter">
@@ -39,10 +39,10 @@
 		</template>
 
 		<template #footer>
-			<div class="flex-jbetween-icenter w-full">
+			<div class="flex w-full flex-wrap items-center justify-between gap-2 max-lg:[&_button]:min-h-11">
 				<UButton color="error" variant="ghost" class="opacity-50 hover:opacity-100" @click="onDelete">{{ t('components.zModal.delete') }}</UButton>
 
-				<div class="flex-jend gap-4">
+				<div class="flex flex-wrap justify-end gap-2 lg:gap-4">
 					<UButton color="neutral" variant="soft" @click="onCancel">{{ t('common.cancel') }}</UButton>
 					<UButton color="primary" variant="solid" type="submit">{{ t('components.zModal.update') }}</UButton>
 				</div>

@@ -1,9 +1,9 @@
 <template>
-	<div class="h-screen flex justify-center items-center">
-		<div class="platform-shell-hero hidden sm:flex w-full h-full flex-col items-center justify-center">
-			<img class="my-2 text-center mx-auto w-100" :src="logoSrc" :alt="logoAlt" @click="navigateTo('/')" />
+	<div class="min-h-dvh flex justify-center items-center">
+		<div class="platform-shell-hero hidden lg:flex w-full self-stretch flex-col items-center justify-center">
+			<img class="my-2 text-center mx-auto w-full max-w-100 px-6" :src="logoSrc" :alt="logoAlt" @click="navigateTo('/')" />
 		</div>
-		<div class="w-full sm:w-[60%] px-10">
+		<div class="w-full lg:w-[60%] px-4 py-5 sm:px-10 lg:py-0">
 			<div v-if="token" class="max-w-md mx-auto">
 				<FormResetPassword :token="token" />
 			</div>

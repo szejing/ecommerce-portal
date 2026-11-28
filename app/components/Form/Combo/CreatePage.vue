@@ -6,7 +6,7 @@
 
 		<template #footer>
 			<div class="w-full backdrop-blur-sm border-t border-default shadow-md z-50">
-				<div class="mx-auto px-4 sm:px-6 py-4">
+				<div class="mx-auto px-3 py-2 md:px-6 md:py-4">
 					<div class="hidden md:flex justify-between items-center gap-3">
 						<UButton color="neutral" variant="ghost" size="lg" :loading="adding" @click="() => saveDraft()">
 							<UIcon :name="ICONS.SAVE" />

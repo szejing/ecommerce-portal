@@ -1,7 +1,7 @@
 <template>
 	<ZPagePanel id="products-brands-create" :title="t('pages.createBrand')" back-to="/products/brands">
-		<div class="mx-auto max-w-3xl w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-			<div class="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-6 sm:p-8">
+		<div class="mx-auto max-w-3xl w-full min-w-0 px-0 py-0 sm:px-6 sm:py-8 lg:px-8">
+			<div class="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-4 sm:p-8">
 				<FormProductBrandCreation />
 			</div>
 		</div>

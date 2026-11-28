@@ -1,16 +1,16 @@
 <template>
 	<div>
-		<UForm :schema="taxGroupSchema" :state="new_tax_group" class="space-y-4" @submit="onSubmit">
+		<UForm :schema="taxGroupSchema" :state="state" class="mobile-form-controls space-y-4" @submit="onSubmit">
 			<!-- *********************** General Info *********************** -->
 			<ZInputTaxGroupGeneralInfo
-				v-model:code="new_tax_group.code"
-				v-model:description="new_tax_group.description"
-				v-model:tax_codes="new_tax_group.tax_codes"
+				v-model:code="state.code"
+				v-model:description="state.description"
+				v-model:taxes="state.taxes"
 			/>
 
 			<!-- *********************** General Info *********************** -->
 			<div class="flex-center text-center mt-3">
-				<UButton size="md" color="success" variant="solid" type="submit" block :loading="adding">{{ t('components.taxForm.create') }}</UButton>
+				<UButton size="md" color="success" variant="solid" type="submit" class="max-lg:min-h-11" block :loading="adding">{{ t('components.taxForm.create') }}</UButton>
 			</div>
 		</UForm>
 	</div>
@@ -19,6 +19,7 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent } from '#ui/types';
 import type { z } from 'zod';
+import type { TaxInput } from '~/utils/types/tax';
 import { CreateTaxGroupValidation } from '~/utils/schema';
 
 const { t } = useI18n();
@@ -29,9 +30,8 @@ type Schema = z.output<ReturnType<typeof CreateTaxGroupValidation>>;
 const taxGroupStore = useTaxGroupStore();
 const { adding, new_tax_group } = storeToRefs(taxGroupStore);
 
-onMounted(() => {
-	taxGroupStore.resetNewTaxGroup();
-});
+const emit = defineEmits<{ saved: [] }>();
+const state = reactive({ code: '', description: '', taxes: [] as TaxInput[] });
 
 const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 	const { code, description, taxes } = event.data;
@@ -39,10 +39,10 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 	new_tax_group.value = {
 		code,
 		description,
-		taxes: taxes ?? [],
+		tax_codes: taxes?.map((tax) => tax.code) ?? [],
 	};
 
-	await taxGroupStore.createTaxGroup();
+	if (await taxGroupStore.createTaxGroup()) emit('saved');
 };
 </script>
 

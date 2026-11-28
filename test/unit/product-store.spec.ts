@@ -15,6 +15,7 @@ vi.mock('../../app/stores/AppUi/AppUi', () => ({
 }));
 
 const getMany = vi.fn();
+const exportProducts = vi.fn();
 const create = vi.fn();
 const importProducts = vi.fn();
 const upload = vi.fn();
@@ -47,6 +48,7 @@ describe('useProductStore', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia());
 		getMany.mockReset();
+		exportProducts.mockReset();
 		create.mockReset();
 		importProducts.mockReset();
 		upload.mockReset();
@@ -57,7 +59,7 @@ describe('useProductStore', () => {
 		create.mockResolvedValue({ product: product('SKU-1') });
 		(globalThis as unknown as { useNuxtApp: () => unknown }).useNuxtApp = () => ({
 			$api: {
-				product: { getMany, create, importProducts },
+				product: { getMany, create, importProducts, exportProducts },
 				image: { upload, uploadMultiple },
 			},
 			$i18n: { t: translate },
@@ -79,6 +81,31 @@ describe('useProductStore', () => {
 		expect(getMany.mock.calls[0]?.[0].$search).toBe('helmet');
 	});
 
+	it('retires earlier page requests immediately when a new search starts', async () => {
+		vi.useFakeTimers();
+		const store = useProductStore();
+		const oldPage = deferred<{ data: Product[]; '@odata.count': number }>();
+		getMany.mockReturnValueOnce(oldPage.promise);
+		const inFlight = store.setPage(3);
+
+		store.setSearch('CC-30');
+		expect(store.loading).toBe(true);
+		oldPage.resolve({ data: [product('OLD')], '@odata.count': 30 });
+		await expect(inFlight).resolves.toEqual({ status: 'stale' });
+		expect(store.loading).toBe(true);
+		await vi.advanceTimersByTimeAsync(PRODUCT_FILTER_DEBOUNCE_MS);
+		expect(getMany.mock.calls.at(-1)?.[0]).toMatchObject({ $search: 'CC-30', $skip: 0 });
+	});
+
+	it('reloads the last available results page after the catalogue shrinks', async () => {
+		const store = useProductStore();
+		getMany.mockResolvedValueOnce({ data: [], '@odata.count': 1 });
+		await store.setPage(2);
+
+		expect(store.filters.current_page).toBe(1);
+		expect(store.products.map(({ code }) => code)).toEqual(['SKU-1']);
+	});
+
 	it('does not treat mutations of returned filter snapshots as workflow intent', async () => {
 		vi.useFakeTimers();
 		const store = useProductStore();
@@ -88,6 +115,36 @@ describe('useProductStore', () => {
 		await vi.runAllTicks();
 		expect(getMany.mock.calls.at(-1)?.[0].$filter).toBe(`status eq '${ProductStatus.DRAFT}'`);
 		expect(store.filters.query).toBe('');
+	});
+
+	it('applies status and name sorting together from page one and keeps the search and type', async () => {
+		const store = useProductStore();
+		store.filter.query = 'CC-30';
+		store.filter.type_id = 1;
+		await store.setPage(3);
+		getMany.mockClear();
+
+		await store.applyListingOptions(ProductStatus.PUBLISHED, 'name');
+
+		expect(getMany).toHaveBeenCalledTimes(1);
+		expect(getMany).toHaveBeenCalledWith(expect.objectContaining({
+			$search: 'CC-30',
+			type_id: 1,
+			$filter: `status eq '${ProductStatus.PUBLISHED}'`,
+			$orderby: 'name asc,code asc',
+			$skip: 0,
+		}));
+	});
+
+	it('reports export API errors and clears its loading state', async () => {
+		const store = useProductStore();
+		exportProducts.mockRejectedValue(new Error('Unable to export products'));
+
+		await store.exportProducts();
+
+		expect(exportProducts).toHaveBeenCalledOnce();
+		expect(failedNotification).toHaveBeenCalledWith('Unable to export products');
+		expect(store.exporting).toBe(false);
 	});
 
 	it('lists products with table-only expands', async () => {

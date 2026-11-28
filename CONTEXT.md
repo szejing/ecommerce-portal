@@ -143,3 +143,7 @@ _Avoid_: spreadsheet row (for Product Import), variant, uploaded file
 **Import Report**:
 The lasting summary of one Product Import or Customer Import run, retained on the Activity Log. It includes Import Unit counts (total, created, updated, failed), the source file name when known, and the list of failed Import Units (row, code, message). Distinct from Import Progress, which is live only while the import runs.
 _Avoid_: Import Progress, toast-only summary, System Log, spreadsheet dump
+
+**Staff Prompt**:
+A CRM Staff question about the current Merchant Store, answered only with data that staff member can already open. Distinct from a WhatsApp Conversation.
+_Avoid_: storefront chat, WhatsApp Inbox, Conversation Thread, MASTER assistant, an answer that changes an order, message, catalogue row, or payment

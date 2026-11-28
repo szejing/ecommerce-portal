@@ -1,6 +1,6 @@
 <template>
 	<ZPagePanel id="reason-edit" :title="panelTitle" back-to="/settings/reasons" grow>
-		<div class="container w-full mx-auto">
+		<div class="mobile-form-controls container mx-auto w-full min-w-0">
 			<FormReasonUpdateLoading v-if="isLoading" />
 			<FormReasonUpdate
 				v-else-if="current_reason"
@@ -13,7 +13,7 @@
 
 		<template #footer>
 			<div v-if="current_reason" class="w-full backdrop-blur-sm border-t border-neutral-200 dark:border-neutral-800 shadow-md z-50">
-				<div class="mx-auto px-4 sm:px-6 py-4">
+				<div class="mx-auto px-3 py-2 sm:px-6 md:py-4">
 					<div class="hidden md:flex justify-between items-center gap-3">
 						<UButton color="error" variant="ghost" size="lg" :loading="removing" @click="confirmDelete">
 							<UIcon :name="ICONS.TRASH" />
@@ -27,20 +27,20 @@
 							</UButton>
 						</div>
 					</div>
-					<div class="md:hidden flex flex-col gap-2">
-						<UButton color="success" size="md" class="w-full" :loading="updating" @click="onSubmit">
-							<UIcon :name="ICONS.CHECK_ROUNDED" class="w-4 h-4" />
-							<span class="text-sm">{{ t('common.save') }}</span>
-						</UButton>
-						<div class="flex gap-2">
-							<UButton color="error" variant="ghost" size="sm" class="flex-1" :loading="removing" @click="confirmDelete">
+					<div class="flex flex-wrap items-center gap-2 md:hidden">
+						<div class="contents">
+							<UButton color="error" variant="ghost" size="sm" class="justify-center" :loading="removing" @click="confirmDelete">
 								<UIcon :name="ICONS.TRASH" class="w-4 h-4" />
 								<span class="text-xs">{{ t('common.delete') }}</span>
 							</UButton>
-							<UButton color="neutral" variant="outline" size="sm" class="flex-1" @click="goBack">
+							<UButton color="neutral" variant="outline" size="sm" class="justify-center" @click="goBack">
 								<span class="text-xs">{{ t('common.cancel') }}</span>
 							</UButton>
 						</div>
+						<UButton color="success" size="md" class="flex-1 justify-center" :loading="updating" @click="onSubmit">
+							<UIcon :name="ICONS.CHECK_ROUNDED" class="w-4 h-4" />
+							<span class="text-sm">{{ t('common.save') }}</span>
+						</UButton>
 					</div>
 				</div>
 			</div>

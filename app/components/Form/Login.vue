@@ -3,8 +3,8 @@
 		<UCard variant="outline" class="w-full">
 			<template #header>
 				<div>
-					<div class="flex sm:hidden w-full">
-						<NuxtImg class="my-2 mx-auto w-full cursor-pointer rounded-sm" :src="logoSrc" :alt="logoAlt" />
+					<div class="flex lg:hidden w-full">
+						<NuxtImg class="my-2 mx-auto w-full max-w-56 rounded-sm" :src="logoSrc" :alt="logoAlt" />
 					</div>
 					<h1 class="text-center">{{ t('auth.loginTitle') }}</h1>
 				</div>
@@ -25,11 +25,11 @@
 				</UFormField>
 
 				<UFormField :label="t('auth.email')" name="email_address" required>
-					<UInput v-model="state.email_address" autocomplete="section-login email" />
+					<UInput v-model="state.email_address" inputmode="email" autocomplete="section-login email" />
 				</UFormField>
 
 				<UFormField :label="t('auth.password')" name="password" required>
-					<UInput v-model="state.password" :type="state.show ? 'text' : 'password'">
+					<UInput v-model="state.password" autocomplete="current-password" :type="state.show ? 'text' : 'password'">
 						<template v-if="state.password?.length" #trailing>
 							<UButton
 								type="button"
@@ -49,7 +49,7 @@
 
 			<template #footer>
 				<div class="flex flex-col gap-2">
-					<UButton block size="md" color="primary" variant="outline" type="submit" :loading="loading">{{ t('common.submit') }}</UButton>
+					<UButton block size="md" color="primary" variant="outline" type="submit" class="max-lg:min-h-11" :loading="loading">{{ t('common.submit') }}</UButton>
 					<NuxtLink to="/forgot-password" class="text-center text-sm text-muted hover:underline">{{ t('auth.forgotPassword') }}</NuxtLink>
 				</div>
 			</template>

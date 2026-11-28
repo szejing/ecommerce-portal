@@ -1,12 +1,12 @@
 <template>
 	<UCard>
-		<div class="relative mb-4 pr-9 sm:mb-6 sm:pr-10">
+		<div class="relative mb-4 pr-11 sm:mb-6 sm:pr-10">
 			<UButton
 				icon="i-heroicons-x-mark"
 				color="neutral"
 				variant="ghost"
 				size="sm"
-				class="absolute top-0 right-0 cursor-pointer"
+				class="absolute top-0 right-0 cursor-pointer max-lg:size-11 max-lg:justify-center"
 				:aria-label="t('common.close')"
 				@click="$emit('close')"
 			/>
@@ -32,13 +32,13 @@
 				</div>
 			</div>
 		</div>
-		<div v-if="showNav" class="mb-4 flex items-center justify-between gap-2 sm:mb-6">
+		<div v-if="showNav" class="mb-4 flex flex-wrap items-center justify-between gap-2 sm:mb-6">
 			<UButton
 				color="neutral"
 				variant="outline"
 				size="sm"
 				icon="i-heroicons-chevron-left"
-				class="min-h-9 cursor-pointer"
+				class="min-h-9 cursor-pointer max-lg:min-h-11"
 				:disabled="!canGoPrevious"
 				:aria-label="t('pages.previousAppointment')"
 				:label="t('pages.previousAppointment')"
@@ -50,7 +50,7 @@
 				variant="outline"
 				size="sm"
 				trailing-icon="i-heroicons-chevron-right"
-				class="min-h-9 cursor-pointer"
+				class="min-h-9 cursor-pointer max-lg:min-h-11"
 				:disabled="!canGoNext"
 				:aria-label="t('pages.nextAppointment')"
 				:label="t('pages.nextAppointment')"

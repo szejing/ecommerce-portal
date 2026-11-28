@@ -3,8 +3,18 @@
 	<ZPagePanel id="appointments" :title="t('nav.appointments')" toolbar-fill>
 		<template #toolbar>
 			<div class="flex w-full min-w-0 flex-col gap-2">
-				<ZSectionFilterAppointments />
-				<div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+				<ZSectionFilterAppointments>
+					<template #mobile-status>
+						<div class="space-y-2">
+							<p class="text-sm font-medium">{{ t('pages.appointmentStatusFilter') }}</p>
+							<ZSectionAppointmentsStatusChips :model-value="uiStatus" :counts="statusCounts" @update:model-value="onStatusChip" />
+						</div>
+					</template>
+					<template #mobile-action>
+						<UButton v-if="nextPending" color="primary" variant="soft" class="min-h-11" :label="t('pages.appointmentNextPending')" @click="onNextPending" />
+					</template>
+				</ZSectionFilterAppointments>
+				<div class="hidden gap-2 lg:flex lg:items-center lg:justify-between">
 					<ZSectionAppointmentsStatusChips class="min-w-0" :model-value="uiStatus" :counts="statusCounts" @update:model-value="onStatusChip" />
 					<p class="text-sm text-gray-500 lg:shrink-0 lg:text-right dark:text-gray-400">
 						{{
@@ -15,24 +25,67 @@
 						}}
 					</p>
 				</div>
+				<p v-if="uiStatus !== 'All'" class="text-sm text-muted lg:hidden">{{ t('components.filter.status') }} · {{ t('options.' + uiStatus.toLowerCase()) }}</p>
 			</div>
 		</template>
-		<div class="space-y-3 pb-24 lg:pb-0">
-			<ZSectionAppointmentsAttentionRail v-if="showAttentionRail" :items="attentionRailItems" @select="selectAppointment" @select-gap="onSelectGap" />
+		<div class="space-y-3">
+			<ZSectionAppointmentsAttentionRail
+				v-if="showAttentionRail"
+				class="hidden lg:flex"
+				:items="attentionRailItems"
+				@select="selectAppointment"
+				@select-gap="onSelectGap"
+			/>
 
 			<!-- Listing view -->
 			<template v-if="appointmentStore.isListingView">
-				<UCard>
+				<UCard :ui="{ body: 'max-lg:p-3' }">
 					<div class="flex items-center justify-between mb-4">
 						<div>
-							<h3 class="font-semibold">{{ t('pages.upcomingAppointments') }}</h3>
-							<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+							<h3 class="font-semibold">{{ t(filters.query.trim() ? 'nav.appointments' : 'pages.upcomingAppointments') }}</h3>
+							<p v-if="!showInitialLoader" class="mt-1 text-sm text-muted" role="status">
 								{{ t('pages.appointmentsCount', displayedAppointments.length) }}
 							</p>
 						</div>
 					</div>
 					<ZLoading v-if="showInitialLoader" />
-					<UTable v-else :data="displayedAppointments" :columns="appointment_columns" :meta="appointmentTableMeta" @select="onSelectAppointment">
+					<div v-else class="lg:hidden">
+						<UEmpty
+							v-if="!displayedAppointments.length"
+							icon="i-heroicons-calendar-days"
+							:title="t('pages.noAppointmentsFound')"
+							:description="filters.query ? t('pages.tryAdjustingFilters') : undefined"
+						/>
+						<ul v-else class="divide-y divide-default">
+							<li v-for="appointment in displayedAppointments" :key="appointment.code">
+								<button
+									type="button"
+									class="flex min-h-16 w-full items-center justify-between gap-2 rounded-sm py-2 text-start focus-visible:outline-2 focus-visible:outline-primary"
+									@click="selectAppointment(appointment)"
+								>
+									<span class="min-w-0 wrap-anywhere">
+										<span class="block text-sm font-semibold text-highlighted">{{ appointment.customer_name || appointment.code }}</span>
+										<span v-if="appointment.appt_desc" class="block text-sm text-muted">{{ appointment.appt_desc }}</span>
+										<span v-if="appointment.start_date_time" class="block text-xs text-muted">
+											{{ format(new Date(appointment.start_date_time), 'dd MMM yyyy, p') }}
+										</span>
+									</span>
+									<UBadge :color="getAppointmentStatusColor(appointment.status)" variant="subtle" class="shrink-0">
+										{{ t('options.' + appointment.status.toLowerCase()) }}
+									</UBadge>
+								</button>
+							</li>
+						</ul>
+					</div>
+
+					<UTable
+						v-if="!showInitialLoader"
+						class="hidden lg:block"
+						:data="displayedAppointments"
+						:columns="appointment_columns"
+						:meta="appointmentTableMeta"
+						@select="onSelectAppointment"
+					>
 						<template #empty>
 							<div class="flex flex-col items-center justify-center py-12 gap-3">
 								<UIcon name="i-heroicons-calendar-days" class="w-16 h-16 text-gray-400" />
@@ -50,20 +103,31 @@
 
 			<!-- Daily view -->
 			<template v-else-if="appointmentStore.isDailyView">
-				<UCard>
+				<UCard :ui="{ body: 'max-lg:p-3' }">
 					<div class="mb-3 flex items-center gap-2">
 						<UButton
 							color="neutral"
 							variant="outline"
 							size="lg"
+							class="max-lg:size-11 max-lg:justify-center"
 							icon="i-heroicons-chevron-left"
 							:aria-label="t('pages.previousAppointment')"
 							@click="goPrevDay"
 						/>
-						<span class="min-w-0 flex-1 truncate text-center text-sm font-medium sm:text-base">{{ format(calendarFocusDate, 'EEE, d MMM yyyy') }}</span>
-						<UButton color="neutral" variant="outline" size="lg" icon="i-heroicons-chevron-right" :aria-label="t('pages.nextAppointment')" @click="goNextDay" />
+						<span class="hidden min-w-0 flex-1 text-center text-base font-medium lg:block" aria-live="polite">
+							{{ format(calendarFocusDate, 'EEE, d MMM yyyy') }}
+						</span>
 						<UPopover v-model:open="dayPickerOpen">
-							<UButton color="neutral" variant="outline" size="lg" icon="i-heroicons-calendar-days" :aria-label="t('components.selectMenu.pickADate')" />
+							<UButton
+								color="neutral"
+								variant="outline"
+								size="lg"
+								class="min-w-0 max-lg:min-h-11 max-lg:flex-1 max-lg:justify-center"
+								icon="i-heroicons-calendar-days"
+								:aria-label="`${t('components.selectMenu.pickADate')} · ${format(calendarFocusDate, 'PP')}`"
+							>
+								<span class="min-w-0 text-center text-sm lg:hidden">{{ format(calendarFocusDate, 'EEE, d MMM') }}</span>
+							</UButton>
 							<template #content>
 								<div class="p-2">
 									<UCalendar
@@ -82,7 +146,16 @@
 								</div>
 							</template>
 						</UPopover>
-						<UButton color="primary" variant="soft" size="sm" :label="t('pages.today')" class="hidden min-h-10 sm:flex" @click="goToTodayMonth" />
+						<UButton
+							color="neutral"
+							variant="outline"
+							size="lg"
+							class="max-lg:size-11 max-lg:justify-center"
+							icon="i-heroicons-chevron-right"
+							:aria-label="t('pages.nextAppointment')"
+							@click="goNextDay"
+						/>
+						<UButton color="primary" variant="soft" size="sm" :label="t('pages.today')" class="min-h-11 lg:min-h-10" @click="goToTodayMonth" />
 					</div>
 					<ZLoading v-if="showInitialLoader" />
 					<ZCalendarDailySlots
@@ -98,12 +171,13 @@
 
 			<!-- Weekly view -->
 			<template v-else-if="appointmentStore.isWeeklyView">
-				<UCard>
+				<UCard :ui="{ body: 'max-lg:p-3' }">
 					<div class="mb-3 flex items-center gap-2">
 						<UButton
 							color="neutral"
 							variant="outline"
 							size="lg"
+							class="max-lg:size-11 max-lg:justify-center"
 							icon="i-heroicons-chevron-left"
 							:aria-label="t('pages.previousAppointment')"
 							@click="goPrevWeek"
@@ -120,11 +194,12 @@
 							color="neutral"
 							variant="outline"
 							size="lg"
+							class="max-lg:size-11 max-lg:justify-center"
 							icon="i-heroicons-chevron-right"
 							:aria-label="t('pages.nextAppointment')"
 							@click="goNextWeek"
 						/>
-						<UButton color="primary" variant="soft" size="sm" :label="t('pages.today')" class="hidden min-h-10 sm:flex" @click="goToTodayMonth" />
+						<UButton color="primary" variant="soft" size="sm" :label="t('pages.today')" class="min-h-11 lg:min-h-10" @click="goToTodayMonth" />
 					</div>
 					<ZLoading v-if="showInitialLoader" />
 					<div v-else>
@@ -142,12 +217,13 @@
 
 			<!-- Calendar (month) view -->
 			<template v-else-if="appointmentStore.isMonthlyView">
-				<UCard>
+				<UCard :ui="{ body: 'max-lg:p-3' }">
 					<div class="mb-3 flex items-center gap-2">
 						<UButton
 							color="neutral"
 							variant="outline"
 							size="lg"
+							class="max-lg:size-11 max-lg:justify-center"
 							icon="i-heroicons-chevron-left"
 							:aria-label="t('pages.previousAppointment')"
 							@click="goPrevMonth"
@@ -157,11 +233,12 @@
 							color="neutral"
 							variant="outline"
 							size="lg"
+							class="max-lg:size-11 max-lg:justify-center"
 							icon="i-heroicons-chevron-right"
 							:aria-label="t('pages.nextAppointment')"
 							@click="goNextMonth"
 						/>
-						<UButton color="primary" variant="soft" size="sm" :label="t('pages.today')" class="hidden min-h-10 sm:flex" @click="goToTodayMonth" />
+						<UButton color="primary" variant="soft" size="sm" :label="t('pages.today')" class="min-h-11 lg:min-h-10" @click="goToTodayMonth" />
 					</div>
 					<ZLoading v-if="showInitialLoader" />
 					<div v-else>
@@ -173,6 +250,7 @@
 							:get-status-color="(s: string) => getAppointmentStatusColor(s as AppointmentStatus)"
 							@select-day="selectDayInCalendarFromDate"
 							@open-day-listing="openDayListing"
+							@navigate-month="goToMonth"
 							@select-appointment="selectAppointment"
 							@edit="openEditModal"
 							@delete="deleteAppointment"
@@ -180,6 +258,16 @@
 					</div>
 				</UCard>
 			</template>
+
+			<details v-if="showAttentionRail && attentionRailItems.length" class="rounded-md border border-default lg:hidden">
+				<summary class="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold">{{ t('pages.appointmentAttentionRail') }}</summary>
+				<ZSectionAppointmentsAttentionRail
+					class="m-0! grid! gap-2 px-3 pb-3 [&_button]:min-w-0"
+					:items="attentionRailItems"
+					@select="selectAppointment"
+					@select-gap="onSelectGap"
+				/>
+			</details>
 
 			<ZCalendarAppointmentPanel
 				v-model:open="isPanelOpen"
@@ -197,24 +285,6 @@
 				@delete="deleteAppointment"
 				@select="(appointment) => selectAppointment(appointment, { fromDayAgenda: true })"
 			/>
-
-			<!-- Mobile day-ops dock -->
-			<div
-				class="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-3 py-2 backdrop-blur dark:border-gray-800 dark:bg-gray-950/95 lg:hidden"
-				style="padding-bottom: max(0.5rem, env(safe-area-inset-bottom))"
-			>
-				<div class="mx-auto grid max-w-lg grid-cols-3 gap-2">
-					<UButton color="neutral" variant="outline" class="min-h-12 justify-center" @click="setView('weekly')">
-						{{ t('components.filter.weekly') }}
-					</UButton>
-					<UButton color="neutral" variant="outline" class="min-h-12 justify-center" @click="setView('monthly')">
-						{{ t('components.filter.monthly') }}
-					</UButton>
-					<UButton color="primary" class="min-h-12 justify-center" :disabled="!nextPending" @click="onNextPending">
-						{{ t('pages.appointmentNextPending') }}
-					</UButton>
-				</div>
-			</div>
 		</div>
 	</ZPagePanel>
 </template>
@@ -225,7 +295,6 @@ import type { TableRow } from '@nuxt/ui';
 import { ZModalAppointmentDetail, ZModalConfirmation } from '#components';
 import { add, addMonths, endOfMonth, endOfDay, endOfWeek, format, getISOWeek, isWithinInterval, startOfDay, startOfMonth, startOfWeek, sub } from 'date-fns';
 import { AppointmentStatus } from 'yeppi-common';
-import type { AppointmentView } from '~/stores/Appointment/Appointment';
 import {
 	appointmentsOnDay,
 	buildAttentionRailItems,
@@ -267,7 +336,7 @@ const { t } = useI18n();
 const appointment_columns = computed(() => getAppointmentColumns(t));
 const appointmentTableMeta: TableMeta<Appointment> = {
 	class: {
-		tr: (row: Row<Appointment>) => (isAppointmentPast(row.original) ? 'opacity-50' : undefined),
+		tr: (row: Row<Appointment>) => (isAppointmentPast(row.original) ? 'opacity-50' : ''),
 	},
 };
 useHead({ title: () => t('pages.appointmentsTitle') });
@@ -282,7 +351,7 @@ const visibleAppointments = computed(() => {
 	return appointments.value.filter((a) => a.status === uiStatus.value);
 });
 
-const showInitialLoader = computed(() => appointmentStore.loading && appointments.value.length === 0);
+const showInitialLoader = computed(() => appointmentStore.loading && (appointmentStore.isListingView || appointments.value.length === 0));
 const statusCounts = computed(() => countAppointmentsByStatus(appointments.value));
 const dayAppointments = computed(() => appointmentsOnDay(appointments.value, calendarFocusDate.value));
 const dayStatusCounts = computed(() => countAppointmentsByStatus(dayAppointments.value));
@@ -416,10 +485,6 @@ const onStatusChip = (status: string) => {
 	uiStatus.value = status;
 };
 
-const setView = (view: AppointmentView) => {
-	filter.value.view = view;
-};
-
 const onNextPending = () => {
 	const pending = nextPending.value;
 	if (!pending) return;
@@ -470,19 +535,13 @@ const goNextWeek = async () => {
 	await appointmentStore.setDateRange(fourMonthForwardRange(ws));
 };
 
-const goPrevMonth = async () => {
-	const prev = sub(monthDate.value, { months: 1 });
-	calendarPlaceholder.value = new CalendarDate(prev.getFullYear(), prev.getMonth() + 1, 1);
-	const anchor = new Date(prev.getFullYear(), prev.getMonth(), 1);
-	await appointmentStore.setDateRange(fourMonthForwardRange(anchor));
+const goToMonth = async (date: Date) => {
+	calendarPlaceholder.value = new CalendarDate(date.getFullYear(), date.getMonth() + 1, 1);
+	await appointmentStore.setDateRange(fourMonthForwardRange(date));
 };
 
-const goNextMonth = async () => {
-	const next = add(monthDate.value, { months: 1 });
-	calendarPlaceholder.value = new CalendarDate(next.getFullYear(), next.getMonth() + 1, 1);
-	const anchor = new Date(next.getFullYear(), next.getMonth(), 1);
-	await appointmentStore.setDateRange(fourMonthForwardRange(anchor));
-};
+const goPrevMonth = () => goToMonth(sub(monthDate.value, { months: 1 }));
+const goNextMonth = () => goToMonth(add(monthDate.value, { months: 1 }));
 
 const goToTodayMonth = async () => {
 	const now = new Date();

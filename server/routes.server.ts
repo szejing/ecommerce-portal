@@ -52,6 +52,7 @@ export const Routes = {
 		Single: (code: string) => `${API_PATH.PROD}/${code}`,
 		BySlug: (slug: string) => `${API_PATH.PROD}/by-slug/${encodeURIComponent(slug)}`,
 		Many: () => `${API_PATH.PROD}/`,
+		Export: () => `${API_PATH.PROD}/export`,
 		Import: () => `${API_PATH.PROD}/import`,
 		ImportTemplate: () => `${API_PATH.PROD}/import/template`,
 		Update: (code: string) => `${API_PATH.PROD}/${code}`,
@@ -135,6 +136,8 @@ export const Routes = {
 		PaymentStatus: (order_no: string) => `${API_PATH.ORDERS}/${order_no}/payment-status`,
 		Process: () => `${API_PATH.ORDERS}/process`,
 		Export: () => `${API_PATH.ORDERS}/export`,
+		CounterSale: () => `${API_PATH.ORDERS}/counter-sale`,
+		CounterSaleQuote: () => `${API_PATH.ORDERS}/counter-sale/quote`,
 	},
 	Notifications: {
 		Many: () => `${API_PATH.NOTIFICATIONS}`,

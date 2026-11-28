@@ -1,10 +1,10 @@
 <template>
 	<ZPagePanel id="taxes-rules-create" :title="t('nav.taxRules')" back-to="/settings/taxes/rules">
-		<div class="flex-jbetween-icenter">
+		<div class="hidden lg:flex">
 			<h2 class="my-6">Add Tax Rule</h2>
 		</div>
-		<div class="wrapper-grid">
-			<UCard>
+		<div class="mobile-form-controls wrapper-grid min-w-0">
+			<UCard :ui="{ header: 'max-lg:p-3', body: 'max-lg:p-3' }">
 				<template #header>
 					<h2>New Tax Rule</h2>
 				</template>

@@ -1,11 +1,11 @@
 <template>
 	<ZPagePanel id="taxes-rules" :title="t('nav.taxRules')" back-to="/settings/taxes/rules">
-		<div class="wrapper-grid">
-			<UCard>
+		<div class="mobile-form-controls wrapper-grid min-w-0">
+			<UCard :ui="{ header: 'max-lg:p-3', body: 'max-lg:p-3' }">
 				<template #header>
 					<div class="flex items-center justify-between">
 						<h2>Tax Rule</h2>
-						<UButton size="sm" color="error" variant="ghost" class="opacity-50 hover:opacity-100" :icon="ICONS.TRASH" @click="deleteTaxRule">
+						<UButton size="sm" color="error" variant="ghost" class="max-lg:min-h-11 lg:opacity-50 lg:hover:opacity-100" :icon="ICONS.TRASH" @click="deleteTaxRule">
 							{{ t('common.delete') }}
 						</UButton>
 					</div>

@@ -39,6 +39,7 @@ const initialEmptyDiscount: DiscountCreate = {
 export const useDiscountStore = defineStore('discountStore', {
 	state: () => ({
 		loading: false as boolean,
+		listingRequestId: 0,
 		adding: false as boolean,
 		updating: false as boolean,
 		exporting: false as boolean,
@@ -55,26 +56,17 @@ export const useDiscountStore = defineStore('discountStore', {
 
 		async updatePageSize(size: number) {
 			this.filter.page_size = size;
-
-			if (this.filter.page_size > this.discounts.length) {
-				this.filter.current_page = 1;
-				return;
-			}
-
-			this.getDiscounts();
+			this.filter.current_page = 1;
+			await this.getDiscounts();
 		},
 
 		async updatePage(page: number) {
 			this.filter.current_page = page;
-
-			if (this.filter.current_page < 0 || this.discounts.length === this.total_discounts) {
-				return;
-			}
-
-			this.getDiscounts();
+			await this.getDiscounts();
 		},
 
 		async getDiscounts() {
+			const requestId = ++this.listingRequestId;
 			this.loading = true;
 			const { $api } = useNuxtApp();
 			try {
@@ -98,15 +90,15 @@ export const useDiscountStore = defineStore('discountStore', {
 
 				const response = await $api.discount.getMany(queryParams);
 
-				if (response.data) {
+				if (requestId === this.listingRequestId && response.data) {
 					this.discounts = response.data;
 					this.total_discounts = response['@odata.count'] ?? 0;
 				}
 			} catch (err: unknown | ErrorResponse) {
 				const message = (err as ErrorResponse).message ?? 'Failed to process discount';
-				failedNotification(message);
+				if (requestId === this.listingRequestId) failedNotification(message);
 			} finally {
-				this.loading = false;
+				if (requestId === this.listingRequestId) this.loading = false;
 			}
 		},
 

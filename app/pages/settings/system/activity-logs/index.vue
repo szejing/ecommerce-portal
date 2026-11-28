@@ -1,17 +1,18 @@
 <template>
-	<ZPagePanel id="settings-system-activity-logs" :title="t('nav.activityLogs')" back-to="/settings/system">
+	<ZPagePanel id="settings-system-activity-logs" mobile-filter-drawer :title="t('nav.activityLogs')" back-to="/settings/system">
 		<template #toolbar>
 			<ZSectionFilterActivityLogs />
 		</template>
 
-		<div class="space-y-6">
+		<div class="flex min-w-0 flex-col gap-3 lg:gap-6">
 			<div class="flex flex-col sm:flex-row sm:items-center justify-end sm:justify-between gap-4">
-				<p v-if="!initialize && !loading" class="text-sm text-muted">
+				<p v-if="!initialize && !loading" class="hidden text-sm text-muted lg:block">
 					{{ t('pages.showingActivityLogs', { total: total_activity_logs }) }}
 				</p>
 				<ZTableToolbar
-					:model-value="filters.page_size"
 					v-model:selected-column-keys="selectedColumnKeys"
+					desktop-columns
+					:model-value="filters.page_size"
 					:page-size-options="options_page_size"
 					:export-enabled="false"
 					:exporting="exporting"
@@ -21,7 +22,7 @@
 			</div>
 
 			<template v-if="initialize || loading">
-				<div class="rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
+				<div class="hidden lg:block rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
 					<div class="grid grid-cols-4 gap-4 p-4">
 						<USkeleton v-for="i in 4" :key="i" class="h-4 flex-1 min-w-0" />
 					</div>
@@ -31,7 +32,7 @@
 				</div>
 			</template>
 
-			<UCard v-else :ui="{ body: 'p-0 sm:p-0' }">
+			<UCard v-else class="hidden lg:block" :ui="{ body: 'p-0 sm:p-0' }">
 				<UTable
 					:data="activity_logs"
 					:columns="visibleColumns"
@@ -49,12 +50,33 @@
 				</UTable>
 			</UCard>
 
+			<ZMobileRecordList
+				v-slot="{ item }"
+				:items="activity_logs"
+				item-key="id"
+				:label="t('nav.activityLogs')"
+				:empty-title="t('pages.noActivityLogsFound')"
+				:loading="initialize || loading"
+			>
+				<ZRecordLink @click="openActivityLogDetail(item)">
+					<span class="block text-sm text-highlighted">
+						<template v-for="(segment, index) in parseActivityLogRichText(item.internal_desc ?? item.desc ?? item.action)" :key="index">
+							<UBadge v-if="segment.type === 'badge'" :color="segment.color" variant="subtle" size="sm">{{ segment.text }}</UBadge>
+							<strong v-else-if="segment.type === 'bold'">{{ segment.text }}</strong>
+							<em v-else-if="segment.type === 'identifier'">{{ segment.text }}</em>
+							<template v-else>{{ segment.text }}</template>
+						</template>
+					</span>
+					<span v-if="item.created_at" class="block text-xs text-muted">{{ format(new Date(item.created_at), 'dd/MM/yyyy HH:mm') }}</span>
+				</ZRecordLink>
+			</ZMobileRecordList>
+
 			<div
-				v-if="!initialize && !loading && activity_logs.length > 0"
+				v-if="!initialize && (activity_logs.length > 0 || filters.current_page > 1)"
 				class="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 px-4 py-3"
 			>
-				<div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-					<div class="text-sm text-gray-700 dark:text-gray-300">
+				<div class="flex min-w-0 flex-1 flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+					<div class="hidden text-sm text-gray-700 lg:block dark:text-gray-300">
 						{{
 							t('pages.showingToOf', {
 								from: (filters.current_page - 1) * filters.page_size + 1,
@@ -63,13 +85,12 @@
 							})
 						}}
 					</div>
-					<UPagination
+					<ZPagination
 						:page="filters.current_page"
 						:total="total_activity_logs"
-						:page-size="filters.page_size"
-						show-last
-						show-first
+						:items-per-page="filters.page_size"
 						size="sm"
+						:disabled="loading"
 						@update:page="activityLogStore.setPage"
 					/>
 				</div>
@@ -79,6 +100,8 @@
 </template>
 
 <script lang="ts" setup>
+import { format } from 'date-fns';
+import { parseActivityLogRichText } from '~/utils/activity-log-rich-text';
 import type { TableRow } from '@nuxt/ui';
 import { ZModalActivityLogDetail } from '#components';
 import { options_page_size } from '~/utils/options';

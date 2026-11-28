@@ -6,7 +6,7 @@
 
 		<template #footer>
 			<div class="w-full backdrop-blur-sm border-t border-neutral-200 dark:border-neutral-800 shadow-md z-50">
-				<div class="mx-auto px-4 sm:px-6 py-4">
+				<div class="mx-auto px-3 py-2 sm:px-6 md:py-4">
 					<div class="hidden md:flex justify-end items-center gap-3">
 						<UButton color="neutral" variant="outline" size="lg" @click="goBack">{{ t('common.cancel') }}</UButton>
 						<UButton color="success" variant="solid" size="lg" :loading="adding" @click="onSubmit">
@@ -14,13 +14,12 @@
 							{{ t('components.voucherForm.createVoucher') }}
 						</UButton>
 					</div>
-					<div class="md:hidden flex flex-col gap-2">
-						<UButton color="success" size="md" class="w-full" :loading="adding" @click="onSubmit">
-							<UIcon :name="ICONS.CHECK_ROUNDED" class="w-4 h-4" />
-							<span class="text-sm">{{ t('components.voucherForm.createVoucher') }}</span>
+					<div class="grid grid-cols-[1fr_2fr] gap-2 md:hidden">
+						<UButton color="neutral" variant="outline" class="min-w-0 justify-center" @click="goBack">
+							{{ t('common.cancel') }}
 						</UButton>
-						<UButton color="neutral" variant="outline" size="sm" class="w-full" @click="goBack">
-							<span class="text-xs">{{ t('common.cancel') }}</span>
+						<UButton color="success" class="min-w-0 justify-center" :loading="adding" @click="onSubmit">
+							{{ t('components.voucherForm.createVoucher') }}
 						</UButton>
 					</div>
 				</div>

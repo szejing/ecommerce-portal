@@ -26,7 +26,7 @@ const mountPage = () =>
 	mountSuspended(ShipmentArrangementPage, {
 		global: {
 			stubs: {
-				ZPagePanel: { template: '<main><slot name="navbar-right"/><slot/></main>' },
+				ZPagePanel: { template: '<main><slot name="navbar-right"/><slot/><slot name="footer"/></main>' },
 			},
 		},
 	});
@@ -254,6 +254,49 @@ describe('ShipmentArrangementPage', () => {
 		expect(wrapper.find('[data-testid="push-selected-easyparcel"]').exists()).toBe(true);
 		expect(wrapper.find('[data-testid="push-all-easyparcel"]').exists()).toBe(true);
 		wrapper.unmount();
+	});
+
+	it('selects only unbooked shipments from the mobile list', async () => {
+		const bookedRow = { ...pendingRow, fulfillment_id: 'booked-id', batch_no: 2, booking_no: 'EP-1' };
+		mockPendingResponse([pendingRow, bookedRow]);
+		useSettingStore().settings = [
+			new Setting({
+				group_code: GROUP_CODE.EASYPARCEL,
+				set_code: EASYPARCEL.CONNECTION,
+				set_value: 'merchant@example.com',
+			} as Setting),
+		];
+		const media = vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+			matches: false,
+			media: query,
+			onchange: null,
+			addListener() {},
+			removeListener() {},
+			addEventListener() {},
+			removeEventListener() {},
+			dispatchEvent: () => true,
+		}));
+
+		try {
+			const wrapper = await mountPage();
+			try {
+				await flushPromises();
+				expect(wrapper.find('table').exists()).toBe(false);
+				const available = wrapper.get('[role="checkbox"][aria-label$="#1"]');
+				expect(wrapper.get('[role="checkbox"][aria-label$="#2"]').attributes('disabled')).toBeDefined();
+				await available.trigger('click');
+				await wrapper.get('[data-testid="push-selected-easyparcel"]').trigger('click');
+
+				const booking = wrapper.getComponent({ name: 'FulfillmentCourierBookingModal' });
+				expect(booking.props('targets')).toEqual([
+					{ fulfillmentId: pendingRow.fulfillment_id, orderNo: pendingRow.order_no, batchNo: 1 },
+				]);
+			} finally {
+				wrapper.unmount();
+			}
+		} finally {
+			media.mockRestore();
+		}
 	});
 
 	it('hides EasyParcel push actions when the merchant is not connected', async () => {

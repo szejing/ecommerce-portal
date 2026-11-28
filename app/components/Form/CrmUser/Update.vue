@@ -55,7 +55,7 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent } from '@nuxt/ui';
 import type { z } from 'zod';
-import { type CrmUserUpdate } from '~/utils/types/crm-user';
+import type { CrmUserUpdate } from '~/utils/types/crm-user';
 import { CreateCRMUserValidation } from '~/utils/schema';
 
 const { t } = useI18n();
@@ -85,7 +85,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
 	'update:modelValue': [value: CrmUserUpdate];
-	submit: [payload: Schema];
+	'submit': [payload: Schema];
 }>();
 
 const onSubmit = (event: FormSubmitEvent<Schema>) => {

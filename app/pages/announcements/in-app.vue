@@ -1,5 +1,5 @@
 <template>
-	<ZPagePanel id="in-app-announcement" :title="t('nav.inAppAnnouncement')" back-to="/announcements">
+	<ZPagePanel inline-mobile-actions id="in-app-announcement" :title="t('nav.inAppAnnouncement')" back-to="/announcements">
 		<template #navbar-right>
 			<UButton
 				class="min-h-11 lg:hidden"

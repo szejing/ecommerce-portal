@@ -13,16 +13,39 @@
 
 				<UCard>
 					<template #header>
-						<div class="flex items-center justify-between gap-3">
-							<div>
+						<div class="flex items-start justify-between gap-3">
+							<div class="min-w-0">
 								<h3 class="text-lg font-semibold text-default">{{ t('pages.staffDepartmentAssignedUsers') }}</h3>
 								<p class="text-sm text-muted">{{ t('pages.staffDepartmentAssignedUsersDesc') }}</p>
 							</div>
-							<UBadge color="neutral" variant="subtle">{{ department_users_total }}</UBadge>
+							<UBadge color="neutral" variant="subtle" class="shrink-0">{{ department_users_total }}</UBadge>
 						</div>
 					</template>
 
+					<section class="lg:hidden" :aria-label="t('pages.staffDepartmentAssignedUsers')" :aria-busy="department_users_loading">
+						<div v-if="department_users_loading" class="space-y-2" role="status">
+							<span class="sr-only">{{ t('common.loading') }}</span>
+							<USkeleton v-for="index in 3" :key="index" class="h-14 w-full" />
+						</div>
+						<p v-else-if="!department_users.length" class="py-8 text-center text-sm text-muted">{{ t('pages.noStaffInDepartment') }}</p>
+						<ul v-else class="divide-y divide-default border-y border-default">
+							<li v-for="user in department_users" :key="user.id">
+								<ZRecordLink :to="`/operation/staff/${encodeURIComponent(user.id)}`">
+									<span class="block text-sm font-semibold text-highlighted">{{ user.name || user.email_address }}</span>
+									<span v-if="user.email_address" class="block text-xs text-muted wrap-anywhere">{{ user.email_address }}</span>
+									<template #trailing>
+										<UBadge :color="user.is_active ? 'success' : 'neutral'" variant="subtle" size="sm">
+											{{ t(user.is_active ? 'common.active' : 'common.inactive') }}
+										</UBadge>
+										<span class="text-xs text-muted wrap-anywhere">{{ roleLabel(user.role, t) }}</span>
+									</template>
+								</ZRecordLink>
+							</li>
+						</ul>
+					</section>
+
 					<UTable
+						class="hidden lg:block"
 						:data="department_users"
 						:columns="assignedUserColumns"
 						:loading="department_users_loading"
@@ -38,8 +61,8 @@
 					</UTable>
 
 					<div v-if="department_users.length > 0" class="section-pagination pt-4">
-						<UPagination
-							v-model="department_users_filter.current_page"
+						<ZPagination
+							:page="department_users_filter.current_page"
 							:items-per-page="department_users_filter.page_size"
 							:total="department_users_total"
 							@update:page="updateDepartmentUsersPage"
@@ -90,6 +113,7 @@
 import { ZModalConfirmation } from '#components';
 import type { TableRow } from '@nuxt/ui';
 import { ICONS } from '~/utils/icons';
+import { roleLabel } from '~/utils/options/user-roles';
 import { getCrmUserColumns } from '~/utils/table-columns';
 import type { CRMUser } from '~/utils/types/crm-user';
 import type { StaffDepartment } from '~/utils/types/staff-department';

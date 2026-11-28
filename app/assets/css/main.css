@@ -382,3 +382,12 @@ html[data-platform='yeppi'] .platform-shell-hero {
 
 	/**************************** button styling ****************************/
 }
+
+@layer components {
+	@media (width < 64rem) {
+		.mobile-form-controls :is(input:not([type='checkbox'], [type='radio']), textarea, [role='combobox'])[data-slot='base'] {
+			min-height: 2.75rem;
+			font-size: 1rem;
+		}
+	}
+}

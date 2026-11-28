@@ -11,6 +11,33 @@ import type { BaseODataResp } from '~/repository/base/base.resp';
 import type { OrderHistory } from '~/utils/types/order-history';
 import type { OrderResendEmailAction, OrderStatus, PaymentStatus } from 'yeppi-common';
 
+export type CounterSaleRequest = {
+	biz_date: string;
+	outlet_code?: string;
+	payment_method: string;
+	payment_ref?: string;
+	customer: {
+		dial_code: string;
+		phone_no: string;
+		name?: string;
+		email_address?: string;
+	};
+	items: { prod_code: string; prod_variant_code?: string; qty: number }[];
+};
+
+export type CounterSaleQuote = {
+	subtotal: number;
+	tax: number;
+	total: number;
+	currency_code: string;
+};
+
+export type CounterSaleResult = {
+	order_no: string;
+	inv_no: string;
+	payable_total: number;
+};
+
 class OrderModule extends HttpFactory {
 	private readonly RESOURCE = MerchantRoutes.Orders;
 
@@ -142,6 +169,22 @@ class OrderModule extends HttpFactory {
 			fetchOptions: {
 				responseType: 'blob', // Tell the HTTP client to expect a blob response
 			},
+		});
+	}
+
+	async quoteCounterSale(body: CounterSaleRequest): Promise<CounterSaleQuote> {
+		return await this.call<CounterSaleQuote>({
+			method: 'POST',
+			url: this.RESOURCE.CounterSaleQuote(),
+			body,
+		});
+	}
+
+	async createCounterSale(body: CounterSaleRequest): Promise<CounterSaleResult> {
+		return await this.call<CounterSaleResult>({
+			method: 'POST',
+			url: this.RESOURCE.CounterSale(),
+			body,
 		});
 	}
 }

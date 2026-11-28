@@ -65,6 +65,7 @@ export type Product = {
   combo_component_details?: (ComboComponent & { product_name: string; variant_name?: string })[];
   combo_available_quantity?: number | null;
 	code?: string;
+	sku?: string;
 	slug?: string;
 	name?: string;
 	short_desc?: string;

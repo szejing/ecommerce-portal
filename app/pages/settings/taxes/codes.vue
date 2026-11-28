@@ -4,11 +4,12 @@
 			<ZSectionFilterTaxCodes />
 		</template>
 
-		<div class="space-y-6">
+		<div class="flex min-w-0 flex-col gap-3 lg:gap-6">
 			<!-- Table Controls -->
 			<ZTableToolbar
 				v-model="filter.page_size"
 				v-model:selected-column-keys="selectedColumnKeys"
+				desktop-columns
 				:page-size-options="options_page_size"
 				:export-enabled="true"
 				:exporting="exporting"
@@ -18,7 +19,7 @@
 			/>
 
 			<template v-if="initialize">
-				<div class="rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
+				<div class="hidden lg:block rounded-lg overflow-hidden divide-y divide-neutral-200 dark:divide-neutral-700">
 					<div class="grid grid-cols-[1fr_auto] gap-4 p-4">
 						<USkeleton class="h-4 w-24" />
 						<USkeleton class="h-4 w-16" />
@@ -29,7 +30,7 @@
 					</div>
 				</div>
 			</template>
-			<UTable v-else :data="taxes" :columns="visibleColumns" :loading="loading" @select="selectTax">
+			<UTable v-else class="hidden lg:block" :data="taxes" :columns="visibleColumns" :loading="loading" @select="selectTax">
 				<template #empty>
 					<div class="flex flex-col items-center justify-center py-12 gap-3">
 						<UIcon :name="ICONS.TAX" class="w-12 h-12 text-gray-400" />
@@ -39,9 +40,29 @@
 				</template>
 			</UTable>
 
+			<ZMobileRecordList
+				v-slot="{ item }"
+				:items="taxes"
+				item-key="code"
+				:label="t('nav.taxCodes')"
+				:empty-title="t('pages.noTaxCodesFound')"
+				:loading="initialize || loading"
+			>
+				<ZRecordLink @click="openTax(item)">
+					<span class="block text-sm font-semibold text-highlighted">{{ item.description || item.code }}</span>
+					<span v-if="item.code" class="block text-xs text-muted">{{ item.code }}</span>
+					<template #trailing>
+						<UBadge :color="item.is_active ? 'success' : 'neutral'" variant="subtle" size="sm">
+							{{ t(item.is_active ? 'common.active' : 'common.inactive') }}
+						</UBadge>
+						<span class="text-xs text-muted wrap-anywhere">{{ t(item.is_inclusive ? 'table.inclusive' : 'table.exclusive') }}</span>
+					</template>
+				</ZRecordLink>
+			</ZMobileRecordList>
+
 			<!-- Pagination  -->
-			<div v-if="!initialize && taxes.length > 0" class="section-pagination">
-				<UPagination v-model="filter.current_page" :items-per-page="filter.page_size" :total="total_taxes" @update:page="updatePage" />
+			<div v-if="!initialize && (taxes.length > 0 || filter.current_page > 1)" class="section-pagination">
+				<ZPagination :page="filter.current_page" :items-per-page="filter.page_size" :total="total_taxes" :disabled="loading" @update:page="updatePage" />
 			</div>
 		</div>
 	</ZPagePanel>
@@ -112,10 +133,9 @@ const deleteTax = async (code: string) => {
 	confirmModal.open();
 };
 
-const selectTax = async (e: Event, row: TableRow<Tax>) => {
-	const tax = row.original;
-	if (!tax) return;
+const selectTax = (_event: Event, row: TableRow<Tax>) => openTax(row.original);
 
+const openTax = async (tax: Tax) => {
 	const taxModal = overlay.create(ZModalTaxDetail, {
 		props: {
 			tax: JSON.parse(JSON.stringify(tax)),

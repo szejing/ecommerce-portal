@@ -1,10 +1,12 @@
 <template>
 	<ZPagePanel id="home" :title="t('pages.home')">
-		<ZDateRange v-model="dashboardRange" @update:model-value="onDashboardRangeChange" />
-		<DashboardStats />
-		<DashboardCustomerRequests />
-		<!-- <DashboardOrderAmtChart /> -->
-		<DashboardOrders :range="dashboardRange" />
+		<div class="flex min-w-0 flex-col gap-3 lg:gap-4">
+			<ZDateRange v-model="dashboardRange" class="w-full lg:w-fit" @update:model-value="onDashboardRangeChange" />
+			<DashboardStats />
+			<DashboardCustomerRequests />
+			<!-- <DashboardOrderAmtChart /> -->
+			<DashboardOrders :range="dashboardRange" />
+		</div>
 	</ZPagePanel>
 </template>
 

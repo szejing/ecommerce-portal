@@ -89,6 +89,38 @@ describe('SettingsConfigurationPage', () => {
 		leavePageGuard.mockClear();
 	});
 
+	it('uses a segment combobox on a narrow screen and switches the visible settings', async () => {
+		const media = vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+			matches: false,
+			media: query,
+			onchange: null,
+			addListener() {},
+			removeListener() {},
+			addEventListener() {},
+			removeEventListener() {},
+			dispatchEvent: () => true,
+		}));
+
+		try {
+			const wrapper = await mountSuspended(ConfigurationPage, {
+				global: { stubs: { ZSettingSegment: { props: ['segment'], template: '<p>{{ segment.segment_desc }}</p>' } } },
+			});
+			try {
+				const select = wrapper.getComponent({ name: 'USelect' });
+				expect(select.get('[role="combobox"]').attributes('aria-label')).toBe('Configuration');
+				expect(wrapper.findComponent({ name: 'UTabs' }).exists()).toBe(false);
+				select.vm.$emit('update:modelValue', 'sales');
+				await nextTick();
+				expect(wrapper.text()).toContain('Sales Order Settings');
+				expect(wrapper.text()).not.toContain('Email Notifications');
+			} finally {
+				wrapper.unmount();
+			}
+		} finally {
+			media.mockRestore();
+		}
+	});
+
 	it('renders scrollable UTabs that keep full segment labels', async () => {
 		const wrapper = await mountSuspended(ConfigurationPage);
 

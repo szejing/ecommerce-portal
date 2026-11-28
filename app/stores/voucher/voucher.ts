@@ -12,6 +12,7 @@ type VoucherFilter = {
 	query: string;
 	page_size: number;
 	current_page: number;
+	status?: string;
 	/** When set, OData `$filter` restricts to vouchers whose linked discount has this allocation. */
 	listing_allocation: AllocationType | null;
 };
@@ -20,6 +21,7 @@ const initialVoucherFilter: VoucherFilter = {
 	query: '',
 	page_size: options_page_size[0] as number,
 	current_page: 1,
+	status: undefined,
 	listing_allocation: null,
 };
 
@@ -35,6 +37,7 @@ const initialEmptyVoucher: Partial<VoucherFormState> = {
 export const useVoucherStore = defineStore('voucherStore', {
 	state: () => ({
 		loading: false as boolean,
+		listingRequestId: 0,
 		adding: false as boolean,
 		updating: false as boolean,
 		exporting: false as boolean,
@@ -53,23 +56,13 @@ export const useVoucherStore = defineStore('voucherStore', {
 
 		async updatePageSize(size: number) {
 			this.filter.page_size = size;
-
-			if (this.filter.page_size > this.vouchers.length) {
-				this.filter.current_page = 1;
-				return;
-			}
-
-			this.getVouchers();
+			this.filter.current_page = 1;
+			await this.getVouchers();
 		},
 
 		async updatePage(page: number) {
 			this.filter.current_page = page;
-
-			if (this.filter.current_page < 0 || this.vouchers.length === this.total_vouchers) {
-				return;
-			}
-
-			this.getVouchers();
+			await this.getVouchers();
 		},
 
 		setListingAllocationFilter(allocation: AllocationType) {
@@ -78,6 +71,7 @@ export const useVoucherStore = defineStore('voucherStore', {
 		},
 
 		async getVouchers() {
+			const requestId = ++this.listingRequestId;
 			this.loading = true;
 			const { $api } = useNuxtApp();
 			try {
@@ -89,8 +83,17 @@ export const useVoucherStore = defineStore('voucherStore', {
 					$orderby: 'updated_at desc',
 				};
 
+				const filters: string[] = [];
 				if (this.filter.listing_allocation != null) {
-					queryParams.$filter = `discount.allocation eq '${this.filter.listing_allocation}'`;
+					filters.push(`discount.allocation eq '${this.filter.listing_allocation}'`);
+				}
+				if (this.filter.status === 'active') {
+					filters.push('is_disabled eq false');
+				} else if (this.filter.status === 'inactive') {
+					filters.push('is_disabled eq true');
+				}
+				if (filters.length > 0) {
+					queryParams.$filter = filters.join(' and ');
 				}
 
 				if (this.filter.query) {
@@ -99,15 +102,15 @@ export const useVoucherStore = defineStore('voucherStore', {
 
 				const response = await $api.voucher.getMany(queryParams);
 
-				if (response.data) {
+				if (requestId === this.listingRequestId && response.data) {
 					this.vouchers = response.data;
 					this.total_vouchers = response['@odata.count'] ?? 0;
 				}
 			} catch (err: unknown | ErrorResponse) {
 				const message = (err as ErrorResponse).message ?? 'Failed to process voucher';
-				failedNotification(message);
+				if (requestId === this.listingRequestId) failedNotification(message);
 			} finally {
-				this.loading = false;
+				if (requestId === this.listingRequestId) this.loading = false;
 			}
 		},
 

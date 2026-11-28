@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<!-- Desktop: Full calendar grid -->
-		<div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-default">
+		<div class="hidden rounded-lg border border-default bg-default lg:block">
 			<!-- Weekday headers -->
 			<div class="grid grid-cols-7 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
 				<div v-for="wd in weekdayLabels" :key="wd.full" class="py-2 text-center text-xs font-medium text-gray-600 dark:text-gray-400">
@@ -20,7 +20,7 @@
 						cell.isToday ? 'bg-primary/5 dark:bg-primary/10' : cell.isCurrentMonth ? 'bg-default' : 'bg-gray-50/80 dark:bg-gray-900/50',
 						cell.isSelected ? 'ring-2 ring-primary ring-inset bg-primary/5 dark:bg-primary/10' : '',
 					]"
-					:style="{ minHeight: isMobileView ? '3.5rem' : `max(4.75rem, calc((100dvh - 20rem) / ${weeksInGrid}))` }"
+					:style="{ minHeight: `max(4.75rem, calc((100dvh - 20rem) / ${weeksInGrid}))` }"
 					@click="$emit('selectDay', cell.date as Date)"
 				>
 					<!-- Date number -->
@@ -35,15 +35,6 @@
 							]"
 						>
 							{{ cell.dayNumber ?? '' }}
-						</span>
-						<!-- Appointment count dot for mobile -->
-						<span v-if="cell.appointments.length > 0" class="sm:hidden flex items-center gap-0.5">
-							<span
-								v-for="(dot, dotIdx) in Math.min(cell.appointments.length, 3)"
-								:key="dotIdx"
-								class="w-1.5 h-1.5 rounded-full"
-								:class="getDotColorClass(cell.appointments[dotIdx]?.status)"
-							/>
 						</span>
 					</div>
 					<!-- Appointments in this day (desktop only) -->
@@ -82,62 +73,36 @@
 			</div>
 		</div>
 
-		<!-- Mobile: Selected day agenda panel (shown below calendar when a day is selected) -->
-		<div v-if="selectedDay && isMobileView" class="mt-3 lg:hidden">
-			<div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-default">
-				<div class="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
-					<div
-						class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-sm"
-						:class="[isSelectedDayToday ? 'bg-primary text-inverted' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300']"
-					>
-						{{ format(selectedDay, 'd') }}
-					</div>
-					<div class="flex-1 min-w-0">
-						<p class="font-semibold text-sm text-gray-900 dark:text-white">{{ format(selectedDay, 'EEEE, d MMMM') }}</p>
-					</div>
-					<UBadge v-if="selectedDayAppointments.length > 0" color="primary" variant="subtle" size="sm">
-						{{ selectedDayAppointments.length }}
-					</UBadge>
-				</div>
-				<div v-if="selectedDayAppointments.length > 0" class="divide-y divide-gray-100 dark:divide-gray-800">
-					<div
-						v-for="appointment in selectedDayAppointments"
-						:key="appointment.code"
-						class="flex items-start gap-3 px-3 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors"
-						:class="[
-							selectedCode === appointment.code ? 'bg-primary-50/50 dark:bg-primary-900/10' : '',
-							isPastAppointment(appointment) ? 'opacity-50' : '',
-						]"
-						@click="$emit('selectAppointment', appointment)"
-					>
-						<div class="w-1 self-stretch rounded-full shrink-0 mt-0.5" :class="getDotColorClass(appointment.status)" />
-						<div class="flex-1 min-w-0">
-							<div class="flex items-center justify-between gap-2">
-								<p class="font-medium text-sm text-gray-900 dark:text-white truncate">{{ appointment.customer_name }}</p>
-								<UBadge :color="getStatusColor(appointment.status)" variant="subtle" size="xs" class="shrink-0">
-									{{ t('options.' + appointment.status.toLowerCase()) }}
-								</UBadge>
-							</div>
-							<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1">
-								<UIcon name="i-heroicons-clock" class="w-3 h-3 shrink-0" />
-								{{ formatTime(appointment.start_date_time) }}
-								<span v-if="appointment.duration" class="text-gray-400 dark:text-gray-500">
-									· {{ t('pages.durationMinutes', { n: appointment.duration }) }}
-								</span>
-							</p>
-							<p v-if="appointment.appt_desc" class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">
-								{{ appointment.appt_desc }}
-							</p>
-						</div>
-					</div>
-				</div>
-			</div>
+		<div class="space-y-3 lg:hidden">
+			<UCalendar
+				:model-value="calendarDate(mobileDay)"
+				:placeholder="calendarDate(month)"
+				:week-starts-on="1"
+				:disable-days-outside-current-view="true"
+				:ui="{ header: 'sr-only', body: 'pt-0', cellTrigger: 'mx-auto size-11 shrink-0 flex-col gap-0.5 rounded-full' }"
+				@update:model-value="selectMobileDay"
+				@update:placeholder="navigateMobileMonth"
+			>
+				<template #day="{ day }">
+					<span>{{ day.day }}</span>
+					<span v-if="appointmentsByDate[day.toString()]?.length" class="size-1.5 rounded-full bg-primary" aria-hidden="true" />
+				</template>
+			</UCalendar>
+			<h3 class="text-sm font-semibold text-highlighted" aria-live="polite">{{ format(mobileDay, 'EEEE, d MMMM') }}</h3>
+			<ZCalendarDailySlots
+				:date="mobileDay"
+				:appointments="mobileDayAppointments"
+				:selected-code="selectedCode"
+				:get-status-color="getStatusColor"
+				@select="$emit('selectAppointment', $event)"
+			/>
 		</div>
 	</div>
 </template>
 
 <script lang="ts" setup>
-import { add, format, startOfMonth, startOfWeek } from 'date-fns';
+import { CalendarDate, type DateValue } from '@internationalized/date';
+import { add, format, isSameMonth, startOfMonth, startOfWeek } from 'date-fns';
 import { isAppointmentPast } from '~/utils/appointment-day-ops';
 import type { Appointment } from '~/utils/types/appointment';
 
@@ -160,6 +125,7 @@ const props = withDefaults(
 const emit = defineEmits<{
 	selectDay: [date: Date];
 	openDayListing: [date: Date];
+	navigateMonth: [date: Date];
 	selectAppointment: [appointment: Appointment];
 	edit: [appointment: Appointment];
 	delete: [code: string];
@@ -170,24 +136,17 @@ const { t } = useI18n();
 // Max visible appointments per cell in grid (desktop)
 const maxVisibleAppointments = 3;
 
-// Simple mobile detection + refresh "past" styling about once a minute
-const isMobileView = ref(false);
+// Refresh past-booking styling about once a minute.
 const now = ref(new Date());
 let pastTimer: ReturnType<typeof setInterval> | null = null;
 onMounted(() => {
-	checkMobile();
-	window.addEventListener('resize', checkMobile);
 	pastTimer = setInterval(() => {
 		now.value = new Date();
 	}, 60_000);
 });
 onUnmounted(() => {
-	window.removeEventListener('resize', checkMobile);
 	if (pastTimer) clearInterval(pastTimer);
 });
-const checkMobile = () => {
-	isMobileView.value = window.innerWidth < 640;
-};
 
 // Weekday headers with full & short labels
 const weekdayLabels = computed(() => {
@@ -204,11 +163,6 @@ const weeksInGrid = 6;
 
 const dayKey = (d: Date) => format(d, 'yyyy-MM-dd');
 const todayKey = dayKey(new Date());
-
-const isSelectedDayToday = computed(() => {
-	if (!props.selectedDay) return false;
-	return dayKey(props.selectedDay) === todayKey;
-});
 
 const appointmentsByDate = computed(() => {
 	const map: Record<string, Appointment[]> = {};
@@ -259,10 +213,27 @@ const gridCells = computed(() => {
 	return cells;
 });
 
-const selectedDayAppointments = computed(() => {
-	if (!props.selectedDay) return [];
-	return appointmentsByDate.value[dayKey(props.selectedDay)] ?? [];
+const mobileDay = computed(() => {
+	if (props.selectedDay && isSameMonth(props.selectedDay, props.month)) return props.selectedDay;
+	if (isSameMonth(now.value, props.month)) return now.value;
+	return startOfMonth(props.month);
 });
+const mobileDayAppointments = computed(() => appointmentsByDate.value[dayKey(mobileDay.value)] ?? []);
+
+function calendarDate(date: Date) {
+	return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate());
+}
+
+function selectMobileDay(value: unknown) {
+	if (!value || typeof value !== 'object' || !('year' in value) || !('month' in value) || !('day' in value)) return;
+	const day = value as DateValue;
+	emit('selectDay', new Date(day.year, day.month - 1, day.day));
+}
+
+function navigateMobileMonth(day: DateValue) {
+	const date = new Date(day.year, day.month - 1, 1);
+	if (!isSameMonth(date, props.month)) emit('navigateMonth', date);
+}
 
 /** "+N more" → parent opens day agenda in the shared Slideover (no nested modal). */
 const emitOpenDayListing = (date: Date) => {

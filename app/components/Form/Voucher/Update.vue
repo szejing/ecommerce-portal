@@ -1,7 +1,7 @@
 <template>
 	<div class="w-full">
-		<UForm ref="formRef" :schema="formSchema" :state="uFormState" class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6" @submit="onSubmit" @error="onError">
-			<div class="lg:col-span-9 space-y-6">
+		<UForm ref="formRef" :schema="formSchema" :state="uFormState" class="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-6 lg:mb-6" @submit="onSubmit" @error="onError">
+			<div class="min-w-0 space-y-3 lg:col-span-9 lg:space-y-6">
 				<ZInputVoucherDetailsSection
 					:state="formModel.voucher"
 					form-field-prefix="voucher"
@@ -16,7 +16,7 @@
 				/>
 			</div>
 
-			<div class="lg:col-span-3">
+			<div class="min-w-0 lg:col-span-3">
 				<div class="lg:sticky lg:top-4">
 					<FormVoucherReviewSummary :summary="reviewSummary" />
 				</div>

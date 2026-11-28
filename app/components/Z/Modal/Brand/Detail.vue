@@ -2,7 +2,7 @@
 	<UModal
 		:title="t('components.zModal.updateBrand')"
 		:ui="{
-			content: 'w-full sm:max-w-[60%] md:max-w-[40%] lg:max-w-[30%]',
+			content: 'w-full sm:max-w-[60%] md:max-w-[40%] lg:max-w-[30%]', footer: 'max-sm:px-3 max-sm:pb-[max(0.75rem,env(safe-area-inset-bottom))]',
 		}"
 	>
 		<template #body>
@@ -28,10 +28,10 @@
 		</template>
 
 		<template #footer>
-			<div class="flex-jbetween-icenter w-full">
+			<div class="flex w-full flex-wrap items-center justify-between gap-2 max-sm:[&_button]:min-h-11">
 				<UButton color="error" variant="ghost" class="opacity-50 hover:opacity-100" @click="onDelete">{{ t('components.zModal.delete') }}</UButton>
 
-				<div class="flex-jend gap-4">
+				<div class="flex flex-wrap justify-end gap-2 sm:gap-4">
 					<UButton color="neutral" variant="soft" @click="onCancel">{{ t('common.cancel') }}</UButton>
 					<UButton color="primary" variant="solid" :loading="updating" @click="form.submit()">{{ t('components.zModal.update') }}</UButton>
 				</div>
